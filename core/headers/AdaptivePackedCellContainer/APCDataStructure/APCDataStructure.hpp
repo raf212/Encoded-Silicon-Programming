@@ -28,6 +28,7 @@ namespace PredictedAdaptedEncoding
         OCCUPANCY_SNAPSHOT_OF_PUBLISHED_CELLS = 12,
         OCCUPANCY_SNAPSHOT_OF_IDLE_CELLS = 85,
         OCCUPANCY_SNAPSHOT_OF_FAULTY_CELLS = 86,
+        TOTAL_PUBLISHED_CLAIMED_FAULTY_OCCUPANCY16x3_48 = 87,
             //
         SPLIT_THRESHOLD_PERCENTAGE = 13,
         SEGMENT_KIND = 14,
@@ -116,7 +117,7 @@ namespace PredictedAdaptedEncoding
         RETIRE_EPOCH_LOW32     = 83,
         RETIRE_EPOCH_HIGH32    = 84,
 
-        RESERVED_87 = 87,
+        RESERVED_88 = 88,
         EOF_APC_HEADER = 95
     };
 
@@ -133,6 +134,13 @@ namespace PredictedAdaptedEncoding
         static constexpr uint32_t APC_INDEX_SENTINAL = UINT16_MAX;
         static constexpr uint64_t MASK_LOW_16 = MaskLowNBits(16);
 
+        enum class OccupancyBucket : uint8_t
+        {
+            IDLE = 0,
+            PUBLISHED = 1,
+            CLAIMED = 2,
+            FAULTY = 3
+        };
 
         static inline packed64_t Compose3Unsigned16bitIndependentInMode48(
             uint16_t low16_bits,
@@ -141,21 +149,83 @@ namespace PredictedAdaptedEncoding
             meta16_t meta16
         ) noexcept
         {
-            if(static_cast<PackedMode>(PackedCell64_t::ExtractCellModeFromMETA16_U_(meta16)) != PackedMode::MODE_CLKVAL48)
-            {
-                return PackedCell64_t::MakeFaultyCell();
-            }
-            if (static_cast<RelOffsetMode48>(PackedCell64_t::ExtractRelOffsetFromMETA16_U_(meta16)) != RelOffsetMode48::THREE_16_BIT_SUB_DIVISION)
-            {
-                return PackedCell64_t::MakeFaultyCell();
-            }
-
-            packed64_t packed_cell = (PackUnsigned16x3ToMode48_(low16_bits, mid_16_bits, high_16_bits) & MaskLowNBits(CLK_B48));
-            packed_cell = PackedCell64_t::SetMETA16InPacked(packed_cell, meta16);
-            return packed_cell;
+            const uint64_t raw48 = (PackUnsigned16x3ToMode48_(low16_bits, mid_16_bits, high_16_bits) & MaskLowNBits(CLK_B48));
+            return PackedCell64_t::ComposeCLK48u_64(raw48, meta16);
         }
 
-        static inline std::optional<uint16_t> ExtractLow16FromPackedCellMode48(packed64_t packed_cell) noexcept
+        static inline packed64_t ComposeAPCOccupancyModel_16x3_48t(
+            uint16_t published_count,
+            uint16_t claimed_count,
+            uint16_t faulty_count,
+            APCPagedNodeRelMaskClasses page_region_class,
+            PriorityPhysics priority = PriorityPhysics::STRUCTURAL_DEPENDENCY,
+            PackedCellNodeAuthority authority = PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM
+        ) noexcept
+        {
+            const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(
+                priority, authority,
+                PackedCellLocalityTypes::ST_PUBLISHED,
+                page_region_class,
+                RelOffsetMode48::THREE_16_BIT_SUB_DIVISION,
+                PackedCellDataType::UnsignedPCellDataType
+            );
+            return Compose3Unsigned16bitIndependentInMode48(
+                published_count,
+                claimed_count,
+                faulty_count,
+                meta16
+            );
+        }
+
+        static inline std::optional<uint16_t>GetOccuupancyFromPackedCellMode48(
+            packed64_t packed_cell,
+            OccupancyBucket desired_occupancy_bucket
+        ) noexcept
+        {
+            if (!IsThisCellASubdevision_3x16_48t(packed_cell))
+            {
+                return std::nullopt;
+            }
+            const uint64_t raw48 = PackedCell64_t::ExtractClk48(packed_cell);
+            if (raw48 == PackedCell64_t::PACKED_CELL_SENTINAL)
+            {
+                return std::nullopt;
+            }
+            
+            switch (desired_occupancy_bucket)
+            {
+            case OccupancyBucket::PUBLISHED :
+                return ExtractLow16FromUnsigned48_(raw48);
+            case OccupancyBucket::CLAIMED :
+                return ExtractMid16FromUnsigned48_(raw48);
+            case OccupancyBucket::FAULTY :
+                return ExtractHigh16FromUnsigned48_(raw48);
+            default:
+                return std::nullopt;
+            }
+        }
+
+        static inline OccupancyBucket BucketFromCellLocality(
+            PackedCellLocalityTypes locality
+        ) noexcept
+        {
+            switch (locality)
+            {
+            case PackedCellLocalityTypes::ST_PUBLISHED :
+                return OccupancyBucket::PUBLISHED;
+            case PackedCellLocalityTypes::ST_CLAIMED :
+                return OccupancyBucket::CLAIMED;
+            case PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY :
+                return OccupancyBucket::FAULTY;
+
+            default:
+                return OccupancyBucket::IDLE;
+            }
+        }
+
+
+        //as an example
+        static inline std::optional<uint16_t> ExtractMid16FromPackedCellMode48(packed64_t packed_cell) noexcept
         {
             if (PackedCell64_t::ExtractRelOffset48FromPacked(packed_cell) != RelOffsetMode48::THREE_16_BIT_SUB_DIVISION)
             {
@@ -166,8 +236,9 @@ namespace PredictedAdaptedEncoding
             {
                 return std::nullopt;
             }
-            return ExtractLow16FromUnsigned48_(raw_value48);
+            return ExtractMid16FromUnsigned48_(raw_value48);
         }
+
 
     protected:
         static constexpr unsigned PACK3XU16TOMODE48_SHIFT_LOW = 0u;
@@ -204,6 +275,35 @@ namespace PredictedAdaptedEncoding
         {
             return static_cast<uint16_t>((raw48 >> PACK3XU16TOMODE48_SHIFT_HIGH) & MASK_LOW_16);
         }
+
+        static inline uint32_t SumOf3PartOccupancyOf48Bit_(uint64_t raw48) noexcept
+        {
+            return ExtractLow16FromUnsigned48_(raw48) + ExtractMid16FromUnsigned48_(raw48) + ExtractHigh16FromUnsigned48_(raw48);
+        }
+
+        static inline uint32_t DeriveIdleCoundtFromRaw48General_(uint64_t raw48, uint16_t physical_capacity) noexcept
+        {
+            const  uint32_t in_use_potion = SumOf3PartOccupancyOf48Bit_(raw48);
+            return in_use_potion > physical_capacity ? UNSIGNED_ZERO : physical_capacity - in_use_potion;
+        }
+
+        static inline uint32_t DerivedIdleFromPackedCell48(packed64_t packed_cell, uint16_t physical_capacity) noexcept
+        {
+            const uint64_t raw48 = PackedCell64_t::ExtractClk48(packed_cell);
+            if (raw48 == PackedCell64_t::PACKED_CELL_SENTINAL)
+            {
+                return UNSIGNED_ZERO;
+            }
+            return DeriveIdleCoundtFromRaw48General_(raw48, physical_capacity);
+        }
+
+        static inline bool IsThisCellASubdevision_3x16_48t(packed64_t packed_cell) noexcept
+        {
+            return PackedCell64_t::ExtractModeOfPackedCellFromPacked(packed_cell) == PackedMode::MODE_CLKVAL48 &&
+                PackedCell64_t::ExtractRelOffset48FromPacked(packed_cell) == RelOffsetMode48::THREE_16_BIT_SUB_DIVISION &&
+                PackedCell64_t::ExtractLocalityFromPacked(packed_cell) != PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY;
+        }
+
 
     };
     
