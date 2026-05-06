@@ -399,8 +399,35 @@ public:
         return desired_region_occupancy && *desired_region_occupancy <= APC_MAX_LENGTH_OR_COUNTER ? *desired_region_occupancy : UNSIGNED_ZERO;
     }
 
+    uint16_t ReadPublishedOccupancyOfAPageClass(APCPagedNodeRelMaskClasses page_class) noexcept
+    {
+        return ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED, page_class);
+    }
+
+    uint16_t ReadIdleOccupancyOfAPAgeClass(APCPagedNodeRelMaskClasses page_class) noexcept
+    {
+        return ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::ST_IDLE, page_class);
+    }
 
 
+    uint16_t ReadClaimedOccupancyOfAPAgeClass(APCPagedNodeRelMaskClasses page_class) noexcept
+    {
+        return ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::ST_CLAIMED, page_class);
+    }
+    
+
+    uint16_t ReadFaultyOccupancyOfAPAgeClass(APCPagedNodeRelMaskClasses page_class) noexcept
+    {
+        return ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY, page_class);
+    }
+
+    uint16_t ReadTotalUsedOccupancyOfARegion(APCPagedNodeRelMaskClasses page_class) noexcept
+    {
+        return ReadPublishedOccupancyOfAPageClass(page_class) +
+            ReadClaimedOccupancyOfAPAgeClass(page_class) +
+            ReadFaultyOccupancyOfAPAgeClass(page_class);
+    }
+    
 };
 
 }
