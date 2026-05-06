@@ -28,7 +28,7 @@ namespace PredictedAdaptedEncoding
         OCCUPANCY_SNAPSHOT_OF_PUBLISHED_CELLS = 12,
         OCCUPANCY_SNAPSHOT_OF_IDLE_CELLS = 85,
         OCCUPANCY_SNAPSHOT_OF_FAULTY_CELLS = 86,
-        TOTAL_PUBLISHED_CLAIMED_FAULTY_OCCUPANCY16x3_48 = 87,
+        COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48 = 87,
             //
         SPLIT_THRESHOLD_PERCENTAGE = 13,
         SEGMENT_KIND = 14,
@@ -134,13 +134,6 @@ namespace PredictedAdaptedEncoding
         static constexpr uint32_t APC_INDEX_SENTINAL = UINT16_MAX;
         static constexpr uint64_t MASK_LOW_16 = MaskLowNBits(16);
 
-        enum class OccupancyBucket : uint8_t
-        {
-            IDLE = 0,
-            PUBLISHED = 1,
-            CLAIMED = 2,
-            FAULTY = 3
-        };
 
         static inline packed64_t Compose3Unsigned16bitIndependentInMode48(
             uint16_t low16_bits,
@@ -179,7 +172,8 @@ namespace PredictedAdaptedEncoding
 
         static inline std::optional<uint16_t>GetOccuupancyFromPackedCellMode48(
             packed64_t packed_cell,
-            OccupancyBucket desired_occupancy_bucket
+            PackedCellLocalityTypes desired_occupancy_bucket,
+            uint16_t physical_capacity
         ) noexcept
         {
             if (!IsThisCellASubdevision_3x16_48t(packed_cell))
@@ -194,49 +188,17 @@ namespace PredictedAdaptedEncoding
             
             switch (desired_occupancy_bucket)
             {
-            case OccupancyBucket::PUBLISHED :
-                return ExtractLow16FromUnsigned48_(raw48);
-            case OccupancyBucket::CLAIMED :
-                return ExtractMid16FromUnsigned48_(raw48);
-            case OccupancyBucket::FAULTY :
-                return ExtractHigh16FromUnsigned48_(raw48);
-            default:
-                return std::nullopt;
-            }
-        }
-
-        static inline OccupancyBucket BucketFromCellLocality(
-            PackedCellLocalityTypes locality
-        ) noexcept
-        {
-            switch (locality)
-            {
             case PackedCellLocalityTypes::ST_PUBLISHED :
-                return OccupancyBucket::PUBLISHED;
+                return ExtractLow16FromUnsigned48_(raw48);
             case PackedCellLocalityTypes::ST_CLAIMED :
-                return OccupancyBucket::CLAIMED;
+                return ExtractMid16FromUnsigned48_(raw48);
             case PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY :
-                return OccupancyBucket::FAULTY;
-
+                return ExtractHigh16FromUnsigned48_(raw48);
+            case PackedCellLocalityTypes::ST_IDLE :
+                return DerivedIdleFromPackedCell48(packed_cell, physical_capacity);
             default:
-                return OccupancyBucket::IDLE;
-            }
-        }
-
-
-        //as an example
-        static inline std::optional<uint16_t> ExtractMid16FromPackedCellMode48(packed64_t packed_cell) noexcept
-        {
-            if (PackedCell64_t::ExtractRelOffset48FromPacked(packed_cell) != RelOffsetMode48::THREE_16_BIT_SUB_DIVISION)
-            {
                 return std::nullopt;
             }
-            const uint64_t raw_value48 = PackedCell64_t::ExtractClk48(packed_cell);
-            if (raw_value48 == PackedCell64_t::PACKED_CELL_SENTINAL)
-            {
-                return std::nullopt;
-            }
-            return ExtractMid16FromUnsigned48_(raw_value48);
         }
 
 
@@ -281,13 +243,13 @@ namespace PredictedAdaptedEncoding
             return ExtractLow16FromUnsigned48_(raw48) + ExtractMid16FromUnsigned48_(raw48) + ExtractHigh16FromUnsigned48_(raw48);
         }
 
-        static inline uint32_t DeriveIdleCoundtFromRaw48General_(uint64_t raw48, uint16_t physical_capacity) noexcept
+        static inline uint16_t DeriveIdleCoundtFromRaw48General_(uint64_t raw48, uint16_t physical_capacity) noexcept
         {
             const  uint32_t in_use_potion = SumOf3PartOccupancyOf48Bit_(raw48);
-            return in_use_potion > physical_capacity ? UNSIGNED_ZERO : physical_capacity - in_use_potion;
+            return in_use_potion > physical_capacity ? UNSIGNED_ZERO : static_cast<uint16_t>(physical_capacity - in_use_potion);
         }
 
-        static inline uint32_t DerivedIdleFromPackedCell48(packed64_t packed_cell, uint16_t physical_capacity) noexcept
+        static inline uint16_t DerivedIdleFromPackedCell48(packed64_t packed_cell, uint16_t physical_capacity) noexcept
         {
             const uint64_t raw48 = PackedCell64_t::ExtractClk48(packed_cell);
             if (raw48 == PackedCell64_t::PACKED_CELL_SENTINAL)
@@ -306,11 +268,5 @@ namespace PredictedAdaptedEncoding
 
 
     };
-    
-
-
-
-
-  
     
 }

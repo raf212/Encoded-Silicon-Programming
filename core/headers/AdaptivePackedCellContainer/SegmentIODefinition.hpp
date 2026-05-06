@@ -360,29 +360,45 @@ public:
         return nullptr;
     }
 
-    std::optional<uint16_t> GetAnyTypeOfOccupancyFromPackedCellMode48_(packed64_t packed_cell, OccupancyBucket occupancy_bucket) noexcept
+    packed64_t ReadCentralAPCOccupancyCellForThisPagedNode() noexcept
     {
-        if (PackedCell64_t::ExtractRelOffset48FromPacked(packed_cell) != RelOffsetMode48::THREE_16_BIT_SUB_DIVISION)
-        {
-            return std::nullopt;
-        }
-        const uint64_t raw_value48 = PackedCell64_t::ExtractClk48(packed_cell);
-        if (raw_value48 == PackedCell64_t::PACKED_CELL_SENTINAL)
-        {
-            return std::nullopt;
-        }
-        switch (occupancy_bucket)
-        {
-        case OccupancyBucket::PUBLISHED :
-            return ExtractLow16FromUnsigned48_(raw_value48);
-        case OccupancyBucket::CLAIMED :
-            return ExtractMid16FromUnsigned48_(raw_value48);
-        case OccupancyBucket::FAULTY :
-            return ExtractHigh16FromUnsigned48_(raw_value48);
-        default:
-            break;
-        }
+        return ReadFullMetaCell(MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48);
     }
+    
+    packed64_t ReadRegionOccupancyCombinedCell(APCPagedNodeRelMaskClasses page_class) noexcept
+    {
+        return ReadFullMetaCell(
+            APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(page_class)
+        );
+    }
+
+    uint16_t ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes locality_type) noexcept
+    {
+        const std::optional<uint16_t> desired_occupancy =  GetOccuupancyFromPackedCellMode48(
+                ReadCentralAPCOccupancyCellForThisPagedNode(),
+                locality_type,
+                static_cast<uint16_t>(PayloadCapacityFromHeader())
+            );
+        return desired_occupancy ? *desired_occupancy : UNSIGNED_ZERO;
+    }
+
+    uint16_t ReadRegionOccupancyOfALocality(PackedCellLocalityTypes locality_type, APCPagedNodeRelMaskClasses page_class) noexcept
+    {
+        const packed64_t packed_cell = ReadRegionOccupancyCombinedCell(page_class);
+
+        std::optional<LayoutBoundsOfSingleRelNodeClass> maybe_bounds_of_the_page_class = ReadLayoutBounds(page_class);
+        if (!maybe_bounds_of_the_page_class || maybe_bounds_of_the_page_class->IsEmpty())
+        {
+            return UNSIGNED_ZERO;
+        }
+        const std::optional<uint16_t> desired_region_occupancy = GetOccuupancyFromPackedCellMode48(
+            packed_cell,
+            locality_type,
+            (static_cast<uint16_t>(maybe_bounds_of_the_page_class->GetPayloadSpan())
+        ));
+        return desired_region_occupancy && *desired_region_occupancy <= APC_MAX_LENGTH_OR_COUNTER ? *desired_region_occupancy : UNSIGNED_ZERO;
+    }
+
 
 
 };
