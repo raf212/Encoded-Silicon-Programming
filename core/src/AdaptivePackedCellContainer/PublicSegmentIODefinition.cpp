@@ -279,6 +279,11 @@ namespace PredictedAdaptedEncoding
         for (size_t rel_class = 0; rel_class < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses; rel_class++)
         {
             const LayoutBoundsOfSingleRelNodeClass* current_layout = compleate_layout_of_this_apc.GetALayoutByRelMask(static_cast<APCPagedNodeRelMaskClasses>(rel_class));
+            if (!current_layout || current_layout->IsEmpty())
+            {
+                continue;
+            }
+
             const uint32_t payload_span = current_layout->GetPayloadSpan();
             if (payload_span == 0)
             {
