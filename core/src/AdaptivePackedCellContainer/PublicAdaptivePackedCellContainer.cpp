@@ -256,53 +256,6 @@ namespace PredictedAdaptedEncoding
         
     }
     
-    uint32_t AdaptivePackedCellContainer::OccupancyAddOrSubAndGetAfterChange_(MetaIndexOfAPCNode desired_region_meta_idx, int delta) noexcept
-    {
-        if (delta == 0)
-        {
-            return static_cast<size_t>(ReadMetaCellValue32(desired_region_meta_idx));
-        }
-        while (true)
-        {
-            packed64_t current_occupancy_cell = ReadFullMetaCell(desired_region_meta_idx);
-            val32_t current_occupancy = PackedCell64_t::ExtractValue32(current_occupancy_cell);
-            if (current_occupancy == BRANCH_SENTINAL)
-            {
-                return BRANCH_SENTINAL;
-            }
-            
-            int64_t next_occupancy_winded = static_cast<int64_t>(current_occupancy) + static_cast<int64_t>(delta);
-            if (next_occupancy_winded < 0)
-            {
-                next_occupancy_winded = 0;
-            }
-            constexpr int64_t high_val = static_cast<int64_t>(BRANCH_SENTINAL - 1u);
-            if (next_occupancy_winded > high_val)
-            {
-                next_occupancy_winded = high_val;
-            }
-            
-            uint32_t next_occupancy = static_cast<uint32_t>(next_occupancy_winded);
-            if (JustUpdateValueOfMeta32(desired_region_meta_idx, current_occupancy, next_occupancy))
-            {
-                return next_occupancy;
-            }
-            if (APCManagerPtr_)
-            {
-                auto& backoff = APCManagerPtr_->GetManagersAdaptiveBackoff();
-                backoff.AdaptiveBackOffPacked(current_occupancy_cell);
-            }
-            
-        }
-    }
-
-    uint32_t AdaptivePackedCellContainer::RegionOccupancyAddOrSubAndGet(APCPagedNodeRelMaskClasses desired_region_class, int delta) noexcept
-    {
-        const MetaIndexOfAPCNode region_occ_meta_idx = APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(desired_region_class);
-        return OccupancyAddOrSubAndGetAfterChange_(region_occ_meta_idx, delta);
-    }
-
-
 
     AdaptivePackedCellContainer* AdaptivePackedCellContainer::FindSharedRootOrThis() noexcept
     {

@@ -67,7 +67,6 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         uint32_t SuggestedInternalAPCExpension_(CompleteAPCNodeRegionsLayout* complete_layout, uint8_t prefared_percentage_of_free = 50) noexcept;
 
-        uint32_t OccupancyAddOrSubAndGetAfterChange_(MetaIndexOfAPCNode desired_region_meta_idx, int delta = 0) noexcept;
 
         packed64_t NormalizeDesiredPublishedCellForRegion_(
             packed64_t out_going_cell,
@@ -161,8 +160,6 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
         size_t ReserveProducerSlots(size_t number_of_slots) noexcept;
 
         size_t NextProducerSequence() noexcept;
-
-        uint32_t RegionOccupancyAddOrSubAndGet(APCPagedNodeRelMaskClasses desired_region_class, int delta = 0) noexcept;
 
         void ClearAllManagerLinksAndFlags() noexcept;
 

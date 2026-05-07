@@ -653,7 +653,8 @@ namespace PredictedAdaptedEncoding
             return true;
         }
 
-        const MetaIndexOfAPCNode meta_idx = page_class ? APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(*page_class) : MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48;
+        const MetaIndexOfAPCNode meta_idx = page_class.has_value() ? APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(*page_class) : MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48;
+        const APCPagedNodeRelMaskClasses desired_page_class = page_class.has_value() ? *page_class : APCPagedNodeRelMaskClasses::CONTROL_SLOT;
 
         packed64_t observed_cell = ReadFullMetaCell(meta_idx);
         while (true)
@@ -675,6 +676,8 @@ namespace PredictedAdaptedEncoding
             {
                 switch (locality)
                 {
+                case PackedCellLocalityTypes::ST_IDLE :
+                    return true;
                 case PackedCellLocalityTypes::ST_PUBLISHED :
                     if (published_count > UNSIGNED_ZERO)
                     {
@@ -703,6 +706,8 @@ namespace PredictedAdaptedEncoding
             {
                 switch (locality)
                 {
+                case PackedCellLocalityTypes::ST_IDLE :
+                    return true;
                 case PackedCellLocalityTypes::ST_PUBLISHED :
                     if (published_count < APC_MAX_LENGTH_OR_COUNTER)
                     {
@@ -733,8 +738,7 @@ namespace PredictedAdaptedEncoding
             {
                 return false;
             }
-            
-            const packed64_t desired_cell = ComposeAPCOccupancyModel_16x3_48t(published_count, claimed_count, faulty_count, *page_class);
+            const packed64_t desired_cell = ComposeAPCOccupancyModel_16x3_48t(published_count, claimed_count, faulty_count, desired_page_class);
 
             packed64_t expected_cell = observed_cell;
 
@@ -756,17 +760,21 @@ namespace PredictedAdaptedEncoding
     {
         const PackedCellLocalityTypes from_locality = PackedCell64_t::ExtractLocalityFromPacked(old_cell);
         const PackedCellLocalityTypes to_locality = PackedCell64_t::ExtractLocalityFromPacked(new_cell);
-        const bool total_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell(from_locality, to_locality);
-        if (total_ok && physical_page_class != APCPagedNodeRelMaskClasses::NANNULL)
+        if (from_locality == to_locality)
         {
-            const bool region_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell(from_locality, to_locality, physical_page_class);
-            if (region_ok)
-            {
-                RefreshReadyBitForRegionFromOccupancy(physical_page_class);
-                return true;
-            }
+            return true;
         }
-        return false;
+        
+        const bool total_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell(from_locality, to_locality);
+        if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(physical_page_class))
+        {
+            return total_ok;
+        }
+
+        const bool region_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell(from_locality, to_locality, physical_page_class);
+
+        RefreshReadyBitForRegionFromOccupancy(physical_page_class);
+        return total_ok && region_ok;
     }
 
     bool SegmentIODefinition::RefreshReadyBitForRegionFromOccupancy(APCPagedNodeRelMaskClasses page_class) noexcept

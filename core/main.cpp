@@ -167,14 +167,23 @@ namespace
         return out;
     }
 
-    static uint16_t HeaderLocalitySum(APCSegmentsCausalCordinator& apc)
+    static uint16_t HeaderUsedSum(APCSegmentsCausalCordinator& apc)
     {
         return apc.ReadTotalOccuPancyOfAnyOccupancyCell();
     }
 
+    static uint32_t HeaderLocalitySum(APCSegmentsCausalCordinator& apc)
+    {
+        return
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_IDLE) +
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED) +
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_CLAIMED) +
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY);
+    }
+    
     static uint32_t RegionMeta(APCSegmentsCausalCordinator& apc, APCPagedNodeRelMaskClasses region)
     {
-        return apc.RegionOccupancyAddOrSubAndGet(region, 0);
+        return apc.ReadPublishedOccupancyOfAPageClass(region);
     }
 
     static void PrintRegion(
@@ -218,6 +227,7 @@ namespace
             apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY);
 
         const uint32_t header_sum = HeaderLocalitySum(apc);
+        const uint32_t header_used = HeaderUsedSum(apc);
         const uint32_t payload = static_cast<uint32_t>(apc.PayloadCapacityFromHeader());
 
         std::cout << "\n[" << name << "]\n";
@@ -242,6 +252,16 @@ namespace
                   << " sum=" << header_sum
                   << " invariant=" << (header_sum == payload ? "OK" : "BAD")
                   << "\n";
+
+        std::cout << "  header locality: "
+                << "idle=" << header_idle
+                << " pub=" << header_pub
+                << " claim=" << header_claim
+                << " faulty=" << header_fault
+                << " used=" << header_used
+                << " sum=" << header_sum
+                << " invariant=" << (header_sum == payload ? "OK" : "BAD")
+                << "\n";
 
         std::cout << "  exact  locality: "
                   << "idle=" << exact.Idle

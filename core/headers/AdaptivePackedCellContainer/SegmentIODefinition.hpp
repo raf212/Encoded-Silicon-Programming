@@ -273,11 +273,6 @@ public:
 
     bool WriteExactMetaCellJustNewValue(MetaIndexOfAPCNode idx, uint32_t value) noexcept;
 
-    uint32_t ReadRegionOccupancy(APCPagedNodeRelMaskClasses desired_region_class) noexcept
-    {
-        return ReadMetaCellValue32(APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(desired_region_class));
-    }
-
     bool  TryBindShareNext(uint32_t shared_next_id) noexcept
     {
         return TryBindPortTarget(MetaIndexOfAPCNode::SHARED_NEXT_ID, shared_next_id);
