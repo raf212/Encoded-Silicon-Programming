@@ -271,7 +271,6 @@ namespace PredictedAdaptedEncoding
         {
             return false;
         }
-
         auto maybe_compleate_layout = ReadAndGetFullRegionLayout_();
         if (!maybe_compleate_layout)
         {
@@ -282,17 +281,20 @@ namespace PredictedAdaptedEncoding
         for (size_t rel_class = 0; rel_class < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses; rel_class++)
         {
             const LayoutBoundsOfSingleRelNodeClass* current_layout = compleate_layout_of_this_apc.GetALayoutByRelMask(static_cast<APCPagedNodeRelMaskClasses>(rel_class));
-            if (!current_layout || current_layout->IsEmpty())
+            const uint32_t payload_span = current_layout->GetPayloadSpan();
+            if (payload_span == 0)
             {
                 continue;
             }
-            const uint32_t desired_region_occupancy = ReadRegionOccupancy(current_layout->LAYOUT_CLASS);
-            const uint32_t span = current_layout->GetPayloadSpan();
-            if (span == 0)
+            
+            const APCPagedNodeRelMaskClasses page_class = current_layout->LAYOUT_CLASS;
+            if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(page_class))
             {
                 continue;
             }
-            if (((static_cast<uint64_t>(desired_region_occupancy) * 100) / span) >= split_threshold)
+            const uint16_t sum_of_total_occupancy  = ReadTotalUsedOccupancyOfARegion(page_class);
+            
+            if (((static_cast<uint64_t>(sum_of_total_occupancy) * 100) / payload_span) >= split_threshold)
             {
                 return true;
             } 
