@@ -622,4 +622,20 @@ namespace PredictedAdaptedEncoding
         }
     }
 
+    uint16_t SegmentIODefinition::ReadRegionOccupancyOfALocality(PackedCellLocalityTypes locality_type, APCPagedNodeRelMaskClasses page_class) noexcept
+    {
+        const packed64_t packed_cell = ReadRegionOccupancyCombinedCell(page_class);
+
+        std::optional<LayoutBoundsOfSingleRelNodeClass> maybe_bounds_of_the_page_class = ReadLayoutBounds(page_class);
+        if (!maybe_bounds_of_the_page_class || maybe_bounds_of_the_page_class->IsEmpty())
+        {
+            return UNSIGNED_ZERO;
+        }
+        const std::optional<uint16_t> desired_region_occupancy = GetOccuupancyFromPackedCellMode48(
+            packed_cell,
+            locality_type,
+            (static_cast<uint16_t>(maybe_bounds_of_the_page_class->GetPayloadSpan())
+        ));
+        return desired_region_occupancy && *desired_region_occupancy <= APC_MAX_LENGTH_OR_COUNTER ? *desired_region_occupancy : UNSIGNED_ZERO;
+    }
 }

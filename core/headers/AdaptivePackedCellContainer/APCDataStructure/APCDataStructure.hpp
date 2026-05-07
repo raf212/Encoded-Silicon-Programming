@@ -266,6 +266,18 @@ namespace PredictedAdaptedEncoding
                 PackedCell64_t::ExtractLocalityFromPacked(packed_cell) != PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY;
         }
 
+        static inline bool ExtractLowMidHighFromMode48_(uint64_t raw48, uint16_t& low, uint16_t& mid, uint16_t& high)
+        {
+            if (raw48 == PackedCell64_t::PACKED_CELL_SENTINAL)
+            {
+                return false;
+            }
+            low = ExtractLow16FromUnsigned48_(raw48);
+            mid = ExtractMid16FromUnsigned48_(raw48);
+            high = ExtractHigh16FromUnsigned48_(raw48);
+            return true;
+        }
+
 
     };
     
