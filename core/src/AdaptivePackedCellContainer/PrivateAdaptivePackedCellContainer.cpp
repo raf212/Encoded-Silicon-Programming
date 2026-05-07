@@ -19,7 +19,7 @@ namespace PredictedAdaptedEncoding
 
     void AdaptivePackedCellContainer::InitZeroState_() noexcept
     {
-        ForceZeroOccupancy_();
+        ResetALLOccupancy16x3ModelToZero_();
         MakeAPCBranchOwned();
         ResetTotalCASFailureForThisBranch();
         UpdateProducerCursorPlacement(static_cast<uint32_t>(PayloadBegin()));
@@ -212,13 +212,13 @@ namespace PredictedAdaptedEncoding
                 continue;
             }
 
-            ApplyPackedCellTransitionAfterSuccessfulWrite_(current_cell, current_cell_claimed_local);
+            APPLYCentralAndRegionOccupancyTransitionCell(current_cell, current_cell_claimed_local, region_kind);
 
             const packed64_t idle_cell = PackedCell64_t::MakeInitialPacked(current_cell_view.CellMode, PriorityPhysics::IDLE, PackedCellLocalityTypes::ST_IDLE, region_kind, current_cell_view.CellValueDataType);
             BackingPtr[idx].store(idle_cell, MoStoreSeq_);
             BackingPtr[idx].notify_all();
 
-            ApplyPackedCellTransitionAfterSuccessfulWrite_(current_cell_claimed_local, idle_cell);
+            APPLYCentralAndRegionOccupancyTransitionCell(current_cell_claimed_local, idle_cell, region_kind);
             TouchLocalMetaClock48();
             RefreshAPCMeta_();
             scan_cursor = idx + 1;
@@ -336,10 +336,10 @@ namespace PredictedAdaptedEncoding
                 continue;
             }
 
-            ApplyPackedCellTransitionAfterSuccessfulWrite_(observed_cell, claimd_local_inplace_cell);
+            APPLYCentralAndRegionOccupancyTransitionCell(observed_cell, claimd_local_inplace_cell, region_kind);
             BackingPtr[current_index].store(packed_cell_for_publish, MoStoreSeq_);
             BackingPtr[current_index].notify_all();
-            ApplyPackedCellTransitionAfterSuccessfulWrite_(claimd_local_inplace_cell, packed_cell_for_publish);
+            APPLYCentralAndRegionOccupancyTransitionCell(claimd_local_inplace_cell, packed_cell_for_publish, region_kind);
             TouchLocalMetaClock48();
             RefreshAPCMeta_();
 

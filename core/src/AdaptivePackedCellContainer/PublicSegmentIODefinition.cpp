@@ -180,7 +180,6 @@ namespace PredictedAdaptedEncoding
         WriteBrenchMeta32_(MetaIndexOfAPCNode::SEGMENT_KIND, static_cast<uint32_t>(APCPagedNodeRelMaskClasses::FREE_SLOT), write_cell_priority);
         WriteBrenchMeta32_(MetaIndexOfAPCNode::MAX_DEPTH, container_configuration.BranchMaxDepth, write_cell_priority);
         WriteBrenchMeta32_(MetaIndexOfAPCNode::TOTAL_CAPACITY_OF_THIS_SEGEMENT, safe_capacity, write_cell_priority);                                                                                        
-        WriteOrUpdateMetaClock48(write_cell_priority, UNSIGNED_ZERO);
         WriteBrenchMeta32_(MetaIndexOfAPCNode::LAST_SPLIT_EPOCH, UNSIGNED_ZERO, write_cell_priority);
         WriteBrenchMeta32_(MetaIndexOfAPCNode::REGION_SIZE, static_cast<uint32_t>(container_configuration.RegionSize), write_cell_priority);
         WriteBrenchMeta32_(MetaIndexOfAPCNode::REGION_COUNT, region_count, write_cell_priority);
@@ -203,6 +202,8 @@ namespace PredictedAdaptedEncoding
                             UNSIGNED_ZERO, write_cell_priority, APCPagedNodeRelMaskClasses::CONTROL_SLOT
                         );
         }
+
+        ResetALLOccupancy16x3ModelToZero_();
         
         WriteBrenchMeta32_(MetaIndexOfAPCNode::EOF_APC_HEADER, EOF_HEADER, write_cell_priority);
     }

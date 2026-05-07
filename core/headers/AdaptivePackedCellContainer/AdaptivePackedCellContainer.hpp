@@ -69,8 +69,6 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         uint32_t OccupancyAddOrSubAndGetAfterChange_(MetaIndexOfAPCNode desired_region_meta_idx, int delta = 0) noexcept;
 
-        bool ApplyPackedCellTransitionAfterSuccessfulWrite_(packed64_t old_cell, packed64_t new_cell) noexcept;
-
         packed64_t NormalizeDesiredPublishedCellForRegion_(
             packed64_t out_going_cell,
             APCPagedNodeRelMaskClasses region_kind,

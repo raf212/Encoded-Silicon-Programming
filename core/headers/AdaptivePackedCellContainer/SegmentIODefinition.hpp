@@ -158,9 +158,7 @@ protected:
         return UpdateAPCModeFlagsInHeader_(UNSIGNED_ZERO, use_or_between_flags);
     }
 
-    bool ForceZeroOccupancy_() noexcept;
-
-    bool ResetAny16x3ModelToZero_() noexcept
+    bool ResetALLOccupancy16x3ModelToZero_() noexcept
     {
         if (!IsBound())
         {
