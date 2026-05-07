@@ -363,7 +363,7 @@ namespace PredictedAdaptedEncoding
         AdaptivePackedCellContainer* current_apc_ptr = FindSharedRootOrThis();
         while (current_apc_ptr)
         {
-            if (current_apc_ptr->AllPublishedCellsOccupancySnapshotAddOrSubAndGetAfterChange() > UNSIGNED_ZERO)
+            if (current_apc_ptr->ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED) > UNSIGNED_ZERO)
             {
                 return false;
             }

@@ -24,10 +24,6 @@ namespace PredictedAdaptedEncoding
         SEGMENT_CONF_FLAGS = 10,
         CURRENT_ACTIVE_THREADS = 11,
             //occupancy
-        OCCUPANCY_SNAPSHOT_OF_CLAIMED_CELLS = 2,
-        OCCUPANCY_SNAPSHOT_OF_PUBLISHED_CELLS = 12,
-        OCCUPANCY_SNAPSHOT_OF_IDLE_CELLS = 85,
-        OCCUPANCY_SNAPSHOT_OF_FAULTY_CELLS = 86,
         COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48 = 87,
             //
         SPLIT_THRESHOLD_PERCENTAGE = 13,
@@ -199,6 +195,18 @@ namespace PredictedAdaptedEncoding
             default:
                 return std::nullopt;
             }
+        }
+
+        static inline uint16_t GetTootalOccupancyFromPackedCell(packed64_t packed_cell) noexcept
+        {
+            if (!IsThisCellASubdevision_3x16_48t(packed_cell))
+            {
+                return UNSIGNED_ZERO;
+            }
+            const uint64_t raw48 = PackedCell64_t::ExtractClk48(packed_cell);
+            uint16_t published, claimed, faulty = UNSIGNED_ZERO;
+            ExtractLowMidHighFromMode48_(raw48, published, claimed, faulty);
+            return published + claimed + faulty;
         }
 
 

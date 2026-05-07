@@ -176,36 +176,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
         
         bool RebuildExectReadyMask() noexcept;
 
-        uint32_t AllPublishedCellsOccupancySnapshotAddOrSubAndGetAfterChange(int delta = 0) noexcept
-        {
-            return OccupancyAddOrSubAndGetAfterChange_(MetaIndexOfAPCNode::OCCUPANCY_SNAPSHOT_OF_PUBLISHED_CELLS, delta);
-        }
 
-        uint32_t AllClaimedCellsOccupancySnapshotAddOrSubAndGetAfterChange(int delta = 0) noexcept
-        {
-            return OccupancyAddOrSubAndGetAfterChange_(MetaIndexOfAPCNode::OCCUPANCY_SNAPSHOT_OF_CLAIMED_CELLS, delta);
-        }
-
-        uint32_t AllIdleCellsOccupancySnapshotAddOrSubAndGetAfterChange(int delta = 0) noexcept
-        {
-            return OccupancyAddOrSubAndGetAfterChange_(MetaIndexOfAPCNode::OCCUPANCY_SNAPSHOT_OF_IDLE_CELLS, delta);
-        }
-
-        uint32_t AllFaultyCellsOccupancySnapshotAddOrSubAndGetAfterChange(int delta = 0) noexcept
-        {
-            return OccupancyAddOrSubAndGetAfterChange_(MetaIndexOfAPCNode::OCCUPANCY_SNAPSHOT_OF_FAULTY_CELLS, delta);
-        }
-
-        uint32_t StrictOccupancySumOfFourLocalities() noexcept
-        {
-            return AllPublishedCellsOccupancySnapshotAddOrSubAndGetAfterChange() + AllClaimedCellsOccupancySnapshotAddOrSubAndGetAfterChange() +
-                AllIdleCellsOccupancySnapshotAddOrSubAndGetAfterChange() + AllFaultyCellsOccupancySnapshotAddOrSubAndGetAfterChange();
-        }
-
-        bool DoseStrictSumOf4OccupancyHoldsInvarients() noexcept
-        {
-            return StrictOccupancySumOfFourLocalities() == static_cast<uint32_t>(PayloadCapacityFromHeader());
-        }
 
         static constexpr uint32_t PayloadBegin() noexcept
         {

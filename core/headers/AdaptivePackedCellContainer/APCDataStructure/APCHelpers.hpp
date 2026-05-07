@@ -143,28 +143,6 @@ namespace PredictedAdaptedEncoding
                 view.PageClass == region_kind;
         }    
 
-        static inline MetaIndexOfAPCNode GetDesiredMetaIndexBucketForOccupancy(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
-        {
-            if (!a_cell_view.IsCellValid || a_cell_view.LocalityOfCell == PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY)
-            {
-                return MetaIndexOfAPCNode::OCCUPANCY_SNAPSHOT_OF_FAULTY_CELLS;
-            }
-            switch (a_cell_view.LocalityOfCell)
-            {
-                case PackedCellLocalityTypes::ST_IDLE :
-                    return MetaIndexOfAPCNode::OCCUPANCY_SNAPSHOT_OF_IDLE_CELLS;
-
-                case PackedCellLocalityTypes::ST_PUBLISHED :
-                    return MetaIndexOfAPCNode::OCCUPANCY_SNAPSHOT_OF_PUBLISHED_CELLS;
-
-                case PackedCellLocalityTypes::ST_CLAIMED :
-                    return MetaIndexOfAPCNode::OCCUPANCY_SNAPSHOT_OF_CLAIMED_CELLS;
-
-                default :
-                    return MetaIndexOfAPCNode::OCCUPANCY_SNAPSHOT_OF_FAULTY_CELLS;
-            }
-            
-        } 
 
 
 };

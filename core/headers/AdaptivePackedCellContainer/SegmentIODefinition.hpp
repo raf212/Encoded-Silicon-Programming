@@ -116,7 +116,7 @@ protected:
         uint64_t raw48_value,
         APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::CONTROL_SLOT,
         PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY,
-        RelOffsetMode48 rel_offset = RelOffsetMode48::RELOFFSET_GENERIC_VALUE
+        RelOffsetMode48 rel_offset = RelOffsetMode48::THREE_16_BIT_SUB_DIVISION
     ) noexcept
     {
         size_t index = static_cast<size_t>(idx);
@@ -472,6 +472,16 @@ public:
     ) noexcept;
 
     bool RefreshReadyBitForRegionFromOccupancy(APCPagedNodeRelMaskClasses page_class) noexcept;
+
+    uint16_t ReadTotalOccuPancyOfAnyOccupancyCell(APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::NANNULL) noexcept
+    {
+
+        const packed64_t packed_cell = page_class != APCPagedNodeRelMaskClasses::NANNULL ?
+            ReadRegionOccupancyCombinedCell(page_class) : ReadCentralAPCOccupancyCellForThisPagedNode();
+
+        const uint16_t full_combined_occupancy = GetTootalOccupancyFromPackedCell(packed_cell);
+        return full_combined_occupancy;
+    }
     
 };
 

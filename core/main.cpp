@@ -167,13 +167,9 @@ namespace
         return out;
     }
 
-    static uint32_t HeaderLocalitySum(APCSegmentsCausalCordinator& apc)
+    static uint16_t HeaderLocalitySum(APCSegmentsCausalCordinator& apc)
     {
-        return
-            apc.AllIdleCellsOccupancySnapshotAddOrSubAndGetAfterChange(0) +
-            apc.AllPublishedCellsOccupancySnapshotAddOrSubAndGetAfterChange(0) +
-            apc.AllClaimedCellsOccupancySnapshotAddOrSubAndGetAfterChange(0) +
-            apc.AllFaultyCellsOccupancySnapshotAddOrSubAndGetAfterChange(0);
+        return apc.ReadTotalOccuPancyOfAnyOccupancyCell();
     }
 
     static uint32_t RegionMeta(APCSegmentsCausalCordinator& apc, APCPagedNodeRelMaskClasses region)
@@ -210,16 +206,16 @@ namespace
         const ExactLocalityCount exact = CountExactLocality(apc);
 
         const uint32_t header_idle =
-            apc.AllIdleCellsOccupancySnapshotAddOrSubAndGetAfterChange(0);
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_IDLE);
 
         const uint32_t header_pub =
-            apc.AllPublishedCellsOccupancySnapshotAddOrSubAndGetAfterChange(0);
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED);
 
         const uint32_t header_claim =
-            apc.AllClaimedCellsOccupancySnapshotAddOrSubAndGetAfterChange(0);
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_CLAIMED);
 
         const uint32_t header_fault =
-            apc.AllFaultyCellsOccupancySnapshotAddOrSubAndGetAfterChange(0);
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY);
 
         const uint32_t header_sum = HeaderLocalitySum(apc);
         const uint32_t payload = static_cast<uint32_t>(apc.PayloadCapacityFromHeader());
