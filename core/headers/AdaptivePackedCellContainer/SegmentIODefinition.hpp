@@ -1,25 +1,19 @@
 #pragma once
 #include "PackedCell/CoreCellDefination.hpp"
-#include "MasterClockConf.hpp"
-#include "APCHelpers.hpp"
+#include "APCSpikeController/AtomicAdaptiveBackoff.hpp"
 
 namespace PredictedAdaptedEncoding
 {
 
 
-class SegmentIODefinition
+class SegmentIODefinition : public APCDataStructure
 {
 public:
-    std::atomic<packed64_t>* BackingPtr{nullptr};
-    static constexpr size_t METACELL_COUNT = PackedCell64_t::METACELL_COUNT_FIRST;
-    static constexpr uint32_t BRANCH_MAGIC = 0x41504342u;//big-endian
-    static constexpr uint32_t EOF_HEADER = 0x72616600;//big-endian
-    static constexpr uint32_t BRANCH_VERSION = 1u;
-    static constexpr uint32_t BRANCH_SENTINAL = LayoutBoundsOfSingleRelNodeClass::BRANCH_SENTINAL;
-    static constexpr packed64_t APC_SENTENAL = UINT64_MAX;
-    static constexpr uint8_t TOTAL_LAYOUT_SECTION_IN_APC_CONTAINER_NODE = 8;
-    static constexpr uint8_t OPTIMAL_FREE_LAYOUT_PERCENTAGE = 20;
+    SegmentIODefinition() noexcept = default;
     
+    std::atomic<packed64_t>* BackingPtr{nullptr};
+    static constexpr uint32_t BRANCH_SENTINAL = LayoutBoundsOfSingleRelNodeClass::BRANCH_SENTINAL;
+
     enum class APCNodeComputeKind : uint32_t
     {
         NONE = 0u,
@@ -62,22 +56,19 @@ public:
         IN_CLEANUP_STACK = 1u << 6
     };
 
-    static constexpr uint32_t PAYLOAD_BOUND_START = static_cast<uint32_t>(MetaIndexOfAPCNode::MESSAGE_FEEDFORWARD_BEGAIN);
-    static constexpr uint32_t PAYLOAD_BOUND_END = static_cast<uint32_t>(MetaIndexOfAPCNode::FREE_END);
 
-
-    bool ValidMeteIdx(MetaIndexOfAPCNode idx) const noexcept
+    bool ValidMetaIdx(MetaIndexOfAPCNode idx) const noexcept
     {
         return BackingPtr && static_cast<size_t>(idx) < BranchCapacity_ && static_cast<size_t>(idx) < METACELL_COUNT;
     }
 
     packed64_t ReadFullMetaCell(MetaIndexOfAPCNode idx) noexcept
     {
-        if (ValidMeteIdx(idx))
+        if (ValidMetaIdx(idx))
         {
             return BackingPtr[static_cast<size_t>(idx)].load(MoLoad_);
         }
-        return APC_SENTENAL;
+        return PACKED_CELL_SENTENAL;
     }
     
 protected:
@@ -112,11 +103,30 @@ protected:
     ) noexcept
     {
         size_t index = static_cast<size_t>(idx);
-        if (!ValidMeteIdx(idx))
+        if (!ValidMetaIdx(idx))
         {
             return;
         }
         BackingPtr[index].store(PackValue32InPackedCellwithClock16_(value32, priority, PackedCellLocalityTypes::ST_PUBLISHED, rel_mask4), MoStoreSeq_);
+        BackingPtr[index].notify_all();
+    }
+
+    void WritBranchMeta48_(
+        MetaIndexOfAPCNode idx,
+        uint64_t raw48_value,
+        APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::CONTROL_SLOT,
+        PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY,
+        RelOffsetMode48 rel_offset = RelOffsetMode48::RELOFFSET_GENERIC_VALUE
+    ) noexcept
+    {
+        size_t index = static_cast<size_t>(idx);
+        if (!ValidMetaIdx(idx))
+        {
+            return;
+        }
+        const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(priority, PackedCellNodeAuthority::IDLE_OR_FREE, PackedCellLocalityTypes::ST_PUBLISHED, page_class, rel_offset);
+        const packed64_t packed_cell = PackedCell64_t::ComposeCLK48u_64(raw48_value & MaskLowNBits(CLK_B48), meta16);
+        BackingPtr[index].store(packed_cell);
         BackingPtr[index].notify_all();
     }
 
@@ -149,6 +159,32 @@ protected:
     }
 
     bool ForceZeroOccupancy_() noexcept;
+
+    bool ResetAny16x3ModelToZero_() noexcept
+    {
+        if (!IsBound())
+        {
+            return false;
+        }
+        WritBranchMeta48_(MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48, UNSIGNED_ZERO);
+
+        for (uint8_t i = 0; i < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses; i++)
+        {
+            const APCPagedNodeRelMaskClasses blind_page = static_cast<APCPagedNodeRelMaskClasses>(i);
+            const MetaIndexOfAPCNode idx = APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(blind_page);
+            if (!ValidMetaIdx(idx))
+            {
+                continue;
+            }
+            WritBranchMeta48_(idx, UNSIGNED_ZERO);
+        }
+        WriteExactMetaCellJustNewValue(
+            MetaIndexOfAPCNode::PAGED_NODE_READY_BIT,
+            UNSIGNED_ZERO
+        );
+        return true;
+    }
+
     
 public:
     packed64_t PackPureClock48AsPackedCell(
@@ -170,7 +206,6 @@ public:
         bool refresh_clock16 = true
     ) noexcept;
 
-    SegmentIODefinition() noexcept = default;
 
 
     bool IsBound() const noexcept
@@ -371,7 +406,73 @@ public:
         return nullptr;
     }
 
+    packed64_t ReadCentralAPCOccupancyCellForThisPagedNode() noexcept
+    {
+        return ReadFullMetaCell(MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48);
+    }
+    
+    packed64_t ReadRegionOccupancyCombinedCell(APCPagedNodeRelMaskClasses page_class) noexcept
+    {
+        return ReadFullMetaCell(
+            APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(page_class)
+        );
+    }
 
+    uint16_t ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes locality_type) noexcept
+    {
+        const std::optional<uint16_t> desired_occupancy =  GetOccuupancyFromPackedCellMode48(
+                ReadCentralAPCOccupancyCellForThisPagedNode(),
+                locality_type,
+                static_cast<uint16_t>(PayloadCapacityFromHeader())
+            );
+        return desired_occupancy ? *desired_occupancy : UNSIGNED_ZERO;
+    }
+
+    uint16_t ReadRegionOccupancyOfALocality(PackedCellLocalityTypes locality_type, APCPagedNodeRelMaskClasses page_class) noexcept;
+
+    uint16_t ReadPublishedOccupancyOfAPageClass(APCPagedNodeRelMaskClasses page_class) noexcept
+    {
+        return ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED, page_class);
+    }
+
+    uint16_t ReadIdleOccupancyOfAPAgeClass(APCPagedNodeRelMaskClasses page_class) noexcept
+    {
+        return ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::ST_IDLE, page_class);
+    }
+
+
+    uint16_t ReadClaimedOccupancyOfAPAgeClass(APCPagedNodeRelMaskClasses page_class) noexcept
+    {
+        return ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::ST_CLAIMED, page_class);
+    }
+    
+
+    uint16_t ReadFaultyOccupancyOfAPAgeClass(APCPagedNodeRelMaskClasses page_class) noexcept
+    {
+        return ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY, page_class);
+    }
+
+    uint16_t ReadTotalUsedOccupancyOfARegion(APCPagedNodeRelMaskClasses page_class) noexcept
+    {
+        return ReadPublishedOccupancyOfAPageClass(page_class) +
+            ReadClaimedOccupancyOfAPAgeClass(page_class) +
+            ReadFaultyOccupancyOfAPAgeClass(page_class);
+    }
+
+    bool CasUpdateOccupancy3x16ThreeSubdivisionCell(
+        PackedCellLocalityTypes from_locality,
+        PackedCellLocalityTypes to_locality,
+        std::optional<APCPagedNodeRelMaskClasses> page_class = std::nullopt
+    ) noexcept;
+
+    bool APPLYCentralAndRegionOccupancyTransitionCell(
+        packed64_t old_cell,
+        packed64_t new_cell,
+        APCPagedNodeRelMaskClasses physical_page_class = APCPagedNodeRelMaskClasses::NANNULL
+    ) noexcept;
+
+    bool RefreshReadyBitForRegionFromOccupancy(APCPagedNodeRelMaskClasses page_class) noexcept;
+    
 };
 
 }

@@ -125,7 +125,7 @@ namespace PredictedAdaptedEncoding {
     {
         RELOFFSET_GENERIC_VALUE = 0,
         RELOFFSET_PURE_TIMER = 1,
-        RELOFFSET_STANDALONE_PTR = 2,
+        THREE_16_BIT_SUB_DIVISION  = 2,
         CONTROL_SLOT = 3
     };
 
@@ -161,7 +161,7 @@ namespace PredictedAdaptedEncoding {
         NANNULL     = 0xF
     };
 
-    static inline constexpr packed64_t MaskBits(unsigned n) noexcept
+    static inline constexpr packed64_t MaskLowNBits(unsigned n) noexcept
     {
         if (n == UNSIGNED_ZERO) return packed64_t(0);
         if (n >= MAX_VAL) return ~packed64_t(0);
