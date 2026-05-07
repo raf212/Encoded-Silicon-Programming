@@ -309,21 +309,18 @@ namespace PredictedAdaptedEncoding
 
     bool SegmentIODefinition::TryMarkSplitInFlight() noexcept
     {
-        while (true)
+        const uint32_t current_flags = ReadMetaCellValue32(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
+        if (current_flags == BRANCH_SENTINAL)
         {
-            const uint32_t current_flags = ReadMetaCellValue32(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
-            if (current_flags == BRANCH_SENTINAL)
-            {
-                return false;
-            }
-
-            bool is_already_in_flight = HasThisControlEnumFlag(ControlEnumOfAPCSegment::SPLIT_INFLIGHT);
-            if (is_already_in_flight)
-            {
-                return false;
-            }
-            return TurnOnASegmentFlag(ControlEnumOfAPCSegment::SPLIT_INFLIGHT);
+            return false;
         }
+
+        bool is_already_in_flight = HasThisControlEnumFlag(ControlEnumOfAPCSegment::SPLIT_INFLIGHT);
+        if (is_already_in_flight)
+        {
+            return false;
+        }
+        return TurnOnASegmentFlag(ControlEnumOfAPCSegment::SPLIT_INFLIGHT);
     }
 
     uint32_t SegmentIODefinition::TotalCASFailForThisBranchIncreaseAndGet(uint32_t increment) noexcept

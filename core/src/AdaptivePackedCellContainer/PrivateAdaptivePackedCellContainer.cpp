@@ -425,8 +425,7 @@ namespace PredictedAdaptedEncoding
                 const APCPagedNodeRelMaskClasses absolute_cell_relation_mask = APCAndPagedNodeHelpers::ExtractPagedRelMaskFromPacked(absolute_packed_cell);
                 region_ready_mask |= APCAndPagedNodeHelpers::MakeOneAPCNodeClassReadyBit(absolute_cell_relation_mask);
                 region_epoch = std::max<uint64_t>(region_epoch, PackedCell64_t::ExtractClk16(absolute_packed_cell));
-                RegionRelArray_[region].store(static_cast<uint8_t>(region_ready_mask & APCAndPagedNodeHelpers::HIGH_ALL_EIGHT_NIBBLE), MoStoreSeq_);
-                RegionEpochArray_[region].store(region_epoch, MoStoreSeq_);
+
                 global_ready_mask |= region_ready_mask;
                 if (region_ready_mask != UNSIGNED_ZERO)
                 {
@@ -442,6 +441,8 @@ namespace PredictedAdaptedEncoding
                     }
                 }
             }
+            RegionRelArray_[region].store(static_cast<uint8_t>(region_ready_mask & APCAndPagedNodeHelpers::HIGH_ALL_EIGHT_NIBBLE), MoStoreSeq_);
+            RegionEpochArray_[region].store(region_epoch, MoStoreSeq_);
         }
         const uint32_t expected_mask = ReadMetaCellValue32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
 

@@ -51,7 +51,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
             packed64_t packed_cell_for_publish, 
             APCPagedNodeRelMaskClasses region_kind = APCPagedNodeRelMaskClasses::FREE_SLOT,
             PackedCellNodeAuthority node_authority = PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM,
-            uint16_t max_tries = 128
+            uint16_t max_tries = APC_MAX_LENGTH_OR_COUNTER / (APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses)
         ) noexcept;
 
         //not used

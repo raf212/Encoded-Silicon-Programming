@@ -126,7 +126,7 @@ protected:
         }
         const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(priority, PackedCellNodeAuthority::IDLE_OR_FREE, PackedCellLocalityTypes::ST_PUBLISHED, page_class, rel_offset);
         const packed64_t packed_cell = PackedCell64_t::ComposeCLK48u_64(raw48_value & MaskLowNBits(CLK_B48), meta16);
-        BackingPtr[index].store(packed_cell);
+        BackingPtr[index].store(packed_cell, MoStoreSeq_);
         BackingPtr[index].notify_all();
     }
 
