@@ -103,7 +103,7 @@ class AdaptivePackedCellContainer;
             const meta16_t strl_for_pure48_clock = PackedCell64_t::MakeInCellMetaForMode_48t(desired_priority, 
                                 PackedCellNodeAuthority::IDLE_OR_FREE,
                                 desired_locality, 
-                                APCPagedNodeRelMaskClasses::CLOCK_PURE_TIME,
+                                APCPagedNodeRelMaskClasses::CONTROL_SLOT,
                                 RelOffsetMode48::RELOFFSET_PURE_TIMER,
                                 PackedCellDataType::UnsignedPCellDataType
                             );

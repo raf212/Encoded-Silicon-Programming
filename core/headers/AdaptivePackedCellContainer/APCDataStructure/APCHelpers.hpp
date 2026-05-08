@@ -109,7 +109,6 @@ namespace PredictedAdaptedEncoding
             return page_class != APCPagedNodeRelMaskClasses::NONE &&
                 page_class != APCPagedNodeRelMaskClasses::NANNULL &&
                 page_class != APCPagedNodeRelMaskClasses::FREE_SLOT &&
-                page_class != APCPagedNodeRelMaskClasses::CLOCK_PURE_TIME &&
                 page_class != APCPagedNodeRelMaskClasses::CONTROL_SLOT;
         }
 

@@ -15,7 +15,7 @@ using namespace PredictedAdaptedEncoding;
 
 namespace
 {
-    constexpr uint32_t VALUE_COUNT = 25600u;
+    constexpr uint32_t VALUE_COUNT = 2560u;
     constexpr uint32_t PRODUCER_COUNT = 2u;
     constexpr uint32_t FF_WORKER_COUNT = 3u;
     constexpr uint32_t FB_WORKER_COUNT = 2u;
@@ -305,7 +305,7 @@ int main()
     cfg.ProducerBlockSize = 8;
     cfg.RegionSize = 16;
     cfg.EnableBranching = true;
-    cfg.BranchSplitThresholdPercentage = 70;
+    cfg.BranchSplitThresholdPercentage = 40;
     cfg.BranchMaxDepth = 6;
     cfg.BranchMinChildCapacity = 256;
     cfg.NodeGroupSize = 1u;
@@ -323,35 +323,35 @@ int main()
     Motor.SetManagerForGlobalAPC(&manager);
 
     Sensor.InitAPCAsNode(
-        256,
+        cfg.BranchMinChildCapacity,
         cfg,
         SegmentIODefinition::APCNodeComputeKind::GENERATOR_UINT32,
         0
     );
 
     Predictor.InitAPCAsNode(
-        256,
+        cfg.BranchMinChildCapacity,
         cfg,
         SegmentIODefinition::APCNodeComputeKind::BIDIRECTIONAL_PREDECTIVE,
         0
     );
 
     Comparator.InitAPCAsNode(
-        256,
+        cfg.BranchMinChildCapacity,
         cfg,
         SegmentIODefinition::APCNodeComputeKind::ADD_UINT32,
         0
     );
 
     Integrator.InitAPCAsNode(
-        256,
+        cfg.BranchMinChildCapacity,
         cfg,
         SegmentIODefinition::APCNodeComputeKind::GENERIC_VECTOR,
         0
     );
 
     Motor.InitAPCAsNode(
-        256,
+        cfg.BranchMinChildCapacity,
         cfg,
         SegmentIODefinition::APCNodeComputeKind::GENERIC_VECTOR,
         0

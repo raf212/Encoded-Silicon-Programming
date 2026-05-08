@@ -189,7 +189,7 @@ public:
         std::optional<uint64_t> clock48 = std::nullopt,
         PriorityPhysics priority = PriorityPhysics::IDLE,
         PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_PUBLISHED,
-        APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::CLOCK_PURE_TIME,
+        APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::CONTROL_SLOT,
         RelOffsetMode48 reloffset = RelOffsetMode48::RELOFFSET_PURE_TIMER,
         PackedCellDataType dtype = PackedCellDataType::UnsignedPCellDataType,
         PackedCellNodeAuthority node_authority = PackedCellNodeAuthority::IDLE_OR_FREE
