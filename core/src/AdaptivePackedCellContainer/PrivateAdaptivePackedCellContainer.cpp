@@ -19,7 +19,7 @@ namespace PredictedAdaptedEncoding
 
     void AdaptivePackedCellContainer::InitZeroState_() noexcept
     {
-        ForceZeroOccupancy_();
+        ResetALLOccupancy16x3ModelToZero_();
         MakeAPCBranchOwned();
         ResetTotalCASFailureForThisBranch();
         UpdateProducerCursorPlacement(static_cast<uint32_t>(PayloadBegin()));
@@ -212,13 +212,13 @@ namespace PredictedAdaptedEncoding
                 continue;
             }
 
-            ApplyPackedCellTransitionAfterSuccessfulWrite_(current_cell, current_cell_claimed_local);
+            APPLYCentralAndRegionOccupancyTransitionCell(current_cell, current_cell_claimed_local, region_kind);
 
             const packed64_t idle_cell = PackedCell64_t::MakeInitialPacked(current_cell_view.CellMode, PriorityPhysics::IDLE, PackedCellLocalityTypes::ST_IDLE, region_kind, current_cell_view.CellValueDataType);
             BackingPtr[idx].store(idle_cell, MoStoreSeq_);
             BackingPtr[idx].notify_all();
 
-            ApplyPackedCellTransitionAfterSuccessfulWrite_(current_cell_claimed_local, idle_cell);
+            APPLYCentralAndRegionOccupancyTransitionCell(current_cell_claimed_local, idle_cell, region_kind);
             TouchLocalMetaClock48();
             RefreshAPCMeta_();
             scan_cursor = idx + 1;
@@ -336,10 +336,10 @@ namespace PredictedAdaptedEncoding
                 continue;
             }
 
-            ApplyPackedCellTransitionAfterSuccessfulWrite_(observed_cell, claimd_local_inplace_cell);
+            APPLYCentralAndRegionOccupancyTransitionCell(observed_cell, claimd_local_inplace_cell, region_kind);
             BackingPtr[current_index].store(packed_cell_for_publish, MoStoreSeq_);
             BackingPtr[current_index].notify_all();
-            ApplyPackedCellTransitionAfterSuccessfulWrite_(claimd_local_inplace_cell, packed_cell_for_publish);
+            APPLYCentralAndRegionOccupancyTransitionCell(claimd_local_inplace_cell, packed_cell_for_publish, region_kind);
             TouchLocalMetaClock48();
             RefreshAPCMeta_();
 
@@ -425,8 +425,7 @@ namespace PredictedAdaptedEncoding
                 const APCPagedNodeRelMaskClasses absolute_cell_relation_mask = APCAndPagedNodeHelpers::ExtractPagedRelMaskFromPacked(absolute_packed_cell);
                 region_ready_mask |= APCAndPagedNodeHelpers::MakeOneAPCNodeClassReadyBit(absolute_cell_relation_mask);
                 region_epoch = std::max<uint64_t>(region_epoch, PackedCell64_t::ExtractClk16(absolute_packed_cell));
-                RegionRelArray_[region].store(static_cast<uint8_t>(region_ready_mask & APCAndPagedNodeHelpers::HIGH_ALL_EIGHT_NIBBLE), MoStoreSeq_);
-                RegionEpochArray_[region].store(region_epoch, MoStoreSeq_);
+
                 global_ready_mask |= region_ready_mask;
                 if (region_ready_mask != UNSIGNED_ZERO)
                 {
@@ -442,6 +441,8 @@ namespace PredictedAdaptedEncoding
                     }
                 }
             }
+            RegionRelArray_[region].store(static_cast<uint8_t>(region_ready_mask & APCAndPagedNodeHelpers::HIGH_ALL_EIGHT_NIBBLE), MoStoreSeq_);
+            RegionEpochArray_[region].store(region_epoch, MoStoreSeq_);
         }
         const uint32_t expected_mask = ReadMetaCellValue32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
 
@@ -453,34 +454,6 @@ namespace PredictedAdaptedEncoding
         return true;
     }
 
-
-    bool AdaptivePackedCellContainer::ApplyPackedCellTransitionAfterSuccessfulWrite_(packed64_t old_cell, packed64_t new_cell) noexcept
-    {
-        const PackedCell64_t::AuthoritiveCellView old_cell_view = PackedCell64_t::InspectPackedCell(old_cell);
-        const PackedCell64_t::AuthoritiveCellView new_cell_view = PackedCell64_t::InspectPackedCell(new_cell);
-        const MetaIndexOfAPCNode requires_update_old_meta_idx = APCAndPagedNodeHelpers::GetDesiredMetaIndexBucketForOccupancy(old_cell_view);
-        const MetaIndexOfAPCNode requires_update_new_meta_idx = APCAndPagedNodeHelpers::GetDesiredMetaIndexBucketForOccupancy(new_cell_view);
-        if (requires_update_old_meta_idx != requires_update_new_meta_idx)
-        {
-            OccupancyAddOrSubAndGetAfterChange_(requires_update_old_meta_idx, -1);
-            OccupancyAddOrSubAndGetAfterChange_(requires_update_new_meta_idx, +1);
-        }
-        if (APCAndPagedNodeHelpers::DoesPublishedCellContributeToRegionOccupancy(old_cell_view))
-        {
-            const uint32_t desired_region_occupancy_after_decrease = RegionOccupancyAddOrSubAndGet(old_cell_view.PageClass, -1);
-            if (desired_region_occupancy_after_decrease == 0)
-            {
-                ClearTheDesiredPagedNodeReadyBit_(old_cell_view.PageClass);
-            }
-        }
-
-        if (APCAndPagedNodeHelpers::DoesPublishedCellContributeToRegionOccupancy(new_cell_view))
-        {
-            RegionOccupancyAddOrSubAndGet(new_cell_view.PageClass, +1);
-            TurnOnReadyBitForDesiredPagedNode_(new_cell_view.PageClass);
-        }
-        return true;
-    }
 
     packed64_t AdaptivePackedCellContainer::NormalizeDesiredPublishedCellForRegion_(
         packed64_t out_going_cell,

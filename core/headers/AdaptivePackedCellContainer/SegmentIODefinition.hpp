@@ -116,7 +116,7 @@ protected:
         uint64_t raw48_value,
         APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::CONTROL_SLOT,
         PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY,
-        RelOffsetMode48 rel_offset = RelOffsetMode48::RELOFFSET_GENERIC_VALUE
+        RelOffsetMode48 rel_offset = RelOffsetMode48::THREE_16_BIT_SUB_DIVISION
     ) noexcept
     {
         size_t index = static_cast<size_t>(idx);
@@ -126,7 +126,7 @@ protected:
         }
         const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(priority, PackedCellNodeAuthority::IDLE_OR_FREE, PackedCellLocalityTypes::ST_PUBLISHED, page_class, rel_offset);
         const packed64_t packed_cell = PackedCell64_t::ComposeCLK48u_64(raw48_value & MaskLowNBits(CLK_B48), meta16);
-        BackingPtr[index].store(packed_cell);
+        BackingPtr[index].store(packed_cell, MoStoreSeq_);
         BackingPtr[index].notify_all();
     }
 
@@ -158,9 +158,7 @@ protected:
         return UpdateAPCModeFlagsInHeader_(UNSIGNED_ZERO, use_or_between_flags);
     }
 
-    bool ForceZeroOccupancy_() noexcept;
-
-    bool ResetAny16x3ModelToZero_() noexcept
+    bool ResetALLOccupancy16x3ModelToZero_() noexcept
     {
         if (!IsBound())
         {
@@ -275,11 +273,6 @@ public:
 
     bool WriteExactMetaCellJustNewValue(MetaIndexOfAPCNode idx, uint32_t value) noexcept;
 
-    uint32_t ReadRegionOccupancy(APCPagedNodeRelMaskClasses desired_region_class) noexcept
-    {
-        return ReadMetaCellValue32(APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(desired_region_class));
-    }
-
     bool  TryBindShareNext(uint32_t shared_next_id) noexcept
     {
         return TryBindPortTarget(MetaIndexOfAPCNode::SHARED_NEXT_ID, shared_next_id);
@@ -325,24 +318,9 @@ public:
         TurnOnASegmentFlag(ControlEnumOfAPCSegment::IS_GRAPH_NODE);
     }
 
-    bool IsGraphNode() noexcept
-    {
-        return HasThisControlEnumFlag(ControlEnumOfAPCSegment::IS_GRAPH_NODE);
-    }
-
     uint32_t GetTotalCapacityForThisAPC() noexcept
     {
         return ReadMetaCellValue32(MetaIndexOfAPCNode::TOTAL_CAPACITY_OF_THIS_SEGEMENT);
-    }
-
-    uint32_t RegionCountRead() noexcept
-    {
-        return ReadMetaCellValue32(MetaIndexOfAPCNode::REGION_COUNT);
-    }
-
-    uint32_t SplitThresholdRead() noexcept
-    {
-        return ReadMetaCellValue32(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE);
     }
 
     uint32_t MaxDepthRead() noexcept
@@ -371,20 +349,6 @@ public:
         WriteBrenchMeta32_(MetaIndexOfAPCNode::CURRENTLY_OWNED, 1u, PriorityPhysics::IMPORTANT);
     }
 
-    void ReleseOwneshipFlag() noexcept
-    {
-        WriteBrenchMeta32_(MetaIndexOfAPCNode::CURRENTLY_OWNED, UNSIGNED_ZERO, PriorityPhysics::ERROR_DEPENDENCY);
-    }
-
-    bool IsBranchOwnedByFlag() noexcept
-    {
-        uint32_t owned_cell_value = ReadMetaCellValue32(MetaIndexOfAPCNode::CURRENTLY_OWNED);
-        if (owned_cell_value > UNSIGNED_ZERO)
-        {
-            return true;
-        }
-        return false;
-    }
 
     void ResetTotalCASFailureForThisBranch(PriorityPhysics priority = PriorityPhysics::IDLE) noexcept
     {
@@ -472,6 +436,16 @@ public:
     ) noexcept;
 
     bool RefreshReadyBitForRegionFromOccupancy(APCPagedNodeRelMaskClasses page_class) noexcept;
+
+    uint16_t ReadTotalOccuPancyOfAnyOccupancyCell(APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::NANNULL) noexcept
+    {
+
+        const packed64_t packed_cell = page_class != APCPagedNodeRelMaskClasses::NANNULL ?
+            ReadRegionOccupancyCombinedCell(page_class) : ReadCentralAPCOccupancyCellForThisPagedNode();
+
+        const uint16_t full_combined_occupancy = GetTootalOccupancyFromPackedCell(packed_cell);
+        return full_combined_occupancy;
+    }
     
 };
 

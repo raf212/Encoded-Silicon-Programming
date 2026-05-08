@@ -289,30 +289,6 @@ namespace PredictedAdaptedEncoding
         return false;
     }
 
-    bool SegmentIODefinition::ForceZeroOccupancy_() noexcept
-    {
-        if (!IsBound())
-        {
-            return false;
-        }
-
-        const uint32_t payload_capacity = static_cast<uint32_t>(PayloadCapacityFromHeader());
-        WriteExactMetaCellJustNewValue(MetaIndexOfAPCNode::OCCUPANCY_SNAPSHOT_OF_PUBLISHED_CELLS, UNSIGNED_ZERO);
-        WriteExactMetaCellJustNewValue(MetaIndexOfAPCNode::OCCUPANCY_SNAPSHOT_OF_CLAIMED_CELLS, UNSIGNED_ZERO);
-        WriteExactMetaCellJustNewValue(MetaIndexOfAPCNode::OCCUPANCY_SNAPSHOT_OF_IDLE_CELLS, payload_capacity);
-        WriteExactMetaCellJustNewValue(MetaIndexOfAPCNode::OCCUPANCY_SNAPSHOT_OF_FAULTY_CELLS, UNSIGNED_ZERO);
-
-        for (uint8_t i = 0; i < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses; i++)
-        {
-            WriteExactMetaCellJustNewValue(
-                APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(static_cast<APCPagedNodeRelMaskClasses>(i)),
-                UNSIGNED_ZERO
-            );
-        }
-        
-        WriteExactMetaCellJustNewValue(MetaIndexOfAPCNode::OCCUPANCY_SNAPSHOT_OF_PUBLISHED_CELLS, UNSIGNED_ZERO);
-        return true;      
-    }
 
 
 }

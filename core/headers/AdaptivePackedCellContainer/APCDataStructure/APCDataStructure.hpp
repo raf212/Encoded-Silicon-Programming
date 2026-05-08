@@ -24,10 +24,6 @@ namespace PredictedAdaptedEncoding
         SEGMENT_CONF_FLAGS = 10,
         CURRENT_ACTIVE_THREADS = 11,
             //occupancy
-        OCCUPANCY_SNAPSHOT_OF_CLAIMED_CELLS = 2,
-        OCCUPANCY_SNAPSHOT_OF_PUBLISHED_CELLS = 12,
-        OCCUPANCY_SNAPSHOT_OF_IDLE_CELLS = 85,
-        OCCUPANCY_SNAPSHOT_OF_FAULTY_CELLS = 86,
         COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48 = 87,
             //
         SPLIT_THRESHOLD_PERCENTAGE = 13,
@@ -150,15 +146,17 @@ namespace PredictedAdaptedEncoding
             uint16_t published_count,
             uint16_t claimed_count,
             uint16_t faulty_count,
-            APCPagedNodeRelMaskClasses page_region_class,
-            PriorityPhysics priority = PriorityPhysics::STRUCTURAL_DEPENDENCY,
+            APCPagedNodeRelMaskClasses page_class,
+            PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_PUBLISHED,
+            PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY,
             PackedCellNodeAuthority authority = PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM
         ) noexcept
         {
             const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(
-                priority, authority,
-                PackedCellLocalityTypes::ST_PUBLISHED,
-                page_region_class,
+                priority, 
+                authority,
+                locality,
+                page_class,
                 RelOffsetMode48::THREE_16_BIT_SUB_DIVISION,
                 PackedCellDataType::UnsignedPCellDataType
             );
@@ -199,6 +197,32 @@ namespace PredictedAdaptedEncoding
             default:
                 return std::nullopt;
             }
+        }
+
+        static inline uint16_t GetTootalOccupancyFromPackedCell(packed64_t packed_cell) noexcept
+        {
+            if (!IsThisCellASubdevision_3x16_48t(packed_cell))
+            {
+                return UNSIGNED_ZERO;
+            }
+            const uint64_t raw48 = PackedCell64_t::ExtractClk48(packed_cell);
+            uint16_t published, claimed, faulty = UNSIGNED_ZERO;
+            ExtractLowMidHighFromMode48_(raw48, published, claimed, faulty);
+            return published + claimed + faulty;
+        }
+
+        static inline packed64_t ComposeLayoutModelof16x3(
+            uint16_t begin_low,
+            uint16_t end_mid,
+            uint16_t version_high,
+            APCPagedNodeRelMaskClasses page_class,
+            PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_PUBLISHED,
+            PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY,
+            PackedCellNodeAuthority authority = PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM
+        ) noexcept
+        {
+            const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(priority, authority, locality, page_class, RelOffsetMode48::THREE_16_BIT_SUB_DIVISION, PackedCellDataType::UnsignedPCellDataType);
+            return Compose3Unsigned16bitIndependentInMode48(begin_low, end_mid, version_high, meta16);
         }
 
 
