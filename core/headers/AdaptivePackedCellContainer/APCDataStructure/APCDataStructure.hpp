@@ -146,15 +146,17 @@ namespace PredictedAdaptedEncoding
             uint16_t published_count,
             uint16_t claimed_count,
             uint16_t faulty_count,
-            APCPagedNodeRelMaskClasses page_region_class,
-            PriorityPhysics priority = PriorityPhysics::STRUCTURAL_DEPENDENCY,
+            APCPagedNodeRelMaskClasses page_class,
+            PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_PUBLISHED,
+            PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY,
             PackedCellNodeAuthority authority = PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM
         ) noexcept
         {
             const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(
-                priority, authority,
-                PackedCellLocalityTypes::ST_PUBLISHED,
-                page_region_class,
+                priority, 
+                authority,
+                locality,
+                page_class,
                 RelOffsetMode48::THREE_16_BIT_SUB_DIVISION,
                 PackedCellDataType::UnsignedPCellDataType
             );
@@ -207,6 +209,20 @@ namespace PredictedAdaptedEncoding
             uint16_t published, claimed, faulty = UNSIGNED_ZERO;
             ExtractLowMidHighFromMode48_(raw48, published, claimed, faulty);
             return published + claimed + faulty;
+        }
+
+        static inline packed64_t ComposeLayoutModelof16x3(
+            uint16_t begin_low,
+            uint16_t end_mid,
+            uint16_t version_high,
+            APCPagedNodeRelMaskClasses page_class,
+            PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_PUBLISHED,
+            PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY,
+            PackedCellNodeAuthority authority = PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM
+        ) noexcept
+        {
+            const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(priority, authority, locality, page_class, RelOffsetMode48::THREE_16_BIT_SUB_DIVISION, PackedCellDataType::UnsignedPCellDataType);
+            return Compose3Unsigned16bitIndependentInMode48(begin_low, end_mid, version_high, meta16);
         }
 
 

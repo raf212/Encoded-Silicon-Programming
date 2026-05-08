@@ -318,24 +318,9 @@ public:
         TurnOnASegmentFlag(ControlEnumOfAPCSegment::IS_GRAPH_NODE);
     }
 
-    bool IsGraphNode() noexcept
-    {
-        return HasThisControlEnumFlag(ControlEnumOfAPCSegment::IS_GRAPH_NODE);
-    }
-
     uint32_t GetTotalCapacityForThisAPC() noexcept
     {
         return ReadMetaCellValue32(MetaIndexOfAPCNode::TOTAL_CAPACITY_OF_THIS_SEGEMENT);
-    }
-
-    uint32_t RegionCountRead() noexcept
-    {
-        return ReadMetaCellValue32(MetaIndexOfAPCNode::REGION_COUNT);
-    }
-
-    uint32_t SplitThresholdRead() noexcept
-    {
-        return ReadMetaCellValue32(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE);
     }
 
     uint32_t MaxDepthRead() noexcept
@@ -364,20 +349,6 @@ public:
         WriteBrenchMeta32_(MetaIndexOfAPCNode::CURRENTLY_OWNED, 1u, PriorityPhysics::IMPORTANT);
     }
 
-    void ReleseOwneshipFlag() noexcept
-    {
-        WriteBrenchMeta32_(MetaIndexOfAPCNode::CURRENTLY_OWNED, UNSIGNED_ZERO, PriorityPhysics::ERROR_DEPENDENCY);
-    }
-
-    bool IsBranchOwnedByFlag() noexcept
-    {
-        uint32_t owned_cell_value = ReadMetaCellValue32(MetaIndexOfAPCNode::CURRENTLY_OWNED);
-        if (owned_cell_value > UNSIGNED_ZERO)
-        {
-            return true;
-        }
-        return false;
-    }
 
     void ResetTotalCASFailureForThisBranch(PriorityPhysics priority = PriorityPhysics::IDLE) noexcept
     {
