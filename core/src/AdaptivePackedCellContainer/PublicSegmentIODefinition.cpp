@@ -378,27 +378,67 @@ namespace PredictedAdaptedEncoding
         return out_layout;
     }
 
-    bool SegmentIODefinition::SetLayOutBounds(APCPagedNodeRelMaskClasses desired_rel_mask, uint32_t begin, uint32_t end) noexcept
+    bool SegmentIODefinition::SetLayOutBounds(
+        APCPagedNodeRelMaskClasses page_class, 
+        uint16_t begain_index,
+        uint16_t end_index,
+        std::optional<uint16_t> version_number
+    ) noexcept
     {
-        if (begin > end || begin < METACELL_COUNT || end > GetTotalCapacityForThisAPC())
+        (void) version_number;
+        if (begain_index > end_index || begain_index < METACELL_COUNT || end_index > GetTotalCapacityForThisAPC())
         {
             return false;
         }
-
-        auto maybe_begain_end = GetMetaBoundsLegalPairForPageClasses(desired_rel_mask);
-        if (!maybe_begain_end)
+        
+        const MetaIndexOfAPCNode layout_idx = LayoutBoundsOfSingleRelNodeClass::GetLayoutCellMetaIndexForPageClass(page_class);
+        if (!ValidMetaIdx(layout_idx))
         {
             return false;
         }
+        if (!TrySetLayoutMutationInFlight())
+        {
+            return false;
+        }
+        auto ClearLayoutFlagSB = [this]() noexcept
+        {
+            ClearOneControlEnumFlagOfAPC(
+                ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT
+            );
+        };
 
-        // std::pair begin_end = *maybe_begain_end; kept for learning
+        packed64_t observed_layout = ReadFullMetaCell(layout_idx);
 
-        const auto [begin_meta, end_meta] = *maybe_begain_end;
+        while (true)
+        {
+            uint16_t old_begin, old_end, old_version = 0;
+            if (!ExtractLayoutModel_BegainL_EndM_VersionH(observed_layout, old_begin, old_end, old_version))
+            {
+                old_version = UNSIGNED_ZERO;
+            }
+            
+            const uint16_t next_version = old_version + 1;
 
-        const uint32_t current_begain = ReadMetaCellValue32(begin_meta);
-        const uint32_t current_end = ReadMetaCellValue32(end_meta);
-
-        return JustUpdateValueOfMeta32(begin_meta, current_begain, begin) && JustUpdateValueOfMeta32(end_meta, current_end, end);
+            packed64_t desired_layout = ComposeLayoutModelof16x3(begain_index, end_index, next_version, page_class);
+            packed64_t expected_layout_cell = observed_layout;
+            if (BackingPtr[static_cast<size_t>(layout_idx)].compare_exchange_strong(
+                    expected_layout_cell,
+                    desired_layout,
+                    OnExchangeSuccess,
+                    OnExchangeFailure))
+            {
+                BackingPtr[static_cast<size_t>(layout_idx)].notify_all();
+                ClearLayoutFlagSB();
+                return true;
+            }
+            observed_layout = expected_layout_cell;
+            if (AdaptiveBackoffOfAPCPtr_)
+            {
+                AdaptiveBackoffOfAPCPtr_->AdaptiveBackOffPacked(observed_layout);
+            }
+        }
+        
+        
         
     }
 

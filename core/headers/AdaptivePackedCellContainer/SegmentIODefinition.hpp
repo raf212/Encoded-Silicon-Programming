@@ -137,8 +137,6 @@ protected:
 
     bool UpdateAPCModeFlagsInHeader_(uint32_t flags_to_turn_on = UNSIGNED_ZERO, uint32_t flags_to_turn_off = UNSIGNED_ZERO, MetaIndexOfAPCNode desired_flag_idx = MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS) noexcept;
 
-    std::optional<std::pair<MetaIndexOfAPCNode, MetaIndexOfAPCNode>> GetMetaBoundsLegalPairForPageClasses(APCPagedNodeRelMaskClasses desired_rel_mask) noexcept;
-
     bool WriteBoundsPairToHeader_(const LayoutBoundsOfSingleRelNodeClass layout_bound) noexcept;
 
     void BuidDefaultLayoutPlan_(CompleteAPCNodeRegionsLayout& full_layout) noexcept;
@@ -257,7 +255,12 @@ public:
 
     uint32_t TotalCASFailForThisBranchIncreaseAndGet(uint32_t increment) noexcept;
 
-    bool SetLayOutBounds(APCPagedNodeRelMaskClasses desired_rel_mask, uint32_t begain, uint32_t end) noexcept;
+    bool SetLayOutBounds(
+        APCPagedNodeRelMaskClasses page_class, 
+        uint16_t begain_index,
+        uint16_t end_index,
+        std::optional<uint16_t> version_number = std::nullopt
+    ) noexcept;
 
     std::optional<LayoutBoundsOfSingleRelNodeClass> ReadLayoutBounds(APCPagedNodeRelMaskClasses desired_rel_mask) noexcept;
     std::optional<CompleteAPCNodeRegionsLayout> ReadAndGetFullRegionLayout_() noexcept;
