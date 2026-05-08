@@ -48,7 +48,7 @@ namespace PredictedAdaptedEncoding
         
         auto AssignOne = [&](LayoutBoundsOfSingleRelNodeClass& one, bool keep_tail = false) noexcept
         {
-            if (one.LAYOUT_CLASS == APCPagedNodeRelMaskClasses::NANNULL)
+            if (one.PAGE_LAYOUT_CLASS == APCPagedNodeRelMaskClasses::NANNULL)
             {
                 one.BeginIndex = initial_cursor;
                 one.EndIndex = initial_cursor;
@@ -56,7 +56,7 @@ namespace PredictedAdaptedEncoding
             }
             one.BeginIndex = initial_cursor;
             uint32_t wanted_span = one.ComputeWantedSpanFromTotal(total_span);
-            if (one.LAYOUT_CLASS != APCPagedNodeRelMaskClasses::FREE_SLOT)
+            if (one.PAGE_LAYOUT_CLASS != APCPagedNodeRelMaskClasses::FREE_SLOT)
             {
                 wanted_span = std::max<uint32_t>(wanted_span, 2u);
             }
@@ -85,7 +85,7 @@ namespace PredictedAdaptedEncoding
 
     bool SegmentIODefinition::WriteBoundsPairToHeader_(const LayoutBoundsOfSingleRelNodeClass layout_bound) noexcept
     {
-        auto maybe_region_bounds_pair = GetMetaBoundsLegalPairForPageClasses(layout_bound.LAYOUT_CLASS);
+        auto maybe_region_bounds_pair = GetMetaBoundsLegalPairForPageClasses(layout_bound.PAGE_LAYOUT_CLASS);
         if (!maybe_region_bounds_pair || layout_bound.IsEmpty() == true)
         {
             return false;

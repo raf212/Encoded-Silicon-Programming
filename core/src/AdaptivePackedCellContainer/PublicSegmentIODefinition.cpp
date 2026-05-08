@@ -290,7 +290,7 @@ namespace PredictedAdaptedEncoding
                 continue;
             }
             
-            const APCPagedNodeRelMaskClasses page_class = current_layout->LAYOUT_CLASS;
+            const APCPagedNodeRelMaskClasses page_class = current_layout->PAGE_LAYOUT_CLASS;
             if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(page_class))
             {
                 continue;
@@ -343,20 +343,39 @@ namespace PredictedAdaptedEncoding
 
 
 
-    std::optional<LayoutBoundsOfSingleRelNodeClass> SegmentIODefinition::ReadLayoutBounds(APCPagedNodeRelMaskClasses desired_rel_mask) noexcept
+    std::optional<LayoutBoundsOfSingleRelNodeClass> SegmentIODefinition::ReadLayoutBounds(APCPagedNodeRelMaskClasses page_class) noexcept
     {
-        auto maybe_begin_end = GetMetaBoundsLegalPairForPageClasses(desired_rel_mask);
-        if (!maybe_begin_end)
+        const MetaIndexOfAPCNode layout_idx = LayoutBoundsOfSingleRelNodeClass::GetLayoutCellMetaIndexForPageClass(page_class);
+        if (!ValidMetaIdx(layout_idx))
         {
             return std::nullopt;
         }
-        const auto [begin_meta, end_meta] = *maybe_begin_end;
-        LayoutBoundsOfSingleRelNodeClass current_bounds{};
-        current_bounds.BeginIndex = ReadMetaCellValue32(begin_meta);
-        current_bounds.EndIndex = ReadMetaCellValue32(end_meta);
-        current_bounds.LAYOUT_CLASS = desired_rel_mask;
-        current_bounds.SetOrResetPercentage(ReadMetaCellValue32(MetaIndexOfAPCNode::TOTAL_CAPACITY_OF_THIS_SEGEMENT) - METACELL_COUNT);        
-        return current_bounds;
+        const packed64_t layout_cell = ReadFullMetaCell(layout_idx);
+        uint16_t begin_16, end16, version16 = 0;
+        if (!ExtractLayoutModel_BegainL_EndM_VersionH(layout_cell, begin_16, end16, version16))
+        {
+            return std::nullopt;
+        }
+        
+        const uint32_t total_capacity = GetTotalCapacityForThisAPC();
+        if (begin_16 < METACELL_COUNT || end16 < begin_16 || end16 > total_capacity)
+        {
+            return std::nullopt;
+        }
+
+        LayoutBoundsOfSingleRelNodeClass out_layout{};
+        out_layout.BeginIndex = begin_16;
+        out_layout.EndIndex = end16;
+        out_layout.VersionNumber = version16;
+        out_layout.PAGE_LAYOUT_CLASS = page_class;
+
+        const uint32_t payload_capacity = total_capacity > METACELL_COUNT ? total_capacity - METACELL_COUNT : UNSIGNED_ZERO;
+
+        if (payload_capacity > UNSIGNED_ZERO)
+        {
+            out_layout.SetOrResetPercentage(payload_capacity);
+        }
+        return out_layout;
     }
 
     bool SegmentIODefinition::SetLayOutBounds(APCPagedNodeRelMaskClasses desired_rel_mask, uint32_t begin, uint32_t end) noexcept
@@ -465,7 +484,7 @@ namespace PredictedAdaptedEncoding
 
         auto TryFromSpecificNeighbor = [&](LayoutBoundsOfSingleRelNodeClass& candidate_neighbor) noexcept->bool
         {
-            if (candidate_neighbor.LAYOUT_CLASS == desired_rel_mask)
+            if (candidate_neighbor.PAGE_LAYOUT_CLASS == desired_rel_mask)
             {
                 return false;
             }
@@ -475,7 +494,7 @@ namespace PredictedAdaptedEncoding
             }
             CompleteAPCNodeRegionsLayout trial_layout = current_complete_layout;
             LayoutBoundsOfSingleRelNodeClass* trial_target = trial_layout.GetALayoutByRelMask(desired_rel_mask);
-            LayoutBoundsOfSingleRelNodeClass* trial_neighbor = trial_layout.GetALayoutByRelMask(candidate_neighbor.LAYOUT_CLASS);
+            LayoutBoundsOfSingleRelNodeClass* trial_neighbor = trial_layout.GetALayoutByRelMask(candidate_neighbor.PAGE_LAYOUT_CLASS);
             if (!trial_target || !trial_neighbor)
             {
                 return false;
@@ -521,7 +540,7 @@ namespace PredictedAdaptedEncoding
                 {
                     continue;
                 }
-                if (one_layout->LAYOUT_CLASS == desired_rel_mask)
+                if (one_layout->PAGE_LAYOUT_CLASS == desired_rel_mask)
                 {
                     continue;
                 }

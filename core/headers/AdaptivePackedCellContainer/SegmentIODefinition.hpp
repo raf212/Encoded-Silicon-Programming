@@ -12,7 +12,6 @@ public:
     SegmentIODefinition() noexcept = default;
     
     std::atomic<packed64_t>* BackingPtr{nullptr};
-    static constexpr uint32_t BRANCH_SENTINAL = LayoutBoundsOfSingleRelNodeClass::BRANCH_SENTINAL;
 
     enum class APCNodeComputeKind : uint32_t
     {

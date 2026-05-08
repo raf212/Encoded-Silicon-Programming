@@ -142,11 +142,11 @@ namespace PredictedAdaptedEncoding
     
     struct LayoutBoundsOfSingleRelNodeClass
     {
-        static constexpr uint32_t BRANCH_SENTINAL = UINT32_MAX;
-        uint32_t BeginIndex = BRANCH_SENTINAL;
-        uint32_t EndIndex = BRANCH_SENTINAL;
-        APCPagedNodeRelMaskClasses LAYOUT_CLASS = APCPagedNodeRelMaskClasses::NANNULL;
+        uint32_t BeginIndex = APCDataStructure::BRANCH_SENTINAL;
+        uint32_t EndIndex = APCDataStructure::BRANCH_SENTINAL;
+        APCPagedNodeRelMaskClasses PAGE_LAYOUT_CLASS = APCPagedNodeRelMaskClasses::NANNULL;
         float InitialOrCurrentPercentage = 0u;
+        uint16_t VersionNumber = 0u;
 
         static inline MetaIndexOfAPCNode GetLayoutCellMetaIndexForPageClass(
             APCPagedNodeRelMaskClasses page_class
@@ -206,12 +206,12 @@ namespace PredictedAdaptedEncoding
 
         constexpr bool IsValid(uint32_t payload_begain, uint32_t payload_end) const noexcept
         {
-            return BeginIndex >= payload_begain && EndIndex >= BeginIndex && EndIndex <= payload_end && LAYOUT_CLASS!= APCPagedNodeRelMaskClasses::NANNULL;
+            return BeginIndex >= payload_begain && EndIndex >= BeginIndex && EndIndex <= payload_end && PAGE_LAYOUT_CLASS!= APCPagedNodeRelMaskClasses::NANNULL;
         }
 
         bool IsEmpty() const noexcept
         {
-            return EndIndex <= BeginIndex || LAYOUT_CLASS == APCPagedNodeRelMaskClasses::NANNULL;
+            return EndIndex <= BeginIndex || PAGE_LAYOUT_CLASS == APCPagedNodeRelMaskClasses::NANNULL;
         }
 
         uint32_t GetPayloadSpan() const noexcept
@@ -221,12 +221,12 @@ namespace PredictedAdaptedEncoding
 
         constexpr bool CanBorrowRightFrom(const LayoutBoundsOfSingleRelNodeClass& right) const noexcept
         {
-            return EndIndex == right.BeginIndex && right.GetPayloadSpan() > 0u && right.LAYOUT_CLASS != APCPagedNodeRelMaskClasses::NANNULL;
+            return EndIndex == right.BeginIndex && right.GetPayloadSpan() > 0u && right.PAGE_LAYOUT_CLASS != APCPagedNodeRelMaskClasses::NANNULL;
         }
 
         constexpr bool CanBorrowLeftFrom(const LayoutBoundsOfSingleRelNodeClass& left) const noexcept
         {
-            return BeginIndex == left.EndIndex && left.GetPayloadSpan() > 0u && left.LAYOUT_CLASS != APCPagedNodeRelMaskClasses::NANNULL;
+            return BeginIndex == left.EndIndex && left.GetPayloadSpan() > 0u && left.PAGE_LAYOUT_CLASS != APCPagedNodeRelMaskClasses::NANNULL;
         }
 
         bool TryGrowRight(uint32_t amount, LayoutBoundsOfSingleRelNodeClass& right) noexcept
@@ -295,8 +295,8 @@ namespace PredictedAdaptedEncoding
         ) noexcept
         {
             return LayoutBoundsOfSingleRelNodeClass{
-                LayoutBoundsOfSingleRelNodeClass::BRANCH_SENTINAL,
-                LayoutBoundsOfSingleRelNodeClass::BRANCH_SENTINAL,
+                APCDataStructure::BRANCH_SENTINAL,
+                APCDataStructure::BRANCH_SENTINAL,
                 desired_layout_class,
                 static_cast<float>(initial_percentage)
             };

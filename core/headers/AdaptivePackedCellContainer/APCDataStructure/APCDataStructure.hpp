@@ -124,6 +124,8 @@ namespace PredictedAdaptedEncoding
         static constexpr packed64_t PACKED_CELL_SENTENAL = UINT64_MAX;
         static constexpr uint32_t APC_MAX_LENGTH_OR_COUNTER = UINT16_MAX - 1;
         static constexpr uint32_t APC_INDEX_SENTINAL = UINT16_MAX;
+        static constexpr uint32_t BRANCH_SENTINAL = UINT32_MAX;
+
         static constexpr uint64_t MASK_LOW_16 = MaskLowNBits(16);
 
 
@@ -219,6 +221,18 @@ namespace PredictedAdaptedEncoding
         {
             const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(priority, authority, locality, page_class, RelOffsetMode48::THREE_16_BIT_SUB_DIVISION, PackedCellDataType::UnsignedPCellDataType);
             return Compose3Unsigned16bitIndependentInMode48(begin_low, end_mid, version_high, meta16);
+        }
+
+        static inline bool ExtractLayoutModel_BegainL_EndM_VersionH(packed64_t packed_cell, uint16_t& begin_index, uint16_t& end_index, uint16_t& version_count) noexcept
+        {
+            if (!IsThisCellASubdevision_3x16_48t(packed_cell))
+            {
+                return false;
+            }
+
+            const uint64_t raw48 = PackedCell64_t::ExtractClk48(packed_cell);
+            
+            return ExtractLowMidHighFromMode48_(raw48, begin_index, end_index, version_count);
         }
 
 
