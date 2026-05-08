@@ -108,7 +108,7 @@ namespace PredictedAdaptedEncoding
         COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48 = 74,
 
         // amount / end marker
-        EOF_APC_HEADER = 75
+        EOF_APC_HEADER = 95
     };
 
     class APCDataStructure

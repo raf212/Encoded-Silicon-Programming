@@ -47,12 +47,6 @@ namespace PredictedAdaptedEncoding
             return static_cast<APCPagedNodeRelMaskClasses>(PackedCell64_t::ExtractRelMaskFromPacked(packed_cell));
         }
 
-        static inline bool IsCellPublishedMode32Generic (packed64_t packed_cell) noexcept
-        {
-            return PackedCell64_t::ExtractModeOfPackedCellFromPacked(packed_cell) == PackedMode::MODE_VALUE32 && 
-                PackedCell64_t::ExtractLocalityFromPacked(packed_cell) == PackedCellLocalityTypes::ST_PUBLISHED &&
-                PackedCell64_t::ExtractRelOffset32FromPacked(packed_cell) == RelOffsetMode32::RELOFFSET_GENERIC_VALUE;
-        }
 
         static constexpr uint32_t MakeOneAPCNodeClassReadyBit(APCPagedNodeRelMaskClasses desired_rel_class) noexcept
         {
