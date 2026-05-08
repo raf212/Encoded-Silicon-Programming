@@ -148,6 +148,57 @@ namespace PredictedAdaptedEncoding
         APCPagedNodeRelMaskClasses LAYOUT_CLASS = APCPagedNodeRelMaskClasses::NANNULL;
         float InitialOrCurrentPercentage = 0u;
 
+        static inline MetaIndexOfAPCNode GetLayoutCellMetaIndexForPageClass(
+            APCPagedNodeRelMaskClasses page_class
+        ) noexcept
+        {
+            switch (page_class)
+            {
+                case APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE:
+                    return MetaIndexOfAPCNode::MESSAGE_FEEDFORWARD_BOUNDS_VERSION;
+
+                case APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE:
+                    return MetaIndexOfAPCNode::MESSAGE_FEEDBACKWARD_BOUNDS_VERSION;
+
+                case APCPagedNodeRelMaskClasses::LATERAL_MESAGE:
+                    return MetaIndexOfAPCNode::LATERAL_BOUNDS_VERSION;
+
+                case APCPagedNodeRelMaskClasses::STATE_SLOT:
+                    return MetaIndexOfAPCNode::STATE_BOUNDS_VERSION;
+
+                case APCPagedNodeRelMaskClasses::ERROR_SLOT:
+                    return MetaIndexOfAPCNode::ERROR_BOUNDS_VERSION;
+
+                case APCPagedNodeRelMaskClasses::EDGE_DESCRIPTOR:
+                    return MetaIndexOfAPCNode::EDGE_DESCRIPTIOR_BOUNDS_VERSION;
+
+                case APCPagedNodeRelMaskClasses::WEIGHT_SLOT:
+                    return MetaIndexOfAPCNode::WEIGHT_BOUNDS_VERSION;
+
+                case APCPagedNodeRelMaskClasses::AUX_SLOT:
+                    return MetaIndexOfAPCNode::AUX_BOUNDS_VERSION;
+
+                case APCPagedNodeRelMaskClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT:
+                    return MetaIndexOfAPCNode::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT_BOUNDS_VERSION;
+                    
+                case APCPagedNodeRelMaskClasses::PAIRED_POINTER_LOCAL_MEMORY:
+                    return MetaIndexOfAPCNode::PAIRED_POINTER_LOCAL_MEMORY_BOUNDS_VERSION;
+
+                case APCPagedNodeRelMaskClasses::PAIRED_POINTER_DISTANCE_MEMORY:
+                    return MetaIndexOfAPCNode::PAIRED_POINTER_DISTANCE_MEMORY_BOUNDS_VERSION;
+
+                case APCPagedNodeRelMaskClasses::FREE_SLOT:
+                    return MetaIndexOfAPCNode::FREE_BOUNDS_VERSION;
+
+                case APCPagedNodeRelMaskClasses::UNDEFINED:
+                    return MetaIndexOfAPCNode::UNDEFINED_BOUNDS_VERSION;
+
+                default:
+                    return MetaIndexOfAPCNode::EOF_APC_HEADER;
+            }
+        }
+
+
         void SetOrResetPercentage(uint32_t total_capacity_of_apc) noexcept
         {
             InitialOrCurrentPercentage = static_cast<float>((static_cast<float>(GetPayloadSpan()) / static_cast<float>(total_capacity_of_apc)) * 100.00);
