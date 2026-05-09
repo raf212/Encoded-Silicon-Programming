@@ -236,6 +236,11 @@ namespace PredictedAdaptedEncoding
             return ExtractLowMidHighFromMode48_(raw48, begin_index, end_index, version_count);
         }
 
+        static inline bool IsCapacityOfAPCLegal(size_t total_capacity) noexcept
+        {
+            return total_capacity > METACELL_COUNT && total_capacity <= APC_MAX_LENGTH_OR_COUNTER;
+        }
+
 
     protected:
         static constexpr unsigned PACK3XU16TOMODE48_SHIFT_LOW = 0u;

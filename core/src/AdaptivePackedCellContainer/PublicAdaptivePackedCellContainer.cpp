@@ -79,12 +79,12 @@ namespace PredictedAdaptedEncoding
     {
         
         FreeAll();
-        if (container_capacity <= MINIMUM_BRANCH_CAPACITY)
+        if (!IsCapacityOfAPCLegal(container_capacity))
         {
-            throw std::invalid_argument("Capacity is too small for APC.");
+            throw std::invalid_argument("Capacity is unbounded and not acceptable must be > METACELL_COUNT(95) && <= APC_MAX_LENGTH_OR_COUNTER ");
         }
         
-        BackingPtr = new std::atomic<packed64_t>[container_capacity];
+        BackingPtr = AllocateAlignedAtomicCells_(container_capacity);
         BranchCapacity_ = container_capacity;
         packed64_t idle_cell = PackedCell64_t::MakeInitialPacked(container_cfg.InitialMode);
         for (size_t i = 0; i < container_capacity; i++)
@@ -694,7 +694,8 @@ namespace PredictedAdaptedEncoding
 
         AdaptiveBackoffOfAPCPtr_ = nullptr;
         OwnedMasterClockConfPtr_.reset();   
-        delete[] BackingPtr;
+        // const uint32_t capacity = GetTotalCapacityForThisAPC();
+        FreeAlignedAtomicCells_(BackingPtr, BranchCapacity_);
         BackingPtr = nullptr;
         BranchCapacity_ = 0;
         RegionRelArray_.reset();

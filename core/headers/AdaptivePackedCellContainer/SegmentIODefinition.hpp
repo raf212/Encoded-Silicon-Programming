@@ -55,8 +55,7 @@ public:
         IN_CLEANUP_STACK = 1u << 6
     };
 
-
-    bool ValidMetaIdx(MetaIndexOfAPCNode idx) const noexcept
+    bool ValidMetaIdx(MetaIndexOfAPCNode idx) noexcept
     {
         return BackingPtr && static_cast<size_t>(idx) < BranchCapacity_ && static_cast<size_t>(idx) < METACELL_COUNT;
     }
