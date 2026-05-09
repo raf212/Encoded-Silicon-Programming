@@ -125,6 +125,7 @@ namespace PredictedAdaptedEncoding
         static constexpr uint32_t APC_MAX_LENGTH_OR_COUNTER = UINT16_MAX - 1;
         static constexpr uint32_t APC_INDEX_SENTINAL = UINT16_MAX;
         static constexpr uint32_t BRANCH_SENTINAL = UINT32_MAX;
+        static constexpr size_t APC_CACHELINE_SIZE = 64u;
 
         static constexpr uint64_t MASK_LOW_16 = MaskLowNBits(16);
 
@@ -310,6 +311,40 @@ namespace PredictedAdaptedEncoding
             mid = ExtractMid16FromUnsigned48_(raw48);
             high = ExtractHigh16FromUnsigned48_(raw48);
             return true;
+        }
+
+        static std::atomic<packed64_t>* AllocateAlignedAtomicCells_(size_t count)
+        {
+            const size_t bytes = sizeof(std::atomic<packed64_t>) * count;
+            void* raw_ptr = ::operator new[](
+                bytes,
+                std::align_val_t{APC_CACHELINE_SIZE}
+            );
+            auto* cells_ptr = static_cast<std::atomic<packed64_t>*>(raw_ptr);
+            for (size_t i = 0; i < count; i++)
+            {
+                new(&cells_ptr[i]) std::atomic<packed64_t>{};
+            }
+            return cells_ptr;
+        }
+
+        static void FreeAlignedAtomicCells_(
+            std::atomic<packed64_t>* backing_ptr,
+            size_t count
+        ) noexcept
+        {
+            if (!backing_ptr)
+            {
+                return;
+            }
+            for (size_t i = 0; i < count; i++)
+            {
+                backing_ptr[i].~atomic<packed64_t>();
+            }
+            ::operator delete[](
+                static_cast<void*>(backing_ptr),
+                std ::align_val_t{APC_CACHELINE_SIZE}
+            );
         }
 
 

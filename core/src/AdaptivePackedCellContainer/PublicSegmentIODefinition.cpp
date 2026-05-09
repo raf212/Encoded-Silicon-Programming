@@ -290,17 +290,14 @@ namespace PredictedAdaptedEncoding
                 continue;
             }
             
-            const APCPagedNodeRelMaskClasses page_class = current_layout->PAGE_LAYOUT_CLASS;
-            if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(page_class))
-            {
-                continue;
-            }
-            const uint16_t sum_of_total_occupancy  = ReadTotalUsedOccupancyOfARegion(page_class);
-            
-            if (((static_cast<uint64_t>(sum_of_total_occupancy) * 100) / payload_span) >= split_threshold)
+            const uint16_t total_used_region_occupancy = ReadTotalUsedOccupancyOfARegion(current_layout->PAGE_LAYOUT_CLASS);
+
+            const uint32_t pressure = static_cast<uint32_t>(static_cast<uint64_t>(total_used_region_occupancy) * 100 / payload_span);
+            if (pressure >= split_threshold)
             {
                 return true;
-            } 
+            }
+            
         }
         return false;
         
@@ -444,6 +441,8 @@ namespace PredictedAdaptedEncoding
 
     bool SegmentIODefinition::TrySetLayoutMutationInFlight() noexcept
     {
+        const uint32_t bit = static_cast<uint32_t>(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
+
         while (true)
         {
             const uint32_t current_flags = ReadMetaCellValue32(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
@@ -451,8 +450,7 @@ namespace PredictedAdaptedEncoding
             {
                 return false;
             }
-
-            if (HasThisControlEnumFlag(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT))
+            if ((current_flags & bit) != UNSIGNED_ZERO)
             {
                 return false;
             }
