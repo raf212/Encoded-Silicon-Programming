@@ -85,16 +85,16 @@ namespace PredictedAdaptedEncoding
 
     bool SegmentIODefinition::WriteBoundsPairToHeader_(const LayoutBoundsOfSingleRelNodeClass layout_bound) noexcept
     {
-        auto maybe_region_bounds_pair = GetMetaBoundsLegalPairForPageClasses(layout_bound.PAGE_LAYOUT_CLASS);
-        if (!maybe_region_bounds_pair || layout_bound.IsEmpty() == true)
+        if (layout_bound.IsEmpty())
         {
             return false;
         }
-        const auto [begin_meta, end_meta] = *maybe_region_bounds_pair;
-        const uint32_t current_begin = ReadMetaCellValue32(begin_meta);
-        const uint32_t current_end = ReadMetaCellValue32(end_meta);
-        return JustUpdateValueOfMeta32(begin_meta, current_begin, layout_bound.BeginIndex) &&
-                JustUpdateValueOfMeta32(end_meta, current_end, layout_bound.EndIndex);
+        return SetLayOutBounds(
+            layout_bound.PAGE_LAYOUT_CLASS,
+            static_cast<uint16_t>(layout_bound.BeginIndex),
+            static_cast<uint16_t>(layout_bound.EndIndex)
+        );
+        
     }
 
 

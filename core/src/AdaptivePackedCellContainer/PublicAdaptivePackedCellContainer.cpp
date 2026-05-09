@@ -410,9 +410,13 @@ namespace PredictedAdaptedEncoding
         return std::nullopt;
     }
 
-    PublishResult AdaptivePackedCellContainer::PublishCellByRegionMAskTraverseStartsFromThisAPC(APCPagedNodeRelMaskClasses region_kind, packed64_t cell_to_publish, uint16_t max_tries) noexcept
+    PublishResult AdaptivePackedCellContainer::PublishCellByRegionMAskTraverseStartsFromThisAPC(
+        APCPagedNodeRelMaskClasses region_kind, packed64_t cell_to_publish,
+        PackedCellNodeAuthority authority,
+        std::optional<uint16_t> max_tries
+    ) noexcept
     {
-        (void)max_tries;
+        (void)max_tries, authority;
 
         if (!IfAPCBranchValid())
         {

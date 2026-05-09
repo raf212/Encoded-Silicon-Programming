@@ -174,6 +174,12 @@ namespace PredictedAdaptedEncoding
             return std::nullopt;
         }
 
+        if (HasThisControlEnumFlag(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT))
+        {
+            return std::nullopt;
+        }
+        
+
         const auto maybe_current_region_bounds = ReadLayoutBounds(region_kind);
         if (!maybe_current_region_bounds.has_value() || maybe_current_region_bounds->IsEmpty())
         {
@@ -276,6 +282,11 @@ namespace PredictedAdaptedEncoding
         {
             return failed_result;
         }
+        if (HasThisControlEnumFlag(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT))
+        {
+            return {PublishStatus::FULL, SIZE_MAX};
+        }
+        
 
         packed_cell_for_publish = NormalizeDesiredPublishedCellForRegion_(
             packed_cell_for_publish,
