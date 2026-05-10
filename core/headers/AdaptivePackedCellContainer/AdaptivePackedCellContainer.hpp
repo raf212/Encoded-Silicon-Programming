@@ -139,7 +139,11 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         bool TryPublishRegionalSharedGrowthOnce(APCPagedNodeRelMaskClasses region_kind, packed64_t packed_cell, std::atomic<uint64_t>* growth_counter = nullptr) noexcept;
 
-        PublishResult PublishCellByRegionMAskTraverseStartsFromThisAPC(APCPagedNodeRelMaskClasses region_kind, packed64_t cell_to_publish, uint16_t max_tries = MAX_TRIES) noexcept;
+        PublishResult PublishCellByRegionMAskTraverseStartsFromThisAPC(
+            APCPagedNodeRelMaskClasses region_kind, packed64_t cell_to_publish, 
+            PackedCellNodeAuthority authority = PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM,
+            std::optional<uint16_t> max_tries = std::nullopt
+        ) noexcept;
 
         AdaptivePackedCellContainer* GrowSharedNodeByRegionKind(APCPagedNodeRelMaskClasses desired_region_kind, bool enable_branching = true) noexcept;
 

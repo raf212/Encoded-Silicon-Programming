@@ -153,11 +153,11 @@ namespace PredictedAdaptedEncoding {
         WEIGHT_SLOT = 0x7,
         CONTROL_SLOT = 0x8,
         AUX_SLOT = 0x9,
-        FREE_SLOT = 0xA,
-        SELF_REFARANCE = 0xB,
-        CLOCK_PURE_TIME = 0xC,
-        RESERVED_14     = 0xD,
-        COMPLEX_STORAGE = 0xE,
+        HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT = 0xA,
+        PAIRED_POINTER_LOCAL_MEMORY = 0xB,
+        PAIRED_POINTER_DISTANCE_MEMORY = 0xC,
+        FREE_SLOT     = 0xD,
+        UNDEFINED = 0xE,
         NANNULL     = 0xF
     };
 

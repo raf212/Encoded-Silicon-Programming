@@ -12,7 +12,6 @@ public:
     SegmentIODefinition() noexcept = default;
     
     std::atomic<packed64_t>* BackingPtr{nullptr};
-    static constexpr uint32_t BRANCH_SENTINAL = LayoutBoundsOfSingleRelNodeClass::BRANCH_SENTINAL;
 
     enum class APCNodeComputeKind : uint32_t
     {
@@ -56,8 +55,7 @@ public:
         IN_CLEANUP_STACK = 1u << 6
     };
 
-
-    bool ValidMetaIdx(MetaIndexOfAPCNode idx) const noexcept
+    bool ValidMetaIdx(MetaIndexOfAPCNode idx) noexcept
     {
         return BackingPtr && static_cast<size_t>(idx) < BranchCapacity_ && static_cast<size_t>(idx) < METACELL_COUNT;
     }
@@ -138,8 +136,6 @@ protected:
 
     bool UpdateAPCModeFlagsInHeader_(uint32_t flags_to_turn_on = UNSIGNED_ZERO, uint32_t flags_to_turn_off = UNSIGNED_ZERO, MetaIndexOfAPCNode desired_flag_idx = MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS) noexcept;
 
-    std::optional<std::pair<MetaIndexOfAPCNode, MetaIndexOfAPCNode>> GetMetaBoundsLegalPairForPageClasses(APCPagedNodeRelMaskClasses desired_rel_mask) noexcept;
-
     bool WriteBoundsPairToHeader_(const LayoutBoundsOfSingleRelNodeClass layout_bound) noexcept;
 
     void BuidDefaultLayoutPlan_(CompleteAPCNodeRegionsLayout& full_layout) noexcept;
@@ -189,7 +185,7 @@ public:
         std::optional<uint64_t> clock48 = std::nullopt,
         PriorityPhysics priority = PriorityPhysics::IDLE,
         PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_PUBLISHED,
-        APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::CLOCK_PURE_TIME,
+        APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::CONTROL_SLOT,
         RelOffsetMode48 reloffset = RelOffsetMode48::RELOFFSET_PURE_TIMER,
         PackedCellDataType dtype = PackedCellDataType::UnsignedPCellDataType,
         PackedCellNodeAuthority node_authority = PackedCellNodeAuthority::IDLE_OR_FREE
@@ -258,7 +254,12 @@ public:
 
     uint32_t TotalCASFailForThisBranchIncreaseAndGet(uint32_t increment) noexcept;
 
-    bool SetLayOutBounds(APCPagedNodeRelMaskClasses desired_rel_mask, uint32_t begain, uint32_t end) noexcept;
+    bool SetLayOutBounds(
+        APCPagedNodeRelMaskClasses page_class, 
+        uint16_t begain_index,
+        uint16_t end_index,
+        std::optional<uint16_t> version_number = std::nullopt
+    ) noexcept;
 
     std::optional<LayoutBoundsOfSingleRelNodeClass> ReadLayoutBounds(APCPagedNodeRelMaskClasses desired_rel_mask) noexcept;
     std::optional<CompleteAPCNodeRegionsLayout> ReadAndGetFullRegionLayout_() noexcept;

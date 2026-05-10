@@ -290,17 +290,14 @@ namespace PredictedAdaptedEncoding
                 continue;
             }
             
-            const APCPagedNodeRelMaskClasses page_class = current_layout->LAYOUT_CLASS;
-            if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(page_class))
-            {
-                continue;
-            }
-            const uint16_t sum_of_total_occupancy  = ReadTotalUsedOccupancyOfARegion(page_class);
-            
-            if (((static_cast<uint64_t>(sum_of_total_occupancy) * 100) / payload_span) >= split_threshold)
+            const uint16_t total_used_region_occupancy = ReadTotalUsedOccupancyOfARegion(current_layout->PAGE_LAYOUT_CLASS);
+
+            const uint32_t pressure = static_cast<uint32_t>(static_cast<uint64_t>(total_used_region_occupancy) * 100 / payload_span);
+            if (pressure >= split_threshold)
             {
                 return true;
-            } 
+            }
+            
         }
         return false;
         
@@ -343,48 +340,109 @@ namespace PredictedAdaptedEncoding
 
 
 
-    std::optional<LayoutBoundsOfSingleRelNodeClass> SegmentIODefinition::ReadLayoutBounds(APCPagedNodeRelMaskClasses desired_rel_mask) noexcept
+    std::optional<LayoutBoundsOfSingleRelNodeClass> SegmentIODefinition::ReadLayoutBounds(APCPagedNodeRelMaskClasses page_class) noexcept
     {
-        auto maybe_begin_end = GetMetaBoundsLegalPairForPageClasses(desired_rel_mask);
-        if (!maybe_begin_end)
+        const MetaIndexOfAPCNode layout_idx = LayoutBoundsOfSingleRelNodeClass::GetLayoutCellMetaIndexForPageClass(page_class);
+        if (!ValidMetaIdx(layout_idx))
         {
             return std::nullopt;
         }
-        const auto [begin_meta, end_meta] = *maybe_begin_end;
-        LayoutBoundsOfSingleRelNodeClass current_bounds{};
-        current_bounds.BeginIndex = ReadMetaCellValue32(begin_meta);
-        current_bounds.EndIndex = ReadMetaCellValue32(end_meta);
-        current_bounds.LAYOUT_CLASS = desired_rel_mask;
-        current_bounds.SetOrResetPercentage(ReadMetaCellValue32(MetaIndexOfAPCNode::TOTAL_CAPACITY_OF_THIS_SEGEMENT) - METACELL_COUNT);        
-        return current_bounds;
+        const packed64_t layout_cell = ReadFullMetaCell(layout_idx);
+        uint16_t begin_16, end16, version16 = 0;
+        if (!ExtractLayoutModel_BegainL_EndM_VersionH(layout_cell, begin_16, end16, version16))
+        {
+            return std::nullopt;
+        }
+        
+        const uint32_t total_capacity = GetTotalCapacityForThisAPC();
+        if (begin_16 < METACELL_COUNT || end16 < begin_16 || end16 > total_capacity)
+        {
+            return std::nullopt;
+        }
+
+        LayoutBoundsOfSingleRelNodeClass out_layout{};
+        out_layout.BeginIndex = begin_16;
+        out_layout.EndIndex = end16;
+        out_layout.VersionNumber = version16;
+        out_layout.PAGE_LAYOUT_CLASS = page_class;
+
+        const uint32_t payload_capacity = total_capacity > METACELL_COUNT ? total_capacity - METACELL_COUNT : UNSIGNED_ZERO;
+
+        if (payload_capacity > UNSIGNED_ZERO)
+        {
+            out_layout.SetOrResetPercentage(payload_capacity);
+        }
+        return out_layout;
     }
 
-    bool SegmentIODefinition::SetLayOutBounds(APCPagedNodeRelMaskClasses desired_rel_mask, uint32_t begin, uint32_t end) noexcept
+    bool SegmentIODefinition::SetLayOutBounds(
+        APCPagedNodeRelMaskClasses page_class, 
+        uint16_t begain_index,
+        uint16_t end_index,
+        std::optional<uint16_t> version_number
+    ) noexcept
     {
-        if (begin > end || begin < METACELL_COUNT || end > GetTotalCapacityForThisAPC())
+        (void) version_number;
+        if (begain_index > end_index || begain_index < METACELL_COUNT || end_index > GetTotalCapacityForThisAPC())
         {
             return false;
         }
-
-        auto maybe_begain_end = GetMetaBoundsLegalPairForPageClasses(desired_rel_mask);
-        if (!maybe_begain_end)
+        
+        const MetaIndexOfAPCNode layout_idx = LayoutBoundsOfSingleRelNodeClass::GetLayoutCellMetaIndexForPageClass(page_class);
+        if (!ValidMetaIdx(layout_idx))
         {
             return false;
         }
+        if (!TrySetLayoutMutationInFlight())
+        {
+            return false;
+        }
+        auto ClearLayoutFlagSB = [this]() noexcept
+        {
+            ClearOneControlEnumFlagOfAPC(
+                ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT
+            );
+        };
 
-        // std::pair begin_end = *maybe_begain_end; kept for learning
+        packed64_t observed_layout = ReadFullMetaCell(layout_idx);
 
-        const auto [begin_meta, end_meta] = *maybe_begain_end;
+        while (true)
+        {
+            uint16_t old_begin, old_end, old_version = 0;
+            if (!ExtractLayoutModel_BegainL_EndM_VersionH(observed_layout, old_begin, old_end, old_version))
+            {
+                old_version = UNSIGNED_ZERO;
+            }
+            
+            const uint16_t next_version = old_version + 1;
 
-        const uint32_t current_begain = ReadMetaCellValue32(begin_meta);
-        const uint32_t current_end = ReadMetaCellValue32(end_meta);
-
-        return JustUpdateValueOfMeta32(begin_meta, current_begain, begin) && JustUpdateValueOfMeta32(end_meta, current_end, end);
+            packed64_t desired_layout = ComposeLayoutModelof16x3(begain_index, end_index, next_version, page_class);
+            packed64_t expected_layout_cell = observed_layout;
+            if (BackingPtr[static_cast<size_t>(layout_idx)].compare_exchange_strong(
+                    expected_layout_cell,
+                    desired_layout,
+                    OnExchangeSuccess,
+                    OnExchangeFailure))
+            {
+                BackingPtr[static_cast<size_t>(layout_idx)].notify_all();
+                ClearLayoutFlagSB();
+                return true;
+            }
+            observed_layout = expected_layout_cell;
+            if (AdaptiveBackoffOfAPCPtr_)
+            {
+                AdaptiveBackoffOfAPCPtr_->AdaptiveBackOffPacked(observed_layout);
+            }
+        }
+        
+        
         
     }
 
     bool SegmentIODefinition::TrySetLayoutMutationInFlight() noexcept
     {
+        const uint32_t bit = static_cast<uint32_t>(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
+
         while (true)
         {
             const uint32_t current_flags = ReadMetaCellValue32(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
@@ -392,8 +450,7 @@ namespace PredictedAdaptedEncoding
             {
                 return false;
             }
-
-            if (HasThisControlEnumFlag(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT))
+            if ((current_flags & bit) != UNSIGNED_ZERO)
             {
                 return false;
             }
@@ -465,7 +522,7 @@ namespace PredictedAdaptedEncoding
 
         auto TryFromSpecificNeighbor = [&](LayoutBoundsOfSingleRelNodeClass& candidate_neighbor) noexcept->bool
         {
-            if (candidate_neighbor.LAYOUT_CLASS == desired_rel_mask)
+            if (candidate_neighbor.PAGE_LAYOUT_CLASS == desired_rel_mask)
             {
                 return false;
             }
@@ -475,7 +532,7 @@ namespace PredictedAdaptedEncoding
             }
             CompleteAPCNodeRegionsLayout trial_layout = current_complete_layout;
             LayoutBoundsOfSingleRelNodeClass* trial_target = trial_layout.GetALayoutByRelMask(desired_rel_mask);
-            LayoutBoundsOfSingleRelNodeClass* trial_neighbor = trial_layout.GetALayoutByRelMask(candidate_neighbor.LAYOUT_CLASS);
+            LayoutBoundsOfSingleRelNodeClass* trial_neighbor = trial_layout.GetALayoutByRelMask(candidate_neighbor.PAGE_LAYOUT_CLASS);
             if (!trial_target || !trial_neighbor)
             {
                 return false;
@@ -521,7 +578,7 @@ namespace PredictedAdaptedEncoding
                 {
                     continue;
                 }
-                if (one_layout->LAYOUT_CLASS == desired_rel_mask)
+                if (one_layout->PAGE_LAYOUT_CLASS == desired_rel_mask)
                 {
                     continue;
                 }
