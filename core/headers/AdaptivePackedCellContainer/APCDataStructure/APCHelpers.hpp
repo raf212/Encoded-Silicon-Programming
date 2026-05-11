@@ -102,7 +102,8 @@ namespace PredictedAdaptedEncoding
         {
             return page_class != APCPagedNodeRelMaskClasses::NONE &&
                 page_class != APCPagedNodeRelMaskClasses::NANNULL &&
-                page_class != APCPagedNodeRelMaskClasses::CONTROL_SLOT;
+                page_class != APCPagedNodeRelMaskClasses::CONTROL_SLOT &&
+                page_class != APCPagedNodeRelMaskClasses::UNDEFINED;
         }
 
         static inline bool DoesPublishedCellContributeToRegionOccupancy(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept

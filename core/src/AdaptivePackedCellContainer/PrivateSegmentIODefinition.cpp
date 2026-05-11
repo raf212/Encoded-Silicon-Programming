@@ -89,6 +89,11 @@ namespace PredictedAdaptedEncoding
         {
             return false;
         }
+        if (layout_bound.BeginIndex > APC_MAX_LENGTH_OR_COUNTER || layout_bound.EndIndex > APC_MAX_LENGTH_OR_COUNTER)
+        {
+            return false;
+        }
+        
         return SetLayOutBounds(
             layout_bound.PAGE_LAYOUT_CLASS,
             static_cast<uint16_t>(layout_bound.BeginIndex),
@@ -210,6 +215,31 @@ namespace PredictedAdaptedEncoding
             }
         }
         return false;
+    }
+
+    bool SegmentIODefinition::ResetALLOccupancy16x3ModelToZero_() noexcept
+    {
+        if (!IsBound())
+        {
+            return false;
+        }
+        WritBranchMeta48_(MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48, UNSIGNED_ZERO);
+
+        for (uint8_t i = 0; i < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses; i++)
+        {
+            const APCPagedNodeRelMaskClasses blind_page = static_cast<APCPagedNodeRelMaskClasses>(i);
+            const MetaIndexOfAPCNode idx = APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(blind_page);
+            if (!ValidMetaIdx(idx))
+            {
+                continue;
+            }
+            WritBranchMeta48_(idx, UNSIGNED_ZERO);
+        }
+        WriteExactMetaCellJustNewValue(
+            MetaIndexOfAPCNode::PAGED_NODE_READY_BIT,
+            UNSIGNED_ZERO
+        );
+        return true;
     }
 
 

@@ -136,11 +136,67 @@ protected:
 
     bool UpdateAPCModeFlagsInHeader_(uint32_t flags_to_turn_on = UNSIGNED_ZERO, uint32_t flags_to_turn_off = UNSIGNED_ZERO, MetaIndexOfAPCNode desired_flag_idx = MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS) noexcept;
 
+    ////layout helpers
     bool WriteBoundsPairToHeader_(const LayoutBoundsOfSingleRelNodeClass layout_bound) noexcept;
 
     void BuidDefaultLayoutPlan_(CompleteAPCNodeRegionsLayout& full_layout) noexcept;
 
     void InitDefaultAPCSegmentedNodeLayout_() noexcept;
+
+    std::optional<uint16_t> ReadGlobalLayoutVersion_() noexcept
+    {
+        const uint32_t raw = ReadMetaCellValue32(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
+        if (raw == BRANCH_SENTINAL || raw == UNSIGNED_ZERO)
+        {
+            return std::nullopt;
+        }
+        return static_cast<uint16_t>(raw);
+    }
+
+    bool WriteGlobalLayoutVersion_(uint16_t layout_version) noexcept
+    {
+        if (layout_version == 0)
+        {
+            return false;
+        }
+
+        while (true)
+        {
+            const uint32_t current_version = ReadMetaCellValue32(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
+            if (current_version == BRANCH_SENTINAL)
+            {
+                return false;
+            }
+            if ((current_version) == layout_version)
+            {
+                return true;
+            }
+            if (JustUpdateValueOfMeta32(
+                MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION,
+                current_version,
+                static_cast<uint32_t>(layout_version)
+            ))
+            {
+                return true;
+            }
+        }
+    }
+    
+    std::optional<uint16_t> NextGlobalLayoutVersion_() noexcept
+    {
+        std::optional<uint16_t> maybe_current_layout_version = ReadGlobalLayoutVersion_();
+        if (!maybe_current_layout_version.has_value())
+        {
+            return std::nullopt;
+        }
+
+        const uint16_t next_global_layout_version = *maybe_current_layout_version + 1u;
+        if (next_global_layout_version == APC_INDEX_SENTINAL || next_global_layout_version == UNSIGNED_ZERO)
+        {
+            return std::nullopt;
+        }
+        return next_global_layout_version;
+    }
 
 
     bool WriteAllRegionsLayoutToHeader_(const CompleteAPCNodeRegionsLayout& full_layout) noexcept;
@@ -154,30 +210,7 @@ protected:
         return UpdateAPCModeFlagsInHeader_(UNSIGNED_ZERO, use_or_between_flags);
     }
 
-    bool ResetALLOccupancy16x3ModelToZero_() noexcept
-    {
-        if (!IsBound())
-        {
-            return false;
-        }
-        WritBranchMeta48_(MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48, UNSIGNED_ZERO);
-
-        for (uint8_t i = 0; i < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses; i++)
-        {
-            const APCPagedNodeRelMaskClasses blind_page = static_cast<APCPagedNodeRelMaskClasses>(i);
-            const MetaIndexOfAPCNode idx = APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(blind_page);
-            if (!ValidMetaIdx(idx))
-            {
-                continue;
-            }
-            WritBranchMeta48_(idx, UNSIGNED_ZERO);
-        }
-        WriteExactMetaCellJustNewValue(
-            MetaIndexOfAPCNode::PAGED_NODE_READY_BIT,
-            UNSIGNED_ZERO
-        );
-        return true;
-    }
+    bool ResetALLOccupancy16x3ModelToZero_() noexcept;
 
     
 public:

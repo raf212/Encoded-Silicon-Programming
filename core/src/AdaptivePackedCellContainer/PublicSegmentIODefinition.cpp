@@ -355,25 +355,35 @@ namespace PredictedAdaptedEncoding
     std::optional<LayoutBoundsOfSingleRelNodeClass> SegmentIODefinition::ReadLayoutBounds(APCPagedNodeRelMaskClasses page_class) noexcept
     {
         const MetaIndexOfAPCNode layout_idx = LayoutBoundsOfSingleRelNodeClass::GetLayoutCellMetaIndexForPageClass(page_class);
-        if (!ValidMetaIdx(layout_idx))
+        if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(page_class) || !ValidMetaIdx(layout_idx))
         {
             return std::nullopt;
         }
         const packed64_t layout_cell = ReadFullMetaCell(layout_idx);
-        uint16_t begin_16, end16, version16 = 0;
-        if (!ExtractLayoutModel_BegainL_EndM_VersionH(layout_cell, begin_16, end16, version16))
+        uint16_t begin16 = UNSIGNED_ZERO;
+        uint16_t end16 = UNSIGNED_ZERO;
+        uint16_t version16 = UNSIGNED_ZERO;
+        if (!ExtractLayoutModel_BegainL_EndM_VersionH(layout_cell, begin16, end16, version16))
         {
             return std::nullopt;
         }
+
+        // const std::optional<uint16_t> maybe_global_layout_version = ReadGlobalLayoutVersion_();
+        // if (version16 != )
+        // {
+        //     /* code */
+        // }
+        
+
         
         const uint32_t total_capacity = GetTotalCapacityForThisAPC();
-        if (begin_16 < METACELL_COUNT || end16 < begin_16 || end16 > total_capacity)
+        if (begin16 < METACELL_COUNT || end16 < begin16 || end16 > total_capacity)
         {
             return std::nullopt;
         }
 
         LayoutBoundsOfSingleRelNodeClass out_layout{};
-        out_layout.BeginIndex = begin_16;
+        out_layout.BeginIndex = begin16;
         out_layout.EndIndex = end16;
         out_layout.VersionNumber = version16;
         out_layout.PAGE_LAYOUT_CLASS = page_class;
