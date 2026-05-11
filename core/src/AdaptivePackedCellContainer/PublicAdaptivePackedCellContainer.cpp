@@ -79,12 +79,12 @@ namespace PredictedAdaptedEncoding
     {
         
         FreeAll();
-        if (container_capacity <= MINIMUM_BRANCH_CAPACITY)
+        if (!IsCapacityOfAPCLegal(container_capacity))
         {
-            throw std::invalid_argument("Capacity is too small for APC.");
+            throw std::invalid_argument("Capacity is unbounded and not acceptable must be > METACELL_COUNT(95) && <= APC_MAX_LENGTH_OR_COUNTER ");
         }
         
-        BackingPtr = new std::atomic<packed64_t>[container_capacity];
+        BackingPtr = AllocateAlignedAtomicCells_(container_capacity);
         BranchCapacity_ = container_capacity;
         packed64_t idle_cell = PackedCell64_t::MakeInitialPacked(container_cfg.InitialMode);
         for (size_t i = 0; i < container_capacity; i++)
@@ -113,7 +113,7 @@ namespace PredictedAdaptedEncoding
         {
             AdaptiveBackoffOfAPCPtr_ = nullptr;
             OwnedMasterClockConfPtr_.reset();
-            delete[] BackingPtr;
+            FreeAlignedAtomicCells_(BackingPtr, container_capacity);
             BackingPtr = nullptr;
             throw;
         }
@@ -131,8 +131,8 @@ namespace PredictedAdaptedEncoding
             container_cfg,
             true,
             APCNodeComputeKind::NONE,
-            NO_VAL,
-            NO_VAL
+            UNSIGNED_ZERO,
+            UNSIGNED_ZERO
         );
         InitZeroState_();
         if (container_cfg.RegionSize > 0)
@@ -256,68 +256,6 @@ namespace PredictedAdaptedEncoding
         
     }
     
-    uint32_t AdaptivePackedCellContainer::OccupancyAddOrSubAndGetAfterChange_(MetaIndexOfAPCNode desired_region_meta_idx, int delta) noexcept
-    {
-        if (delta == 0)
-        {
-            return static_cast<size_t>(ReadMetaCellValue32(desired_region_meta_idx));
-        }
-        while (true)
-        {
-            packed64_t current_occupancy_cell = ReadFullMetaCell(desired_region_meta_idx);
-            val32_t current_occupancy = PackedCell64_t::ExtractValue32(current_occupancy_cell);
-            if (current_occupancy == BRANCH_SENTINAL)
-            {
-                return BRANCH_SENTINAL;
-            }
-            
-            int64_t next_occupancy_winded = static_cast<int64_t>(current_occupancy) + static_cast<int64_t>(delta);
-            if (next_occupancy_winded < 0)
-            {
-                next_occupancy_winded = 0;
-            }
-            constexpr int64_t high_val = static_cast<int64_t>(BRANCH_SENTINAL - 1u);
-            if (next_occupancy_winded > high_val)
-            {
-                next_occupancy_winded = high_val;
-            }
-            
-            uint32_t next_occupancy = static_cast<uint32_t>(next_occupancy_winded);
-            if (JustUpdateValueOfMeta32(desired_region_meta_idx, current_occupancy, next_occupancy))
-            {
-                return next_occupancy;
-            }
-            if (APCManagerPtr_)
-            {
-                auto& backoff = APCManagerPtr_->GetManagersAdaptiveBackoff();
-                backoff.AdaptiveBackOffPacked(current_occupancy_cell);
-            }
-            
-        }
-    }
-
-    uint32_t AdaptivePackedCellContainer::AllPublishedCellsOccupancySnapshotAddOrSubAndGetAfterChange(int delta) noexcept
-    {
-        return OccupancyAddOrSubAndGetAfterChange_(MetaIndexOfAPCNode::OCCUPANCY_SNAPSHOT_OF_PUBLISHED_CELLS, delta);
-    }
-
-    uint32_t AdaptivePackedCellContainer::AllClaimedCellsOccupancySnapshotAddOrSubAndGetAfterChange(int delta) noexcept
-    {
-        return OccupancyAddOrSubAndGetAfterChange_(MetaIndexOfAPCNode::OCCUPANCY_SNAPSHOT_OF_CLAIMED_CELLS, delta);
-    }
-
-    uint32_t AdaptivePackedCellContainer::AllUndefinedCellsOccupancySnapshotAddOrSubAndGetAfterChange(int delta) noexcept
-    {
-        return OccupancyAddOrSubAndGetAfterChange_(MetaIndexOfAPCNode::OCCUPANCY_SNAPSHOT_OF_IDLE_CELLS, delta);
-    }
-
-    uint32_t AdaptivePackedCellContainer::RegionOccupancyAddOrSubAndGet(APCPagedNodeRelMaskClasses desired_region_class, int delta) noexcept
-    {
-        const MetaIndexOfAPCNode region_occ_meta_idx = APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(desired_region_class);
-        return OccupancyAddOrSubAndGetAfterChange_(region_occ_meta_idx, delta);
-    }
-
-
 
     AdaptivePackedCellContainer* AdaptivePackedCellContainer::FindSharedRootOrThis() noexcept
     {
@@ -333,7 +271,7 @@ namespace PredictedAdaptedEncoding
                 break;
             }
             const uint32_t previous_id = current_apc_ptr->ReadMetaCellValue32(MetaIndexOfAPCNode::SHARED_PREVIOUS_ID);
-            if (previous_id == NO_VAL || previous_id == BRANCH_SENTINAL)
+            if (previous_id == UNSIGNED_ZERO || previous_id == BRANCH_SENTINAL)
             {
                 break;
             }
@@ -357,7 +295,7 @@ namespace PredictedAdaptedEncoding
 
         const uint32_t next_apc_id = ReadMetaCellValue32(MetaIndexOfAPCNode::SHARED_NEXT_ID);
 
-        if (next_apc_id == NO_VAL || next_apc_id == BRANCH_SENTINAL)
+        if (next_apc_id == UNSIGNED_ZERO || next_apc_id == BRANCH_SENTINAL)
         {
             return nullptr;
         }
@@ -378,7 +316,20 @@ namespace PredictedAdaptedEncoding
         AdaptivePackedCellContainer* current_apc_ptr = FindSharedRootOrThis();
         while (current_apc_ptr)
         {
-            if (current_apc_ptr->AllPublishedCellsOccupancySnapshotAddOrSubAndGetAfterChange() > NO_VAL)
+            uint16_t published_occupancy = UNSIGNED_ZERO;
+            uint16_t claimed_occupancy = UNSIGNED_ZERO;
+            uint16_t faulty_occupancy = UNSIGNED_ZERO;
+            const bool ok = GetPublishedClaimedFaultyFromCentral(published_occupancy, claimed_occupancy, faulty_occupancy);
+
+            if (!ok || published_occupancy > UNSIGNED_ZERO || claimed_occupancy > UNSIGNED_ZERO || faulty_occupancy > UNSIGNED_ZERO)
+            {
+                return false;
+            }
+
+            if (
+                current_apc_ptr->HasThisControlEnumFlag(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT) ||
+                current_apc_ptr->HasThisControlEnumFlag(ControlEnumOfAPCSegment::SPLIT_INFLIGHT)
+            )
             {
                 return false;
             }
@@ -386,8 +337,9 @@ namespace PredictedAdaptedEncoding
             {
                 break;
             }
+            
             uint32_t next_apc_id = current_apc_ptr->ReadMetaCellValue32(MetaIndexOfAPCNode::SHARED_NEXT_ID);
-            if (next_apc_id == NO_VAL || next_apc_id == BRANCH_SENTINAL)
+            if (next_apc_id == UNSIGNED_ZERO || next_apc_id == BRANCH_SENTINAL)
             {
                 break;
             }
@@ -472,15 +424,21 @@ namespace PredictedAdaptedEncoding
         return std::nullopt;
     }
 
-    PublishResult AdaptivePackedCellContainer::PublishCellByRegionMAskTraverseStartsFromThisAPC(APCPagedNodeRelMaskClasses region_kind, packed64_t cell_to_publish, uint16_t max_tries) noexcept
+    PublishResult AdaptivePackedCellContainer::PublishCellByRegionMAskTraverseStartsFromThisAPC(
+        APCPagedNodeRelMaskClasses page_class, packed64_t cell_to_publish,
+        PackedCellNodeAuthority authority,
+        std::optional<uint16_t> max_tries
+    ) noexcept
     {
+        (void)max_tries, authority;
+
         if (!IfAPCBranchValid())
         {
-            const PublishResult invalid{};
-            return invalid;
+            return PublishResult{};
         }
-        
-        const PublishResult local_result = TryPublishToRegionLocal_(region_kind, cell_to_publish, true, max_tries);
+        const uint16_t resolved_tries = max_tries.has_value() ? *max_tries : ComputeAdaptivemaxTreies_(cell_to_publish);
+
+        const PublishResult local_result = TryPublishToRegionLocal_(cell_to_publish, page_class, authority, resolved_tries);
         if (local_result.ResultStatus == PublishStatus::OK)
         {
             return local_result;
@@ -489,7 +447,8 @@ namespace PredictedAdaptedEncoding
         AdaptivePackedCellContainer* curren_or_next_container_ptr = GetNextSharedSegment();
         while (curren_or_next_container_ptr)
         {
-            const PublishResult sibling_result_publish = curren_or_next_container_ptr->TryPublishToRegionLocal_(region_kind, cell_to_publish, true, max_tries);
+            //using resolved_tries here results deadlock 
+            const PublishResult sibling_result_publish = curren_or_next_container_ptr->TryPublishToRegionLocal_(cell_to_publish, page_class, authority);
             if (sibling_result_publish.ResultStatus == PublishStatus::OK)
             {
                 return sibling_result_publish;
@@ -498,10 +457,10 @@ namespace PredictedAdaptedEncoding
         }
         if (ShouldSplitNow())
         {
-            AdaptivePackedCellContainer* grown_apc = GrowSharedNodeByRegionKind(region_kind, true);
+            AdaptivePackedCellContainer* grown_apc = GrowSharedNodeByRegionKind(page_class, true);
             if (grown_apc)
             {
-                return grown_apc->TryPublishToRegionLocal_(region_kind, cell_to_publish, true, max_tries);
+                return grown_apc->TryPublishToRegionLocal_(cell_to_publish, page_class, authority, resolved_tries);
             }
         }
         return local_result;
@@ -539,7 +498,7 @@ namespace PredictedAdaptedEncoding
         }
         const uint32_t root_branch_id = root_apc_ptr->GetBranchId();
         const uint32_t root_logical_id = root_apc_ptr->GetLogicalId();
-        const uint32_t shared_group_id = (root_apc_ptr->GetSharedId() == NO_VAL || root_apc_ptr->GetSharedId() == BRANCH_SENTINAL) ?
+        const uint32_t shared_group_id = (root_apc_ptr->GetSharedId() == UNSIGNED_ZERO || root_apc_ptr->GetSharedId() == BRANCH_SENTINAL) ?
                                             root_branch_id : root_apc_ptr->GetSharedId();
         const uint32_t parents_depth = CurrentBranchDepthRead();
         const uint32_t child_depth = parents_depth + 1u;
@@ -570,12 +529,6 @@ namespace PredictedAdaptedEncoding
         }
         catch(...)
         {
-            ClearSplitFlag();
-            return nullptr;
-        }
-
-        if (!new_child_segment_ptr)
-        {
             if (new_child_segment_ptr)
             {
                 new_child_segment_ptr->FreeAll();
@@ -584,9 +537,11 @@ namespace PredictedAdaptedEncoding
             ClearSplitFlag();
             return nullptr;
         }
+
+
         
         const uint32_t new_child_branch_id = new_child_segment_ptr->GetBranchId();
-        if (new_child_branch_id == NO_VAL || new_child_branch_id == BRANCH_SENTINAL || new_child_branch_id == root_branch_id)
+        if (new_child_branch_id == UNSIGNED_ZERO || new_child_branch_id == BRANCH_SENTINAL || new_child_branch_id == root_branch_id)
         {
             new_child_segment_ptr->FreeAll();
             delete new_child_segment_ptr;
@@ -663,7 +618,7 @@ namespace PredictedAdaptedEncoding
         AdaptivePackedCellContainer* root_apc_ptr = FindSharedRootOrThis();
         
         const uint32_t shared_group_id = (
-            root_apc_ptr->GetSharedId() == NO_VAL || root_apc_ptr->GetSharedId() == BRANCH_SENTINAL
+            root_apc_ptr->GetSharedId() == UNSIGNED_ZERO || root_apc_ptr->GetSharedId() == BRANCH_SENTINAL
         ) ? root_apc_ptr->GetBranchId() : root_apc_ptr->GetSharedId();
         std::vector<AdaptivePackedCellContainer*> apc_chain;
         AdaptivePackedCellContainer* current_apc = root_apc_ptr;
@@ -729,7 +684,7 @@ namespace PredictedAdaptedEncoding
             return;
         }
         
-        const packed64_t idle = OwnedMasterClockConfPtr_->ComposeValue32WithCurrentThreadStamp16(NO_VAL);
+        const packed64_t idle = OwnedMasterClockConfPtr_->ComposeValue32WithCurrentThreadStamp16(UNSIGNED_ZERO);
         BackingPtr[static_cast<size_t>(MetaIndexOfAPCNode::MANAGER_CONTROL_FLAGS)].store(idle, MoStoreSeq_);
     }
 
@@ -750,7 +705,8 @@ namespace PredictedAdaptedEncoding
 
         AdaptiveBackoffOfAPCPtr_ = nullptr;
         OwnedMasterClockConfPtr_.reset();   
-        delete[] BackingPtr;
+        // const uint32_t capacity = GetTotalCapacityForThisAPC();
+        FreeAlignedAtomicCells_(BackingPtr, BranchCapacity_);
         BackingPtr = nullptr;
         BranchCapacity_ = 0;
         RegionRelArray_.reset();
@@ -762,7 +718,7 @@ namespace PredictedAdaptedEncoding
     {
         if (!IfAPCBranchValid())
         {
-            return NO_VAL;
+            return UNSIGNED_ZERO;
         }
 
         uint32_t count = 0;
@@ -780,13 +736,13 @@ namespace PredictedAdaptedEncoding
     {
         if (!IfAPCBranchValid())
         {
-            return NO_VAL;
+            return UNSIGNED_ZERO;
         }
 
         auto maybe_desired_class_bounds = ReadLayoutBounds(desired_region_class);
         if (!maybe_desired_class_bounds || maybe_desired_class_bounds->IsEmpty())
         {
-            return NO_VAL;
+            return UNSIGNED_ZERO;
         }
 
         uint32_t count = 0;
@@ -818,35 +774,6 @@ namespace PredictedAdaptedEncoding
         return total;
     }
 
-    uint32_t AdaptivePackedCellContainer::ReconcileOccupancySnapshotFromPayload() noexcept
-    {
-        if (!IfAPCBranchValid())
-        {
-            return NO_VAL;
-        }
-
-        const uint32_t exact_combined_local_occ = GetLocalTotalOccupancy();
-        WriteExactMetaCellJustNewValue(MetaIndexOfAPCNode::OCCUPANCY_SNAPSHOT_OF_PUBLISHED_CELLS, exact_combined_local_occ);
-
-        uint32_t ready_rel_mask = 0;
-        for (size_t rel_bit_mask = 0; rel_bit_mask < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses; rel_bit_mask++)
-        {
-            const auto region = static_cast<APCPagedNodeRelMaskClasses>(rel_bit_mask);
-            if (region == APCPagedNodeRelMaskClasses::NANNULL)
-            {
-                continue;
-            }
-            const uint32_t exact_region_occupancy = CountExactLocalRegionalOccupancy(region);
-            WriteExactMetaCellJustNewValue(APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(region), exact_region_occupancy);
-            if (exact_region_occupancy > 0)
-            {
-                ready_rel_mask |= APCAndPagedNodeHelpers::MakeOneAPCNodeClassReadyBit(region);
-            }
-        }
-        WriteExactMetaCellJustNewValue(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT, ready_rel_mask);
-        return exact_combined_local_occ;
-    }
-
 
     bool AdaptivePackedCellContainer::RebuildExectReadyMask() noexcept
     {
@@ -859,7 +786,7 @@ namespace PredictedAdaptedEncoding
         for (uint8_t rel_class = 0; rel_class < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses; rel_class++)
         {
             const auto current_region = static_cast<APCPagedNodeRelMaskClasses>(rel_class);
-            if (CountExactTotalChainOccupancy(current_region) > NO_VAL)
+            if (CountExactTotalChainOccupancy(current_region) > UNSIGNED_ZERO)
             {
                 mask |= APCAndPagedNodeHelpers::MakeOneAPCNodeClassReadyBit(current_region);
             }

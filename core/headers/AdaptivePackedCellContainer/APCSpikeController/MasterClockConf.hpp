@@ -1,6 +1,6 @@
 #pragma once 
-#include "PackedCell/CoreCellDefination.hpp"
-#include "APCHelpers.hpp"
+#include "../PackedCell/CoreCellDefination.hpp"
+#include "../APCDataStructure/APCHelpers.hpp"
 
 
 namespace PredictedAdaptedEncoding
@@ -19,7 +19,7 @@ class AdaptivePackedCellContainer;
             using  cns = std::chrono::nanoseconds;
             auto d = std::chrono::steady_clock::now().time_since_epoch();
             uint64_t ns_count = static_cast<uint64_t>(std::chrono::duration_cast<cns>(d).count());
-            return ns_count & MaskBits(CLK_B48);
+            return ns_count & MaskLowNBits(CLK_B48);
         }
     };
 
@@ -68,7 +68,7 @@ class AdaptivePackedCellContainer;
 
         inline clk16_t GetImmidiateDownShiftedClock16(uint64_t now_ticks48) const noexcept
         {
-            return static_cast<clk16_t>((now_ticks48 >> TimerDownShift_) & MaskBits(CLK_B16));
+            return static_cast<clk16_t>((now_ticks48 >> TimerDownShift_) & MaskLowNBits(CLK_B16));
         }
 
         inline clk16_t NowClock16() const noexcept
@@ -103,14 +103,14 @@ class AdaptivePackedCellContainer;
             const meta16_t strl_for_pure48_clock = PackedCell64_t::MakeInCellMetaForMode_48t(desired_priority, 
                                 PackedCellNodeAuthority::IDLE_OR_FREE,
                                 desired_locality, 
-                                APCPagedNodeRelMaskClasses::CLOCK_PURE_TIME,
+                                APCPagedNodeRelMaskClasses::CONTROL_SLOT,
                                 RelOffsetMode48::RELOFFSET_PURE_TIMER,
                                 PackedCellDataType::UnsignedPCellDataType
                             );
             return PackedCell64_t::ComposeCLK48u_64(full_clock48, strl_for_pure48_clock);
         }
 
-        inline uint8_t SetAndGetTimerDownShift(unsigned down_shift_value = NO_VAL) noexcept
+        inline uint8_t SetAndGetTimerDownShift(unsigned down_shift_value = UNSIGNED_ZERO) noexcept
         {
             if (down_shift_value >= MIN_TIMER_DOWNSHIFT && down_shift_value <= MAX_TIMER_DOWNSHIFT)
             {

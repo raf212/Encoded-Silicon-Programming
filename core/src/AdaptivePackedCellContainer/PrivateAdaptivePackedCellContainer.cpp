@@ -19,7 +19,7 @@ namespace PredictedAdaptedEncoding
 
     void AdaptivePackedCellContainer::InitZeroState_() noexcept
     {
-        ForceZeroOccupancy_();
+        ResetALLOccupancy16x3ModelToZero_();
         MakeAPCBranchOwned();
         ResetTotalCASFailureForThisBranch();
         UpdateProducerCursorPlacement(static_cast<uint32_t>(PayloadBegin()));
@@ -40,13 +40,10 @@ namespace PredictedAdaptedEncoding
         {
             ClearOneControlEnumFlagOfAPC(SegmentIODefinition::ControlEnumOfAPCSegment::SATURATED);
         }
-        if (OwnedMasterClockConfPtr_)
-        {
-            TouchLocalMetaClock48();
-        }
+        TouchLocalMetaClock48();
 
         uint32_t current_group_size = ReadMetaCellValue32(MetaIndexOfAPCNode::NODE_GROUP_SIZE);
-        if (current_group_size == NO_VAL)
+        if (current_group_size == UNSIGNED_ZERO)
         {
             JustUpdateValueOfMeta32(
                 MetaIndexOfAPCNode::NODE_GROUP_SIZE,
@@ -97,7 +94,7 @@ namespace PredictedAdaptedEncoding
                     return current_cursor_placement;
                 }
                 const size_t payload_end = GetTotalCapacityForThisAPC();
-                const size_t payload_capacity = (payload_end > PayloadBegin()) ? (payload_end - PayloadBegin()) : NO_VAL;
+                const size_t payload_capacity = (payload_end > PayloadBegin()) ? (payload_end - PayloadBegin()) : UNSIGNED_ZERO;
                 if (payload_capacity == 0)
                 {
                     if (did_changed_easy_return)
@@ -162,14 +159,31 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    std::optional<packed64_t> AdaptivePackedCellContainer::TryConsumeAndIdleFromRegionLocal_(APCPagedNodeRelMaskClasses region_kind, size_t& scan_cursor) noexcept
+    std::optional<packed64_t> AdaptivePackedCellContainer::TryConsumeAndIdleFromRegionLocal_(
+        APCPagedNodeRelMaskClasses region_kind, size_t& scan_cursor,
+        PackedCellNodeAuthority desired_authority_of_updated_cell
+    ) noexcept
     {
+        (void) desired_authority_of_updated_cell;
+        
         if (!IfAPCBranchValid())
         {
             return std::nullopt;
         }
+
+        if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(region_kind))
+        {
+            return std::nullopt;
+        }
+
+        if (HasThisControlEnumFlag(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT))
+        {
+            return std::nullopt;
+        }
+        
+
         const auto maybe_current_region_bounds = ReadLayoutBounds(region_kind);
-        if (!maybe_current_region_bounds.has_value() || maybe_current_region_bounds->GetPayloadSpan() == 0)
+        if (!maybe_current_region_bounds.has_value() || maybe_current_region_bounds->IsEmpty())
         {
             return std::nullopt;
         }
@@ -186,14 +200,16 @@ namespace PredictedAdaptedEncoding
         {
             const size_t idx = current_region_bounds.BeginIndex + ((scan_cursor - current_region_bounds.BeginIndex + prob) % region_capacity);
             packed64_t current_cell = BackingPtr[idx].load(MoLoad_);
-            if (!current_region_bounds.CanCellBEConsumedForThisPhysicalRegion(current_cell, region_kind, idx))
+            const PackedCell64_t::AuthoritiveCellView current_cell_view = PackedCell64_t::InspectPackedCell(current_cell);
+            if (!APCAndPagedNodeHelpers::IsPublishedDataCellForRegion(current_cell_view, region_kind))
             {
                 continue;
             }
 
-            const packed64_t current_cell_claimed_local = PackedCell64_t::SetLocalityInPacked(current_cell, PackedCellLocalityTypes::ST_CLAIMED);
+            const packed64_t idle_cell = PackedCell64_t::MakeInitialPacked(current_cell_view.CellMode, PriorityPhysics::IDLE, PackedCellLocalityTypes::ST_IDLE, region_kind, current_cell_view.CellValueDataType);
+
             packed64_t expected_cell = current_cell;
-            if (!BackingPtr[idx].compare_exchange_strong(expected_cell, current_cell_claimed_local, OnExchangeSuccess, OnExchangeFailure))
+            if (!BackingPtr[idx].compare_exchange_strong(expected_cell, idle_cell, OnExchangeSuccess, OnExchangeFailure))
             {
                 if (APCManagerPtr_)
                 {
@@ -203,25 +219,16 @@ namespace PredictedAdaptedEncoding
                 continue;
             }
 
-            ApplyOccupancyTransition_(
-                PackedCellLocalityTypes::ST_PUBLISHED,
-                PackedCellLocalityTypes::ST_CLAIMED,
-                region_kind
-            );
-
-
-            const PackedMode old_mode = PackedCell64_t::ExtractModeOfPackedCellFromPacked(current_cell);
-            const PackedCellDataType old_dtype = PackedCell64_t::ExtractPCellDataTypeFromPacked(current_cell);
-            const APCPagedNodeRelMaskClasses old_page_class = PackedCell64_t::ExtractRelMaskFromPacked(current_cell);
-            const packed64_t idle_cell = PackedCell64_t::MakeInitialPacked(old_mode, PriorityPhysics::IDLE, PackedCellLocalityTypes::ST_IDLE, old_page_class, old_dtype);
-            BackingPtr[idx].store(idle_cell, MoStoreSeq_);
+            APPLYCentralAndRegionOccupancyTransitionCell(current_cell, idle_cell, region_kind);
             BackingPtr[idx].notify_all();
-            // RebuildExectReadyMask();
-            ApplyOccupancyTransition_(
-                PackedCellLocalityTypes::ST_CLAIMED,
-                PackedCellLocalityTypes::ST_IDLE,
-                region_kind
-            );
+            TouchLocalMetaClock48();
+            RefreshAPCMeta_();
+            scan_cursor = idx + 1;
+            if (scan_cursor >= current_region_bounds.EndIndex)
+            {
+                scan_cursor = current_region_bounds.BeginIndex;
+            }
+
             return current_cell;
         }
         return std::nullopt;
@@ -254,125 +261,122 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    PublishResult AdaptivePackedCellContainer::TryPublishToRegionLocal_(APCPagedNodeRelMaskClasses region_kind, packed64_t packed_cell, bool force_rel_mask, uint16_t max_tries) noexcept
+    PublishResult AdaptivePackedCellContainer::TryPublishToRegionLocal_(
+        packed64_t packed_cell_for_publish, 
+        APCPagedNodeRelMaskClasses region_kind,
+        PackedCellNodeAuthority node_authority, 
+        uint16_t max_tries
+    ) noexcept
     {
-        PublishResult failed_result{PublishStatus::INVALID, SIZE_MAX};
+        const PublishResult failed_result{PublishStatus::INVALID, SIZE_MAX};
         if (!IfAPCBranchValid())
         {
             return failed_result;
         }
-        if (force_rel_mask)
+
+        if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(region_kind))
         {
-            packed_cell = PackedCell64_t::SetPageClassInPacked(packed_cell, region_kind);
+            return failed_result;
+        }
+        if (HasThisControlEnumFlag(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT))
+        {
+            return {PublishStatus::FULL, SIZE_MAX};
         }
         
+
+        packed_cell_for_publish = NormalizeDesiredPublishedCellForRegion_(
+            packed_cell_for_publish,
+            region_kind,
+            node_authority
+        );
+
         const auto maybe_current_region_bounds = ReadLayoutBounds(region_kind);
         if (!maybe_current_region_bounds|| maybe_current_region_bounds->IsEmpty())
         {
             return failed_result;
         }
-        auto TryPublishOnceInBounds = [&](const LayoutBoundsOfSingleRelNodeClass& current_region_bounds)->PublishResult
+
+        const uint32_t begin_idx = maybe_current_region_bounds->BeginIndex;
+        const uint32_t end_idx = maybe_current_region_bounds->EndIndex;
+        const size_t span = (end_idx > begin_idx) ? (end_idx - begin_idx) : 0;
+
+        if (span == 0)
         {
-            const uint32_t begin_idx = current_region_bounds.BeginIndex;
-            const uint32_t end_idx = current_region_bounds.EndIndex;
-            const size_t span = (end_idx > begin_idx) ? (end_idx - begin_idx) : 0;
-
-            const size_t next_producer_sequense = NextProducerSequence();
-            if (next_producer_sequense == SIZE_MAX)
-            {
-                return failed_result;   
-            }
-
-            if (span == 0)
-            {
-                failed_result.ResultStatus = PublishStatus::FULL;
-                return failed_result;
-            }
-            const size_t seed_idx = (next_producer_sequense > PayloadBegin()) ? (next_producer_sequense - PayloadBegin()) : 0;
-            const size_t base = begin_idx + (seed_idx % span);
-            const size_t step = MakeProbeStepCoPrime_(seed_idx + 1u, span);
-            for (size_t tries = 0; tries < max_tries; tries++)
-            {
-                const size_t current_index = begin_idx + ((base - begin_idx + tries * step) % span);
-                packed64_t current_cell = BackingPtr[current_index].load(MoLoad_);
-                if (PackedCell64_t::ExtractLocalityFromPacked(current_cell) != PackedCellLocalityTypes::ST_IDLE)
-                {
-                    continue;
-                }
-                const packed64_t claimd_local_inplace_cell = PackedCell64_t::SetLocalityInPacked(current_cell, PackedCellLocalityTypes::ST_CLAIMED);
-                packed64_t expected_cell = current_cell;
-                if (!BackingPtr[current_index].compare_exchange_strong(expected_cell, claimd_local_inplace_cell, OnExchangeSuccess, OnExchangeFailure))
-                {
-                    if (AdaptiveBackoffOfAPCPtr_)
-                    {
-                        AdaptiveBackoffOfAPCPtr_->AdaptiveBackOffPacked(expected_cell);
-                    }
-                    TotalCASFailForThisBranchIncreaseAndGet(1);
-                    continue;
-                }
-
-                ApplyOccupancyTransition_(
-                    PackedCellLocalityTypes::ST_IDLE,
-                    PackedCellLocalityTypes::ST_CLAIMED,
-                    region_kind
-                );
-
-                packed_cell = PackedCell64_t::SetPageClassInPacked(packed_cell, region_kind);
-                packed_cell = PackedCell64_t::SetLocalityInPacked(packed_cell, PackedCellLocalityTypes::ST_PUBLISHED);
-                BackingPtr[current_index].store(packed_cell, MoStoreSeq_);
-                BackingPtr[current_index].notify_all();
-                ApplyOccupancyTransition_(
-                    PackedCellLocalityTypes::ST_CLAIMED,
-                    PackedCellLocalityTypes::ST_PUBLISHED,
-                    region_kind
-                );
-
-                TouchLocalMetaClock48();
-                RefreshAPCMeta_();
-                return {PublishStatus::OK, current_index};
-            }
-            failed_result.ResultStatus = PublishStatus::FULL;
-            return failed_result;
-        };
-
-        PublishResult first = TryPublishOnceInBounds(*maybe_current_region_bounds);
-        if (first.ResultStatus == PublishStatus::OK)
-        {
-            return first;
+            return {PublishStatus::FULL, SIZE_MAX};
         }
-        auto maybe_complete_layout = ReadAndGetFullRegionLayout_();
-        if (!maybe_complete_layout.has_value())
+        
+        const size_t next_producer_sequense = NextProducerSequence();
+        if (next_producer_sequense == SIZE_MAX)
         {
-            failed_result.ResultStatus = PublishStatus::FULL;
-            return failed_result;
+            return {PublishStatus::FULL, SIZE_MAX};
         }
-        CompleteAPCNodeRegionsLayout complete_layout = *maybe_complete_layout;
-        const uint32_t suggested_expension = SuggestedInternalAPCExpension_(&complete_layout);
-        if (suggested_expension != 0 && TryExtendASegmentInOwnAPC(
-            region_kind,
-            suggested_expension,
-            ContainerConf::APCSegmentExtendOrder::PRIORITY
-        ))
+
+        const size_t seed_idx = (next_producer_sequense >= PayloadBegin()) ? (next_producer_sequense - PayloadBegin()) : 0;
+        const size_t base = begin_idx + (seed_idx % span);
+        const size_t step = MakeProbeStepCoPrime_(seed_idx + 1u, span);
+        for (size_t tries = 0; tries < max_tries; tries++)
         {
-            auto maybe_extended_bounds = ReadLayoutBounds(region_kind);
-            if (maybe_extended_bounds)
+            const size_t current_index = begin_idx + ((base - begin_idx + tries * step) % span);
+            packed64_t observed_cell = BackingPtr[current_index].load(MoLoad_);
+            const PackedCell64_t::AuthoritiveCellView observed_cell_view = PackedCell64_t::InspectPackedCell(observed_cell);
+
+            if (observed_cell_view.LocalityOfCell != PackedCellLocalityTypes::ST_IDLE)
             {
-                PublishResult second = TryPublishOnceInBounds(*maybe_extended_bounds);
-                if (second.ResultStatus == PublishStatus::OK)
-                {
-                    return second;
-                }
+                continue;
             }
+            if (!observed_cell_view.IsCellValid)
+            {
+                continue;
+            }
+            
+            packed64_t claimd_local_inplace_cell = PackedCell64_t::SetLocalityInPacked(observed_cell, PackedCellLocalityTypes::ST_CLAIMED);
+            claimd_local_inplace_cell = PackedCell64_t::SetSegmentLayoutInPacked(claimd_local_inplace_cell, node_authority);
+
+            packed64_t expected_cell = observed_cell;
+            if (!BackingPtr[current_index].compare_exchange_strong(expected_cell, claimd_local_inplace_cell, OnExchangeSuccess, OnExchangeFailure))
+            {
+                if (AdaptiveBackoffOfAPCPtr_)
+                {
+                    AdaptiveBackoffOfAPCPtr_->AdaptiveBackOffPacked(expected_cell);
+                }
+                TotalCASFailForThisBranchIncreaseAndGet(1);
+                continue;
+            }
+
+            APPLYCentralAndRegionOccupancyTransitionCell(observed_cell, claimd_local_inplace_cell, region_kind);
+            BackingPtr[current_index].store(packed_cell_for_publish, MoStoreSeq_);
+            BackingPtr[current_index].notify_all();
+            APPLYCentralAndRegionOccupancyTransitionCell(claimd_local_inplace_cell, packed_cell_for_publish, region_kind);
+            TouchLocalMetaClock48();
+            RefreshAPCMeta_();
+
+            return {PublishStatus::OK, current_index};
         }
-        return failed_result;
+
+        return {PublishStatus::FULL, SIZE_MAX};
     }
 
     uint32_t AdaptivePackedCellContainer::SuggestedInternalAPCExpension_(CompleteAPCNodeRegionsLayout* complete_layout, uint8_t prefared_percentage_of_free) noexcept
     {
+        if (!complete_layout)
+        {
+            return UNSIGNED_ZERO;
+        }
+        
         complete_layout->NormalizePercentagesIfNeeded();
         LayoutBoundsOfSingleRelNodeClass* free_layout = complete_layout->GetALayoutByRelMask(APCPagedNodeRelMaskClasses::FREE_SLOT);
-        const uint32_t suggested_expension = static_cast<uint32_t>(((PayloadCapacityFromHeader() * (free_layout->InitialOrCurrentPercentage)) / 100) / (100 / prefared_percentage_of_free));
-        return suggested_expension;
+        if (!free_layout || prefared_percentage_of_free == 0)
+        {
+            return UNSIGNED_ZERO;
+        }
+        const uint32_t payload = static_cast<uint32_t>(PayloadCapacityFromHeader());
+        if (payload == UNSIGNED_ZERO)
+        {
+            return UNSIGNED_ZERO;
+        }
+        const float free_percentage = free_layout->InitialOrCurrentPercentage;
+        const float donation_ratio = static_cast<float>(prefared_percentage_of_free) / 100.0f;
+        return static_cast<uint32_t>((payload * (free_percentage / 100.0f)) * donation_ratio);
 
     }
 
@@ -425,13 +429,13 @@ namespace PredictedAdaptedEncoding
         RegionEpochArray_.reset(new std::atomic<uint64_t>[number_of_regions]);
         const size_t words = (number_of_regions + MAX_VAL - 1) / MAX_VAL;
         RelBitmaps_.assign(APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses, std::vector<uint64_t>(words, 0ull));
-        uint32_t global_ready_mask = NO_VAL;
+        uint32_t global_ready_mask = UNSIGNED_ZERO;
         for (size_t region = 0; region < number_of_regions; region++)
         {
             const size_t base = region * region_size;
             const size_t capacity_end = std::min(PayloadCapacityFromHeader(), base + region_size);
-            uint32_t region_ready_mask = NO_VAL;
-            uint64_t region_epoch = NO_VAL;
+            uint32_t region_ready_mask = UNSIGNED_ZERO;
+            uint64_t region_epoch = UNSIGNED_ZERO;
             for (size_t i = base; i < capacity_end; i++)
             {
                 const size_t absolute_idx = PayloadBegin() + i;
@@ -443,10 +447,9 @@ namespace PredictedAdaptedEncoding
                 const APCPagedNodeRelMaskClasses absolute_cell_relation_mask = APCAndPagedNodeHelpers::ExtractPagedRelMaskFromPacked(absolute_packed_cell);
                 region_ready_mask |= APCAndPagedNodeHelpers::MakeOneAPCNodeClassReadyBit(absolute_cell_relation_mask);
                 region_epoch = std::max<uint64_t>(region_epoch, PackedCell64_t::ExtractClk16(absolute_packed_cell));
-                RegionRelArray_[region].store(static_cast<uint8_t>(region_ready_mask & APCAndPagedNodeHelpers::HIGH_ALL_EIGHT_NIBBLE), MoStoreSeq_);
-                RegionEpochArray_[region].store(region_epoch, MoStoreSeq_);
+
                 global_ready_mask |= region_ready_mask;
-                if (region_ready_mask != NO_VAL)
+                if (region_ready_mask != UNSIGNED_ZERO)
                 {
                     const size_t word = region / MAX_VAL;
                     const size_t bit = region % MAX_VAL;
@@ -460,6 +463,8 @@ namespace PredictedAdaptedEncoding
                     }
                 }
             }
+            RegionRelArray_[region].store(static_cast<uint8_t>(region_ready_mask & APCAndPagedNodeHelpers::HIGH_ALL_EIGHT_NIBBLE), MoStoreSeq_);
+            RegionEpochArray_[region].store(region_epoch, MoStoreSeq_);
         }
         const uint32_t expected_mask = ReadMetaCellValue32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
 
@@ -472,49 +477,26 @@ namespace PredictedAdaptedEncoding
     }
 
 
-
-
-    bool AdaptivePackedCellContainer::ApplyOccupancyTransition_(
-        PackedCellLocalityTypes from,
-        PackedCellLocalityTypes to,
-        APCPagedNodeRelMaskClasses desired_region_class
+    packed64_t AdaptivePackedCellContainer::NormalizeDesiredPublishedCellForRegion_(
+        packed64_t out_going_cell,
+        APCPagedNodeRelMaskClasses region_kind,
+        PackedCellNodeAuthority node_authority
     ) noexcept
     {
-        if (desired_region_class == APCPagedNodeRelMaskClasses::NONE || desired_region_class == APCPagedNodeRelMaskClasses::NANNULL)
+        out_going_cell = PackedCell64_t::SetPageClassInPacked(out_going_cell, region_kind);
+        out_going_cell = PackedCell64_t::SetSegmentLayoutInPacked(out_going_cell, node_authority);
+        out_going_cell = PackedCell64_t::SetLocalityInPacked(out_going_cell, PackedCellLocalityTypes::ST_PUBLISHED);
+
+        const PackedMode mode = PackedCell64_t::ExtractModeOfPackedCellFromPacked(out_going_cell);
+        if (mode == PackedMode::MODE_VALUE32)
         {
-            return false;
+            out_going_cell = PackedCell64_t::SetRelOffsetForMode32InPacked(out_going_cell, RelOffsetMode32::RELOFFSET_GENERIC_VALUE);
         }
-        if (from == PackedCellLocalityTypes::ST_IDLE && to == PackedCellLocalityTypes::ST_CLAIMED)
+        else
         {
-            AllClaimedCellsOccupancySnapshotAddOrSubAndGetAfterChange(+1);
-            return true;
+            out_going_cell = PackedCell64_t::SetRelOffsetForMode48InPacked(out_going_cell, RelOffsetMode48::RELOFFSET_GENERIC_VALUE);
         }
-        if (from == PackedCellLocalityTypes::ST_CLAIMED && to == PackedCellLocalityTypes::ST_PUBLISHED)
-        {
-            AllPublishedCellsOccupancySnapshotAddOrSubAndGetAfterChange(+1);
-            AllClaimedCellsOccupancySnapshotAddOrSubAndGetAfterChange(-1);
-            const uint32_t region_occ_after_update = RegionOccupancyAddOrSubAndGet(desired_region_class, +1);
-            TurnOnReadyBitForDesiredPagedNode_(desired_region_class);
-            return region_occ_after_update != BRANCH_SENTINAL;
-        }
-        if (from == PackedCellLocalityTypes::ST_PUBLISHED && to == PackedCellLocalityTypes::ST_CLAIMED)
-        {
-            AllClaimedCellsOccupancySnapshotAddOrSubAndGetAfterChange(+1);
-            return true;
-        }
-        if (from == PackedCellLocalityTypes::ST_CLAIMED && to == PackedCellLocalityTypes::ST_IDLE)
-        {
-            AllClaimedCellsOccupancySnapshotAddOrSubAndGetAfterChange(-1);
-            AllPublishedCellsOccupancySnapshotAddOrSubAndGetAfterChange(-1);
-            const uint32_t region_occ_after_update = RegionOccupancyAddOrSubAndGet(desired_region_class, -1);
-            if (region_occ_after_update == 0)
-            {
-                ClearTheDesiredPagedNodeReadyBit_(desired_region_class);
-            }
-            return region_occ_after_update != BRANCH_SENTINAL;
-        }
-        
-        return from == to;
+        return out_going_cell;
     }
 
 

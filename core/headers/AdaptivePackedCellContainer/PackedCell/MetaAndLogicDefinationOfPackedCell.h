@@ -125,7 +125,7 @@ namespace PredictedAdaptedEncoding {
     {
         RELOFFSET_GENERIC_VALUE = 0,
         RELOFFSET_PURE_TIMER = 1,
-        RELOFFSET_STANDALONE_PTR = 2,
+        THREE_16_BIT_SUB_DIVISION  = 2,
         CONTROL_SLOT = 3
     };
 
@@ -153,17 +153,17 @@ namespace PredictedAdaptedEncoding {
         WEIGHT_SLOT = 0x7,
         CONTROL_SLOT = 0x8,
         AUX_SLOT = 0x9,
-        FREE_SLOT = 0xA,
-        SELF_REFARANCE = 0xB,
-        CLOCK_PURE_TIME = 0xC,
-        RESERVED_14     = 0xD,
-        COMPLEX_STORAGE = 0xE,
+        HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT = 0xA,
+        PAIRED_POINTER_LOCAL_MEMORY = 0xB,
+        PAIRED_POINTER_DISTANCE_MEMORY = 0xC,
+        FREE_SLOT     = 0xD,
+        UNDEFINED = 0xE,
         NANNULL     = 0xF
     };
 
-    static inline constexpr packed64_t MaskBits(unsigned n) noexcept
+    static inline constexpr packed64_t MaskLowNBits(unsigned n) noexcept
     {
-        if (n == NO_VAL) return packed64_t(0);
+        if (n == UNSIGNED_ZERO) return packed64_t(0);
         if (n >= MAX_VAL) return ~packed64_t(0);
         // produce low-n ones without shifting by >= width
         return ((packed64_t(1) << n) - 1u);                  

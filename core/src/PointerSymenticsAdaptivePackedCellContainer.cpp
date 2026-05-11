@@ -162,13 +162,6 @@ namespace PredictedAdaptedEncoding
         BackingPtr[acquired_paired_pointer_struct.TailIdx].store(idle32, MoStoreSeq_);
         BackingPtr[acquired_paired_pointer_struct.HeadIdx].notify_all();
         BackingPtr[acquired_paired_pointer_struct.TailIdx].notify_all();
-        AllPublishedCellsOccupancySnapshotAddOrSubAndGetAfterChange(-1);
-
-        RefreshAPCMeta_();
-        if (APCManagerPtr_)
-        {
-            APCManagerPtr_->ReclaimationRequestOfAPCSegmentFromManager_(this);
-        }
         
     }
 
@@ -213,8 +206,8 @@ namespace PredictedAdaptedEncoding
         }
         
         uint64_t full_ptrval = reinterpret_cast<uint64_t>(object_ptr);
-        uint32_t low32_half = static_cast<uint32_t>(full_ptrval & MaskBits(VALBITS));
-        uint32_t high32_half = static_cast<uint32_t>((full_ptrval >> VALBITS) & MaskBits(VALBITS));
+        uint32_t low32_half = static_cast<uint32_t>(full_ptrval & MaskLowNBits(VALBITS));
+        uint32_t high32_half = static_cast<uint32_t>((full_ptrval >> VALBITS) & MaskLowNBits(VALBITS));
         size_t next_sequence = NextProducerSequence();
         if (next_sequence == SIZE_MAX)
         {
@@ -264,7 +257,6 @@ namespace PredictedAdaptedEncoding
                         BackingPtr[head].store(head_packed, MoStoreSeq_);
                         BackingPtr[tail].notify_all();
                         BackingPtr[head].notify_all();
-                        AllPublishedCellsOccupancySnapshotAddOrSubAndGetAfterChange(+1);
                         return {PublishStatus::OK, head};
                     }
                 }

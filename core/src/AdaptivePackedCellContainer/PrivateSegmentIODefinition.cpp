@@ -24,9 +24,9 @@ namespace PredictedAdaptedEncoding
         WriteBoundsPairToHeader_(full_paged_node_layout.AUXLayout);
         WriteBoundsPairToHeader_(full_paged_node_layout.FreeLayout);
 
-        WriteBrenchMeta32_(MetaIndexOfAPCNode::REGION_DIR_COUNT, TOTAL_LAYOUT_SECTION_IN_APC_CONTAINER_NODE);
-        WriteBrenchMeta32_(MetaIndexOfAPCNode::EDGE_TABLE_COUNT, NO_VAL);
-        WriteBrenchMeta32_(MetaIndexOfAPCNode::WEIGHT_TABLE_COUNT, NO_VAL);
+        WriteBrenchMeta32_(MetaIndexOfAPCNode::REGION_DIR_COUNT, static_cast<val32_t>(APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses));
+        WriteBrenchMeta32_(MetaIndexOfAPCNode::EDGE_TABLE_COUNT, UNSIGNED_ZERO);
+        WriteBrenchMeta32_(MetaIndexOfAPCNode::WEIGHT_TABLE_COUNT, UNSIGNED_ZERO);
 
         TurnOnMultipleSegmentFlagsAtOnce_(static_cast<uint32_t>(ControlEnumOfAPCSegment::HAS_LAYOUT_DIR));
 
@@ -48,7 +48,7 @@ namespace PredictedAdaptedEncoding
         
         auto AssignOne = [&](LayoutBoundsOfSingleRelNodeClass& one, bool keep_tail = false) noexcept
         {
-            if (one.LAYOUT_CLASS == APCPagedNodeRelMaskClasses::NANNULL)
+            if (one.PAGE_LAYOUT_CLASS == APCPagedNodeRelMaskClasses::NANNULL)
             {
                 one.BeginIndex = initial_cursor;
                 one.EndIndex = initial_cursor;
@@ -56,7 +56,7 @@ namespace PredictedAdaptedEncoding
             }
             one.BeginIndex = initial_cursor;
             uint32_t wanted_span = one.ComputeWantedSpanFromTotal(total_span);
-            if (one.LAYOUT_CLASS != APCPagedNodeRelMaskClasses::FREE_SLOT)
+            if (one.PAGE_LAYOUT_CLASS != APCPagedNodeRelMaskClasses::FREE_SLOT)
             {
                 wanted_span = std::max<uint32_t>(wanted_span, 2u);
             }
@@ -66,7 +66,7 @@ namespace PredictedAdaptedEncoding
                 initial_cursor = payload_end;
                 return;
             }
-            const uint32_t remaining_span = (payload_end > initial_cursor) ? (payload_end - initial_cursor) : NO_VAL;
+            const uint32_t remaining_span = (payload_end > initial_cursor) ? (payload_end - initial_cursor) : UNSIGNED_ZERO;
             wanted_span = std::min<uint32_t>(wanted_span, remaining_span);
             one.EndIndex = initial_cursor + wanted_span;
             initial_cursor = one.EndIndex;
@@ -85,96 +85,24 @@ namespace PredictedAdaptedEncoding
 
     bool SegmentIODefinition::WriteBoundsPairToHeader_(const LayoutBoundsOfSingleRelNodeClass layout_bound) noexcept
     {
-        auto maybe_region_bounds_pair = GetMetaBoundsLegalPairForPageClasses(layout_bound.LAYOUT_CLASS);
-        if (!maybe_region_bounds_pair || layout_bound.IsEmpty() == true)
+        if (layout_bound.IsEmpty())
         {
             return false;
         }
-        const auto [begin_meta, end_meta] = *maybe_region_bounds_pair;
-        const uint32_t current_begin = ReadMetaCellValue32(begin_meta);
-        const uint32_t current_end = ReadMetaCellValue32(end_meta);
-        return JustUpdateValueOfMeta32(begin_meta, current_begin, layout_bound.BeginIndex) &&
-                JustUpdateValueOfMeta32(end_meta, current_end, layout_bound.EndIndex);
-    }
-
-    std::optional<std::pair<MetaIndexOfAPCNode, MetaIndexOfAPCNode>>SegmentIODefinition::GetMetaBoundsLegalPairForPageClasses(APCPagedNodeRelMaskClasses desired_rel_mask) noexcept
-    {
-        MetaIndexOfAPCNode begin_idx;
-        MetaIndexOfAPCNode end_idx;
-        switch (desired_rel_mask)
+        if (layout_bound.BeginIndex > APC_MAX_LENGTH_OR_COUNTER || layout_bound.EndIndex > APC_MAX_LENGTH_OR_COUNTER)
         {
-            // ---- Feedforward message ----
-            case APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE:
-            {
-                begin_idx = MetaIndexOfAPCNode::MESSAGE_FEEDFORWARD_BEGAIN;
-                end_idx   = MetaIndexOfAPCNode::MESSAGE_FEEDFORWARD_END;
-                break;
-            }
-
-            // ---- Feedback message ----
-            case APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE:
-            {
-                begin_idx = MetaIndexOfAPCNode::MESSAGE_FEEDBACKWARD_BEGAIN;
-                end_idx   = MetaIndexOfAPCNode::MESSAGE_FEEDBACKWARD_END;
-                break;
-            }
-
-            // ---- State ----
-            case APCPagedNodeRelMaskClasses::STATE_SLOT:
-            {
-                begin_idx = MetaIndexOfAPCNode::STATE_BEGAINING;
-                end_idx   = MetaIndexOfAPCNode::STATE_END;
-                break;
-            }
-
-            //-- ERROR--
-            case APCPagedNodeRelMaskClasses::ERROR_SLOT:
-            {
-                begin_idx = MetaIndexOfAPCNode::ERROR_BEGAIN;
-                end_idx   = MetaIndexOfAPCNode::ERROR_END;
-                break;
-            }
-
-            // ---- Edge descriptor ----
-            case APCPagedNodeRelMaskClasses::EDGE_DESCRIPTOR:
-            {
-                begin_idx = MetaIndexOfAPCNode::EDGE_DESCRIPTIOR_BEGAIN;
-                end_idx   = MetaIndexOfAPCNode::EDGE_DESCRIPTIOR_END;
-                break;
-            }
-
-            // ---- Weight ----
-            case APCPagedNodeRelMaskClasses::WEIGHT_SLOT:
-            {
-                begin_idx = MetaIndexOfAPCNode::WEIGHT_BEGIN;
-                end_idx   = MetaIndexOfAPCNode::WEIGHT_END;
-                break;
-            }
-
-            // ---- Aux ----
-            case APCPagedNodeRelMaskClasses::AUX_SLOT:
-            {
-                begin_idx = MetaIndexOfAPCNode::AUX_BEGAIN;
-                end_idx   = MetaIndexOfAPCNode::AUX_END;
-                break;
-            }
-
-            // ---- Free ----
-            case APCPagedNodeRelMaskClasses::FREE_SLOT:
-            {
-                begin_idx = MetaIndexOfAPCNode::FREE_BEGAIN;
-                end_idx   = MetaIndexOfAPCNode::FREE_END;
-                break;
-            }
-
-            default:
-            {
-                return std::nullopt;
-            }
+            return false;
         }
-
-        return std::pair {begin_idx, end_idx};
+        
+        return SetLayOutBounds(
+            layout_bound.PAGE_LAYOUT_CLASS,
+            static_cast<uint16_t>(layout_bound.BeginIndex),
+            static_cast<uint16_t>(layout_bound.EndIndex)
+        );
+        
     }
+
+
 
     bool SegmentIODefinition::UpdateAPCModeFlagsInHeader_(uint32_t flags_to_turn_on, uint32_t flags_to_turn_off, MetaIndexOfAPCNode desired_flag_idx) noexcept
     {
@@ -287,6 +215,31 @@ namespace PredictedAdaptedEncoding
             }
         }
         return false;
+    }
+
+    bool SegmentIODefinition::ResetALLOccupancy16x3ModelToZero_() noexcept
+    {
+        if (!IsBound())
+        {
+            return false;
+        }
+        WritBranchMeta48_(MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48, UNSIGNED_ZERO);
+
+        for (uint8_t i = 0; i < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses; i++)
+        {
+            const APCPagedNodeRelMaskClasses blind_page = static_cast<APCPagedNodeRelMaskClasses>(i);
+            const MetaIndexOfAPCNode idx = APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(blind_page);
+            if (!ValidMetaIdx(idx))
+            {
+                continue;
+            }
+            WritBranchMeta48_(idx, UNSIGNED_ZERO);
+        }
+        WriteExactMetaCellJustNewValue(
+            MetaIndexOfAPCNode::PAGED_NODE_READY_BIT,
+            UNSIGNED_ZERO
+        );
+        return true;
     }
 
 
