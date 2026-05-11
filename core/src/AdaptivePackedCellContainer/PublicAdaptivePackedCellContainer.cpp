@@ -113,7 +113,7 @@ namespace PredictedAdaptedEncoding
         {
             AdaptiveBackoffOfAPCPtr_ = nullptr;
             OwnedMasterClockConfPtr_.reset();
-            delete[] BackingPtr;
+            FreeAlignedAtomicCells_(BackingPtr, container_capacity);
             BackingPtr = nullptr;
             throw;
         }
@@ -425,7 +425,7 @@ namespace PredictedAdaptedEncoding
     }
 
     PublishResult AdaptivePackedCellContainer::PublishCellByRegionMAskTraverseStartsFromThisAPC(
-        APCPagedNodeRelMaskClasses region_kind, packed64_t cell_to_publish,
+        APCPagedNodeRelMaskClasses page_class, packed64_t cell_to_publish,
         PackedCellNodeAuthority authority,
         std::optional<uint16_t> max_tries
     ) noexcept
@@ -434,11 +434,11 @@ namespace PredictedAdaptedEncoding
 
         if (!IfAPCBranchValid())
         {
-            const PublishResult invalid{};
-            return invalid;
+            return PublishResult{};
         }
-        
-        const PublishResult local_result = TryPublishToRegionLocal_(cell_to_publish, region_kind);
+        const uint16_t resolved_tries = max_tries.has_value() ? *max_tries : ComputeAdaptivemaxTreies_(cell_to_publish);
+
+        const PublishResult local_result = TryPublishToRegionLocal_(cell_to_publish, page_class, authority, resolved_tries);
         if (local_result.ResultStatus == PublishStatus::OK)
         {
             return local_result;
@@ -447,7 +447,8 @@ namespace PredictedAdaptedEncoding
         AdaptivePackedCellContainer* curren_or_next_container_ptr = GetNextSharedSegment();
         while (curren_or_next_container_ptr)
         {
-            const PublishResult sibling_result_publish = curren_or_next_container_ptr->TryPublishToRegionLocal_(cell_to_publish, region_kind);
+            //using resolved_tries here results deadlock 
+            const PublishResult sibling_result_publish = curren_or_next_container_ptr->TryPublishToRegionLocal_(cell_to_publish, page_class, authority);
             if (sibling_result_publish.ResultStatus == PublishStatus::OK)
             {
                 return sibling_result_publish;
@@ -456,10 +457,10 @@ namespace PredictedAdaptedEncoding
         }
         if (ShouldSplitNow())
         {
-            AdaptivePackedCellContainer* grown_apc = GrowSharedNodeByRegionKind(region_kind, true);
+            AdaptivePackedCellContainer* grown_apc = GrowSharedNodeByRegionKind(page_class, true);
             if (grown_apc)
             {
-                return grown_apc->TryPublishToRegionLocal_(cell_to_publish, region_kind);
+                return grown_apc->TryPublishToRegionLocal_(cell_to_publish, page_class, authority, resolved_tries);
             }
         }
         return local_result;
