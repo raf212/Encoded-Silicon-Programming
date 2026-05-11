@@ -391,10 +391,15 @@ namespace PredictedAdaptedEncoding
         APCPagedNodeRelMaskClasses page_class, 
         uint16_t begain_index,
         uint16_t end_index,
+        bool caller_already_holds_flag,
         std::optional<uint16_t> version_number
     ) noexcept
     {
-        (void) version_number;
+        if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(page_class))
+        {
+            return false;
+        }
+        
         if (begain_index > end_index || begain_index < METACELL_COUNT || end_index > GetTotalCapacityForThisAPC())
         {
             return false;
@@ -405,10 +410,16 @@ namespace PredictedAdaptedEncoding
         {
             return false;
         }
-        if (!TrySetLayoutMutationInFlight())
+
+
+        if (!caller_already_holds_flag)
         {
-            return false;
+            if (!TrySetLayoutMutationInFlight())
+            {
+                return false;
+            }        
         }
+        
         auto ClearLayoutFlagSB = [this]() noexcept
         {
             ClearOneControlEnumFlagOfAPC(
@@ -416,20 +427,32 @@ namespace PredictedAdaptedEncoding
             );
         };
 
+        auto IsLayoutMutationFlagActive = [&]() noexcept-> bool
+        {
+            return HasThisControlEnumFlag(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
+        };
+
         packed64_t observed_layout = ReadFullMetaCell(layout_idx);
 
         while (true)
         {
-            uint16_t old_begin, old_end, old_version = 0;
+            uint16_t old_begin = UNSIGNED_ZERO;
+            uint16_t old_end = UNSIGNED_ZERO;
+            uint16_t old_version = UNSIGNED_ZERO;
+            
             if (!ExtractLayoutModel_BegainL_EndM_VersionH(observed_layout, old_begin, old_end, old_version))
             {
                 old_version = UNSIGNED_ZERO;
             }
             
-            const uint16_t next_version = old_version + 1;
+            const uint16_t next_version = version_number.has_value() ? *version_number : static_cast<uint16_t>(old_version + 1u);
 
             packed64_t desired_layout = ComposeLayoutModelof16x3(begain_index, end_index, next_version, page_class);
             packed64_t expected_layout_cell = observed_layout;
+            if (!IsLayoutMutationFlagActive())
+            {
+                return false;
+            }
             if (BackingPtr[static_cast<size_t>(layout_idx)].compare_exchange_strong(
                     expected_layout_cell,
                     desired_layout,
@@ -437,6 +460,7 @@ namespace PredictedAdaptedEncoding
                     OnExchangeFailure))
             {
                 BackingPtr[static_cast<size_t>(layout_idx)].notify_all();
+                
                 ClearLayoutFlagSB();
                 return true;
             }

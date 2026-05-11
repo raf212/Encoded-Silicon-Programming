@@ -258,6 +258,7 @@ public:
         APCPagedNodeRelMaskClasses page_class, 
         uint16_t begain_index,
         uint16_t end_index,
+        bool caller_already_holds_flag = false,
         std::optional<uint16_t> version_number = std::nullopt
     ) noexcept;
 
