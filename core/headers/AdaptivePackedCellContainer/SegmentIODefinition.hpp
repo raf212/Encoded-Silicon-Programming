@@ -450,7 +450,7 @@ public:
 
     bool RefreshReadyBitForRegionFromOccupancy(APCPagedNodeRelMaskClasses page_class) noexcept;
 
-    uint16_t ReadTotalOccuPancyOfAnyOccupancyCell(APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::NANNULL) noexcept
+    uint16_t ReadTotalOccuPancyOfAnyPageClass(APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::NANNULL) noexcept
     {
 
         const packed64_t packed_cell = page_class != APCPagedNodeRelMaskClasses::NANNULL ?

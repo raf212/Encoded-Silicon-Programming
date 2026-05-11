@@ -148,7 +148,7 @@ namespace PredictedAdaptedEncoding
             APCPagedNodeRelMaskClasses page_class,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_PUBLISHED,
             PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY,
-            PackedCellNodeAuthority authority = PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM
+            PackedCellNodeAuthority authority = PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT
         ) noexcept
         {
             const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(
@@ -222,7 +222,7 @@ namespace PredictedAdaptedEncoding
             APCPagedNodeRelMaskClasses page_class,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_PUBLISHED,
             PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY,
-            PackedCellNodeAuthority authority = PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM
+            PackedCellNodeAuthority authority = PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT
         ) noexcept
         {
             const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(priority, authority, locality, page_class, RelOffsetMode48::THREE_16_BIT_SUB_DIVISION, PackedCellDataType::UnsignedPCellDataType);

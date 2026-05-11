@@ -120,7 +120,7 @@ namespace
             PackedCellLocalityTypes::ST_PUBLISHED,
             RelOffsetMode32::RELOFFSET_GENERIC_VALUE,
             PackedCellDataType::UnsignedPCellDataType,
-            PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM
+            PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT
         );
     }
 
@@ -140,7 +140,7 @@ namespace
             PackedCellLocalityTypes::ST_PUBLISHED,
             RelOffsetMode32::RELOFFSET_GENERIC_VALUE,
             PackedCellDataType::FloatPCellDataType,
-            PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM
+            PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT
         );
     }
 

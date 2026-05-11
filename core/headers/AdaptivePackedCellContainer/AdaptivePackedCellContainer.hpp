@@ -44,13 +44,13 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         std::optional<packed64_t> TryConsumeAndIdleFromRegionLocal_(
             APCPagedNodeRelMaskClasses region_kind, size_t& scan_cursor,
-            PackedCellNodeAuthority desired_authority_of_updated_cell = PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM
+            PackedCellNodeAuthority desired_authority_of_updated_cell = PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT
         ) noexcept;
 
         PublishResult TryPublishToRegionLocal_(
             packed64_t packed_cell_for_publish, 
             APCPagedNodeRelMaskClasses region_kind = APCPagedNodeRelMaskClasses::FREE_SLOT,
-            PackedCellNodeAuthority node_authority = PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM,
+            PackedCellNodeAuthority node_authority = PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT,
             uint16_t max_tries = APC_MAX_LENGTH_OR_COUNTER / (APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses)
         ) noexcept;
 
@@ -141,7 +141,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         PublishResult PublishCellByRegionMAskTraverseStartsFromThisAPC(
             APCPagedNodeRelMaskClasses region_kind, packed64_t cell_to_publish, 
-            PackedCellNodeAuthority authority = PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM,
+            PackedCellNodeAuthority authority = PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT,
             std::optional<uint16_t> max_tries = std::nullopt
         ) noexcept;
 
@@ -281,6 +281,50 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
         inline void StoreCleanupNextAPC(AdaptivePackedCellContainer* apc_ptr) noexcept
         {
             CleanupNextAPCPtr_.store(apc_ptr, MoStoreSeq_);
+        }
+
+        uint16_t ComputeAdaptivemaxTreies_(packed64_t packed_cell) noexcept
+        {
+            const APCPagedNodeRelMaskClasses page_class = PackedCell64_t::ExtractRelMaskFromPacked(packed_cell);
+            const PriorityPhysics priority = PackedCell64_t::ExtractPriorityFromPacked(packed_cell);
+
+            std::optional<LayoutBoundsOfSingleRelNodeClass> layout_bounds = ReadLayoutBounds(page_class);
+            const uint32_t span = layout_bounds ? layout_bounds->GetPayloadSpan() : 1u;
+            const uint16_t used_occupancy_of_desired_page_class = ReadTotalUsedOccupancyOfARegion(page_class);
+            const uint32_t pressure_percentage = (span > UNSIGNED_ZERO) ? static_cast<uint32_t>(static_cast<uint64_t>(used_occupancy_of_desired_page_class) * 100 / span) : 100u;
+            const uint32_t segment_split_threshold = ReadMetaCellValue32(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE);
+
+            const uint32_t cas_failure = ReadMetaCellValue32(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH);
+            const bool high_contention = (cas_failure > used_occupancy_of_desired_page_class);
+            const bool at_max_depth = (CurrentBranchDepthRead() >= MaxDepthRead() && MaxDepthRead() > 0);
+
+            uint16_t budget = (span < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses) ? static_cast<uint16_t>(APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses) : 
+                               static_cast<uint16_t>(span / (APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses / 8));
+            budget = std::min<uint16_t>(budget, APC_MAX_LENGTH_OR_COUNTER);
+            if (pressure_percentage > segment_split_threshold - 10)
+            {
+                budget = budget / 2;
+            }
+            else if (pressure_percentage < (segment_split_threshold / 2))
+            {
+                budget = budget * (2 / 3);
+            }
+
+            if (priority > PriorityPhysics::IDLE)
+            {
+                budget = budget / static_cast<uint8_t>(priority);
+            }
+            
+            if (high_contention)
+            {
+                budget = budget / 2;
+            }
+            
+            if (at_max_depth)
+            {
+                budget = budget * static_cast<uint8_t>(PriorityPhysics::ERROR_DEPENDENCY);
+            }
+            return budget;
         }
 
 };
