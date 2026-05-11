@@ -838,15 +838,23 @@ namespace PredictedAdaptedEncoding
         }
         
         const bool total_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell(from_locality, to_locality);
+
+        if (!total_ok)
+        {
+            return false;
+        }
+        
         if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(physical_page_class))
         {
-            return total_ok;
+            return true;
         }
-
+        
         const bool region_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell(from_locality, to_locality, physical_page_class);
-
-        RefreshReadyBitForRegionFromOccupancy(physical_page_class);
-        return total_ok && region_ok;
+        if (region_ok)
+        {
+            RefreshReadyBitForRegionFromOccupancy(physical_page_class);
+        }
+        return region_ok;
     }
 
     bool SegmentIODefinition::RefreshReadyBitForRegionFromOccupancy(APCPagedNodeRelMaskClasses page_class) noexcept
