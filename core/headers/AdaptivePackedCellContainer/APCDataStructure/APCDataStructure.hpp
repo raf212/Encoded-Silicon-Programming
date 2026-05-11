@@ -205,8 +205,13 @@ namespace PredictedAdaptedEncoding
                 return UNSIGNED_ZERO;
             }
             const uint64_t raw48 = PackedCell64_t::ExtractClk48(packed_cell);
-            uint16_t published, claimed, faulty = UNSIGNED_ZERO;
-            ExtractLowMidHighFromMode48_(raw48, published, claimed, faulty);
+            uint16_t published = UNSIGNED_ZERO;
+            uint16_t claimed = UNSIGNED_ZERO;
+            uint16_t faulty = UNSIGNED_ZERO;
+            if(!ExtractLowMidHighFromMode48_(raw48, published, claimed, faulty))
+            {
+                return UNSIGNED_ZERO;
+            }
             return published + claimed + faulty;
         }
 

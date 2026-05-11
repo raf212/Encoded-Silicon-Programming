@@ -219,6 +219,10 @@ namespace PredictedAdaptedEncoding
         {
             change_count = 1;
         }
+        else
+        {
+            return true;
+        }
         ///
         
         
@@ -229,7 +233,15 @@ namespace PredictedAdaptedEncoding
             {
                 return false;
             }
-            if (JustUpdateValueOfMeta32(MetaIndexOfAPCNode::CURRENT_ACTIVE_THREADS, current_thread_count, current_thread_count + change_count))
+
+            if (change_count < 0 && current_thread_count == 0)
+            {
+                return false;
+            }
+
+            const uint32_t desired = static_cast<uint32_t>(static_cast<int64_t>(current_thread_count) + static_cast<int64_t>(change_count));
+            
+            if (JustUpdateValueOfMeta32(MetaIndexOfAPCNode::CURRENT_ACTIVE_THREADS, current_thread_count, desired))
             {
                 return true;
             }
@@ -732,24 +744,30 @@ namespace PredictedAdaptedEncoding
                 {
                 case PackedCellLocalityTypes::ST_IDLE :
                     return true;
+
                 case PackedCellLocalityTypes::ST_PUBLISHED :
                     if (published_count > UNSIGNED_ZERO)
                     {
                         --published_count;
                         return true;
                     }
+                    return false;
+
                 case PackedCellLocalityTypes::ST_CLAIMED :
                     if (claimed_count > UNSIGNED_ZERO)
                     {
                         --claimed_count;
                         return true;
                     }
+                    return false;
+
                 case PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY :
                     if (faulty_count > UNSIGNED_ZERO)
                     {
                         --faulty_count;
                         return true;
                     }
+                    return false;
                     
                 default:
                     return false;

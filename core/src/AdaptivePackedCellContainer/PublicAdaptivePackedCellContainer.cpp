@@ -316,7 +316,20 @@ namespace PredictedAdaptedEncoding
         AdaptivePackedCellContainer* current_apc_ptr = FindSharedRootOrThis();
         while (current_apc_ptr)
         {
-            if (current_apc_ptr->ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED) > UNSIGNED_ZERO)
+            uint16_t published_occupancy = UNSIGNED_ZERO;
+            uint16_t claimed_occupancy = UNSIGNED_ZERO;
+            uint16_t faulty_occupancy = UNSIGNED_ZERO;
+            const bool ok = GetPublishedClaimedFaultyFromCentral(published_occupancy, claimed_occupancy, faulty_occupancy);
+
+            if (!ok || published_occupancy > UNSIGNED_ZERO || claimed_occupancy > UNSIGNED_ZERO || faulty_occupancy > UNSIGNED_ZERO)
+            {
+                return false;
+            }
+
+            if (
+                current_apc_ptr->HasThisControlEnumFlag(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT) ||
+                current_apc_ptr->HasThisControlEnumFlag(ControlEnumOfAPCSegment::SPLIT_INFLIGHT)
+            )
             {
                 return false;
             }
@@ -324,6 +337,7 @@ namespace PredictedAdaptedEncoding
             {
                 break;
             }
+            
             uint32_t next_apc_id = current_apc_ptr->ReadMetaCellValue32(MetaIndexOfAPCNode::SHARED_NEXT_ID);
             if (next_apc_id == UNSIGNED_ZERO || next_apc_id == BRANCH_SENTINAL)
             {
@@ -514,12 +528,6 @@ namespace PredictedAdaptedEncoding
         }
         catch(...)
         {
-            ClearSplitFlag();
-            return nullptr;
-        }
-
-        if (!new_child_segment_ptr)
-        {
             if (new_child_segment_ptr)
             {
                 new_child_segment_ptr->FreeAll();
@@ -528,6 +536,8 @@ namespace PredictedAdaptedEncoding
             ClearSplitFlag();
             return nullptr;
         }
+
+
         
         const uint32_t new_child_branch_id = new_child_segment_ptr->GetBranchId();
         if (new_child_branch_id == UNSIGNED_ZERO || new_child_branch_id == BRANCH_SENTINAL || new_child_branch_id == root_branch_id)

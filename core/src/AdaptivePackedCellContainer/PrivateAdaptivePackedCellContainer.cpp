@@ -164,6 +164,8 @@ namespace PredictedAdaptedEncoding
         PackedCellNodeAuthority desired_authority_of_updated_cell
     ) noexcept
     {
+        (void) desired_authority_of_updated_cell;
+        
         if (!IfAPCBranchValid())
         {
             return std::nullopt;
@@ -204,11 +206,10 @@ namespace PredictedAdaptedEncoding
                 continue;
             }
 
-            packed64_t current_cell_claimed_local = PackedCell64_t::SetLocalityInPacked(current_cell, PackedCellLocalityTypes::ST_CLAIMED);
-            current_cell_claimed_local = PackedCell64_t::SetSegmentLayoutInPacked(current_cell_claimed_local, desired_authority_of_updated_cell);
+            const packed64_t idle_cell = PackedCell64_t::MakeInitialPacked(current_cell_view.CellMode, PriorityPhysics::IDLE, PackedCellLocalityTypes::ST_IDLE, region_kind, current_cell_view.CellValueDataType);
 
             packed64_t expected_cell = current_cell;
-            if (!BackingPtr[idx].compare_exchange_strong(expected_cell, current_cell_claimed_local, OnExchangeSuccess, OnExchangeFailure))
+            if (!BackingPtr[idx].compare_exchange_strong(expected_cell, idle_cell, OnExchangeSuccess, OnExchangeFailure))
             {
                 if (APCManagerPtr_)
                 {
@@ -218,13 +219,8 @@ namespace PredictedAdaptedEncoding
                 continue;
             }
 
-            APPLYCentralAndRegionOccupancyTransitionCell(current_cell, current_cell_claimed_local, region_kind);
-
-            const packed64_t idle_cell = PackedCell64_t::MakeInitialPacked(current_cell_view.CellMode, PriorityPhysics::IDLE, PackedCellLocalityTypes::ST_IDLE, region_kind, current_cell_view.CellValueDataType);
-            BackingPtr[idx].store(idle_cell, MoStoreSeq_);
+            APPLYCentralAndRegionOccupancyTransitionCell(current_cell, idle_cell, region_kind);
             BackingPtr[idx].notify_all();
-
-            APPLYCentralAndRegionOccupancyTransitionCell(current_cell_claimed_local, idle_cell, region_kind);
             TouchLocalMetaClock48();
             RefreshAPCMeta_();
             scan_cursor = idx + 1;
@@ -362,10 +358,25 @@ namespace PredictedAdaptedEncoding
 
     uint32_t AdaptivePackedCellContainer::SuggestedInternalAPCExpension_(CompleteAPCNodeRegionsLayout* complete_layout, uint8_t prefared_percentage_of_free) noexcept
     {
+        if (!complete_layout)
+        {
+            return UNSIGNED_ZERO;
+        }
+        
         complete_layout->NormalizePercentagesIfNeeded();
         LayoutBoundsOfSingleRelNodeClass* free_layout = complete_layout->GetALayoutByRelMask(APCPagedNodeRelMaskClasses::FREE_SLOT);
-        const uint32_t suggested_expension = static_cast<uint32_t>(((PayloadCapacityFromHeader() * (free_layout->InitialOrCurrentPercentage)) / 100) / (100 / prefared_percentage_of_free));
-        return suggested_expension;
+        if (!free_layout || prefared_percentage_of_free == 0)
+        {
+            return UNSIGNED_ZERO;
+        }
+        const uint32_t payload = static_cast<uint32_t>(PayloadCapacityFromHeader());
+        if (payload == UNSIGNED_ZERO)
+        {
+            return UNSIGNED_ZERO;
+        }
+        const float free_percentage = free_layout->InitialOrCurrentPercentage;
+        const float donation_ratio = static_cast<float>(prefared_percentage_of_free) / 100.0f;
+        return static_cast<uint32_t>((payload * (free_percentage / 100.0f)) * donation_ratio);
 
     }
 

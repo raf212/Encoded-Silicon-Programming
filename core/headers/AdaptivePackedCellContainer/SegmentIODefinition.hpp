@@ -393,6 +393,18 @@ public:
         return desired_occupancy ? *desired_occupancy : UNSIGNED_ZERO;
     }
 
+    bool GetPublishedClaimedFaultyFromCentral(
+        uint16_t& published_occupancy,
+        uint16_t& claimed_occupancy,
+        uint16_t& faulty_occupancy
+    )
+    {
+        const packed64_t central_occupancy_cell = ReadCentralAPCOccupancyCellForThisPagedNode();
+        const uint64_t raw48 = PackedCell64_t::ExtractClk48(central_occupancy_cell);
+        bool ok = ExtractLowMidHighFromMode48_(raw48, published_occupancy, claimed_occupancy, faulty_occupancy);
+        return ok;
+    }
+
     uint16_t ReadRegionOccupancyOfALocality(PackedCellLocalityTypes locality_type, APCPagedNodeRelMaskClasses page_class) noexcept;
 
     uint16_t ReadPublishedOccupancyOfAPageClass(APCPagedNodeRelMaskClasses page_class) noexcept
