@@ -304,20 +304,37 @@ namespace PredictedAdaptedEncoding
 
         LayoutBoundsOfSingleRelNodeClass FeedForwardLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE, FEEDFOEWARD_PERCENTAGE)};
         LayoutBoundsOfSingleRelNodeClass FeedBackwardLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE, FEEDBACKWARD_PERCENTAGE)};
+        LayoutBoundsOfSingleRelNodeClass LateralLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::LATERAL_MESAGE, UNSIGNED_ZERO)};
         LayoutBoundsOfSingleRelNodeClass StateLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::STATE_SLOT, STATESLOT_PERCENTAGE)};
         LayoutBoundsOfSingleRelNodeClass ErrorLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::ERROR_SLOT, ERRORSLOT_PERCENTAGE)};
         LayoutBoundsOfSingleRelNodeClass EdgeDescriptorLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::EDGE_DESCRIPTOR, EDGEDESCRIPTOR_PERCENTAGE)};
         LayoutBoundsOfSingleRelNodeClass WeightLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::WEIGHT_SLOT, WEIGHTSLOT_PERCENTAGE)};
         LayoutBoundsOfSingleRelNodeClass AUXLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::AUX_SLOT, AUXSLOT_PERCENTAGE)};
+        LayoutBoundsOfSingleRelNodeClass HeterogenousMemoryLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT, UNSIGNED_ZERO)};
+        LayoutBoundsOfSingleRelNodeClass LocalPairedPointerLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::PAIRED_POINTER_LOCAL_MEMORY, UNSIGNED_ZERO)};
+        LayoutBoundsOfSingleRelNodeClass DistancePairedLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::PAIRED_POINTER_DISTANCE_MEMORY, UNSIGNED_ZERO)};
         LayoutBoundsOfSingleRelNodeClass FreeLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::FREE_SLOT, FREE_PERCENTAGE)};
         //we can add 8 more threrritically rel_mask = 4 bit ->16 classes 
-        static constexpr uint8_t CURRENT_TOTAL_APC_REL_NODE_CLASSES = 8u;
+        static constexpr uint8_t CURRENT_TOTAL_APC_REL_NODE_CLASSES = 12u;
 
         constexpr float SumOfPercentage() const noexcept
         {
-            return FeedForwardLayout.InitialOrCurrentPercentage + FeedBackwardLayout.InitialOrCurrentPercentage + StateLayout.InitialOrCurrentPercentage +
-                    ErrorLayout.InitialOrCurrentPercentage + EdgeDescriptorLayout.InitialOrCurrentPercentage + WeightLayout.InitialOrCurrentPercentage +
-                    AUXLayout.InitialOrCurrentPercentage + FreeLayout.InitialOrCurrentPercentage;//+8more if
+            return FeedForwardLayout.InitialOrCurrentPercentage + FeedBackwardLayout.InitialOrCurrentPercentage + 
+                    LateralLayout.InitialOrCurrentPercentage + StateLayout.InitialOrCurrentPercentage +
+                    ErrorLayout.InitialOrCurrentPercentage + EdgeDescriptorLayout.InitialOrCurrentPercentage + 
+                    WeightLayout.InitialOrCurrentPercentage + AUXLayout.InitialOrCurrentPercentage + 
+                    HeterogenousMemoryLayout.InitialOrCurrentPercentage + LocalPairedPointerLayout.InitialOrCurrentPercentage +
+                    DistancePairedLayout.InitialOrCurrentPercentage + FreeLayout.InitialOrCurrentPercentage;
+        }
+
+        bool DoseAllPhysicalLayoutCarrySameVersionNumberAsGlobal(uint16_t global_version_number) noexcept
+        {
+            return FeedForwardLayout.VersionNumber == FeedBackwardLayout.VersionNumber == 
+                    LateralLayout.VersionNumber == StateLayout.VersionNumber ==
+                    ErrorLayout.VersionNumber == EdgeDescriptorLayout.VersionNumber == 
+                    WeightLayout.VersionNumber == AUXLayout.VersionNumber ==
+                    HeterogenousMemoryLayout.VersionNumber == LocalPairedPointerLayout.VersionNumber ==
+                    DistancePairedLayout.VersionNumber == FreeLayout.VersionNumber == global_version_number;        
         }
 
         bool NormalizePercentagesIfNeeded() noexcept
@@ -339,13 +356,16 @@ namespace PredictedAdaptedEncoding
             
             NormalizeOne(FeedForwardLayout);
             NormalizeOne(FeedBackwardLayout);
+            NormalizeOne(LateralLayout);
             NormalizeOne(StateLayout);
             NormalizeOne(ErrorLayout);
             NormalizeOne(EdgeDescriptorLayout);
             NormalizeOne(WeightLayout);
             NormalizeOne(AUXLayout);
+            NormalizeOne(HeterogenousMemoryLayout);
+            NormalizeOne(LocalPairedPointerLayout);
+            NormalizeOne(DistancePairedLayout);
             NormalizeOne(FreeLayout);
-            //noramalize 8 morfe if
 
             float repaired_sum = SumOfPercentage();
             if (repaired_sum < 100)
@@ -361,11 +381,18 @@ namespace PredictedAdaptedEncoding
             {
                 case APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE:  return &FeedForwardLayout;
                 case APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE: return &FeedBackwardLayout;
+                case APCPagedNodeRelMaskClasses::LATERAL_MESAGE     :  return &LateralLayout;
                 case APCPagedNodeRelMaskClasses::STATE_SLOT:           return &StateLayout;
                 case APCPagedNodeRelMaskClasses::ERROR_SLOT:           return &ErrorLayout;
                 case APCPagedNodeRelMaskClasses::EDGE_DESCRIPTOR:      return &EdgeDescriptorLayout;
                 case APCPagedNodeRelMaskClasses::WEIGHT_SLOT:          return &WeightLayout;
                 case APCPagedNodeRelMaskClasses::AUX_SLOT:             return &AUXLayout;
+                case APCPagedNodeRelMaskClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT:
+                    return &HeterogenousMemoryLayout;
+                case APCPagedNodeRelMaskClasses::PAIRED_POINTER_LOCAL_MEMORY: 
+                    return &LocalPairedPointerLayout;
+                case APCPagedNodeRelMaskClasses::PAIRED_POINTER_DISTANCE_MEMORY:
+                    return &DistancePairedLayout;
                 case APCPagedNodeRelMaskClasses::FREE_SLOT:            return &FreeLayout;
                 default:                                               return nullptr;
             }
@@ -376,11 +403,18 @@ namespace PredictedAdaptedEncoding
             {
                 case APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE:  return &FeedForwardLayout;
                 case APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE: return &FeedBackwardLayout;
+                case APCPagedNodeRelMaskClasses::LATERAL_MESAGE     :  return &LateralLayout;
                 case APCPagedNodeRelMaskClasses::STATE_SLOT:           return &StateLayout;
                 case APCPagedNodeRelMaskClasses::ERROR_SLOT:           return &ErrorLayout;
                 case APCPagedNodeRelMaskClasses::EDGE_DESCRIPTOR:      return &EdgeDescriptorLayout;
                 case APCPagedNodeRelMaskClasses::WEIGHT_SLOT:          return &WeightLayout;
                 case APCPagedNodeRelMaskClasses::AUX_SLOT:             return &AUXLayout;
+                case APCPagedNodeRelMaskClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT:
+                    return &HeterogenousMemoryLayout;
+                case APCPagedNodeRelMaskClasses::PAIRED_POINTER_LOCAL_MEMORY: 
+                    return &LocalPairedPointerLayout;
+                case APCPagedNodeRelMaskClasses::PAIRED_POINTER_DISTANCE_MEMORY:
+                    return &DistancePairedLayout;
                 case APCPagedNodeRelMaskClasses::FREE_SLOT:            return &FreeLayout;
                 default:                                               return nullptr;
             }
@@ -389,8 +423,12 @@ namespace PredictedAdaptedEncoding
         std::array<LayoutBoundsOfSingleRelNodeClass*, CURRENT_TOTAL_APC_REL_NODE_CLASSES> OrderedViewsFIFO() noexcept
         {
             return {
-                &FeedForwardLayout, &FeedBackwardLayout, &StateLayout, 
-                &ErrorLayout, &EdgeDescriptorLayout, &WeightLayout, &AUXLayout, &FreeLayout
+                &FeedForwardLayout, &FeedBackwardLayout, 
+                &LateralLayout, &StateLayout,  
+                &ErrorLayout, &EdgeDescriptorLayout,
+                &WeightLayout, &AUXLayout, 
+                &HeterogenousMemoryLayout, &LocalPairedPointerLayout,
+                &DistancePairedLayout, &FreeLayout
             };
         }
     };

@@ -163,10 +163,6 @@ protected:
         while (true)
         {
             const uint32_t current_version = ReadMetaCellValue32(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
-            if (current_version == BRANCH_SENTINAL)
-            {
-                return false;
-            }
             if ((current_version) == layout_version)
             {
                 return true;
@@ -295,7 +291,7 @@ public:
         std::optional<uint16_t> version_number = std::nullopt
     ) noexcept;
 
-    std::optional<LayoutBoundsOfSingleRelNodeClass> ReadLayoutBounds(APCPagedNodeRelMaskClasses desired_rel_mask) noexcept;
+    std::optional<LayoutBoundsOfSingleRelNodeClass> ReadLayoutBoundsAndVersion(APCPagedNodeRelMaskClasses desired_rel_mask) noexcept;
     std::optional<CompleteAPCNodeRegionsLayout> ReadAndGetFullRegionLayout_() noexcept;
 
 
@@ -346,6 +342,11 @@ public:
     bool HasThisManageControlFlag(ManagerControlFlagBits desired_manager_contgrol_flag) noexcept
     {
         return (ReadMetaCellValue32(MetaIndexOfAPCNode::MANAGER_CONTROL_FLAGS) & static_cast<uint32_t>(desired_manager_contgrol_flag)) != UNSIGNED_ZERO;
+    }
+
+    bool IsLayoutMutationFlagActive() noexcept
+    {
+        return HasThisControlEnumFlag(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
     }
     
     void SetGraphNodeFlag() noexcept

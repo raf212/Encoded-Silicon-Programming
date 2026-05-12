@@ -13,23 +13,20 @@ namespace PredictedAdaptedEncoding
         {
             return;
         }
-        CompleteAPCNodeRegionsLayout full_paged_node_layout{};
+        CompleteAPCNodeRegionsLayout full_paged_node_layout{};        
+        
+
         BuidDefaultLayoutPlan_(full_paged_node_layout);
-        WriteBoundsPairToHeader_(full_paged_node_layout.FeedForwardLayout);
-        WriteBoundsPairToHeader_(full_paged_node_layout.FeedBackwardLayout);
-        WriteBoundsPairToHeader_(full_paged_node_layout.StateLayout);
-        WriteBoundsPairToHeader_(full_paged_node_layout.ErrorLayout);
-        WriteBoundsPairToHeader_(full_paged_node_layout.EdgeDescriptorLayout);
-        WriteBoundsPairToHeader_(full_paged_node_layout.WeightLayout);
-        WriteBoundsPairToHeader_(full_paged_node_layout.AUXLayout);
-        WriteBoundsPairToHeader_(full_paged_node_layout.FreeLayout);
+
+        if (!WriteAllRegionsLayoutToHeader_(full_paged_node_layout))
+        {
+            return;
+        }
 
         WriteBrenchMeta32_(MetaIndexOfAPCNode::REGION_DIR_COUNT, static_cast<val32_t>(APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses));
         WriteBrenchMeta32_(MetaIndexOfAPCNode::EDGE_TABLE_COUNT, UNSIGNED_ZERO);
         WriteBrenchMeta32_(MetaIndexOfAPCNode::WEIGHT_TABLE_COUNT, UNSIGNED_ZERO);
-
-        TurnOnMultipleSegmentFlagsAtOnce_(static_cast<uint32_t>(ControlEnumOfAPCSegment::HAS_LAYOUT_DIR));
-
+        TurnOnASegmentFlag(ControlEnumOfAPCSegment::HAS_LAYOUT_DIR);
         
     }
 
@@ -45,6 +42,14 @@ namespace PredictedAdaptedEncoding
 
         const uint32_t total_span = payload_end - payload_begain;
         uint32_t initial_cursor = payload_begain;
+
+        const std::optional<uint16_t> maybe_current_global_version = ReadGlobalLayoutVersion_();
+        const uint16_t current_or_start_version = maybe_current_global_version.has_value() ? *maybe_current_global_version : 1u;
+
+        if (!WriteGlobalLayoutVersion_(current_or_start_version))
+        {
+            return;
+        }
         
         auto AssignOne = [&](LayoutBoundsOfSingleRelNodeClass& one, bool keep_tail = false) noexcept
         {
@@ -55,6 +60,7 @@ namespace PredictedAdaptedEncoding
                 return;
             }
             one.BeginIndex = initial_cursor;
+            one.VersionNumber = current_or_start_version;
             uint32_t wanted_span = one.ComputeWantedSpanFromTotal(total_span);
             if (one.PAGE_LAYOUT_CLASS != APCPagedNodeRelMaskClasses::FREE_SLOT)
             {
@@ -73,11 +79,15 @@ namespace PredictedAdaptedEncoding
         };
         AssignOne(full_layout.FeedForwardLayout);
         AssignOne(full_layout.FeedBackwardLayout);
+        AssignOne(full_layout.LateralLayout);
         AssignOne(full_layout.StateLayout);
         AssignOne(full_layout.ErrorLayout);
         AssignOne(full_layout.EdgeDescriptorLayout);
         AssignOne(full_layout.WeightLayout);
         AssignOne(full_layout.AUXLayout);
+        AssignOne(full_layout.HeterogenousMemoryLayout);
+        AssignOne(full_layout.LocalPairedPointerLayout);
+        AssignOne(full_layout.DistancePairedLayout);
 
         full_layout.FreeLayout.BeginIndex = initial_cursor;
         full_layout.FreeLayout.EndIndex = payload_end;
@@ -85,21 +95,31 @@ namespace PredictedAdaptedEncoding
 
     bool SegmentIODefinition::WriteBoundsPairToHeader_(const LayoutBoundsOfSingleRelNodeClass layout_bound) noexcept
     {
-        if (layout_bound.IsEmpty())
+        if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(layout_bound.PAGE_LAYOUT_CLASS))
         {
             return false;
         }
+        
         if (layout_bound.BeginIndex > APC_MAX_LENGTH_OR_COUNTER || layout_bound.EndIndex > APC_MAX_LENGTH_OR_COUNTER)
         {
             return false;
         }
         
+        const std::optional<uint16_t> maybe_global_version = ReadGlobalLayoutVersion_();
+        if (maybe_global_version.has_value())
+        {
+            if (layout_bound.VersionNumber != *maybe_global_version)
+            {
+                return false;
+            }
+        }
+        
         return SetLayOutBounds(
             layout_bound.PAGE_LAYOUT_CLASS,
             static_cast<uint16_t>(layout_bound.BeginIndex),
-            static_cast<uint16_t>(layout_bound.EndIndex)
+            static_cast<uint16_t>(layout_bound.EndIndex),
+            layout_bound.VersionNumber
         );
-        
     }
 
 
@@ -134,41 +154,81 @@ namespace PredictedAdaptedEncoding
     }
 
     std::optional<CompleteAPCNodeRegionsLayout> SegmentIODefinition::ReadAndGetFullRegionLayout_() noexcept
-    {
+    {   
         auto LoadOne = [&](APCPagedNodeRelMaskClasses desired_rel_mask, LayoutBoundsOfSingleRelNodeClass& out_one) noexcept->bool
         {
-            auto maybe_one = ReadLayoutBounds(desired_rel_mask);
-            if (!maybe_one)
+            if (!IsLayoutMutationFlagActive())
             {
-                return false;
+                auto maybe_one = ReadLayoutBoundsAndVersion(desired_rel_mask);
+                if (!maybe_one)
+                {
+                    return false;
+                }
+                out_one = *maybe_one;
+                return true;
             }
-            out_one = *maybe_one;
-            return true;
+            return false;
         };
 
         CompleteAPCNodeRegionsLayout out_layout{};
         LoadOne(APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE, out_layout.FeedForwardLayout);
         LoadOne(APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE, out_layout.FeedBackwardLayout);
+        LoadOne(APCPagedNodeRelMaskClasses::LATERAL_MESAGE, out_layout.LateralLayout);
         LoadOne(APCPagedNodeRelMaskClasses::STATE_SLOT, out_layout.StateLayout);
         LoadOne(APCPagedNodeRelMaskClasses::ERROR_SLOT, out_layout.ErrorLayout);
         LoadOne(APCPagedNodeRelMaskClasses::EDGE_DESCRIPTOR, out_layout.EdgeDescriptorLayout);
         LoadOne(APCPagedNodeRelMaskClasses::WEIGHT_SLOT, out_layout.WeightLayout);
         LoadOne(APCPagedNodeRelMaskClasses::AUX_SLOT, out_layout.AUXLayout);
+        LoadOne(APCPagedNodeRelMaskClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT, out_layout.HeterogenousMemoryLayout);
+        LoadOne(APCPagedNodeRelMaskClasses::PAIRED_POINTER_LOCAL_MEMORY, out_layout.LocalPairedPointerLayout);
+        LoadOne(APCPagedNodeRelMaskClasses::PAIRED_POINTER_DISTANCE_MEMORY, out_layout.DistancePairedLayout);
         LoadOne(APCPagedNodeRelMaskClasses::FREE_SLOT, out_layout.FreeLayout);
+        //in complete layout any-one layout can be std::nullopt
         return out_layout;
     }
 
     bool SegmentIODefinition::WriteAllRegionsLayoutToHeader_(const CompleteAPCNodeRegionsLayout& full_layout) noexcept
     {
-        return 
+        if (!IsLayoutMutationFlagActive())
+        {
+            if (!TrySetLayoutMutationInFlight())
+            {
+                return false;
+            }
+        }
+
+        auto ClearIfOwned = [this]() noexcept
+        {
+            if (IsLayoutMutationFlagActive())
+            {
+                ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
+            }
+        };
+        
+        const bool ok =
             WriteBoundsPairToHeader_(full_layout.FeedForwardLayout) &&
             WriteBoundsPairToHeader_(full_layout.FeedBackwardLayout) &&
+            WriteBoundsPairToHeader_(full_layout.LateralLayout) &&
             WriteBoundsPairToHeader_(full_layout.StateLayout) &&
-            WriteBoundsPairToHeader_(full_layout.ErrorLayout) && 
+            WriteBoundsPairToHeader_(full_layout.ErrorLayout) &&
             WriteBoundsPairToHeader_(full_layout.EdgeDescriptorLayout) &&
-            WriteBoundsPairToHeader_(full_layout.WeightLayout) && 
+            WriteBoundsPairToHeader_(full_layout.WeightLayout) &&
             WriteBoundsPairToHeader_(full_layout.AUXLayout) &&
+            WriteBoundsPairToHeader_(full_layout.HeterogenousMemoryLayout) &&
+            WriteBoundsPairToHeader_(full_layout.LocalPairedPointerLayout) &&
+            WriteBoundsPairToHeader_(full_layout.DistancePairedLayout) &&
             WriteBoundsPairToHeader_(full_layout.FreeLayout);
+
+        if (!ok)
+        {
+            ClearIfOwned();
+            return false;
+        }
+
+        const bool version_ok = WriteGlobalLayoutVersion_(full_layout.FeedBackwardLayout.VersionNumber + 1u);
+
+        ClearIfOwned();
+        return version_ok;
     }
 
     bool SegmentIODefinition::TurnOnReadyBitForDesiredPagedNode_(APCPagedNodeRelMaskClasses desired_region_class) noexcept

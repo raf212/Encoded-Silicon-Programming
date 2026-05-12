@@ -192,7 +192,7 @@ namespace
         APCPagedNodeRelMaskClasses region
     )
     {
-        const auto maybe = apc.ReadLayoutBounds(region);
+        const auto maybe = apc.ReadLayoutBoundsAndVersion(region);
 
         std::cout << "    " << label
                   << " meta_pub=" << RegionMeta(apc, region);

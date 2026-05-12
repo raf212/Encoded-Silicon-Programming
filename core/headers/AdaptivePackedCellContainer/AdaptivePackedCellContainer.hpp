@@ -288,7 +288,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
             const APCPagedNodeRelMaskClasses page_class = PackedCell64_t::ExtractRelMaskFromPacked(packed_cell);
             const PriorityPhysics priority = PackedCell64_t::ExtractPriorityFromPacked(packed_cell);
 
-            std::optional<LayoutBoundsOfSingleRelNodeClass> layout_bounds = ReadLayoutBounds(page_class);
+            std::optional<LayoutBoundsOfSingleRelNodeClass> layout_bounds = ReadLayoutBoundsAndVersion(page_class);
             const uint32_t span = layout_bounds ? layout_bounds->GetPayloadSpan() : 1u;
             const uint16_t used_occupancy_of_desired_page_class = ReadTotalUsedOccupancyOfARegion(page_class);
             const uint32_t pressure_percentage = (span > UNSIGNED_ZERO) ? static_cast<uint32_t>(static_cast<uint64_t>(used_occupancy_of_desired_page_class) * 100 / span) : 100u;

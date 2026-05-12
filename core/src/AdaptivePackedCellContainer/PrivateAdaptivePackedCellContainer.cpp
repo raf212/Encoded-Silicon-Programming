@@ -182,7 +182,7 @@ namespace PredictedAdaptedEncoding
         }
         
 
-        const auto maybe_current_region_bounds = ReadLayoutBounds(region_kind);
+        const auto maybe_current_region_bounds = ReadLayoutBoundsAndVersion(region_kind);
         if (!maybe_current_region_bounds.has_value() || maybe_current_region_bounds->IsEmpty())
         {
             return std::nullopt;
@@ -290,7 +290,7 @@ namespace PredictedAdaptedEncoding
             node_authority
         );
 
-        const auto maybe_current_region_bounds = ReadLayoutBounds(region_kind);
+        const auto maybe_current_region_bounds = ReadLayoutBoundsAndVersion(region_kind);
         if (!maybe_current_region_bounds|| maybe_current_region_bounds->IsEmpty())
         {
             return failed_result;

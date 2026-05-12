@@ -739,7 +739,7 @@ namespace PredictedAdaptedEncoding
             return UNSIGNED_ZERO;
         }
 
-        auto maybe_desired_class_bounds = ReadLayoutBounds(desired_region_class);
+        auto maybe_desired_class_bounds = ReadLayoutBoundsAndVersion(desired_region_class);
         if (!maybe_desired_class_bounds || maybe_desired_class_bounds->IsEmpty())
         {
             return UNSIGNED_ZERO;

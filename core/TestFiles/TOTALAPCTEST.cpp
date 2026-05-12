@@ -193,7 +193,7 @@ namespace
         APCPagedNodeRelMaskClasses region
     )
     {
-        auto bounds = apc.ReadLayoutBounds(region);
+        auto bounds = apc.ReadLayoutBoundsAndVersion(region);
         if (!bounds || bounds->IsEmpty())
         {
             return 0;
@@ -350,7 +350,7 @@ namespace
 
         for (const auto region : ImportantRegions)
         {
-            const auto bounds = apc.ReadLayoutBounds(region);
+            const auto bounds = apc.ReadLayoutBoundsAndVersion(region);
             std::cout << "  region " << RegionName(region)
                       << " meta_pub=" << apc.ReadPublishedOccupancyOfAPageClass(region)
                       << " exact_pub=" << CountExactPublishedInPhysicalRegion(apc, region);
@@ -569,7 +569,7 @@ namespace
 
         for (const auto region : ImportantRegions)
         {
-            const auto bounds = node.ReadLayoutBounds(region);
+            const auto bounds = node.ReadLayoutBoundsAndVersion(region);
 
             std::ostringstream label;
             label << "Layout: " << RegionName(region) << " bounds exist";
@@ -758,7 +758,7 @@ namespace
         InitNode(node, manager, cfg, SegmentIODefinition::APCNodeComputeKind::GENERIC_VECTOR);
 
         const auto before =
-            node.ReadLayoutBounds(APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE);
+            node.ReadLayoutBoundsAndVersion(APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE);
 
         suite.Check(before.has_value(), "LayoutGrow: FF layout exists before extension");
 
@@ -770,7 +770,7 @@ namespace
             );
 
         const auto after =
-            node.ReadLayoutBounds(APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE);
+            node.ReadLayoutBoundsAndVersion(APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE);
 
         if (extended && before && after)
         {

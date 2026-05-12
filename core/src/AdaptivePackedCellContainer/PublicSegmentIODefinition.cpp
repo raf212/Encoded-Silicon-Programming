@@ -352,7 +352,7 @@ namespace PredictedAdaptedEncoding
 
 
 
-    std::optional<LayoutBoundsOfSingleRelNodeClass> SegmentIODefinition::ReadLayoutBounds(APCPagedNodeRelMaskClasses page_class) noexcept
+    std::optional<LayoutBoundsOfSingleRelNodeClass> SegmentIODefinition::ReadLayoutBoundsAndVersion(APCPagedNodeRelMaskClasses page_class) noexcept
     {
         const MetaIndexOfAPCNode layout_idx = LayoutBoundsOfSingleRelNodeClass::GetLayoutCellMetaIndexForPageClass(page_class);
         if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(page_class) || !ValidMetaIdx(layout_idx))
@@ -368,13 +368,11 @@ namespace PredictedAdaptedEncoding
             return std::nullopt;
         }
 
-        // const std::optional<uint16_t> maybe_global_layout_version = ReadGlobalLayoutVersion_();
-        // if (version16 != )
-        // {
-        //     /* code */
-        // }
-        
-
+        const std::optional<uint16_t> maybe_global_layout_version = ReadGlobalLayoutVersion_();
+        if (!maybe_global_layout_version.has_value() || *maybe_global_layout_version != version16)
+        {
+            return std::nullopt;
+        }
         
         const uint32_t total_capacity = GetTotalCapacityForThisAPC();
         if (begin16 < METACELL_COUNT || end16 < begin16 || end16 > total_capacity)
@@ -437,11 +435,6 @@ namespace PredictedAdaptedEncoding
             );
         };
 
-        auto IsLayoutMutationFlagActive = [&]() noexcept-> bool
-        {
-            return HasThisControlEnumFlag(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
-        };
-
         packed64_t observed_layout = ReadFullMetaCell(layout_idx);
 
         while (true)
@@ -455,7 +448,8 @@ namespace PredictedAdaptedEncoding
                 old_version = UNSIGNED_ZERO;
             }
             
-            const uint16_t next_version = version_number.has_value() ? *version_number : static_cast<uint16_t>(old_version + 1u);
+            const std::optional<uint16_t> maybe_next_version = version_number.has_value() ? version_number : NextGlobalLayoutVersion_();
+            const uint16_t next_version = maybe_next_version.has_value() ? *maybe_next_version : 1u;
 
             packed64_t desired_layout = ComposeLayoutModelof16x3(begain_index, end_index, next_version, page_class);
             packed64_t expected_layout_cell = observed_layout;
@@ -728,7 +722,7 @@ namespace PredictedAdaptedEncoding
     {
         const packed64_t packed_cell = ReadRegionOccupancyCombinedCell(page_class);
 
-        std::optional<LayoutBoundsOfSingleRelNodeClass> maybe_bounds_of_the_page_class = ReadLayoutBounds(page_class);
+        std::optional<LayoutBoundsOfSingleRelNodeClass> maybe_bounds_of_the_page_class = ReadLayoutBoundsAndVersion(page_class);
         if (!maybe_bounds_of_the_page_class || maybe_bounds_of_the_page_class->IsEmpty())
         {
             return UNSIGNED_ZERO;
