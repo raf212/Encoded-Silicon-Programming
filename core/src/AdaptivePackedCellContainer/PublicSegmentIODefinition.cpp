@@ -329,18 +329,34 @@ namespace PredictedAdaptedEncoding
 
     bool SegmentIODefinition::TryMarkSplitInFlight() noexcept
     {
-        const uint32_t current_flags = ReadMetaCellValue32(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
-        if (current_flags == BRANCH_SENTINAL)
+        const uint32_t bit = static_cast<uint32_t>(ControlEnumOfAPCSegment::SPLIT_INFLIGHT);
+        while (true)
         {
-            return false;
+            const uint32_t current_flags = ReadMetaCellValue32(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
+            if ((current_flags & bit) != UNSIGNED_ZERO)
+            {
+                return false;
+            }
+            const uint32_t desired_flags = current_flags | bit;
+            if (JustUpdateValueOfMeta32(
+                MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS,
+                current_flags,
+                desired_flags,
+                false
+            ))
+            {
+                return true;
+            }
+            if (AdaptiveBackoffOfAPCPtr_)
+            {
+                AdaptiveBackoffOfAPCPtr_->AdaptiveBackOffPacked(
+                    ReadFullMetaCell(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS)
+                );
+            }
+            
+            
         }
-
-        bool is_already_in_flight = HasThisControlEnumFlag(ControlEnumOfAPCSegment::SPLIT_INFLIGHT);
-        if (is_already_in_flight)
-        {
-            return false;
-        }
-        return TurnOnASegmentFlag(ControlEnumOfAPCSegment::SPLIT_INFLIGHT);
+        
     }
 
     uint32_t SegmentIODefinition::TotalCASFailForThisBranchIncreaseAndGet(uint32_t increment) noexcept
@@ -363,7 +379,7 @@ namespace PredictedAdaptedEncoding
 
 
 
-    std::optional<LayoutBoundsOfSingleRelNodeClass> SegmentIODefinition::ReadLayoutBoundsAndVersion(APCPagedNodeRelMaskClasses page_class) noexcept
+    std::optional<LayoutBoundsOfSingleRelNodeClass> SegmentIODefinition::ReadLayoutBoundsAndVersion(APCPagedNodeRelMaskClasses page_class, bool caller_holds_the_flag) noexcept
     {
         const MetaIndexOfAPCNode layout_idx = LayoutBoundsOfSingleRelNodeClass::GetLayoutCellMetaIndexForPageClass(page_class);
         if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(page_class) || !ValidMetaIdx(layout_idx))
@@ -379,18 +395,24 @@ namespace PredictedAdaptedEncoding
             return std::nullopt;
         }
 
-        const std::optional<uint16_t> maybe_global_layout_version = ReadGlobalLayoutVersion_();
-        if (!maybe_global_layout_version.has_value() || *maybe_global_layout_version != version16)
-        {
-            return std::nullopt;
-        }
-        
         const uint32_t total_capacity = GetTotalCapacityForThisAPC();
-        if (begin16 < METACELL_COUNT || end16 < begin16 || end16 > total_capacity)
+        if (begin16 < METACELL_COUNT || end16 < begin16 || end16 > total_capacity ||
+            version16 == UNSIGNED_ZERO || version16 == APC_INDEX_SENTINAL
+        )
         {
             return std::nullopt;
         }
 
+        if (!caller_holds_the_flag)
+        {
+            const std::optional<uint16_t> global_version = ReadGlobalLayoutVersion_();
+            if (!global_version.has_value() || *global_version != version16)
+            {
+                return std::nullopt;
+            }
+            
+        }
+        
         LayoutBoundsOfSingleRelNodeClass out_layout{};
         out_layout.BeginIndex = begin16;
         out_layout.EndIndex = end16;
@@ -459,7 +481,8 @@ namespace PredictedAdaptedEncoding
             }
         };
 
-        const uint16_t resolved_version = (version_number.has_value() && *version_number > UNSIGNED_ZERO) ? *version_number : NextGlobalLayoutVersion_().value_or(static_cast<uint16_t>(BRANCH_VERSION));
+        const uint16_t resolved_version = (version_number.has_value() && *version_number > UNSIGNED_ZERO && *version_number != APC_INDEX_SENTINAL) ? 
+                                            *version_number : ReadGlobalLayoutVersion_().value_or(static_cast<uint16_t>(BRANCH_VERSION));
         if (resolved_version == UNSIGNED_ZERO || resolved_version == APC_INDEX_SENTINAL)
         {
             ClearLayoutFlagSB();
@@ -517,7 +540,22 @@ namespace PredictedAdaptedEncoding
             {
                 return false;
             }
-            return TurnOnASegmentFlag(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);            
+            const uint32_t desired_flags = current_flags | bit;
+            if (JustUpdateValueOfMeta32(
+                MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS,
+                current_flags,
+                desired_flags,
+                false
+            ))
+            {
+                return true;
+            }
+            if (AdaptiveBackoffOfAPCPtr_)
+            {
+                AdaptiveBackoffOfAPCPtr_->AdaptiveBackOffPacked(
+                    ReadFullMetaCell(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS)
+                );
+            }
         }
     }
 
@@ -527,7 +565,7 @@ namespace PredictedAdaptedEncoding
         {
             return true;
         }
-        if (!IsBound() || desired_rel_mask == APCPagedNodeRelMaskClasses::NANNULL)
+        if (!IsBound() || !APCAndPagedNodeHelpers::IsValidAccountingPageClass(desired_rel_mask))
         {
             return false;
         }
@@ -535,12 +573,22 @@ namespace PredictedAdaptedEncoding
         {
             return false;
         }
+
+        auto ClearIfOwned = [this]() noexcept
+        {
+            ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
+        };
+
+        auto FailedWrite = [&]()noexcept -> bool
+        {
+            ClearIfOwned();
+            return false;
+        };
         
         auto maybe_current_complete_node_layout = ReadAndGetFullRegionLayout_(true);
         if (!maybe_current_complete_node_layout)
         {
-            ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
-            return false;
+            return FailedWrite();
         }
 
         CompleteAPCNodeRegionsLayout current_complete_layout = *maybe_current_complete_node_layout;
@@ -550,17 +598,14 @@ namespace PredictedAdaptedEncoding
 
         if (!target_layout_of_increment || !free_slot_layout)
         {
-            ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
-            return false;
+            return FailedWrite();
         }
+
         const uint32_t payload_begain = METACELL_COUNT;
         const uint32_t payload_end = GetTotalCapacityForThisAPC();
         if (!target_layout_of_increment->IsValid(payload_begain, payload_end) || !free_slot_layout->IsValid(payload_begain, payload_end))
         {
-            ClearOneControlEnumFlagOfAPC(
-                ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT
-            );
-            return false;
+            return FailedWrite();
         }
         
 
@@ -640,27 +685,22 @@ namespace PredictedAdaptedEncoding
                 true
             );
 
-            ClearOneControlEnumFlagOfAPC(
-                ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT
-            );
+            ClearIfOwned();
 
             return ok;
         }
         
-        std::array<LayoutBoundsOfSingleRelNodeClass*, (CompleteAPCNodeRegionsLayout::CURRENT_TOTAL_APC_REL_NODE_CLASSES - 1)> candidates{};
+        std::array<LayoutBoundsOfSingleRelNodeClass*, (CompleteAPCNodeRegionsLayout::CURRENT_TOTAL_APC_REL_NODE_CLASSES)> candidates{};
         size_t count = 0;
         {
             auto all_layouts = current_complete_layout.OrderedViewsFIFO();
             for (auto* one_layout : all_layouts)
             {
-                if (!one_layout)
+                if (!one_layout || one_layout->PAGE_LAYOUT_CLASS == desired_rel_mask)
                 {
                     continue;
                 }
-                if (one_layout->PAGE_LAYOUT_CLASS == desired_rel_mask)
-                {
-                    continue;
-                }
+
                 const bool touches_target = target_layout_of_increment->CanBorrowRightFrom(*one_layout) || target_layout_of_increment->CanBorrowLeftFrom(*one_layout);
                 if (touches_target)
                 {
@@ -669,34 +709,15 @@ namespace PredictedAdaptedEncoding
             }
         }
 
-        auto PriorityScore = [] (const LayoutBoundsOfSingleRelNodeClass* one_layout) noexcept->uint32_t
-        {
-            if (!one_layout)
-            {
-                return UNSIGNED_ZERO;
-            }
-            return one_layout->GetPayloadSpan();
-        };
 
         if (desired_apc_order == ContainerConf::APCSegmentExtendOrder::PRIORITY)
         {
             std::sort(candidates.begin(), candidates.begin() + count, 
                 [&](const auto* priority_layout_1, const auto* priority_layout_2) noexcept
                 {
-                    return PriorityScore(priority_layout_1) > PriorityScore(priority_layout_2);
+                    return priority_layout_1->GetPayloadSpan() > priority_layout_2->GetPayloadSpan();
                 }
             );
-        }
-        else if (desired_apc_order == ContainerConf::APCSegmentExtendOrder::RANDOM)
-        {
-            const uint32_t seed = ReadMetaCellValue32(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH) ^
-                                ReadMetaCellValue32(MetaIndexOfAPCNode::BRANCH_ID);
-            for (size_t i = 0; i < count; i++)
-            {
-                const size_t j = (static_cast<size_t>(seed) + i * (CompleteAPCNodeRegionsLayout::CURRENT_TOTAL_APC_REL_NODE_CLASSES - 1)) % count;
-                std::swap(candidates[i], candidates[j]);
-            }
-            
         }
 
         for (size_t i = 0; i < count; i++)
@@ -713,16 +734,11 @@ namespace PredictedAdaptedEncoding
                     true
                 );
 
-                ClearOneControlEnumFlagOfAPC(
-                    ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT
-                );
-
+                ClearIfOwned();
                 return ok;
             }
         }
-        ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
-        return false;
-        
+        return FailedWrite();
     }
 
     clk16_t SegmentIODefinition::ReadLastAcceptedClok16ForThisSegment(APCPagedNodeRelMaskClasses region_kind) noexcept

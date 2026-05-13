@@ -295,8 +295,8 @@ public:
         std::optional<uint16_t> version_number = std::nullopt
     ) noexcept;
 
-    std::optional<LayoutBoundsOfSingleRelNodeClass> ReadLayoutBoundsAndVersion(APCPagedNodeRelMaskClasses desired_rel_mask) noexcept;
-    std::optional<CompleteAPCNodeRegionsLayout> ReadAndGetFullRegionLayout_(bool allow_read_while_mutating = false) noexcept;
+    std::optional<LayoutBoundsOfSingleRelNodeClass> ReadLayoutBoundsAndVersion(APCPagedNodeRelMaskClasses desired_rel_mask, bool caller_holds_the_flag = false) noexcept;
+    std::optional<CompleteAPCNodeRegionsLayout> ReadAndGetFullRegionLayout_(bool caller_holds_layout_flag = false) noexcept;
 
 
     bool TrySetLayoutMutationInFlight() noexcept;
