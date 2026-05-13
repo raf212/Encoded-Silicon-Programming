@@ -170,6 +170,7 @@ namespace PredictedAdaptedEncoding
         
         WriteBrenchMeta32_(MetaIndexOfAPCNode::MAGIC_ID, BRANCH_MAGIC, write_cell_priority);
         WriteBrenchMeta32_(MetaIndexOfAPCNode::BRANCH_ID, static_cast<uint32_t>(std::min<uint32_t>(branch_id, BRANCH_SENTINAL)), write_cell_priority);
+        WriteBrenchMeta32_(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION, BRANCH_VERSION, write_cell_priority, APCPagedNodeRelMaskClasses::CONTROL_SLOT);
 
         WriteBrenchMeta32_(MetaIndexOfAPCNode::BRANCH_DEPTH, branch_depth, write_cell_priority);
         WriteBrenchMeta32_(MetaIndexOfAPCNode::BRANCH_PRIORITY, branch_priority, write_cell_priority);
@@ -419,7 +420,16 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-
+        bool owns_layout_flag = false;
+        if (!caller_already_holds_flag)
+        {
+            if (!TrySetLayoutMutationInFlight())
+            {
+                return false;
+            }
+            owns_layout_flag = true;
+        }
+        
         if (!caller_already_holds_flag)
         {
             if (!TrySetLayoutMutationInFlight())
@@ -427,31 +437,38 @@ namespace PredictedAdaptedEncoding
                 return false;
             }        
         }
-        
-        auto ClearLayoutFlagSB = [this]() noexcept
+        else
         {
-            ClearOneControlEnumFlagOfAPC(
-                ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT
-            );
+            if (IsLayoutMutationFlagActive())
+            {
+                return false;
+            }
+        }
+
+        
+        auto ClearLayoutFlagSB = [this, owns_layout_flag]() noexcept
+        {
+            if (owns_layout_flag)
+            {
+                ClearOneControlEnumFlagOfAPC(
+                    ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT
+                );            
+            }
         };
+
+        const uint16_t resolved_version = version_number.has_value() && (*version_number > UNSIGNED_ZERO) ? *version_number : NextGlobalLayoutVersion_().value_or(static_cast<uint16_t>(BRANCH_VERSION));
+        if (resolved_version == UNSIGNED_ZERO || resolved_version == APC_INDEX_SENTINAL)
+        {
+            ClearLayoutFlagSB();
+            return false;
+        }
+        
 
         packed64_t observed_layout = ReadFullMetaCell(layout_idx);
 
         while (true)
         {
-            uint16_t old_begin = UNSIGNED_ZERO;
-            uint16_t old_end = UNSIGNED_ZERO;
-            uint16_t old_version = UNSIGNED_ZERO;
-            
-            if (!ExtractLayoutModel_BegainL_EndM_VersionH(observed_layout, old_begin, old_end, old_version))
-            {
-                old_version = UNSIGNED_ZERO;
-            }
-            
-            const std::optional<uint16_t> maybe_next_version = version_number.has_value() ? version_number : NextGlobalLayoutVersion_();
-            const uint16_t next_version = maybe_next_version.has_value() ? *maybe_next_version : 1u;
-
-            packed64_t desired_layout = ComposeLayoutModelof16x3(begain_index, end_index, next_version, page_class);
+            packed64_t desired_layout = ComposeLayoutModelof16x3(begain_index, end_index, resolved_version, page_class);
             packed64_t expected_layout_cell = observed_layout;
             if (!IsLayoutMutationFlagActive())
             {
@@ -513,7 +530,7 @@ namespace PredictedAdaptedEncoding
             return false;
         }
         
-        auto maybe_current_complete_node_layout = ReadAndGetFullRegionLayout_();
+        auto maybe_current_complete_node_layout = ReadAndGetFullRegionLayout_(true);
         if (!maybe_current_complete_node_layout)
         {
             ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
@@ -603,8 +620,16 @@ namespace PredictedAdaptedEncoding
         //first try against free
         if (TryFromSpecificNeighbor(*free_slot_layout))
         {
-            const bool ok = WriteAllRegionsLayoutToHeader_(current_complete_layout);
-            ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
+            const bool ok = WriteAllRegionsLayoutToHeader_(
+                current_complete_layout,
+                std::nullopt,
+                true
+            );
+
+            ClearOneControlEnumFlagOfAPC(
+                ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT
+            );
+
             return ok;
         }
         
@@ -668,8 +693,16 @@ namespace PredictedAdaptedEncoding
             }
             if (TryFromSpecificNeighbor(*candidates[i]))
             {
-                const bool ok = WriteAllRegionsLayoutToHeader_(current_complete_layout);
-                ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
+                const bool ok = WriteAllRegionsLayoutToHeader_(
+                    current_complete_layout,
+                    std::nullopt,
+                    true
+                );
+
+                ClearOneControlEnumFlagOfAPC(
+                    ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT
+                );
+
                 return ok;
             }
         }

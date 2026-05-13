@@ -18,8 +18,11 @@ namespace PredictedAdaptedEncoding
 
         BuidDefaultLayoutPlan_(full_paged_node_layout);
 
-        if (!WriteAllRegionsLayoutToHeader_(full_paged_node_layout))
+        if (!WriteAllRegionsLayoutToHeader_(full_paged_node_layout, static_cast<uint16_t>(BRANCH_VERSION), false))
         {
+            ClearOneControlEnumFlagOfAPC(
+                ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT
+            );
             return;
         }
 
@@ -51,49 +54,59 @@ namespace PredictedAdaptedEncoding
             return;
         }
         
-        auto AssignOne = [&](LayoutBoundsOfSingleRelNodeClass& one, bool keep_tail = false) noexcept
+        auto AssignOne = [&](LayoutBoundsOfSingleRelNodeClass& one) noexcept
         {
-            if (one.PAGE_LAYOUT_CLASS == APCPagedNodeRelMaskClasses::NANNULL)
+            if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(one.PAGE_LAYOUT_CLASS))
             {
                 one.BeginIndex = initial_cursor;
                 one.EndIndex = initial_cursor;
                 return;
             }
-            one.BeginIndex = initial_cursor;
-            one.VersionNumber = current_or_start_version;
-            uint32_t wanted_span = one.ComputeWantedSpanFromTotal(total_span);
-            if (one.PAGE_LAYOUT_CLASS != APCPagedNodeRelMaskClasses::FREE_SLOT)
+
+            if (one.PAGE_LAYOUT_CLASS == APCPagedNodeRelMaskClasses::FREE_SLOT)
             {
-                wanted_span = std::max<uint32_t>(wanted_span, 2u);
-            }
-            if (keep_tail)
-            {
-                one.EndIndex = payload_end;
-                initial_cursor = payload_end;
                 return;
             }
-            const uint32_t remaining_span = (payload_end > initial_cursor) ? (payload_end - initial_cursor) : UNSIGNED_ZERO;
-            wanted_span = std::min<uint32_t>(wanted_span, remaining_span);
+            
+            one.BeginIndex = initial_cursor;
+            uint32_t wanted_span = one.ComputeWantedSpanFromTotal(total_span);
+            if (wanted_span == UNSIGNED_ZERO)
+            {
+                one.EndIndex = initial_cursor;
+                return;
+            }
+            
+            wanted_span = std::max<uint32_t>(wanted_span, MIN_REGION_SIZE);
+            const uint32_t remaining = payload_end > initial_cursor ? (payload_end - initial_cursor) : UNSIGNED_ZERO;
+            wanted_span = std::min<uint32_t>(wanted_span, remaining);
             one.EndIndex = initial_cursor + wanted_span;
             initial_cursor = one.EndIndex;
         };
-        AssignOne(full_layout.FeedForwardLayout);
-        AssignOne(full_layout.FeedBackwardLayout);
-        AssignOne(full_layout.LateralLayout);
-        AssignOne(full_layout.StateLayout);
-        AssignOne(full_layout.ErrorLayout);
-        AssignOne(full_layout.EdgeDescriptorLayout);
-        AssignOne(full_layout.WeightLayout);
-        AssignOne(full_layout.AUXLayout);
-        AssignOne(full_layout.HeterogenousMemoryLayout);
-        AssignOne(full_layout.LocalPairedPointerLayout);
-        AssignOne(full_layout.DistancePairedLayout);
 
+        auto ordered = full_layout.OrderedViewsFIFO();
+        for (auto* one : ordered)
+        {
+            if (!one)
+            {
+                return;
+            }
+            if (one->PAGE_LAYOUT_CLASS == APCPagedNodeRelMaskClasses::FREE_SLOT)
+            {
+                continue;
+            }
+            AssignOne(*one);
+        }
+        
         full_layout.FreeLayout.BeginIndex = initial_cursor;
         full_layout.FreeLayout.EndIndex = payload_end;
+        full_layout.FreeLayout.PAGE_LAYOUT_CLASS = APCPagedNodeRelMaskClasses::FREE_SLOT;
     }
 
-    bool SegmentIODefinition::WriteBoundsPairToHeader_(const LayoutBoundsOfSingleRelNodeClass layout_bound) noexcept
+    bool SegmentIODefinition::WriteBoundsPairToHeader_(
+        const LayoutBoundsOfSingleRelNodeClass layout_bound,
+        std::optional<uint16_t> version_number,
+        bool caller_holds_the_flag
+    ) noexcept
     {
         if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(layout_bound.PAGE_LAYOUT_CLASS))
         {
@@ -104,21 +117,23 @@ namespace PredictedAdaptedEncoding
         {
             return false;
         }
+
+        const uint16_t resolved_version = version_number.has_value() && (*version_number > UNSIGNED_ZERO) ? *version_number : NextGlobalLayoutVersion_().value_or(static_cast<uint16_t>(BRANCH_VERSION));
+
         
-        const std::optional<uint16_t> maybe_global_version = ReadGlobalLayoutVersion_();
-        if (maybe_global_version.has_value())
+        const uint32_t payload_begin = METACELL_COUNT;
+        const uint32_t payload_end = GetTotalCapacityForThisAPC();
+        if (!layout_bound.IsValid(payload_begin, payload_end))
         {
-            if (layout_bound.VersionNumber != *maybe_global_version)
-            {
-                return false;
-            }
+            return false;
         }
         
         return SetLayOutBounds(
             layout_bound.PAGE_LAYOUT_CLASS,
             static_cast<uint16_t>(layout_bound.BeginIndex),
             static_cast<uint16_t>(layout_bound.EndIndex),
-            layout_bound.VersionNumber
+            resolved_version,
+            caller_holds_the_flag
         );
     }
 
@@ -153,71 +168,122 @@ namespace PredictedAdaptedEncoding
         }
     }
 
-    std::optional<CompleteAPCNodeRegionsLayout> SegmentIODefinition::ReadAndGetFullRegionLayout_() noexcept
-    {   
+    std::optional<CompleteAPCNodeRegionsLayout> SegmentIODefinition::ReadAndGetFullRegionLayout_(bool allow_read_while_mutating) noexcept
+    {  
+        if (IsLayoutMutationFlagActive() && !allow_read_while_mutating)
+        {
+            return std::nullopt;
+        }
+         
         auto LoadOne = [&](APCPagedNodeRelMaskClasses desired_rel_mask, LayoutBoundsOfSingleRelNodeClass& out_one) noexcept->bool
         {
-            if (!IsLayoutMutationFlagActive())
+            auto maybe_one = ReadLayoutBoundsAndVersion(desired_rel_mask);
+            if (!maybe_one)
             {
-                auto maybe_one = ReadLayoutBoundsAndVersion(desired_rel_mask);
-                if (!maybe_one)
-                {
-                    return false;
-                }
-                out_one = *maybe_one;
-                return true;
+                return false;
             }
-            return false;
+            out_one = *maybe_one;
+            return true;
         };
 
         CompleteAPCNodeRegionsLayout out_layout{};
-        LoadOne(APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE, out_layout.FeedForwardLayout);
-        LoadOne(APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE, out_layout.FeedBackwardLayout);
-        LoadOne(APCPagedNodeRelMaskClasses::LATERAL_MESAGE, out_layout.LateralLayout);
-        LoadOne(APCPagedNodeRelMaskClasses::STATE_SLOT, out_layout.StateLayout);
-        LoadOne(APCPagedNodeRelMaskClasses::ERROR_SLOT, out_layout.ErrorLayout);
-        LoadOne(APCPagedNodeRelMaskClasses::EDGE_DESCRIPTOR, out_layout.EdgeDescriptorLayout);
-        LoadOne(APCPagedNodeRelMaskClasses::WEIGHT_SLOT, out_layout.WeightLayout);
-        LoadOne(APCPagedNodeRelMaskClasses::AUX_SLOT, out_layout.AUXLayout);
-        LoadOne(APCPagedNodeRelMaskClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT, out_layout.HeterogenousMemoryLayout);
-        LoadOne(APCPagedNodeRelMaskClasses::PAIRED_POINTER_LOCAL_MEMORY, out_layout.LocalPairedPointerLayout);
-        LoadOne(APCPagedNodeRelMaskClasses::PAIRED_POINTER_DISTANCE_MEMORY, out_layout.DistancePairedLayout);
-        LoadOne(APCPagedNodeRelMaskClasses::FREE_SLOT, out_layout.FreeLayout);
+        bool ok = true;
+        ok = LoadOne(APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE, out_layout.FeedForwardLayout);
+        ok = LoadOne(APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE, out_layout.FeedBackwardLayout);
+        ok = LoadOne(APCPagedNodeRelMaskClasses::LATERAL_MESAGE, out_layout.LateralLayout);
+        ok = LoadOne(APCPagedNodeRelMaskClasses::STATE_SLOT, out_layout.StateLayout);
+        ok = LoadOne(APCPagedNodeRelMaskClasses::ERROR_SLOT, out_layout.ErrorLayout);
+        ok = LoadOne(APCPagedNodeRelMaskClasses::EDGE_DESCRIPTOR, out_layout.EdgeDescriptorLayout);
+        ok = LoadOne(APCPagedNodeRelMaskClasses::WEIGHT_SLOT, out_layout.WeightLayout);
+        ok = LoadOne(APCPagedNodeRelMaskClasses::AUX_SLOT, out_layout.AUXLayout);
+        ok = LoadOne(APCPagedNodeRelMaskClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT, out_layout.HeterogenousMemoryLayout);
+        ok = LoadOne(APCPagedNodeRelMaskClasses::PAIRED_POINTER_LOCAL_MEMORY, out_layout.LocalPairedPointerLayout);
+        ok = LoadOne(APCPagedNodeRelMaskClasses::PAIRED_POINTER_DISTANCE_MEMORY, out_layout.DistancePairedLayout);
+        ok = LoadOne(APCPagedNodeRelMaskClasses::FREE_SLOT, out_layout.FreeLayout);
+        if (!ok)
+        {
+            return std::nullopt;
+        }
+
+        const std::optional<uint16_t> maybe_global_version = ReadGlobalLayoutVersion_();
+        if (!maybe_global_version)
+        {
+            return std::nullopt;
+        }
+        
+        
+        if (!out_layout.DoseAllPhysicalLayoutCarrySameVersionNumberAsGlobal(*maybe_global_version))
+        {
+            return std::nullopt;
+        }
+        
         //in complete layout any-one layout can be std::nullopt
         return out_layout;
     }
 
-    bool SegmentIODefinition::WriteAllRegionsLayoutToHeader_(const CompleteAPCNodeRegionsLayout& full_layout) noexcept
+    bool SegmentIODefinition::WriteAllRegionsLayoutToHeader_(
+        const CompleteAPCNodeRegionsLayout& full_layout,
+        std::optional<uint16_t> forced_version_number,
+        bool caller_holds_the_flag
+    ) noexcept
     {
-        if (!IsLayoutMutationFlagActive())
+        bool owns_layout_flag = false;
+
+        if (!caller_holds_the_flag)
         {
             if (!TrySetLayoutMutationInFlight())
             {
                 return false;
             }
+            owns_layout_flag = true;
+        }
+        else
+        {
+            if (!IsLayoutMutationFlagActive())
+            {
+                return false;
+            }
         }
 
-        auto ClearIfOwned = [this]() noexcept
+        auto ClearIfOwned = [this, owns_layout_flag]() noexcept
         {
-            if (IsLayoutMutationFlagActive())
+            if (owns_layout_flag)
             {
                 ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
             }
         };
+
+        uint16_t commit_version = 0;
+        if (forced_version_number.has_value())
+        {
+            commit_version = *forced_version_number;
+        }
+        else
+        {
+            commit_version = NextGlobalLayoutVersion_().value_or(static_cast<uint16_t>(BRANCH_VERSION));
+        }
+
+        if (commit_version == UNSIGNED_ZERO || commit_version == APC_INDEX_SENTINAL)
+        {
+            ClearIfOwned();
+            return false;
+        }
+        
+
         
         const bool ok =
-            WriteBoundsPairToHeader_(full_layout.FeedForwardLayout) &&
-            WriteBoundsPairToHeader_(full_layout.FeedBackwardLayout) &&
-            WriteBoundsPairToHeader_(full_layout.LateralLayout) &&
-            WriteBoundsPairToHeader_(full_layout.StateLayout) &&
-            WriteBoundsPairToHeader_(full_layout.ErrorLayout) &&
-            WriteBoundsPairToHeader_(full_layout.EdgeDescriptorLayout) &&
-            WriteBoundsPairToHeader_(full_layout.WeightLayout) &&
-            WriteBoundsPairToHeader_(full_layout.AUXLayout) &&
-            WriteBoundsPairToHeader_(full_layout.HeterogenousMemoryLayout) &&
-            WriteBoundsPairToHeader_(full_layout.LocalPairedPointerLayout) &&
-            WriteBoundsPairToHeader_(full_layout.DistancePairedLayout) &&
-            WriteBoundsPairToHeader_(full_layout.FreeLayout);
+            WriteBoundsPairToHeader_(full_layout.FeedForwardLayout, commit_version, true) &&
+            WriteBoundsPairToHeader_(full_layout.FeedBackwardLayout, commit_version, true) &&
+            WriteBoundsPairToHeader_(full_layout.LateralLayout, commit_version, true) &&
+            WriteBoundsPairToHeader_(full_layout.StateLayout, commit_version, true) &&
+            WriteBoundsPairToHeader_(full_layout.ErrorLayout, commit_version, true) &&
+            WriteBoundsPairToHeader_(full_layout.EdgeDescriptorLayout, commit_version, true) &&
+            WriteBoundsPairToHeader_(full_layout.WeightLayout, commit_version, true) &&
+            WriteBoundsPairToHeader_(full_layout.AUXLayout, commit_version, true) &&
+            WriteBoundsPairToHeader_(full_layout.HeterogenousMemoryLayout, commit_version, true) &&
+            WriteBoundsPairToHeader_(full_layout.LocalPairedPointerLayout, commit_version, true) &&
+            WriteBoundsPairToHeader_(full_layout.DistancePairedLayout, commit_version, true) &&
+            WriteBoundsPairToHeader_(full_layout.FreeLayout, commit_version, true);
 
         if (!ok)
         {

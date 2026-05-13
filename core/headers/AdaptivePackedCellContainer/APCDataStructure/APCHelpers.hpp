@@ -327,14 +327,22 @@ namespace PredictedAdaptedEncoding
                     DistancePairedLayout.InitialOrCurrentPercentage + FreeLayout.InitialOrCurrentPercentage;
         }
 
-        bool DoseAllPhysicalLayoutCarrySameVersionNumberAsGlobal(uint16_t global_version_number) noexcept
+        bool DoseAllPhysicalLayoutCarrySameVersionNumberAsGlobal(
+            uint16_t global_version_number
+        ) noexcept
         {
-            return FeedForwardLayout.VersionNumber == FeedBackwardLayout.VersionNumber == 
-                    LateralLayout.VersionNumber == StateLayout.VersionNumber ==
-                    ErrorLayout.VersionNumber == EdgeDescriptorLayout.VersionNumber == 
-                    WeightLayout.VersionNumber == AUXLayout.VersionNumber ==
-                    HeterogenousMemoryLayout.VersionNumber == LocalPairedPointerLayout.VersionNumber ==
-                    DistancePairedLayout.VersionNumber == FreeLayout.VersionNumber == global_version_number;        
+            return FeedForwardLayout.VersionNumber == global_version_number &&
+                FeedBackwardLayout.VersionNumber == global_version_number &&
+                LateralLayout.VersionNumber == global_version_number &&
+                StateLayout.VersionNumber == global_version_number &&
+                ErrorLayout.VersionNumber == global_version_number &&
+                EdgeDescriptorLayout.VersionNumber == global_version_number &&
+                WeightLayout.VersionNumber == global_version_number &&
+                AUXLayout.VersionNumber == global_version_number &&
+                HeterogenousMemoryLayout.VersionNumber == global_version_number &&
+                LocalPairedPointerLayout.VersionNumber == global_version_number &&
+                DistancePairedLayout.VersionNumber == global_version_number &&
+                FreeLayout.VersionNumber == global_version_number;
         }
 
         bool NormalizePercentagesIfNeeded() noexcept

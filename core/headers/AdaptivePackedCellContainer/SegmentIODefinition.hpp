@@ -137,7 +137,11 @@ protected:
     bool UpdateAPCModeFlagsInHeader_(uint32_t flags_to_turn_on = UNSIGNED_ZERO, uint32_t flags_to_turn_off = UNSIGNED_ZERO, MetaIndexOfAPCNode desired_flag_idx = MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS) noexcept;
 
     ////layout helpers
-    bool WriteBoundsPairToHeader_(const LayoutBoundsOfSingleRelNodeClass layout_bound) noexcept;
+    bool WriteBoundsPairToHeader_(
+        const LayoutBoundsOfSingleRelNodeClass layout_bound,
+        std::optional<uint16_t> version_number = std::nullopt,
+        bool caller_holds_the_flag = false
+    ) noexcept;
 
     void BuidDefaultLayoutPlan_(CompleteAPCNodeRegionsLayout& full_layout) noexcept;
 
@@ -181,21 +185,20 @@ protected:
     std::optional<uint16_t> NextGlobalLayoutVersion_() noexcept
     {
         std::optional<uint16_t> maybe_current_layout_version = ReadGlobalLayoutVersion_();
-        if (!maybe_current_layout_version.has_value())
-        {
-            return std::nullopt;
-        }
-
-        const uint16_t next_global_layout_version = *maybe_current_layout_version + 1u;
+        uint16_t next_global_layout_version = maybe_current_layout_version.has_value() ? *maybe_current_layout_version : static_cast<uint16_t>(BRANCH_VERSION);
         if (next_global_layout_version == APC_INDEX_SENTINAL || next_global_layout_version == UNSIGNED_ZERO)
         {
-            return std::nullopt;
+            return static_cast<uint16_t>(BRANCH_VERSION);
         }
         return next_global_layout_version;
     }
 
 
-    bool WriteAllRegionsLayoutToHeader_(const CompleteAPCNodeRegionsLayout& full_layout) noexcept;
+    bool WriteAllRegionsLayoutToHeader_(
+        const CompleteAPCNodeRegionsLayout& full_layout,
+        std::optional<uint16_t> forced_version_number = std::nullopt,
+        bool caller_holds_the_flag = false
+    ) noexcept;
 
     bool TurnOnReadyBitForDesiredPagedNode_(APCPagedNodeRelMaskClasses desired_region_class) noexcept;
 
@@ -292,7 +295,7 @@ public:
     ) noexcept;
 
     std::optional<LayoutBoundsOfSingleRelNodeClass> ReadLayoutBoundsAndVersion(APCPagedNodeRelMaskClasses desired_rel_mask) noexcept;
-    std::optional<CompleteAPCNodeRegionsLayout> ReadAndGetFullRegionLayout_() noexcept;
+    std::optional<CompleteAPCNodeRegionsLayout> ReadAndGetFullRegionLayout_(bool allow_read_while_mutating = false) noexcept;
 
 
     bool TrySetLayoutMutationInFlight() noexcept;
