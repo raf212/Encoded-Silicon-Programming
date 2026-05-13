@@ -331,7 +331,14 @@ namespace PredictedAdaptedEncoding
             uint16_t global_version_number
         ) noexcept
         {
-            return FeedForwardLayout.VersionNumber == global_version_number &&
+            if (global_version_number == UNSIGNED_ZERO ||
+                global_version_number == APCDataStructure::APC_INDEX_SENTINAL)
+            {
+                return false;
+            }
+
+            return
+                FeedForwardLayout.VersionNumber == global_version_number &&
                 FeedBackwardLayout.VersionNumber == global_version_number &&
                 LateralLayout.VersionNumber == global_version_number &&
                 StateLayout.VersionNumber == global_version_number &&
@@ -344,7 +351,7 @@ namespace PredictedAdaptedEncoding
                 DistancePairedLayout.VersionNumber == global_version_number &&
                 FreeLayout.VersionNumber == global_version_number;
         }
-
+        
         bool NormalizePercentagesIfNeeded() noexcept
         {
             const float sum_of_default = SumOfPercentage();

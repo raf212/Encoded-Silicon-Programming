@@ -248,11 +248,7 @@ namespace PredictedAdaptedEncoding
             return;
         }
 
-        AdaptivePackedCellContainer* grown_apc = GrowSharedNodeByRegionKind(rel_mask_hint);
-        if (grown_apc)
-        {
-            APCManagerPtr_->RegisterAPCFromManager_(grown_apc);
-        }
+        GrowSharedNodeByRegionKind(rel_mask_hint);
         
     }
     
@@ -406,7 +402,11 @@ namespace PredictedAdaptedEncoding
         }
         AdaptivePackedCellContainer* current_apc_ptr = root_apc_ptr;
         bool first = true;
-        while (current_apc_ptr)
+        const uint32_t group_size = std::max<uint32_t>(1u, ReadMetaCellValue32(MetaIndexOfAPCNode::NODE_GROUP_SIZE));
+        uint32_t chain_guard = 0;
+        const uint32_t max_chain_steps = group_size + 2u;
+
+        while (current_apc_ptr && chain_guard++ < max_chain_steps)
         {
             size_t local_cursor = first ? scan_cursor : PayloadBegin();
             auto maybe_cell = current_apc_ptr->TryConsumeAndIdleFromRegionLocal_(region_kind, local_cursor);
@@ -417,6 +417,11 @@ namespace PredictedAdaptedEncoding
                     scan_cursor = local_cursor;
                 }
                 return *maybe_cell;
+            }
+            AdaptivePackedCellContainer* next_apc_ptr = current_apc_ptr->GetNextSharedSegment();
+            if (!next_apc_ptr || next_apc_ptr == current_apc_ptr)
+            {
+                break;
             }
             current_apc_ptr = current_apc_ptr->GetNextSharedSegment();
             first = false;
@@ -445,13 +450,22 @@ namespace PredictedAdaptedEncoding
         }
 
         AdaptivePackedCellContainer* curren_or_next_container_ptr = GetNextSharedSegment();
-        while (curren_or_next_container_ptr)
+        const uint32_t group_size = std::max<uint32_t>(1u, ReadMetaCellValue32(MetaIndexOfAPCNode::NODE_GROUP_SIZE));
+        uint32_t chain_guard = 0;
+        const uint32_t max_chain_steps = group_size + 2u;
+
+        while (curren_or_next_container_ptr && chain_guard++ < max_chain_steps)
         {
             //using resolved_tries here results deadlock 
-            const PublishResult sibling_result_publish = curren_or_next_container_ptr->TryPublishToRegionLocal_(cell_to_publish, page_class, authority);
+            const PublishResult sibling_result_publish = curren_or_next_container_ptr->TryPublishToRegionLocal_(cell_to_publish, page_class, authority, resolved_tries);
             if (sibling_result_publish.ResultStatus == PublishStatus::OK)
             {
                 return sibling_result_publish;
+            }
+            AdaptivePackedCellContainer* next_apc_ptr = curren_or_next_container_ptr->GetNextSharedSegment();
+            if (!next_apc_ptr || next_apc_ptr == curren_or_next_container_ptr)
+            {
+                break;
             }
             curren_or_next_container_ptr = curren_or_next_container_ptr->GetNextSharedSegment();
         }

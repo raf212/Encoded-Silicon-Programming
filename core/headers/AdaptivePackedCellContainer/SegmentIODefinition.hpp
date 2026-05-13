@@ -185,7 +185,8 @@ protected:
     std::optional<uint16_t> NextGlobalLayoutVersion_() noexcept
     {
         std::optional<uint16_t> maybe_current_layout_version = ReadGlobalLayoutVersion_();
-        uint16_t next_global_layout_version = maybe_current_layout_version.has_value() ? *maybe_current_layout_version : static_cast<uint16_t>(BRANCH_VERSION);
+        uint16_t current_global_version = maybe_current_layout_version.has_value() ? *maybe_current_layout_version : static_cast<uint16_t>(BRANCH_VERSION);
+        uint16_t next_global_layout_version = current_global_version + 1;
         if (next_global_layout_version == APC_INDEX_SENTINAL || next_global_layout_version == UNSIGNED_ZERO)
         {
             return static_cast<uint16_t>(BRANCH_VERSION);

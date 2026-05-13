@@ -207,6 +207,16 @@ namespace PredictedAdaptedEncoding
         ResetALLOccupancy16x3ModelToZero_();
         
         WriteBrenchMeta32_(MetaIndexOfAPCNode::EOF_APC_HEADER, EOF_HEADER, write_cell_priority);
+#ifndef NDEBUG
+{
+    auto layout = ReadAndGetFullRegionLayout_(false);
+    if (!layout)
+    {
+        std::cerr << "[APC INIT BUG] layout version validation failed after init\n";
+        std::terminate();
+    }
+}
+#endif
     }
 
     bool SegmentIODefinition::TryIncrementOrDecrementActiveThreadCount(int8_t change_count) noexcept
@@ -421,28 +431,21 @@ namespace PredictedAdaptedEncoding
         }
 
         bool owns_layout_flag = false;
-        if (!caller_already_holds_flag)
-        {
-            if (!TrySetLayoutMutationInFlight())
-            {
-                return false;
-            }
-            owns_layout_flag = true;
-        }
         
-        if (!caller_already_holds_flag)
+        if (caller_already_holds_flag)
         {
-            if (!TrySetLayoutMutationInFlight())
+            if (!IsLayoutMutationFlagActive())
             {
                 return false;
             }        
         }
         else
         {
-            if (IsLayoutMutationFlagActive())
+            if (!TrySetLayoutMutationInFlight())
             {
                 return false;
             }
+            owns_layout_flag = true;
         }
 
         
@@ -456,7 +459,7 @@ namespace PredictedAdaptedEncoding
             }
         };
 
-        const uint16_t resolved_version = version_number.has_value() && (*version_number > UNSIGNED_ZERO) ? *version_number : NextGlobalLayoutVersion_().value_or(static_cast<uint16_t>(BRANCH_VERSION));
+        const uint16_t resolved_version = (version_number.has_value() && *version_number > UNSIGNED_ZERO) ? *version_number : NextGlobalLayoutVersion_().value_or(static_cast<uint16_t>(BRANCH_VERSION));
         if (resolved_version == UNSIGNED_ZERO || resolved_version == APC_INDEX_SENTINAL)
         {
             ClearLayoutFlagSB();
@@ -468,12 +471,15 @@ namespace PredictedAdaptedEncoding
 
         while (true)
         {
-            packed64_t desired_layout = ComposeLayoutModelof16x3(begain_index, end_index, resolved_version, page_class);
-            packed64_t expected_layout_cell = observed_layout;
             if (!IsLayoutMutationFlagActive())
             {
+                ClearLayoutFlagSB();
                 return false;
             }
+            
+            packed64_t desired_layout = ComposeLayoutModelof16x3(begain_index, end_index, resolved_version, page_class);
+            packed64_t expected_layout_cell = observed_layout;
+
             if (BackingPtr[static_cast<size_t>(layout_idx)].compare_exchange_strong(
                     expected_layout_cell,
                     desired_layout,
@@ -542,13 +548,21 @@ namespace PredictedAdaptedEncoding
         LayoutBoundsOfSingleRelNodeClass* target_layout_of_increment = current_complete_layout.GetALayoutByRelMask(desired_rel_mask);
         LayoutBoundsOfSingleRelNodeClass* free_slot_layout = current_complete_layout.GetALayoutByRelMask(APCPagedNodeRelMaskClasses::FREE_SLOT);
 
-        if (!target_layout_of_increment || !free_slot_layout || target_layout_of_increment->IsEmpty())
+        if (!target_layout_of_increment || !free_slot_layout)
         {
             ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
             return false;
         }
         const uint32_t payload_begain = METACELL_COUNT;
         const uint32_t payload_end = GetTotalCapacityForThisAPC();
+        if (!target_layout_of_increment->IsValid(payload_begain, payload_end) || !free_slot_layout->IsValid(payload_begain, payload_end))
+        {
+            ClearOneControlEnumFlagOfAPC(
+                ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT
+            );
+            return false;
+        }
+        
 
         auto IsLayoutValid = [&](CompleteAPCNodeRegionsLayout& compleate_layout_address) noexcept->bool
         {

@@ -30,6 +30,16 @@ namespace PredictedAdaptedEncoding
         WriteBrenchMeta32_(MetaIndexOfAPCNode::EDGE_TABLE_COUNT, UNSIGNED_ZERO);
         WriteBrenchMeta32_(MetaIndexOfAPCNode::WEIGHT_TABLE_COUNT, UNSIGNED_ZERO);
         TurnOnASegmentFlag(ControlEnumOfAPCSegment::HAS_LAYOUT_DIR);
+#ifndef NDEBUG
+{
+    auto layout = ReadAndGetFullRegionLayout_(false);
+    if (!layout)
+    {
+        std::cerr << "[APC INIT BUG] layout version validation failed after init\n";
+        std::terminate();
+    }
+}
+#endif
         
     }
 
@@ -118,7 +128,6 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-        const uint16_t resolved_version = version_number.has_value() && (*version_number > UNSIGNED_ZERO) ? *version_number : NextGlobalLayoutVersion_().value_or(static_cast<uint16_t>(BRANCH_VERSION));
 
         
         const uint32_t payload_begin = METACELL_COUNT;
@@ -127,13 +136,20 @@ namespace PredictedAdaptedEncoding
         {
             return false;
         }
+
+        const uint16_t resolved_version = version_number.has_value() && (*version_number > UNSIGNED_ZERO) ? *version_number : NextGlobalLayoutVersion_().value_or(static_cast<uint16_t>(BRANCH_VERSION));
+
+        if (resolved_version == UNSIGNED_ZERO || resolved_version == APC_INDEX_SENTINAL)
+        {
+            return false;
+        }
         
         return SetLayOutBounds(
             layout_bound.PAGE_LAYOUT_CLASS,
             static_cast<uint16_t>(layout_bound.BeginIndex),
             static_cast<uint16_t>(layout_bound.EndIndex),
-            resolved_version,
-            caller_holds_the_flag
+            caller_holds_the_flag,
+            resolved_version
         );
     }
 
@@ -188,18 +204,18 @@ namespace PredictedAdaptedEncoding
 
         CompleteAPCNodeRegionsLayout out_layout{};
         bool ok = true;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE, out_layout.FeedForwardLayout);
-        ok = LoadOne(APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE, out_layout.FeedBackwardLayout);
-        ok = LoadOne(APCPagedNodeRelMaskClasses::LATERAL_MESAGE, out_layout.LateralLayout);
-        ok = LoadOne(APCPagedNodeRelMaskClasses::STATE_SLOT, out_layout.StateLayout);
-        ok = LoadOne(APCPagedNodeRelMaskClasses::ERROR_SLOT, out_layout.ErrorLayout);
-        ok = LoadOne(APCPagedNodeRelMaskClasses::EDGE_DESCRIPTOR, out_layout.EdgeDescriptorLayout);
-        ok = LoadOne(APCPagedNodeRelMaskClasses::WEIGHT_SLOT, out_layout.WeightLayout);
-        ok = LoadOne(APCPagedNodeRelMaskClasses::AUX_SLOT, out_layout.AUXLayout);
-        ok = LoadOne(APCPagedNodeRelMaskClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT, out_layout.HeterogenousMemoryLayout);
-        ok = LoadOne(APCPagedNodeRelMaskClasses::PAIRED_POINTER_LOCAL_MEMORY, out_layout.LocalPairedPointerLayout);
-        ok = LoadOne(APCPagedNodeRelMaskClasses::PAIRED_POINTER_DISTANCE_MEMORY, out_layout.DistancePairedLayout);
-        ok = LoadOne(APCPagedNodeRelMaskClasses::FREE_SLOT, out_layout.FreeLayout);
+        ok = LoadOne(APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE, out_layout.FeedForwardLayout) && ok;
+        ok = LoadOne(APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE, out_layout.FeedBackwardLayout) && ok;
+        ok = LoadOne(APCPagedNodeRelMaskClasses::LATERAL_MESAGE, out_layout.LateralLayout) && ok;
+        ok = LoadOne(APCPagedNodeRelMaskClasses::STATE_SLOT, out_layout.StateLayout) && ok;
+        ok = LoadOne(APCPagedNodeRelMaskClasses::ERROR_SLOT, out_layout.ErrorLayout) && ok;
+        ok = LoadOne(APCPagedNodeRelMaskClasses::EDGE_DESCRIPTOR, out_layout.EdgeDescriptorLayout) && ok;
+        ok = LoadOne(APCPagedNodeRelMaskClasses::WEIGHT_SLOT, out_layout.WeightLayout) && ok;
+        ok = LoadOne(APCPagedNodeRelMaskClasses::AUX_SLOT, out_layout.AUXLayout) && ok;
+        ok = LoadOne(APCPagedNodeRelMaskClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT, out_layout.HeterogenousMemoryLayout) && ok;
+        ok = LoadOne(APCPagedNodeRelMaskClasses::PAIRED_POINTER_LOCAL_MEMORY, out_layout.LocalPairedPointerLayout) && ok;
+        ok = LoadOne(APCPagedNodeRelMaskClasses::PAIRED_POINTER_DISTANCE_MEMORY, out_layout.DistancePairedLayout) && ok;
+        ok = LoadOne(APCPagedNodeRelMaskClasses::FREE_SLOT, out_layout.FreeLayout) && ok;
         if (!ok)
         {
             return std::nullopt;
@@ -291,7 +307,7 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-        const bool version_ok = WriteGlobalLayoutVersion_(full_layout.FeedBackwardLayout.VersionNumber + 1u);
+        const bool version_ok = WriteGlobalLayoutVersion_(commit_version);
 
         ClearIfOwned();
         return version_ok;
