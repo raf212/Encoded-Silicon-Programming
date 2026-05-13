@@ -877,19 +877,21 @@ namespace PredictedAdaptedEncoding
                         published_count++;
                         return true;
                     }
+                    return false;
                 case PackedCellLocalityTypes::ST_CLAIMED :
                     if (claimed_count < APC_MAX_LENGTH_OR_COUNTER)
                     {
                         claimed_count++;
                         return true;
                     }
+                    return false;
                 case PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY :
                     if (faulty_count < APC_MAX_LENGTH_OR_COUNTER)
                     {
                         faulty_count++;
                         return true;
                     }
-                
+                    return false;
                 default:
                     return false;
                 }

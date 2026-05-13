@@ -358,25 +358,33 @@ namespace PredictedAdaptedEncoding
 
     uint32_t AdaptivePackedCellContainer::SuggestedInternalAPCExpension_(CompleteAPCNodeRegionsLayout* complete_layout, uint8_t prefared_percentage_of_free) noexcept
     {
-        if (!complete_layout)
+        if (!complete_layout || prefared_percentage_of_free == UNSIGNED_ZERO)
         {
             return UNSIGNED_ZERO;
         }
+
+        prefared_percentage_of_free = std::min<uint8_t>(prefared_percentage_of_free, 100u);
         
         complete_layout->NormalizePercentagesIfNeeded();
         LayoutBoundsOfSingleRelNodeClass* free_layout = complete_layout->GetALayoutByRelMask(APCPagedNodeRelMaskClasses::FREE_SLOT);
-        if (!free_layout || prefared_percentage_of_free == 0)
+        if (!free_layout || free_layout->IsEmpty())
         {
             return UNSIGNED_ZERO;
         }
-        const uint32_t payload = static_cast<uint32_t>(PayloadCapacityFromHeader());
-        if (payload == UNSIGNED_ZERO)
+        const uint32_t free_span = free_layout->GetPayloadSpan();
+        if (free_span == UNSIGNED_ZERO)
         {
             return UNSIGNED_ZERO;
         }
-        const float free_percentage = free_layout->InitialOrCurrentPercentage;
-        const float donation_ratio = static_cast<float>(prefared_percentage_of_free) / 100.0f;
-        return static_cast<uint32_t>((payload * (free_percentage / 100.0f)) * donation_ratio);
+        uint32_t suggested =
+            static_cast<uint32_t>(
+                (static_cast<uint64_t>(free_span) * prefared_percentage_of_free) / 100u
+            );
+
+        suggested = std::max<uint32_t>(suggested, 1u);
+        suggested = std::min<uint32_t>(suggested, free_span);
+
+        return suggested;
 
     }
 

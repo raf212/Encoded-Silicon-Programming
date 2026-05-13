@@ -210,7 +210,17 @@ namespace PredictedAdaptedEncoding
         {
             return std::nullopt;
         }
-
+        
+        const std::optional<uint16_t> maybe_lobal_version = ReadGlobalLayoutVersion_();
+        if (!maybe_lobal_version)
+        {
+            return std::nullopt;
+        }
+        if (!caller_holds_layout_flag && !out_layout.DoseAllPhysicalLayoutCarrySameVersionNumberAsGlobal(*maybe_lobal_version))
+        {
+            return std::nullopt;
+        }
+        
         return out_layout;
     }
 
