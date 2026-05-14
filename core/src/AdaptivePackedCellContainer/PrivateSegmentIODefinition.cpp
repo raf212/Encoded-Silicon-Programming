@@ -76,6 +76,7 @@ namespace PredictedAdaptedEncoding
             }
             
             one.BeginIndex = initial_cursor;
+            one.VersionNumber = current_or_start_version;
             uint32_t wanted_span = one.ComputeWantedSpanFromTotal(total_span);
             if (wanted_span == UNSIGNED_ZERO)
             {
@@ -107,6 +108,7 @@ namespace PredictedAdaptedEncoding
         full_layout.FreeLayout.BeginIndex = initial_cursor;
         full_layout.FreeLayout.EndIndex = payload_end;
         full_layout.FreeLayout.PAGE_LAYOUT_CLASS = APCPagedNodeRelMaskClasses::FREE_SLOT;
+        full_layout.FreeLayout.VersionNumber = current_or_start_version;
     }
 
     bool SegmentIODefinition::WriteBoundsPairToHeader_(
@@ -115,32 +117,77 @@ namespace PredictedAdaptedEncoding
         bool caller_holds_the_flag
     ) noexcept
     {
-        if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(layout_bound.PAGE_LAYOUT_CLASS))
+        const bool valid_layout_class =
+            APCAndPagedNodeHelpers::IsValidAccountingPageClass(
+                layout_bound.PAGE_LAYOUT_CLASS
+            ) ||
+            layout_bound.PAGE_LAYOUT_CLASS == APCPagedNodeRelMaskClasses::FREE_SLOT;
+
+        if (!valid_layout_class)
         {
             return true;
         }
-        
-        if (layout_bound.BeginIndex > APC_MAX_LENGTH_OR_COUNTER || layout_bound.EndIndex > APC_MAX_LENGTH_OR_COUNTER)
+
+        if (caller_holds_the_flag && !IsLayoutMutationFlagActive())
         {
             return false;
         }
 
-
-        
         const uint32_t payload_begin = METACELL_COUNT;
         const uint32_t payload_end = GetTotalCapacityForThisAPC();
+
         if (!layout_bound.IsValid(payload_begin, payload_end))
         {
             return false;
         }
 
-        return SetLayOutBounds(
-            layout_bound.PAGE_LAYOUT_CLASS,
-            static_cast<uint16_t>(layout_bound.BeginIndex),
-            static_cast<uint16_t>(layout_bound.EndIndex),
-            caller_holds_the_flag,
-            version_number
+        if (layout_bound.BeginIndex > APC_MAX_LENGTH_OR_COUNTER ||
+            layout_bound.EndIndex > APC_MAX_LENGTH_OR_COUNTER ||
+            layout_bound.EndIndex < layout_bound.BeginIndex)
+        {
+            return false;
+        }
+
+        const MetaIndexOfAPCNode layout_idx =
+            LayoutBoundsOfSingleRelNodeClass::GetLayoutCellMetaIndexForPageClass(
+                layout_bound.PAGE_LAYOUT_CLASS
+            );
+
+        if (!ValidMetaIdx(layout_idx) ||
+            layout_idx == MetaIndexOfAPCNode::EOF_APC_HEADER)
+        {
+            return false;
+        }
+
+        uint16_t resolved_version =
+            version_number.has_value()
+                ? *version_number
+                : ReadGlobalLayoutVersion_().value_or(
+                    static_cast<uint16_t>(BRANCH_VERSION)
+                );
+
+        if (resolved_version == UNSIGNED_ZERO ||
+            resolved_version == APC_INDEX_SENTINAL)
+        {
+            resolved_version = static_cast<uint16_t>(BRANCH_VERSION);
+        }
+
+        const packed64_t desired_layout =
+            ComposeLayoutModelof16x3(
+                static_cast<uint16_t>(layout_bound.BeginIndex),
+                static_cast<uint16_t>(layout_bound.EndIndex),
+                resolved_version,
+                layout_bound.PAGE_LAYOUT_CLASS
+            );
+
+        BackingPtr[static_cast<size_t>(layout_idx)].store(
+            desired_layout,
+            MoStoreSeq_
         );
+
+        BackingPtr[static_cast<size_t>(layout_idx)].notify_all();
+
+        return true;
     }
 
 
@@ -210,7 +257,7 @@ namespace PredictedAdaptedEncoding
         {
             return std::nullopt;
         }
-        
+
         const std::optional<uint16_t> maybe_lobal_version = ReadGlobalLayoutVersion_();
         if (!maybe_lobal_version)
         {

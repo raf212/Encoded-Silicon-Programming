@@ -379,52 +379,85 @@ namespace PredictedAdaptedEncoding
 
 
 
-    std::optional<LayoutBoundsOfSingleRelNodeClass> SegmentIODefinition::ReadLayoutBoundsAndVersion(APCPagedNodeRelMaskClasses page_class, bool caller_holds_the_flag) noexcept
+    std::optional<LayoutBoundsOfSingleRelNodeClass>
+    SegmentIODefinition::ReadLayoutBoundsAndVersion(
+        APCPagedNodeRelMaskClasses page_class,
+        bool caller_holds_the_flag
+    ) noexcept
     {
-        const MetaIndexOfAPCNode layout_idx = LayoutBoundsOfSingleRelNodeClass::GetLayoutCellMetaIndexForPageClass(page_class);
-        if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(page_class) || !ValidMetaIdx(layout_idx))
+        const bool valid_layout_class =
+            APCAndPagedNodeHelpers::IsValidAccountingPageClass(page_class) ||
+            page_class == APCPagedNodeRelMaskClasses::FREE_SLOT;
+
+        if (!valid_layout_class)
         {
             return std::nullopt;
         }
+
+        const MetaIndexOfAPCNode layout_idx =
+            LayoutBoundsOfSingleRelNodeClass::GetLayoutCellMetaIndexForPageClass(
+                page_class
+            );
+
+        if (!ValidMetaIdx(layout_idx) ||
+            layout_idx == MetaIndexOfAPCNode::EOF_APC_HEADER)
+        {
+            return std::nullopt;
+        }
+
         const packed64_t layout_cell = ReadFullMetaCell(layout_idx);
+
         uint16_t begin16 = UNSIGNED_ZERO;
         uint16_t end16 = UNSIGNED_ZERO;
         uint16_t version16 = UNSIGNED_ZERO;
-        if (!ExtractLayoutModel_BegainL_EndM_VersionH(layout_cell, begin16, end16, version16))
+
+        if (!ExtractLayoutModel_BegainL_EndM_VersionH(
+                layout_cell,
+                begin16,
+                end16,
+                version16))
         {
             return std::nullopt;
         }
 
         const uint32_t total_capacity = GetTotalCapacityForThisAPC();
-        if (begin16 < METACELL_COUNT || end16 < begin16 || end16 > total_capacity ||
-            version16 == UNSIGNED_ZERO || version16 == APC_INDEX_SENTINAL
-        )
+
+        if (begin16 < METACELL_COUNT ||
+            end16 < begin16 ||
+            end16 > total_capacity ||
+            version16 == UNSIGNED_ZERO ||
+            version16 == APC_INDEX_SENTINAL)
         {
             return std::nullopt;
         }
 
         if (!caller_holds_the_flag)
         {
-            const std::optional<uint16_t> global_version = ReadGlobalLayoutVersion_();
+            const std::optional<uint16_t> global_version =
+                ReadGlobalLayoutVersion_();
+
             if (!global_version.has_value() || *global_version != version16)
             {
                 return std::nullopt;
             }
-            
         }
-        
+
         LayoutBoundsOfSingleRelNodeClass out_layout{};
         out_layout.BeginIndex = begin16;
         out_layout.EndIndex = end16;
         out_layout.VersionNumber = version16;
         out_layout.PAGE_LAYOUT_CLASS = page_class;
 
-        const uint32_t payload_capacity = total_capacity > METACELL_COUNT ? total_capacity - METACELL_COUNT : UNSIGNED_ZERO;
+        const uint32_t payload_capacity =
+            total_capacity > METACELL_COUNT
+                ? total_capacity - METACELL_COUNT
+                : UNSIGNED_ZERO;
 
         if (payload_capacity > UNSIGNED_ZERO)
         {
             out_layout.SetOrResetPercentage(payload_capacity);
         }
+
         return out_layout;
     }
 

@@ -314,7 +314,13 @@ namespace PredictedAdaptedEncoding
         const size_t seed_idx = (next_producer_sequense >= PayloadBegin()) ? (next_producer_sequense - PayloadBegin()) : 0;
         const size_t base = begin_idx + (seed_idx % span);
         const size_t step = MakeProbeStepCoPrime_(seed_idx + 1u, span);
-        for (size_t tries = 0; tries < max_tries; tries++)
+        const size_t bounded_tries =
+            std::min<size_t>(
+                span,
+                std::max<size_t>(1u, static_cast<size_t>(max_tries))
+            );
+
+        for (size_t tries = 0; tries < bounded_tries; tries++)        
         {
             const size_t current_index = begin_idx + ((base - begin_idx + tries * step) % span);
             packed64_t observed_cell = BackingPtr[current_index].load(MoLoad_);
