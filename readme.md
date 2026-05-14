@@ -22,7 +22,6 @@ It is already capable of:
 - tracking local and per-region occupancy;
 - rebuilding ready masks from exact scans;
 - dynamically growing shared segments when a region is under pressure;
-- running a bidirectional causal demo with no terminal failure in the pasted output.
 
 It is not yet:
 
@@ -41,16 +40,23 @@ A normal container stores values. APC stores **self-describing atomic events**.
 Each cell is a `uint64_t`-sized atomic word. In the common `MODE_VALUE32` mode, the cell is conceptually split as:
 
 ```text
+`MODE_VALUE32`
 +------------------+------------------+------------------+
 | meta16           | clock16          | value32          |
 +------------------+------------------+------------------+
 | type/state/route | local time stamp | payload value    |
 +------------------+------------------+------------------+
 ```
+```text
+`MODE_CLKVAL48`
++------------------+------------------+------------------+
+| meta16           |                    value48          |
++------------------+------------------+------------------+
+| type/state/route | local time stamp / payload value    |
++------------------+------------------+------------------+
+```
 
-The `value32` field can hold a `uint32_t`, `int32_t`, `float`, or small supported data type. The `clock16` field carries a local down-shifted clock stamp. The `meta16` field carries compact metadata: mode, priority, locality, region class, relative-offset mode, data type, and node authority.
-
-In `MODE_CLKVAL48`, the lower 48 bits are used as a larger clock/value lane, still controlled by `meta16`.
+The `value32` or `value48` field can hold a `uint32_t`, `int32_t`, `float`, or small supported data type. The `clock16` field carries a local down-shifted clock stamp. The `meta16` field carries compact metadata: mode, priority, locality, region class, relative-offset mode, data type, and node authority.
 
 The important design principle is:
 
@@ -241,7 +247,7 @@ flowchart LR
     Motor --> Collected["Final collected values"]
 ```
 
-Important current truth: in the pasted `main.cpp` run, the error path is produced and consumed, but the final printed motor values are generated as `state + 0.5`. The first outputs are therefore `2.5, 3.5, 4.5, ...`, matching the pasted output.
+Important current truth: in `main.cpp` run, the final printed motor values are generated as `state + 0.5`. The first outputs are therefore `2.5, 3.5, 4.5, ...`, matching the pasted output.
 
 ---
 
@@ -341,16 +347,6 @@ The current bidirectional causal demo completed:
 | Terminal fail | 0 |
 | Older FF observed | 16,375 |
 | Older FB observed | 17,889 |
-
-### Main event-count line graph
-
-```mermaid
-xychart-beta
-    title "APC bidirectional causal demo: event counts"
-    x-axis ["Sensor FF produced", "Predictor FB produced", "FF consumed", "FB consumed", "State integrated", "Error computed", "State consumed", "Error consumed", "Forward emitted", "Feedback emitted", "Final collected"]
-    y-axis "count" 0 --> 25600
-    line [25600, 25600, 25600, 25600, 25600, 25600, 25600, 25600, 25600, 25600, 25600]
-```
 
 ### Runtime pressure line graph
 
@@ -514,8 +510,6 @@ Several names are misspelled or inconsistent, for example:
 - `Thrashold`
 - `Exect`
 
-These do not invalidate the architecture, but they should be cleaned before publishing a stable API.
-
 ---
 
 ## Novelty
@@ -619,8 +613,6 @@ Bridge layer:
 
 In this model, APC is not trying to replace tensor libraries. It is trying to become the control/memory fabric around them.
 
-That is the most realistic path toward a multidirectional, heterogeneous, predictively encoded APC neural network.
-
 ---
 
 ## Minimal glossary
@@ -647,8 +639,6 @@ That is the most realistic path toward a multidirectional, heterogeneous, predic
 ---
 
 ## Honest conclusion
-
-APC is not garbage, but it is not finished.
 
 It is a coherent and original C++ systems prototype for self-describing, region-aware, causally stamped atomic cells. The current output proves useful bidirectional event flow and dynamic growth. The same output also proves that multi-region occupancy and shared-chain accounting still need repair.
 
