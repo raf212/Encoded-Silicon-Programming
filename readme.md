@@ -39,24 +39,27 @@ A normal container stores values. APC stores **self-describing atomic events**.
 
 Each cell is a `uint64_t`-sized atomic word. In the common `MODE_VALUE32` mode, the cell is conceptually split as:
 
+- `MODE_VALUE32`
+
 ```text
-`MODE_VALUE32`
 +------------------+------------------+------------------+
 | meta16           | clock16          | value32          |
 +------------------+------------------+------------------+
 | type/state/route | local time stamp | payload value    |
 +------------------+------------------+------------------+
 ```
+
+The `value32` or `value48` field can hold a `uint32_t`, `int32_t`, `float`, or small supported data type. The `clock16` field carries a local down-shifted clock stamp. The `meta16` field carries compact metadata: mode, priority, locality, region class, relative-offset mode, data type, and node authority.
+
+- `MODE_CLKVAL48`
+
 ```text
-`MODE_CLKVAL48`
 +------------------+------------------+------------------+
 | meta16           |                    value48          |
 +------------------+------------------+------------------+
 | type/state/route | local time stamp / payload value    |
 +------------------+------------------+------------------+
 ```
-
-The `value32` or `value48` field can hold a `uint32_t`, `int32_t`, `float`, or small supported data type. The `clock16` field carries a local down-shifted clock stamp. The `meta16` field carries compact metadata: mode, priority, locality, region class, relative-offset mode, data type, and node authority.
 
 The important design principle is:
 
