@@ -4,17 +4,12 @@
 #include <condition_variable>
 #include <cstdio>
 #include <iostream>
-
-#include "AtomicAdaptiveBackoff.hpp"
-#include "MasterClockConf.hpp"
 #include "SegmentIODefinition.hpp"
 #include "../PackedCellContainerManager.hpp"
-#include "APCHElpers.hpp"
 
 namespace PredictedAdaptedEncoding
 {
 static_assert(__cpp_lib_atomic_wait, "C++ must suppoet atomic wait/notify");
-#define CURRENT_BRANCHING_CLIENT  3
 
 class PackedCellContainerManager;
 
@@ -33,7 +28,6 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
         std::unique_ptr<std::atomic<uint8_t>[]> RegionRelArray_{nullptr};
         std::vector<std::vector<uint64_t>> RelBitmaps_;
         std::unique_ptr<std::atomic<uint64_t>[]> RegionEpochArray_{nullptr};
-        static inline thread_local std::vector<std::pair<size_t, packed64_t>> TLSCandidates_;
         //--??
 
         std::atomic<AdaptivePackedCellContainer*> RegistryNextAPCPtr_{nullptr};
@@ -50,14 +44,14 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         std::optional<packed64_t> TryConsumeAndIdleFromRegionLocal_(
             APCPagedNodeRelMaskClasses region_kind, size_t& scan_cursor,
-            PackedCellNodeAuthority desired_authority_of_updated_cell = PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM
+            PackedCellNodeAuthority desired_authority_of_updated_cell = PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT
         ) noexcept;
 
         PublishResult TryPublishToRegionLocal_(
             packed64_t packed_cell_for_publish, 
             APCPagedNodeRelMaskClasses region_kind = APCPagedNodeRelMaskClasses::FREE_SLOT,
-            PackedCellNodeAuthority node_authority = PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM,
-            uint16_t max_tries = 128
+            PackedCellNodeAuthority node_authority = PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT,
+            uint16_t max_tries = APC_MAX_LENGTH_OR_COUNTER / (APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses)
         ) noexcept;
 
         //not used
@@ -73,9 +67,8 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         uint32_t SuggestedInternalAPCExpension_(CompleteAPCNodeRegionsLayout* complete_layout, uint8_t prefared_percentage_of_free = 50) noexcept;
 
-        uint32_t OccupancyAddOrSubAndGetAfterChange_(MetaIndexOfAPCNode desired_region_meta_idx, int delta = 0) noexcept;
+        uint16_t ComputeAdaptivemaxTreies_(packed64_t packed_cell) noexcept;
 
-        bool ApplyPackedCellTransitionAfterSuccessfulWrite_(packed64_t old_cell, packed64_t new_cell) noexcept;
 
         packed64_t NormalizeDesiredPublishedCellForRegion_(
             packed64_t out_going_cell,
@@ -148,7 +141,11 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         bool TryPublishRegionalSharedGrowthOnce(APCPagedNodeRelMaskClasses region_kind, packed64_t packed_cell, std::atomic<uint64_t>* growth_counter = nullptr) noexcept;
 
-        PublishResult PublishCellByRegionMAskTraverseStartsFromThisAPC(APCPagedNodeRelMaskClasses region_kind, packed64_t cell_to_publish, uint16_t max_tries = MAX_TRIES) noexcept;
+        PublishResult PublishCellByRegionMAskTraverseStartsFromThisAPC(
+            APCPagedNodeRelMaskClasses region_kind, packed64_t cell_to_publish, 
+            PackedCellNodeAuthority authority = PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT,
+            std::optional<uint16_t> max_tries = std::nullopt
+        ) noexcept;
 
         AdaptivePackedCellContainer* GrowSharedNodeByRegionKind(APCPagedNodeRelMaskClasses desired_region_kind, bool enable_branching = true) noexcept;
 
@@ -170,11 +167,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         size_t NextProducerSequence() noexcept;
 
-        uint32_t RegionOccupancyAddOrSubAndGet(APCPagedNodeRelMaskClasses desired_region_class, int delta = 0) noexcept;
-
         void ClearAllManagerLinksAndFlags() noexcept;
-
-        uint32_t GetLocalTotalOccupancy() noexcept;
 
         uint32_t CountExactLocalRegionalOccupancy(APCPagedNodeRelMaskClasses desired_region_class) noexcept;
 
@@ -182,36 +175,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
         
         bool RebuildExectReadyMask() noexcept;
 
-        uint32_t AllPublishedCellsOccupancySnapshotAddOrSubAndGetAfterChange(int delta = 0) noexcept
-        {
-            return OccupancyAddOrSubAndGetAfterChange_(MetaIndexOfAPCNode::OCCUPANCY_SNAPSHOT_OF_PUBLISHED_CELLS, delta);
-        }
 
-        uint32_t AllClaimedCellsOccupancySnapshotAddOrSubAndGetAfterChange(int delta = 0) noexcept
-        {
-            return OccupancyAddOrSubAndGetAfterChange_(MetaIndexOfAPCNode::OCCUPANCY_SNAPSHOT_OF_CLAIMED_CELLS, delta);
-        }
-
-        uint32_t AllIdleCellsOccupancySnapshotAddOrSubAndGetAfterChange(int delta = 0) noexcept
-        {
-            return OccupancyAddOrSubAndGetAfterChange_(MetaIndexOfAPCNode::OCCUPANCY_SNAPSHOT_OF_IDLE_CELLS, delta);
-        }
-
-        uint32_t AllFaultyCellsOccupancySnapshotAddOrSubAndGetAfterChange(int delta = 0) noexcept
-        {
-            return OccupancyAddOrSubAndGetAfterChange_(MetaIndexOfAPCNode::OCCUPANCY_SNAPSHOT_OF_FAULTY_CELLS, delta);
-        }
-
-        uint32_t StrictOccupancySumOfFourLocalities() noexcept
-        {
-            return AllPublishedCellsOccupancySnapshotAddOrSubAndGetAfterChange() + AllClaimedCellsOccupancySnapshotAddOrSubAndGetAfterChange() +
-                AllIdleCellsOccupancySnapshotAddOrSubAndGetAfterChange() + AllFaultyCellsOccupancySnapshotAddOrSubAndGetAfterChange();
-        }
-
-        bool DoseStrictSumOf4OccupancyHoldsInvarients() noexcept
-        {
-            return StrictOccupancySumOfFourLocalities() == static_cast<uint32_t>(PayloadCapacityFromHeader());
-        }
 
         static constexpr uint32_t PayloadBegin() noexcept
         {
@@ -318,6 +282,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
         {
             CleanupNextAPCPtr_.store(apc_ptr, MoStoreSeq_);
         }
+
 
 };
 
