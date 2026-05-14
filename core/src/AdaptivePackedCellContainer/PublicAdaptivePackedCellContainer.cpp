@@ -43,7 +43,9 @@ namespace PredictedAdaptedEncoding
         number_of_slots = std::min<size_t>(number_of_slots, payload_capacity - 1);
         number_of_slots = std::max<size_t>(number_of_slots, 1u);
 
-        while (true)
+        constexpr uint32_t HARD_RESERVE_GUARD = 4096u;
+
+        for (uint32_t attempt = 0; attempt < HARD_RESERVE_GUARD; ++attempt)
         {
             uint32_t current_producer_cursor = GetProducerCursorPlacement();
             if (current_producer_cursor == BRANCH_SENTINAL || current_producer_cursor < PayloadBegin() || current_producer_cursor >= GetTotalCapacityForThisAPC())
@@ -72,7 +74,20 @@ namespace PredictedAdaptedEncoding
             {
                 return static_cast<size_t>(current_producer_cursor);
             }
+            if (AdaptiveBackoffOfAPCPtr_)
+            {
+                AdaptiveBackoffOfAPCPtr_->AdaptiveBackOffPacked(
+                    ReadFullMetaCell(MetaIndexOfAPCNode::PRODUCER_CURSOR_PLACEMENT)
+                );
+            }
+            else
+            {
+                std::this_thread::yield();
+            }
         }
+
+        TotalCASFailForThisBranchIncreaseAndGet(1);
+        return SIZE_MAX;
     }
 
     void AdaptivePackedCellContainer::SetManagerForGlobalAPC(PackedCellContainerManager* pointer_of_global_apc_manager) noexcept
@@ -464,7 +479,6 @@ namespace PredictedAdaptedEncoding
         std::optional<uint16_t> max_tries
     ) noexcept
     {
-        (void)max_tries, authority;
 
         if (!IfAPCBranchValid())
         {
@@ -496,7 +510,7 @@ namespace PredictedAdaptedEncoding
             {
                 break;
             }
-            curren_or_next_container_ptr = curren_or_next_container_ptr->GetNextSharedSegment();
+            curren_or_next_container_ptr = next_apc_ptr;
         }
         if (ShouldSplitNow())
         {
