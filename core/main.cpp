@@ -15,7 +15,7 @@ using namespace PredictedAdaptedEncoding;
 
 namespace
 {
-    constexpr uint32_t VALUE_COUNT = 25600u;
+    constexpr uint32_t VALUE_COUNT = 256u;
     constexpr uint32_t PRODUCER_COUNT = 2u;
     constexpr uint32_t FF_WORKER_COUNT = 3u;
     constexpr uint32_t FB_WORKER_COUNT = 2u;

@@ -167,8 +167,6 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         void ClearAllManagerLinksAndFlags() noexcept;
 
-        uint32_t GetLocalTotalOccupancy() noexcept;
-
         uint32_t CountExactLocalRegionalOccupancy(APCPagedNodeRelMaskClasses desired_region_class) noexcept;
 
         uint32_t CountExactTotalChainOccupancy(APCPagedNodeRelMaskClasses desired_region_class) noexcept;
@@ -283,102 +281,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
             CleanupNextAPCPtr_.store(apc_ptr, MoStoreSeq_);
         }
 
-        uint16_t ComputeAdaptivemaxTreies_(packed64_t packed_cell) noexcept
-        {
-            const APCPagedNodeRelMaskClasses page_class =
-                PackedCell64_t::ExtractRelMaskFromPacked(packed_cell);
-
-            if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(page_class))
-            {
-                return 1u;
-            }
-
-            const PriorityPhysics priority =
-                PackedCell64_t::ExtractPriorityFromPacked(packed_cell);
-
-            std::optional<LayoutBoundsOfSingleRelNodeClass> layout_bounds =
-                ReadLayoutBoundsAndVersion(page_class);
-
-            const uint32_t span =
-                (layout_bounds && !layout_bounds->IsEmpty())
-                    ? layout_bounds->GetPayloadSpan()
-                    : 1u;
-
-            const uint16_t used_occupancy =
-                ReadTotalUsedOccupancyOfARegion(page_class);
-
-            const uint32_t pressure_percentage =
-                span > 0u
-                    ? static_cast<uint32_t>((uint64_t{used_occupancy} * 100u) / span)
-                    : 100u;
-
-            uint32_t split_threshold =
-                ReadMetaCellValue32(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE);
-
-            if (split_threshold == 0u ||
-                split_threshold == BRANCH_SENTINAL ||
-                split_threshold > 100u)
-            {
-                split_threshold = INITIAL_BRANCH_SPLIT_THRESHOLD_PERCENTAGE;
-            }
-
-            const uint32_t cas_failure =
-                ReadMetaCellValue32(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH);
-
-            const bool high_contention =
-                cas_failure != BRANCH_SENTINAL &&
-                cas_failure > static_cast<uint32_t>(used_occupancy + 4u);
-
-            const bool near_full =
-                pressure_percentage + 10u >= split_threshold;
-
-            const bool low_pressure =
-                pressure_percentage < (split_threshold / 2u);
-
-            const bool at_max_depth =
-                MaxDepthRead() > 0u && CurrentBranchDepthRead() >= MaxDepthRead();
-
-            uint32_t budget = std::max<uint32_t>(1u, span / 4u);
-
-            if (low_pressure)
-            {
-                budget = std::max<uint32_t>(budget, span / 2u);
-            }
-
-            if (near_full)
-            {
-                budget = std::max<uint32_t>(1u, budget / 2u);
-            }
-
-            if (high_contention)
-            {
-                budget = std::max<uint32_t>(1u, budget / 2u);
-            }
-
-            const uint32_t priority_u32 =
-                static_cast<uint32_t>(priority);
-
-            if (priority_u32 > static_cast<uint32_t>(PriorityPhysics::IDLE))
-            {
-                budget = std::max<uint32_t>(
-                    1u,
-                    budget / std::max<uint32_t>(1u, priority_u32)
-                );
-            }
-
-            if (at_max_depth)
-            {
-                budget = std::max<uint32_t>(budget, span);
-            }
-
-            budget = std::clamp<uint32_t>(
-                budget,
-                1u,
-                std::min<uint32_t>(span, APC_MAX_LENGTH_OR_COUNTER)
-            );
-
-            return static_cast<uint16_t>(budget);
-        }
+        uint16_t ComputeAdaptivemaxTreies_(packed64_t packed_cell) noexcept;
 
 };
 
