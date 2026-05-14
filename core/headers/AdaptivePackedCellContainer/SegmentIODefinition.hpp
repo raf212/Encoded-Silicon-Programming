@@ -93,7 +93,7 @@ protected:
         return PackedCell64_t::ComposeValue32u_64(value32, UNSIGNED_ZERO, strl_moded32);
     }
 
-    void WriteBrenchMeta32_(
+    void WriteMetaCellMode32_(
         MetaIndexOfAPCNode idx,
         uint32_t value32,
         PriorityPhysics priority = PriorityPhysics::IDLE,
@@ -245,7 +245,6 @@ public:
         return BranchCapacity_ > METACELL_COUNT ? (BranchCapacity_ - METACELL_COUNT) : 0u;
     }
 
-    //continue here
     void InitLogicalNodeIdentity(
         uint32_t logical_node_id,
         uint32_t shared_id,
@@ -268,7 +267,7 @@ public:
         APCNodeComputeKind node_compute_kind = APCNodeComputeKind::NONE,
         uint32_t aux_param_uint32 = UNSIGNED_ZERO,
         uint32_t branch_depth = UNSIGNED_ZERO,
-        uint8_t branch_priority = ZERO_PRIORITY,
+        uint8_t branch_priority = UNSIGNED_ZERO,
         PriorityPhysics write_cell_priority = PriorityPhysics::IDLE
 
     ) noexcept;
@@ -305,7 +304,24 @@ public:
 
     clk16_t ReadLastAcceptedClok16ForThisSegment(APCPagedNodeRelMaskClasses region_kind) noexcept;
     clk16_t ReadLastEmittedClok16ForThisSegment(APCPagedNodeRelMaskClasses region_kind) noexcept;
+    size_t PayloadCapacityFromHeader() noexcept;
 
+    bool CasUpdateOccupancy3x16ThreeSubdivisionCell(
+        PackedCellLocalityTypes from_locality,
+        PackedCellLocalityTypes to_locality,
+        std::optional<APCPagedNodeRelMaskClasses> page_class = std::nullopt
+    ) noexcept;
+
+    bool APPLYCentralAndRegionOccupancyTransitionCell(
+        packed64_t old_cell,
+        packed64_t new_cell,
+        APCPagedNodeRelMaskClasses physical_page_class = APCPagedNodeRelMaskClasses::NANNULL
+    ) noexcept;
+
+    bool RefreshReadyBitForRegionFromOccupancy(APCPagedNodeRelMaskClasses page_class) noexcept;
+
+    uint16_t ReadTotalOccuPancyOfAnyPageClass(APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::NANNULL) noexcept;
+    
     bool WriteExactMetaCellJustNewValue(MetaIndexOfAPCNode idx, uint32_t value) noexcept;
 
     bool  TryBindShareNext(uint32_t shared_next_id) noexcept
@@ -373,26 +389,15 @@ public:
         return ReadMetaCellValue32(MetaIndexOfAPCNode::BRANCH_DEPTH);
     }
 
-    size_t PayloadCapacityFromHeader() noexcept
-    {
-        const uint32_t payload_begain = METACELL_COUNT;
-        const uint32_t payload_end  = GetTotalCapacityForThisAPC();
-        if (payload_end > payload_begain)
-        {
-            return static_cast<size_t>(payload_end - payload_begain);
-        }
-        return UNSIGNED_ZERO;
-    }
-
     void MakeAPCBranchOwned() noexcept
     {
-        WriteBrenchMeta32_(MetaIndexOfAPCNode::CURRENTLY_OWNED, 1u, PriorityPhysics::IMPORTANT);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::CURRENTLY_OWNED, 1u, PriorityPhysics::IMPORTANT);
     }
 
 
     void ResetTotalCASFailureForThisBranch(PriorityPhysics priority = PriorityPhysics::IDLE) noexcept
     {
-        WriteBrenchMeta32_(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH, UNSIGNED_ZERO, priority);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH, UNSIGNED_ZERO, priority);
     }
 
     bool SetSegmentRegionKind(APCPagedNodeRelMaskClasses region_kind) noexcept
@@ -475,30 +480,6 @@ public:
             ReadFaultyOccupancyOfAPAgeClass(page_class);
     }
 
-    bool CasUpdateOccupancy3x16ThreeSubdivisionCell(
-        PackedCellLocalityTypes from_locality,
-        PackedCellLocalityTypes to_locality,
-        std::optional<APCPagedNodeRelMaskClasses> page_class = std::nullopt
-    ) noexcept;
-
-    bool APPLYCentralAndRegionOccupancyTransitionCell(
-        packed64_t old_cell,
-        packed64_t new_cell,
-        APCPagedNodeRelMaskClasses physical_page_class = APCPagedNodeRelMaskClasses::NANNULL
-    ) noexcept;
-
-    bool RefreshReadyBitForRegionFromOccupancy(APCPagedNodeRelMaskClasses page_class) noexcept;
-
-    uint16_t ReadTotalOccuPancyOfAnyPageClass(APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::NANNULL) noexcept
-    {
-
-        const packed64_t packed_cell = page_class != APCPagedNodeRelMaskClasses::NANNULL ?
-            ReadRegionOccupancyCombinedCell(page_class) : ReadCentralAPCOccupancyCellForThisPagedNode();
-
-        const uint16_t full_combined_occupancy = GetTootalOccupancyFromPackedCell(packed_cell);
-        return full_combined_occupancy;
-    }
-    
 };
 
 }

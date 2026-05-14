@@ -67,6 +67,8 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         uint32_t SuggestedInternalAPCExpension_(CompleteAPCNodeRegionsLayout* complete_layout, uint8_t prefared_percentage_of_free = 50) noexcept;
 
+        uint16_t ComputeAdaptivemaxTreies_(packed64_t packed_cell) noexcept;
+
 
         packed64_t NormalizeDesiredPublishedCellForRegion_(
             packed64_t out_going_cell,
@@ -281,7 +283,6 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
             CleanupNextAPCPtr_.store(apc_ptr, MoStoreSeq_);
         }
 
-        uint16_t ComputeAdaptivemaxTreies_(packed64_t packed_cell) noexcept;
 
 };
 
