@@ -95,7 +95,9 @@ namespace PredictedAdaptedEncoding
 
         static inline bool IsThisCellAppropriateAndGenericToConsume(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
-            if (!a_cell_view.IsCellValid)
+
+
+            if (!IsGenericPayloadOffset(a_cell_view))
             {
                 return false;
             }
@@ -105,7 +107,7 @@ namespace PredictedAdaptedEncoding
                 return false;
             }
 
-            if (!IsValidAccountingPageClass(a_cell_view.PageClass))
+            if (!IsDataConsumablePageClass(a_cell_view.PageClass))
             {
                 return false;
             }
@@ -115,11 +117,6 @@ namespace PredictedAdaptedEncoding
                 return false;
             }
 
-            if (!IsGenericPayloadOffset(a_cell_view))
-            {
-                return false;
-            }
-            
             return true;
         }
 
@@ -132,21 +129,29 @@ namespace PredictedAdaptedEncoding
                 view.PageClass == region_kind;
         }    
 
-        static inline bool IsValidLayoutPageClass(APCPagedNodeRelMaskClasses page_class) noexcept
+        static inline bool IsTrackedOccupancyPageClass(APCPagedNodeRelMaskClasses page_class) noexcept
         {
+            /*
+                Occupancy-tracked means:
+                - it has a REGION_OCCUPANCY_* counter cell
+                - it can contribute PUBLISHED / CLAIMED / FAULTY to central occupancy
+
+                This includes CONTROL_SLOT because metacells are real packed cells.
+                This includes UNDEFINED because it is the quarantine/emergence lane.
+                This includes FREE_SLOT only for non-idle abnormal transitions.
+                Normal idle free capacity is still derived, not counted.
+            */
             return page_class != APCPagedNodeRelMaskClasses::NONE &&
                 page_class != APCPagedNodeRelMaskClasses::NANNULL;
         }
 
-        static inline bool IsValidAccountingPageClass(APCPagedNodeRelMaskClasses page_class) noexcept
+        static inline bool IsDataConsumablePageClass(APCPagedNodeRelMaskClasses page_class) noexcept
         {
             /*
-                Accounting-valid means this region can contain data cells whose
-                published / claimed / faulty counts are tracked.
-
-                CONTROL_SLOT is excluded because control cells must survive scans.
-                FREE_SLOT is excluded because free capacity is derived from layout.
-                UNDEFINED is included as the quarantine/emergence region.
+                These regions may contain normal user/runtime data.
+                CONTROL_SLOT is not data-consumable.
+                FREE_SLOT is not data-consumable.
+                NONE/NANNULL are invalid.
             */
             return page_class != APCPagedNodeRelMaskClasses::NONE &&
                 page_class != APCPagedNodeRelMaskClasses::NANNULL &&
@@ -156,6 +161,11 @@ namespace PredictedAdaptedEncoding
 
         static inline bool IsGenericPayloadOffset(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
+            if (!a_cell_view.IsCellValid)
+            {
+                return false;
+            }
+            
             if (a_cell_view.CellMode == PackedMode::MODE_VALUE32)
             {
                 return a_cell_view.RelationOffsetForMode32.has_value() && *a_cell_view.RelationOffsetForMode32 == RelOffsetMode32::RELOFFSET_GENERIC_VALUE;

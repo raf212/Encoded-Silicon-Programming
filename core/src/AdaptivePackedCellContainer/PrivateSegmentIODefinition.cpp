@@ -63,7 +63,7 @@ namespace PredictedAdaptedEncoding
         
         auto AssignOne = [&](LayoutBoundsOfSingleRelNodeClass& one) noexcept
         {
-            if (!APCAndPagedNodeHelpers::IsValidLayoutPageClass(one.PAGE_LAYOUT_CLASS))
+            if (!APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(one.PAGE_LAYOUT_CLASS))
             {
                 one.BeginIndex = initial_cursor;
                 one.EndIndex = initial_cursor;
@@ -119,7 +119,7 @@ namespace PredictedAdaptedEncoding
     ) noexcept
     {
         const bool valid_layout_class =
-            APCAndPagedNodeHelpers::IsValidAccountingPageClass(
+            APCAndPagedNodeHelpers::IsDataConsumablePageClass(
                 layout_bound.PAGE_LAYOUT_CLASS
             ) ||
             layout_bound.PAGE_LAYOUT_CLASS == APCPagedNodeRelMaskClasses::FREE_SLOT;
@@ -458,5 +458,64 @@ namespace PredictedAdaptedEncoding
     }
 
 
+    std::optional<uint16_t> SegmentIODefinition::ReadGlobalLayoutVersion_() noexcept
+    {
+        const uint32_t raw = ReadMetaCellValue32(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
+        if (raw == BRANCH_SENTINAL || raw == UNSIGNED_ZERO)
+        {
+            return std::nullopt;
+        }
+        return static_cast<uint16_t>(raw);
+    }
+
+    bool SegmentIODefinition::WriteGlobalLayoutVersion_(uint16_t layout_version) noexcept
+    {
+        if (layout_version == 0)
+        {
+            return false;
+        }
+
+        while (true)
+        {
+            const uint32_t current_version = ReadMetaCellValue32(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
+            if ((current_version) == layout_version)
+            {
+                return true;
+            }
+            if (JustUpdateValueOfMeta32(
+                MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION,
+                current_version,
+                static_cast<uint32_t>(layout_version)
+            ))
+            {
+                return true;
+            }
+        }
+    }
+    
+    std::optional<uint16_t> SegmentIODefinition::NextGlobalLayoutVersion_() noexcept
+    {
+        std::optional<uint16_t> maybe_current_layout_version = ReadGlobalLayoutVersion_();
+        uint16_t current_global_version = maybe_current_layout_version.has_value() ? *maybe_current_layout_version : static_cast<uint16_t>(BRANCH_VERSION);
+        uint16_t next_global_layout_version = current_global_version + 1;
+        if (next_global_layout_version == APC_INDEX_SENTINAL || next_global_layout_version == UNSIGNED_ZERO)
+        {
+            return static_cast<uint16_t>(BRANCH_VERSION);
+        }
+        return next_global_layout_version;
+    }
+
+    std::optional<LayoutBoundsOfSingleRelNodeClass> SegmentIODefinition::GetVirtualControlSlotLayout_() noexcept
+    {
+        LayoutBoundsOfSingleRelNodeClass out_virtual_control_slot{};
+        out_virtual_control_slot.BeginIndex = 0u;
+        out_virtual_control_slot.EndIndex = static_cast<uint32_t>(METACELL_COUNT);
+        out_virtual_control_slot.VersionNumber = ReadGlobalLayoutVersion_().value_or(static_cast<uint16_t>(BRANCH_VERSION));
+        out_virtual_control_slot.PAGE_LAYOUT_CLASS = APCPagedNodeRelMaskClasses::CONTROL_SLOT;
+        out_virtual_control_slot.SetOrResetPercentage(
+            static_cast<uint32_t>(GetTotalCapacityForThisAPC() == UNSIGNED_ZERO ? METACELL_COUNT : GetTotalCapacityForThisAPC())
+        );
+        return out_virtual_control_slot;
+    }
 
 }

@@ -385,10 +385,13 @@ namespace PredictedAdaptedEncoding
         bool caller_holds_the_flag
     ) noexcept
     {
-        const bool valid_layout_class =
-            APCAndPagedNodeHelpers::IsValidAccountingPageClass(page_class) ||
-            page_class == APCPagedNodeRelMaskClasses::FREE_SLOT;
-
+        if (page_class == APCPagedNodeRelMaskClasses::CONTROL_SLOT)
+        {
+            return GetVirtualControlSlotLayout_();
+        }
+        
+        const bool valid_layout_class = APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(page_class);
+        
         if (!valid_layout_class)
         {
             return std::nullopt;
@@ -469,7 +472,7 @@ namespace PredictedAdaptedEncoding
         std::optional<uint16_t> version_number
     ) noexcept
     {
-        if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(page_class))
+        if (!APCAndPagedNodeHelpers::IsDataConsumablePageClass(page_class))
         {
             return false;
         }
@@ -598,7 +601,7 @@ namespace PredictedAdaptedEncoding
         {
             return true;
         }
-        if (!IsBound() || !APCAndPagedNodeHelpers::IsValidAccountingPageClass(desired_rel_mask))
+        if (!IsBound() || !APCAndPagedNodeHelpers::IsDataConsumablePageClass(desired_rel_mask))
         {
             return false;
         }
@@ -832,21 +835,26 @@ namespace PredictedAdaptedEncoding
     } 
 
 
-    bool SegmentIODefinition::CasUpdateOccupancy3x16ThreeSubdivisionCell(
+    bool SegmentIODefinition::CasUpdateOccupancy3x16ThreeSubdivisionCell__(
         PackedCellLocalityTypes from_locality,
         PackedCellLocalityTypes to_locality,
         std::optional<APCPagedNodeRelMaskClasses> page_class,
-        PackedCellLocalityTypes control_or_meta_cells_own_locality
+        PackedCellLocalityTypes control_or_meta_cells_own_locality,
+        bool is_this_cell_central_occupancy_counter
     ) noexcept
     {
         if (from_locality == to_locality)
         {
             return true;
         }
-
-        const MetaIndexOfAPCNode meta_idx = page_class.has_value() ? APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(*page_class) : MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48;
         const APCPagedNodeRelMaskClasses desired_page_class = page_class.has_value() ? *page_class : APCPagedNodeRelMaskClasses::CONTROL_SLOT;
 
+        const MetaIndexOfAPCNode meta_idx = page_class.has_value() ? APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(*page_class) : MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48;
+        if (meta_idx == MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48 && is_this_cell_central_occupancy_counter != true)
+        {
+            return false;
+        }
+        
         packed64_t observed_cell = ReadFullMetaCell(meta_idx);
         while (true)
         {
@@ -964,12 +972,12 @@ namespace PredictedAdaptedEncoding
             return true;
         }
 
-        if (!APCAndPagedNodeHelpers::IsValidLayoutPageClass(physical_page_class))
+        if (!APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(physical_page_class))
         {
             return true;
         }
         
-        const bool total_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell(from_locality, to_locality);
+        const bool total_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(from_locality, to_locality, std::nullopt, PackedCellLocalityTypes::ST_PUBLISHED, true);
 
         if (!total_ok)
         {
@@ -977,14 +985,16 @@ namespace PredictedAdaptedEncoding
         }
 
         
-        const bool region_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell(from_locality, to_locality, physical_page_class);
+        const bool region_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(from_locality, to_locality, physical_page_class, PackedCellLocalityTypes::ST_PUBLISHED, false);
 
         if (!region_ok)
         {
-            CasUpdateOccupancy3x16ThreeSubdivisionCell(
+            CasUpdateOccupancy3x16ThreeSubdivisionCell__(
                 to_locality,
                 from_locality,
-                std::nullopt
+                std::nullopt,
+                PackedCellLocalityTypes::ST_PUBLISHED,
+                true
             );
         }
         RefreshReadyBitForRegionFromOccupancy(physical_page_class);
@@ -993,7 +1003,7 @@ namespace PredictedAdaptedEncoding
 
     bool SegmentIODefinition::RefreshReadyBitForRegionFromOccupancy(APCPagedNodeRelMaskClasses page_class) noexcept
     {
-        if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(page_class))
+        if (!APCAndPagedNodeHelpers::IsDataConsumablePageClass(page_class))
         {
             return false;
         }
