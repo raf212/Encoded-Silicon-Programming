@@ -95,7 +95,9 @@ namespace PredictedAdaptedEncoding
 
         static inline bool IsThisCellAppropriateAndGenericToConsume(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
-            if (!a_cell_view.IsCellValid)
+
+
+            if (!IsGenericPayloadOffset(a_cell_view))
             {
                 return false;
             }
@@ -115,11 +117,6 @@ namespace PredictedAdaptedEncoding
                 return false;
             }
 
-            if (!IsGenericPayloadOffset(a_cell_view))
-            {
-                return false;
-            }
-            
             return true;
         }
 
@@ -156,6 +153,11 @@ namespace PredictedAdaptedEncoding
 
         static inline bool IsGenericPayloadOffset(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
+            if (!a_cell_view.IsCellValid)
+            {
+                return false;
+            }
+            
             if (a_cell_view.CellMode == PackedMode::MODE_VALUE32)
             {
                 return a_cell_view.RelationOffsetForMode32.has_value() && *a_cell_view.RelationOffsetForMode32 == RelOffsetMode32::RELOFFSET_GENERIC_VALUE;

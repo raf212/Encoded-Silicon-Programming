@@ -832,21 +832,26 @@ namespace PredictedAdaptedEncoding
     } 
 
 
-    bool SegmentIODefinition::CasUpdateOccupancy3x16ThreeSubdivisionCell(
+    bool SegmentIODefinition::CasUpdateOccupancy3x16ThreeSubdivisionCell_(
         PackedCellLocalityTypes from_locality,
         PackedCellLocalityTypes to_locality,
         std::optional<APCPagedNodeRelMaskClasses> page_class,
-        PackedCellLocalityTypes control_or_meta_cells_own_locality
+        PackedCellLocalityTypes control_or_meta_cells_own_locality,
+        bool is_this_cell_central_occupancy_counter
     ) noexcept
     {
         if (from_locality == to_locality)
         {
             return true;
         }
-
-        const MetaIndexOfAPCNode meta_idx = page_class.has_value() ? APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(*page_class) : MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48;
         const APCPagedNodeRelMaskClasses desired_page_class = page_class.has_value() ? *page_class : APCPagedNodeRelMaskClasses::CONTROL_SLOT;
 
+        const MetaIndexOfAPCNode meta_idx = page_class.has_value() ? APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(*page_class) : MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48;
+        if (meta_idx == MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48 && is_this_cell_central_occupancy_counter != true)
+        {
+            return false;
+        }
+        
         packed64_t observed_cell = ReadFullMetaCell(meta_idx);
         while (true)
         {
@@ -969,7 +974,7 @@ namespace PredictedAdaptedEncoding
             return true;
         }
         
-        const bool total_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell(from_locality, to_locality);
+        const bool total_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell_(from_locality, to_locality, std::nullopt, PackedCellLocalityTypes::ST_PUBLISHED, true);
 
         if (!total_ok)
         {
@@ -977,14 +982,16 @@ namespace PredictedAdaptedEncoding
         }
 
         
-        const bool region_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell(from_locality, to_locality, physical_page_class);
+        const bool region_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell_(from_locality, to_locality, physical_page_class, PackedCellLocalityTypes::ST_PUBLISHED, false);
 
         if (!region_ok)
         {
-            CasUpdateOccupancy3x16ThreeSubdivisionCell(
+            CasUpdateOccupancy3x16ThreeSubdivisionCell_(
                 to_locality,
                 from_locality,
-                std::nullopt
+                std::nullopt,
+                PackedCellLocalityTypes::ST_PUBLISHED,
+                true
             );
         }
         RefreshReadyBitForRegionFromOccupancy(physical_page_class);

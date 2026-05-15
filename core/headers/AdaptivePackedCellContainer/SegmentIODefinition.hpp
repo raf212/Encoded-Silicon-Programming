@@ -212,6 +212,16 @@ protected:
 
     bool ResetALLOccupancy16x3ModelToZero_() noexcept;
 
+private:
+
+    bool CasUpdateOccupancy3x16ThreeSubdivisionCell_(
+        PackedCellLocalityTypes from_locality,
+        PackedCellLocalityTypes to_locality,
+        std::optional<APCPagedNodeRelMaskClasses> page_class = std::nullopt,
+        PackedCellLocalityTypes control_cells_own_locality = PackedCellLocalityTypes::ST_PUBLISHED,
+        bool is_this_cell_central_occupancy_counter = false
+    ) noexcept;
+
     
 public:
     packed64_t PackPureClock48AsPackedCell(
@@ -306,13 +316,6 @@ public:
     clk16_t ReadLastEmittedClok16ForThisSegment(APCPagedNodeRelMaskClasses region_kind) noexcept;
     size_t PayloadCapacityFromHeader() noexcept;
 
-    bool CasUpdateOccupancy3x16ThreeSubdivisionCell(
-        PackedCellLocalityTypes from_locality,
-        PackedCellLocalityTypes to_locality,
-        std::optional<APCPagedNodeRelMaskClasses> page_class = std::nullopt,
-        PackedCellLocalityTypes control_cells_own_locality = PackedCellLocalityTypes::ST_PUBLISHED
-    ) noexcept;
-
     bool ApplyCentralAndRegionOccupancyTransitionCell(
         packed64_t old_cell,
         packed64_t new_cell,
@@ -324,6 +327,7 @@ public:
     uint16_t ReadTotalOccuPancyOfAnyPageClass(APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::NANNULL) noexcept;
     
     bool WriteExactMetaCellJustNewValue(MetaIndexOfAPCNode idx, uint32_t value) noexcept;
+
 
     bool  TryBindShareNext(uint32_t shared_next_id) noexcept
     {
