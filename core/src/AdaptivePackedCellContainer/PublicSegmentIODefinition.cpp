@@ -386,7 +386,7 @@ namespace PredictedAdaptedEncoding
     ) noexcept
     {
         const bool valid_layout_class =
-            APCAndPagedNodeHelpers::IsValidAccountingPageClass(page_class) ||
+            APCAndPagedNodeHelpers::IsDataConsumablePageClass(page_class) ||
             page_class == APCPagedNodeRelMaskClasses::FREE_SLOT;
 
         if (!valid_layout_class)
@@ -469,7 +469,7 @@ namespace PredictedAdaptedEncoding
         std::optional<uint16_t> version_number
     ) noexcept
     {
-        if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(page_class))
+        if (!APCAndPagedNodeHelpers::IsDataConsumablePageClass(page_class))
         {
             return false;
         }
@@ -598,7 +598,7 @@ namespace PredictedAdaptedEncoding
         {
             return true;
         }
-        if (!IsBound() || !APCAndPagedNodeHelpers::IsValidAccountingPageClass(desired_rel_mask))
+        if (!IsBound() || !APCAndPagedNodeHelpers::IsDataConsumablePageClass(desired_rel_mask))
         {
             return false;
         }
@@ -969,7 +969,7 @@ namespace PredictedAdaptedEncoding
             return true;
         }
 
-        if (!APCAndPagedNodeHelpers::IsValidLayoutPageClass(physical_page_class))
+        if (!APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(physical_page_class))
         {
             return true;
         }
@@ -1000,7 +1000,7 @@ namespace PredictedAdaptedEncoding
 
     bool SegmentIODefinition::RefreshReadyBitForRegionFromOccupancy(APCPagedNodeRelMaskClasses page_class) noexcept
     {
-        if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(page_class))
+        if (!APCAndPagedNodeHelpers::IsDataConsumablePageClass(page_class))
         {
             return false;
         }

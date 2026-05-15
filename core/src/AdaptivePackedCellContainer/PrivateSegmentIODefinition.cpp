@@ -63,7 +63,7 @@ namespace PredictedAdaptedEncoding
         
         auto AssignOne = [&](LayoutBoundsOfSingleRelNodeClass& one) noexcept
         {
-            if (!APCAndPagedNodeHelpers::IsValidLayoutPageClass(one.PAGE_LAYOUT_CLASS))
+            if (!APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(one.PAGE_LAYOUT_CLASS))
             {
                 one.BeginIndex = initial_cursor;
                 one.EndIndex = initial_cursor;
@@ -119,7 +119,7 @@ namespace PredictedAdaptedEncoding
     ) noexcept
     {
         const bool valid_layout_class =
-            APCAndPagedNodeHelpers::IsValidAccountingPageClass(
+            APCAndPagedNodeHelpers::IsDataConsumablePageClass(
                 layout_bound.PAGE_LAYOUT_CLASS
             ) ||
             layout_bound.PAGE_LAYOUT_CLASS == APCPagedNodeRelMaskClasses::FREE_SLOT;

@@ -171,7 +171,7 @@ namespace PredictedAdaptedEncoding
             return std::nullopt;
         }
 
-        if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(region_kind))
+        if (!APCAndPagedNodeHelpers::IsDataConsumablePageClass(region_kind))
         {
             return std::nullopt;
         }
@@ -274,7 +274,7 @@ namespace PredictedAdaptedEncoding
             return failed_result;
         }
 
-        if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(region_kind))
+        if (!APCAndPagedNodeHelpers::IsDataConsumablePageClass(region_kind))
         {
             return failed_result;
         }
@@ -518,7 +518,7 @@ namespace PredictedAdaptedEncoding
         const APCPagedNodeRelMaskClasses page_class =
             PackedCell64_t::ExtractRelMaskFromPacked(packed_cell);
 
-        if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(page_class))
+        if (!APCAndPagedNodeHelpers::IsDataConsumablePageClass(page_class))
         {
             return 1u;
         }

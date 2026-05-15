@@ -1,6 +1,6 @@
 #pragma once 
 #include "../PackedCell/CoreCellDefination.hpp"
-#include "../APCDataStructure/APCHelpers.hpp"
+#include "../APCDataStructure/APCGenerics.hpp"
 
 
 namespace PredictedAdaptedEncoding
