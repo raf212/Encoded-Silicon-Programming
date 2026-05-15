@@ -440,18 +440,69 @@ namespace PredictedAdaptedEncoding
         {
             return false;
         }
-        WritBranchMeta48_(MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48, UNSIGNED_ZERO);
+
+        auto StoreCount = [&](
+            MetaIndexOfAPCNode meta_idx,
+            APCPagedNodeRelMaskClasses page_class,
+            uint16_t published,
+            uint16_t claimed,
+            uint16_t faulty
+        )
+        {
+            (void) page_class;
+            
+            if (!ValidMetaIdx(meta_idx))
+            {
+                return false;
+            }
+            const packed64_t wanted_cell = ComposeAPCOccupancyModel_16x3_48t(
+                published, claimed, faulty,
+                APCPagedNodeRelMaskClasses ::CONTROL_SLOT,
+                PackedCellLocalityTypes::ST_PUBLISHED
+            );
+            BackingPtr[static_cast<size_t>(meta_idx)].store(wanted_cell, MoStoreSeq_);
+            BackingPtr[static_cast<size_t>(meta_idx)].notify_all();
+            return true;
+        };
+
+        const uint16_t meta_published = static_cast<uint16_t>(
+            std::min<size_t>(METACELL_COUNT, APC_MAX_LENGTH_OR_COUNTER)
+        );
+
+        StoreCount(
+            MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48,
+            APCPagedNodeRelMaskClasses::CONTROL_SLOT,
+            meta_published,
+            UNSIGNED_ZERO,
+            UNSIGNED_ZERO
+        );
 
         for (uint8_t i = 0; i < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses; i++)
         {
-            const APCPagedNodeRelMaskClasses blind_page = static_cast<APCPagedNodeRelMaskClasses>(i);
-            const MetaIndexOfAPCNode idx = APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(blind_page);
-            if (!ValidMetaIdx(idx))
+            const APCPagedNodeRelMaskClasses current_page_class = static_cast<APCPagedNodeRelMaskClasses>(i);
+            if (!APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(current_page_class))
             {
                 continue;
             }
-            WritBranchMeta48_(idx, UNSIGNED_ZERO);
+
+            const MetaIndexOfAPCNode idx_of_current_page_class = APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(current_page_class);
+            StoreCount(
+                idx_of_current_page_class,
+                current_page_class,
+                UNSIGNED_ZERO,
+                UNSIGNED_ZERO,
+                UNSIGNED_ZERO
+            );
         }
+        
+        StoreCount(
+            MetaIndexOfAPCNode::REGION_OCCUPANCY_CONTROL,
+            APCPagedNodeRelMaskClasses::CONTROL_SLOT,
+            meta_published,
+            UNSIGNED_ZERO,
+            UNSIGNED_ZERO
+        );
+
         WriteExactMetaCellJustNewValue(
             MetaIndexOfAPCNode::PAGED_NODE_READY_BIT,
             UNSIGNED_ZERO

@@ -392,15 +392,7 @@ public:
         );
     }
 
-    uint16_t ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes locality_type) noexcept
-    {
-        const std::optional<uint16_t> desired_occupancy =  GetOccuupancyFromPackedCellMode48(
-                ReadCentralAPCOccupancyCellForThisPagedNode(),
-                locality_type,
-                static_cast<uint16_t>(PayloadCapacityFromHeader())
-            );
-        return desired_occupancy ? *desired_occupancy : UNSIGNED_ZERO;
-    }
+    uint16_t ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes locality_type) noexcept;
 
     bool GetPublishedClaimedFaultyFromCentral(
         uint16_t& published_occupancy,

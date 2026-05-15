@@ -5,6 +5,20 @@
 namespace PredictedAdaptedEncoding
 {
 
+    uint16_t SegmentIODefinition::ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes locality_type) noexcept
+    {
+        const uint16_t total_capacity = static_cast<uint16_t>(
+            std::min<size_t>(GetTotalCapacityForThisAPC(), APC_MAX_LENGTH_OR_COUNTER)
+        );
+
+        const std::optional<uint16_t> desired_occupancy =  GetOccuupancyFromPackedCellMode48(
+                ReadCentralAPCOccupancyCellForThisPagedNode(),
+                locality_type,
+                total_capacity
+            );
+        return desired_occupancy ? *desired_occupancy : UNSIGNED_ZERO;
+    }
+
     val32_t SegmentIODefinition::ReadMetaCellValue32(MetaIndexOfAPCNode idx) noexcept
     {
         if (!ValidMetaIdx(idx) || idx == MetaIndexOfAPCNode::LOCAL_CLOCK48)
@@ -819,19 +833,40 @@ namespace PredictedAdaptedEncoding
 
     uint16_t SegmentIODefinition::ReadRegionOccupancyOfALocality(PackedCellLocalityTypes locality_type, APCPagedNodeRelMaskClasses page_class) noexcept
     {
-        const packed64_t packed_cell = ReadRegionOccupancyCombinedCell(page_class);
 
-        std::optional<LayoutBoundsOfSingleRelNodeClass> maybe_bounds_of_the_page_class = ReadLayoutBoundsAndVersion(page_class);
-        if (!maybe_bounds_of_the_page_class || maybe_bounds_of_the_page_class->IsEmpty())
+        if (!APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(page_class))
         {
             return UNSIGNED_ZERO;
         }
+        const packed64_t packed_cell = ReadRegionOccupancyCombinedCell(page_class);
+
+        uint16_t max_for_a_page = UNSIGNED_ZERO;
+        if (page_class == APCPagedNodeRelMaskClasses::CONTROL_SLOT)
+        {
+            max_for_a_page = static_cast<uint16_t>(
+                std::min<size_t>(METACELL_COUNT, APC_MAX_LENGTH_OR_COUNTER)
+            );
+        }
+        else
+        {
+            std::optional<LayoutBoundsOfSingleRelNodeClass> maybe_bounds_of_the_page_class = ReadLayoutBoundsAndVersion(page_class);
+            if (!maybe_bounds_of_the_page_class || maybe_bounds_of_the_page_class->IsEmpty())
+            {
+                return UNSIGNED_ZERO;
+            }
+            max_for_a_page = static_cast<uint16_t>(
+                maybe_bounds_of_the_page_class->GetPayloadSpan(),
+                APC_MAX_LENGTH_OR_COUNTER
+            );
+        }
+        
         const std::optional<uint16_t> desired_region_occupancy = GetOccuupancyFromPackedCellMode48(
             packed_cell,
             locality_type,
-            (static_cast<uint16_t>(maybe_bounds_of_the_page_class->GetPayloadSpan())
-        ));
-        return desired_region_occupancy && *desired_region_occupancy <= APC_MAX_LENGTH_OR_COUNTER ? *desired_region_occupancy : UNSIGNED_ZERO;
+            max_for_a_page
+        );
+
+        return desired_region_occupancy ? *desired_region_occupancy : UNSIGNED_ZERO;
     } 
 
 
