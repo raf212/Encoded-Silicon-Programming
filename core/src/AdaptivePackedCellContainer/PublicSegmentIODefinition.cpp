@@ -385,10 +385,13 @@ namespace PredictedAdaptedEncoding
         bool caller_holds_the_flag
     ) noexcept
     {
-        const bool valid_layout_class =
-            APCAndPagedNodeHelpers::IsDataConsumablePageClass(page_class) ||
-            page_class == APCPagedNodeRelMaskClasses::FREE_SLOT;
-
+        if (page_class == APCPagedNodeRelMaskClasses::CONTROL_SLOT)
+        {
+            return GetVirtualControlSlotLayout_();
+        }
+        
+        const bool valid_layout_class = APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(page_class);
+        
         if (!valid_layout_class)
         {
             return std::nullopt;
@@ -832,7 +835,7 @@ namespace PredictedAdaptedEncoding
     } 
 
 
-    bool SegmentIODefinition::CasUpdateOccupancy3x16ThreeSubdivisionCell_(
+    bool SegmentIODefinition::CasUpdateOccupancy3x16ThreeSubdivisionCell__(
         PackedCellLocalityTypes from_locality,
         PackedCellLocalityTypes to_locality,
         std::optional<APCPagedNodeRelMaskClasses> page_class,
@@ -974,7 +977,7 @@ namespace PredictedAdaptedEncoding
             return true;
         }
         
-        const bool total_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell_(from_locality, to_locality, std::nullopt, PackedCellLocalityTypes::ST_PUBLISHED, true);
+        const bool total_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(from_locality, to_locality, std::nullopt, PackedCellLocalityTypes::ST_PUBLISHED, true);
 
         if (!total_ok)
         {
@@ -982,11 +985,11 @@ namespace PredictedAdaptedEncoding
         }
 
         
-        const bool region_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell_(from_locality, to_locality, physical_page_class, PackedCellLocalityTypes::ST_PUBLISHED, false);
+        const bool region_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(from_locality, to_locality, physical_page_class, PackedCellLocalityTypes::ST_PUBLISHED, false);
 
         if (!region_ok)
         {
-            CasUpdateOccupancy3x16ThreeSubdivisionCell_(
+            CasUpdateOccupancy3x16ThreeSubdivisionCell__(
                 to_locality,
                 from_locality,
                 std::nullopt,
