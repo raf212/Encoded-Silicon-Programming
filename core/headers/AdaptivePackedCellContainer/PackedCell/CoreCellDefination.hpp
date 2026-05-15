@@ -234,7 +234,7 @@ namespace PredictedAdaptedEncoding
         }
 
 
-        static inline AuthoritiveCellView InspectPackedCell(packed64_t packed_cell) noexcept
+        static inline AuthoritiveCellView GetAuthoritiveViewsForACell(packed64_t packed_cell) noexcept
         {
             const meta16_t meta16 = ExtractMeta16fromPackedCell(packed_cell);
             AuthoritiveCellView out_packed_cell_view{};

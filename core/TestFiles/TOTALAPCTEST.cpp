@@ -156,7 +156,7 @@ namespace
         for (size_t i = apc.PayloadBegin(); i < apc.GetTotalCapacityForThisAPC(); ++i)
         {
             const packed64_t cell = apc.BackingPtr[i].load(MoLoad_);
-            const auto view = PackedCell64_t::InspectPackedCell(cell);
+            const auto view = PackedCell64_t::GetAuthoritiveViewsForACell(cell);
 
             if (!view.IsCellValid)
             {
@@ -204,7 +204,7 @@ namespace
         for (size_t i = bounds->BeginIndex; i < bounds->EndIndex; ++i)
         {
             const packed64_t cell = apc.BackingPtr[i].load(MoLoad_);
-            if (bounds->CanCellBEConsumedForThisPhysicalRegion(cell, region, i))
+            if (bounds->CanCellBEConsumedForThisPhysicalRegion(cell, i))
             {
                 ++count;
             }

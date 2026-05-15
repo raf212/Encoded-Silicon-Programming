@@ -78,14 +78,11 @@ namespace PredictedAdaptedEncoding
 
         static inline bool IsEmbededControlCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
-            if (a_cell_view.CellMode == PackedMode::MODE_VALUE32 && a_cell_view.RelationOffsetForMode32.has_value())
+            if (a_cell_view.PageClass == APCPagedNodeRelMaskClasses::CONTROL_SLOT)
             {
-                return *a_cell_view.RelationOffsetForMode32 == RelOffsetMode32::CONTROL_SLOT;
+                return true;
             }
-            if (a_cell_view.CellMode == PackedMode::MODE_CLKVAL48 && a_cell_view.RelationOffsetForMode48.has_value())
-            {
-                return *a_cell_view.RelationOffsetForMode48 == RelOffsetMode48::CONTROL_SLOT;
-            }
+            
             return false;
         }
 
@@ -96,47 +93,79 @@ namespace PredictedAdaptedEncoding
                 *a_cell_view.RelationOffsetForMode48 == RelOffsetMode48::RELOFFSET_PURE_TIMER;
         }
 
-        static inline bool IsValidAccountingPageClass(
-            APCPagedNodeRelMaskClasses page_class
-        ) noexcept
-        {
-            return page_class != APCPagedNodeRelMaskClasses::NONE &&
-                page_class != APCPagedNodeRelMaskClasses::NANNULL &&
-                page_class != APCPagedNodeRelMaskClasses::CONTROL_SLOT &&
-                page_class != APCPagedNodeRelMaskClasses::UNDEFINED;
-        }
-
-        static inline bool DoesPublishedCellContributeToRegionOccupancy(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        static inline bool IsThisCellAppropriateAndGenericToConsume(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
             if (!a_cell_view.IsCellValid)
             {
                 return false;
             }
+
             if (a_cell_view.LocalityOfCell != PackedCellLocalityTypes::ST_PUBLISHED)
             {
                 return false;
             }
+
             if (!IsValidAccountingPageClass(a_cell_view.PageClass))
             {
                 return false;
             }
+
             if (IsEmbededControlCell(a_cell_view) || IsEmbededTimerCell(a_cell_view))
             {
                 return false;
             }
+
+            if (!IsGenericPayloadOffset(a_cell_view))
+            {
+                return false;
+            }
+            
             return true;
         }
 
-        static inline bool IsPublishedDataCellForRegion(
+        static inline bool IsCellAppropriatelyPagedAndPublishedAsGeneric(
             const PackedCell64_t::AuthoritiveCellView& view,
             APCPagedNodeRelMaskClasses region_kind
         ) noexcept
         {
-            return DoesPublishedCellContributeToRegionOccupancy(view) &&
+            return IsThisCellAppropriateAndGenericToConsume(view) &&
                 view.PageClass == region_kind;
         }    
 
+        static inline bool IsValidLayoutPageClass(APCPagedNodeRelMaskClasses page_class) noexcept
+        {
+            return page_class != APCPagedNodeRelMaskClasses::NONE &&
+                page_class != APCPagedNodeRelMaskClasses::NANNULL;
+        }
 
+        static inline bool IsValidAccountingPageClass(APCPagedNodeRelMaskClasses page_class) noexcept
+        {
+            /*
+                Accounting-valid means this region can contain data cells whose
+                published / claimed / faulty counts are tracked.
+
+                CONTROL_SLOT is excluded because control cells must survive scans.
+                FREE_SLOT is excluded because free capacity is derived from layout.
+                UNDEFINED is included as the quarantine/emergence region.
+            */
+            return page_class != APCPagedNodeRelMaskClasses::NONE &&
+                page_class != APCPagedNodeRelMaskClasses::NANNULL &&
+                page_class != APCPagedNodeRelMaskClasses::CONTROL_SLOT &&
+                page_class != APCPagedNodeRelMaskClasses::FREE_SLOT;
+        }
+
+        static inline bool IsGenericPayloadOffset(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        {
+            if (a_cell_view.CellMode == PackedMode::MODE_VALUE32)
+            {
+                return a_cell_view.RelationOffsetForMode32.has_value() && *a_cell_view.RelationOffsetForMode32 == RelOffsetMode32::RELOFFSET_GENERIC_VALUE;
+            }
+            if (a_cell_view.CellMode == PackedMode::MODE_CLKVAL48)
+            {
+                return a_cell_view.RelationOffsetForMode48.has_value() && *a_cell_view.RelationOffsetForMode48 == RelOffsetMode48::RELOFFSET_GENERIC_VALUE;
+            }
+            return false;
+        }
 
 };
     
@@ -273,16 +302,35 @@ namespace PredictedAdaptedEncoding
         {
             return index >= BeginIndex && index < EndIndex;
         }
+        
         inline bool CanCellBEConsumedForThisPhysicalRegion(
             packed64_t packed_cell,
-            APCPagedNodeRelMaskClasses region_kind,
             size_t idx
         ) noexcept
         {
-            return DoseThisIndexPhysicallyExistInThisRegion(idx) && 
-                PackedCell64_t::ExtractLocalityFromPacked(packed_cell) == PackedCellLocalityTypes::ST_PUBLISHED &&
-                APCAndPagedNodeHelpers::ExtractPagedRelMaskFromPacked(packed_cell) == region_kind &&
-                PackedCell64_t::ExtractRelOffset32FromPacked(packed_cell) == RelOffsetMode32::RELOFFSET_GENERIC_VALUE;
+            if (!DoseThisIndexPhysicallyExistInThisRegion(idx))
+            {
+                return false;
+            }
+
+            const PackedCell64_t::AuthoritiveCellView a_cell_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
+
+            if (!a_cell_view.IsCellValid)
+            {
+                return false;
+            }
+
+            if (a_cell_view.PageClass != PAGE_LAYOUT_CLASS)
+            {
+                return false;
+            }
+            
+            if (APCAndPagedNodeHelpers::IsEmbededControlCell(a_cell_view) || APCAndPagedNodeHelpers::IsEmbededTimerCell(a_cell_view))
+            {
+                return false;
+            }
+            
+            return APCAndPagedNodeHelpers::IsCellAppropriatelyPagedAndPublishedAsGeneric(a_cell_view, PAGE_LAYOUT_CLASS);
         }
 
     };

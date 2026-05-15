@@ -826,7 +826,7 @@ namespace PredictedAdaptedEncoding
         for (size_t i = maybe_desired_class_bounds->BeginIndex; i < maybe_desired_class_bounds->EndIndex; i++)
         {
             const packed64_t current_packed_cell = BackingPtr[i].load(MoLoad_);
-            if (maybe_desired_class_bounds->CanCellBEConsumedForThisPhysicalRegion(current_packed_cell, desired_region_class, i))
+            if (maybe_desired_class_bounds->CanCellBEConsumedForThisPhysicalRegion(current_packed_cell, i))
             {
                 count++;
             }

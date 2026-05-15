@@ -200,8 +200,8 @@ namespace PredictedAdaptedEncoding
         {
             const size_t idx = current_region_bounds.BeginIndex + ((scan_cursor - current_region_bounds.BeginIndex + prob) % region_capacity);
             packed64_t current_cell = BackingPtr[idx].load(MoLoad_);
-            const PackedCell64_t::AuthoritiveCellView current_cell_view = PackedCell64_t::InspectPackedCell(current_cell);
-            if (!APCAndPagedNodeHelpers::IsPublishedDataCellForRegion(current_cell_view, region_kind))
+            const PackedCell64_t::AuthoritiveCellView current_cell_view = PackedCell64_t::GetAuthoritiveViewsForACell(current_cell);
+            if (!APCAndPagedNodeHelpers::IsCellAppropriatelyPagedAndPublishedAsGeneric(current_cell_view, region_kind))
             {
                 continue;
             }
@@ -324,7 +324,7 @@ namespace PredictedAdaptedEncoding
         {
             const size_t current_index = begin_idx + ((base - begin_idx + tries * step) % span);
             packed64_t observed_cell = BackingPtr[current_index].load(MoLoad_);
-            const PackedCell64_t::AuthoritiveCellView observed_cell_view = PackedCell64_t::InspectPackedCell(observed_cell);
+            const PackedCell64_t::AuthoritiveCellView observed_cell_view = PackedCell64_t::GetAuthoritiveViewsForACell(observed_cell);
 
             if (observed_cell_view.LocalityOfCell != PackedCellLocalityTypes::ST_IDLE)
             {
