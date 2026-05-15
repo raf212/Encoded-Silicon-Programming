@@ -63,10 +63,11 @@ namespace PredictedAdaptedEncoding
         
         auto AssignOne = [&](LayoutBoundsOfSingleRelNodeClass& one) noexcept
         {
-            if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(one.PAGE_LAYOUT_CLASS))
+            if (!APCAndPagedNodeHelpers::IsValidLayoutPageClass(one.PAGE_LAYOUT_CLASS))
             {
                 one.BeginIndex = initial_cursor;
                 one.EndIndex = initial_cursor;
+                one.VersionNumber = current_or_start_version;
                 return;
             }
 

@@ -97,7 +97,7 @@ protected:
         MetaIndexOfAPCNode idx,
         uint32_t value32,
         PriorityPhysics priority = PriorityPhysics::IDLE,
-        APCPagedNodeRelMaskClasses rel_mask4 = APCPagedNodeRelMaskClasses::CONTROL_SLOT
+        APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::CONTROL_SLOT
     ) noexcept
     {
         size_t index = static_cast<size_t>(idx);
@@ -105,7 +105,7 @@ protected:
         {
             return;
         }
-        BackingPtr[index].store(PackValue32InPackedCellwithClock16_(value32, priority, PackedCellLocalityTypes::ST_PUBLISHED, rel_mask4), MoStoreSeq_);
+        BackingPtr[index].store(PackValue32InPackedCellwithClock16_(value32, priority, PackedCellLocalityTypes::ST_PUBLISHED, page_class), MoStoreSeq_);
         BackingPtr[index].notify_all();
     }
 
@@ -309,10 +309,11 @@ public:
     bool CasUpdateOccupancy3x16ThreeSubdivisionCell(
         PackedCellLocalityTypes from_locality,
         PackedCellLocalityTypes to_locality,
-        std::optional<APCPagedNodeRelMaskClasses> page_class = std::nullopt
+        std::optional<APCPagedNodeRelMaskClasses> page_class = std::nullopt,
+        PackedCellLocalityTypes control_cells_own_locality = PackedCellLocalityTypes::ST_PUBLISHED
     ) noexcept;
 
-    bool APPLYCentralAndRegionOccupancyTransitionCell(
+    bool ApplyCentralAndRegionOccupancyTransitionCell(
         packed64_t old_cell,
         packed64_t new_cell,
         APCPagedNodeRelMaskClasses physical_page_class = APCPagedNodeRelMaskClasses::NANNULL

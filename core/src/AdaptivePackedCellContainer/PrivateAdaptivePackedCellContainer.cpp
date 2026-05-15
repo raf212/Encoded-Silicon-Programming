@@ -219,7 +219,7 @@ namespace PredictedAdaptedEncoding
                 continue;
             }
 
-            APPLYCentralAndRegionOccupancyTransitionCell(current_cell, idle_cell, region_kind);
+            ApplyCentralAndRegionOccupancyTransitionCell(current_cell, idle_cell, region_kind);
             BackingPtr[idx].notify_all();
             TouchLocalMetaClock48();
             RefreshAPCMeta_();
@@ -349,10 +349,10 @@ namespace PredictedAdaptedEncoding
                 continue;
             }
 
-            APPLYCentralAndRegionOccupancyTransitionCell(observed_cell, claimd_local_inplace_cell, region_kind);
+            ApplyCentralAndRegionOccupancyTransitionCell(observed_cell, claimd_local_inplace_cell, region_kind);
             BackingPtr[current_index].store(packed_cell_for_publish, MoStoreSeq_);
             BackingPtr[current_index].notify_all();
-            APPLYCentralAndRegionOccupancyTransitionCell(claimd_local_inplace_cell, packed_cell_for_publish, region_kind);
+            ApplyCentralAndRegionOccupancyTransitionCell(claimd_local_inplace_cell, packed_cell_for_publish, region_kind);
             TouchLocalMetaClock48();
             RefreshAPCMeta_();
 

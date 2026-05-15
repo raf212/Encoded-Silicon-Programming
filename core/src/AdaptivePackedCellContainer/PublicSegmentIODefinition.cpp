@@ -835,7 +835,8 @@ namespace PredictedAdaptedEncoding
     bool SegmentIODefinition::CasUpdateOccupancy3x16ThreeSubdivisionCell(
         PackedCellLocalityTypes from_locality,
         PackedCellLocalityTypes to_locality,
-        std::optional<APCPagedNodeRelMaskClasses> page_class
+        std::optional<APCPagedNodeRelMaskClasses> page_class,
+        PackedCellLocalityTypes control_or_meta_cells_own_locality
     ) noexcept
     {
         if (from_locality == to_locality)
@@ -936,7 +937,7 @@ namespace PredictedAdaptedEncoding
             {
                 return false;
             }
-            const packed64_t desired_cell = ComposeAPCOccupancyModel_16x3_48t(published_count, claimed_count, faulty_count, desired_page_class);
+            const packed64_t desired_cell = ComposeAPCOccupancyModel_16x3_48t(published_count, claimed_count, faulty_count, desired_page_class, control_or_meta_cells_own_locality);
 
             packed64_t expected_cell = observed_cell;
 
@@ -950,7 +951,7 @@ namespace PredictedAdaptedEncoding
         
     }
 
-    bool SegmentIODefinition::APPLYCentralAndRegionOccupancyTransitionCell(
+    bool SegmentIODefinition::ApplyCentralAndRegionOccupancyTransitionCell(
         packed64_t old_cell,
         packed64_t new_cell,
         APCPagedNodeRelMaskClasses physical_page_class
@@ -962,6 +963,11 @@ namespace PredictedAdaptedEncoding
         {
             return true;
         }
+
+        if (!APCAndPagedNodeHelpers::IsValidLayoutPageClass(physical_page_class))
+        {
+            return true;
+        }
         
         const bool total_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell(from_locality, to_locality);
 
@@ -969,17 +975,19 @@ namespace PredictedAdaptedEncoding
         {
             return false;
         }
-        
-        if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(physical_page_class))
-        {
-            return true;
-        }
+
         
         const bool region_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell(from_locality, to_locality, physical_page_class);
-        if (region_ok)
+
+        if (!region_ok)
         {
-            RefreshReadyBitForRegionFromOccupancy(physical_page_class);
+            CasUpdateOccupancy3x16ThreeSubdivisionCell(
+                to_locality,
+                from_locality,
+                std::nullopt
+            );
         }
+        RefreshReadyBitForRegionFromOccupancy(physical_page_class);
         return region_ok;
     }
 
