@@ -177,6 +177,24 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
+        static inline bool DoseThisCellUpdateableAsOccupancy16x3(
+            const PackedCell64_t::AuthoritiveCellView& occupancy_cell_view,
+            PackedCellLocalityTypes desired_cell_locality = PackedCellLocalityTypes::ST_PUBLISHED
+        ) noexcept
+        {
+            if (
+                !occupancy_cell_view.IsCellValid || occupancy_cell_view.PageClass != APCPagedNodeRelMaskClasses::CONTROL_SLOT ||
+                occupancy_cell_view.CellMode != PackedMode::MODE_CLKVAL48 ||
+                occupancy_cell_view.LocalityOfCell != desired_cell_locality ||
+                !occupancy_cell_view.RelationOffsetForMode48.has_value() ||
+                *occupancy_cell_view.RelationOffsetForMode48 != RelOffsetMode48::RELOFFSET_GENERIC_VALUE
+            )
+            {
+                return false;
+            }
+            return true;
+        }
+
 };
     
     struct LayoutBoundsOfSingleRelNodeClass

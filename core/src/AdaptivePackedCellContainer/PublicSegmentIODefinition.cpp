@@ -882,10 +882,24 @@ namespace PredictedAdaptedEncoding
         {
             return true;
         }
-        const APCPagedNodeRelMaskClasses desired_page_class = page_class.has_value() ? *page_class : APCPagedNodeRelMaskClasses::CONTROL_SLOT;
 
+        if (is_this_cell_central_occupancy_counter)
+        {
+            if (page_class.has_value())
+            {
+                return false;
+            }
+        }
+        else
+        {
+            if (!page_class.has_value() || !APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(*page_class))
+            {
+                return false;
+            }
+        }
         const MetaIndexOfAPCNode meta_idx = page_class.has_value() ? APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(*page_class) : MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48;
-        if (meta_idx == MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48 && is_this_cell_central_occupancy_counter != true)
+
+        if (!ValidMetaIdx(meta_idx))
         {
             return false;
         }
@@ -893,17 +907,25 @@ namespace PredictedAdaptedEncoding
         packed64_t observed_cell = ReadFullMetaCell(meta_idx);
         while (true)
         {
+
+            const PackedCell64_t::AuthoritiveCellView occupancy_cell_view = PackedCell64_t::GetAuthoritiveViewsForACell(observed_cell);
+
+            if (!APCAndPagedNodeHelpers::DoseThisCellUpdateableAsOccupancy16x3(occupancy_cell_view))
+            {
+                return false;
+            }
+
+            //return addresses
             uint16_t published_count = UNSIGNED_ZERO;
             uint16_t claimed_count = UNSIGNED_ZERO;
             uint16_t faulty_count = UNSIGNED_ZERO;
-            if (IsThisCellASubdevision_3x16_48t(observed_cell))
+            //
+
+            const uint64_t raw48 = PackedCell64_t::ExtractClk48(observed_cell);
+
+            if (!ExtractLowMidHighFromMode48_(raw48, published_count, claimed_count, faulty_count))
             {
-                const uint64_t raw48 = PackedCell64_t::ExtractClk48(observed_cell);
-                const bool ok = ExtractLowMidHighFromMode48_(raw48, published_count, claimed_count, faulty_count);
-                if (!ok)
-                {
-                    return false;
-                }
+                return false;
             }
 
             auto DecrementLocalityCount = [&](PackedCellLocalityTypes locality) noexcept->bool
@@ -980,7 +1002,12 @@ namespace PredictedAdaptedEncoding
             {
                 return false;
             }
-            const packed64_t desired_cell = ComposeAPCOccupancyModel_16x3_48t(published_count, claimed_count, faulty_count, desired_page_class, control_or_meta_cells_own_locality);
+
+            const packed64_t desired_cell = ComposeAPCOccupancyModel_16x3_48t(
+                published_count, claimed_count, faulty_count, 
+                APCPagedNodeRelMaskClasses::CONTROL_SLOT,
+                control_or_meta_cells_own_locality
+            );
 
             packed64_t expected_cell = observed_cell;
 
@@ -990,6 +1017,16 @@ namespace PredictedAdaptedEncoding
                 return true;
             }
             observed_cell = expected_cell;
+
+            if (AdaptiveBackoffOfAPCPtr_)
+            {
+                AdaptiveBackoffOfAPCPtr_->AdaptiveBackOffPacked(observed_cell);
+            }
+            else
+            {
+                std::this_thread::yield();
+            }
+            
         }
         
     }
