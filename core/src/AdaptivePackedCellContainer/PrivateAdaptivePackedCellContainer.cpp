@@ -160,7 +160,7 @@ namespace PredictedAdaptedEncoding
 
 
     std::optional<packed64_t> AdaptivePackedCellContainer::TryConsumeAndIdleFromRegionLocal_(
-        APCPagedNodeRelMaskClasses region_kind, size_t& scan_cursor,
+        APCPagedNodeSegmentClasses region_kind, size_t& scan_cursor,
         PackedCellNodeAuthority desired_authority_of_updated_cell
     ) noexcept
     {
@@ -234,7 +234,7 @@ namespace PredictedAdaptedEncoding
         return std::nullopt;
     }
 
-    void AdaptivePackedCellContainer::UpdateRegionRelMaskForIdx_(APCPagedNodeRelMaskClasses rel_mask) noexcept
+    void AdaptivePackedCellContainer::UpdateRegionRelMaskForIdx_(APCPagedNodeSegmentClasses rel_mask) noexcept
     {
         if (!IfAPCBranchValid())
         {
@@ -263,7 +263,7 @@ namespace PredictedAdaptedEncoding
 
     PublishResult AdaptivePackedCellContainer::TryPublishToRegionLocal_(
         packed64_t packed_cell_for_publish, 
-        APCPagedNodeRelMaskClasses region_kind,
+        APCPagedNodeSegmentClasses region_kind,
         PackedCellNodeAuthority node_authority, 
         uint16_t max_tries
     ) noexcept
@@ -372,7 +372,7 @@ namespace PredictedAdaptedEncoding
         prefared_percentage_of_free = std::min<uint8_t>(prefared_percentage_of_free, 100u);
         
         complete_layout->NormalizePercentagesIfNeeded();
-        LayoutBoundsOfSingleRelNodeClass* free_layout = complete_layout->GetALayoutByRelMask(APCPagedNodeRelMaskClasses::FREE_SLOT);
+        LayoutBoundsOfSingleRelNodeClass* free_layout = complete_layout->GetALayoutByRelMask(APCPagedNodeSegmentClasses::FREE_SLOT);
         if (!free_layout || free_layout->IsEmpty())
         {
             return UNSIGNED_ZERO;
@@ -458,7 +458,7 @@ namespace PredictedAdaptedEncoding
                 {
                     continue;
                 }
-                const APCPagedNodeRelMaskClasses absolute_cell_relation_mask = APCAndPagedNodeHelpers::ExtractPagedRelMaskFromPacked(absolute_packed_cell);
+                const APCPagedNodeSegmentClasses absolute_cell_relation_mask = APCAndPagedNodeHelpers::ExtractPagedRelMaskFromPacked(absolute_packed_cell);
                 region_ready_mask |= APCAndPagedNodeHelpers::MakeOneAPCNodeClassReadyBit(absolute_cell_relation_mask);
                 region_epoch = std::max<uint64_t>(region_epoch, PackedCell64_t::ExtractClk16(absolute_packed_cell));
 
@@ -493,7 +493,7 @@ namespace PredictedAdaptedEncoding
 
     packed64_t AdaptivePackedCellContainer::NormalizeDesiredPublishedCellForRegion_(
         packed64_t out_going_cell,
-        APCPagedNodeRelMaskClasses region_kind,
+        APCPagedNodeSegmentClasses region_kind,
         PackedCellNodeAuthority node_authority
     ) noexcept
     {
@@ -515,7 +515,7 @@ namespace PredictedAdaptedEncoding
 
     uint16_t AdaptivePackedCellContainer::ComputeAdaptivemaxTreies_(packed64_t packed_cell) noexcept
     {
-        const APCPagedNodeRelMaskClasses page_class =
+        const APCPagedNodeSegmentClasses page_class =
             PackedCell64_t::ExtractRelMaskFromPacked(packed_cell);
 
         if (!APCAndPagedNodeHelpers::IsDataConsumablePageClass(page_class))

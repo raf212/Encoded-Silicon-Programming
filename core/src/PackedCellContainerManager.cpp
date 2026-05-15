@@ -315,7 +315,7 @@ namespace PredictedAdaptedEncoding
                 if (batch_head_apc_ptr->HasThisManageControlFlag(SegmentIODefinition::ManagerControlFlagBits::REQUEST_NEW_SEGMENTATION))
                 {
                     batch_head_apc_ptr->ClearOneManagerControlFlag(SegmentIODefinition::ManagerControlFlagBits::REQUEST_NEW_SEGMENTATION);
-                    batch_head_apc_ptr->TryCreateBranchIfNeeded(APCPagedNodeRelMaskClasses::FREE_SLOT);
+                    batch_head_apc_ptr->TryCreateBranchIfNeeded(APCPagedNodeSegmentClasses::FREE_SLOT);
                 }
             }
             batch_head_apc_ptr = next_apc_ptr;

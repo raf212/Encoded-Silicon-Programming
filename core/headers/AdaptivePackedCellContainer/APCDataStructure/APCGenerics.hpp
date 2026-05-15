@@ -42,16 +42,16 @@ namespace PredictedAdaptedEncoding
             return static_cast<uint16_t>(candidate - baseline) < HALF16Bit_THRESHOLD_WRAP;
             
         }
-        static APCPagedNodeRelMaskClasses ExtractPagedRelMaskFromPacked (packed64_t packed_cell) noexcept
+        static APCPagedNodeSegmentClasses ExtractPagedRelMaskFromPacked (packed64_t packed_cell) noexcept
         {
-            return static_cast<APCPagedNodeRelMaskClasses>(PackedCell64_t::ExtractRelMaskFromPacked(packed_cell));
+            return static_cast<APCPagedNodeSegmentClasses>(PackedCell64_t::ExtractRelMaskFromPacked(packed_cell));
         }
 
 
-        static constexpr uint32_t MakeOneAPCNodeClassReadyBit(APCPagedNodeRelMaskClasses desired_rel_class) noexcept
+        static constexpr uint32_t MakeOneAPCNodeClassReadyBit(APCPagedNodeSegmentClasses desired_rel_class) noexcept
         {
             const uint32_t rel_class = static_cast<uint8_t>(desired_rel_class) & HIGH_FOUR_NIBBLE;
-            if (rel_class == static_cast<uint8_t>(APCPagedNodeRelMaskClasses::NONE) || rel_class == static_cast<uint8_t>(APCPagedNodeRelMaskClasses::NANNULL))
+            if (rel_class == static_cast<uint8_t>(APCPagedNodeSegmentClasses::NONE) || rel_class == static_cast<uint8_t>(APCPagedNodeSegmentClasses::NANNULL))
             {
                 return UNSIGNED_ZERO;
             }
@@ -59,7 +59,7 @@ namespace PredictedAdaptedEncoding
         }
 
 
-        static bool CanCellBeConsumedForThisRegion(packed64_t packed_cell, APCPagedNodeRelMaskClasses region_kind) noexcept
+        static bool CanCellBeConsumedForThisRegion(packed64_t packed_cell, APCPagedNodeSegmentClasses region_kind) noexcept
         {
             return PackedCell64_t::ExtractLocalityFromPacked(packed_cell) == PackedCellLocalityTypes::ST_PUBLISHED &&
                 ExtractPagedRelMaskFromPacked(packed_cell) == region_kind &&
@@ -67,7 +67,7 @@ namespace PredictedAdaptedEncoding
         }
 
         static constexpr MetaIndexOfAPCNode GetOccupancyMetIndexByRegionClass(
-            APCPagedNodeRelMaskClasses desired_region_class
+            APCPagedNodeSegmentClasses desired_region_class
         )noexcept
         {
             return static_cast<MetaIndexOfAPCNode>(
@@ -78,7 +78,7 @@ namespace PredictedAdaptedEncoding
 
         static inline bool IsEmbededControlCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
-            if (a_cell_view.PageClass == APCPagedNodeRelMaskClasses::CONTROL_SLOT)
+            if (a_cell_view.PageClass == APCPagedNodeSegmentClasses::CONTROL_SLOT)
             {
                 return true;
             }
@@ -122,14 +122,14 @@ namespace PredictedAdaptedEncoding
 
         static inline bool IsCellAppropriatelyPagedAndPublishedAsGeneric(
             const PackedCell64_t::AuthoritiveCellView& view,
-            APCPagedNodeRelMaskClasses region_kind
+            APCPagedNodeSegmentClasses region_kind
         ) noexcept
         {
             return IsThisCellAppropriateAndGenericToConsume(view) &&
                 view.PageClass == region_kind;
         }    
 
-        static inline bool IsTrackedOccupancyPageClass(APCPagedNodeRelMaskClasses page_class) noexcept
+        static inline bool IsTrackedOccupancyPageClass(APCPagedNodeSegmentClasses page_class) noexcept
         {
             /*
                 Occupancy-tracked means:
@@ -141,11 +141,11 @@ namespace PredictedAdaptedEncoding
                 This includes FREE_SLOT only for non-idle abnormal transitions.
                 Normal idle free capacity is still derived, not counted.
             */
-            return page_class != APCPagedNodeRelMaskClasses::NONE &&
-                page_class != APCPagedNodeRelMaskClasses::NANNULL;
+            return page_class != APCPagedNodeSegmentClasses::NONE &&
+                page_class != APCPagedNodeSegmentClasses::NANNULL;
         }
 
-        static inline bool IsDataConsumablePageClass(APCPagedNodeRelMaskClasses page_class) noexcept
+        static inline bool IsDataConsumablePageClass(APCPagedNodeSegmentClasses page_class) noexcept
         {
             /*
                 These regions may contain normal user/runtime data.
@@ -153,10 +153,10 @@ namespace PredictedAdaptedEncoding
                 FREE_SLOT is not data-consumable.
                 NONE/NANNULL are invalid.
             */
-            return page_class != APCPagedNodeRelMaskClasses::NONE &&
-                page_class != APCPagedNodeRelMaskClasses::NANNULL &&
-                page_class != APCPagedNodeRelMaskClasses::CONTROL_SLOT &&
-                page_class != APCPagedNodeRelMaskClasses::FREE_SLOT;
+            return page_class != APCPagedNodeSegmentClasses::NONE &&
+                page_class != APCPagedNodeSegmentClasses::NANNULL &&
+                page_class != APCPagedNodeSegmentClasses::CONTROL_SLOT &&
+                page_class != APCPagedNodeSegmentClasses::FREE_SLOT;
         }
 
         static inline bool IsGenericPayloadOffset(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
@@ -183,7 +183,7 @@ namespace PredictedAdaptedEncoding
         ) noexcept
         {
             if (
-                !occupancy_cell_view.IsCellValid || occupancy_cell_view.PageClass != APCPagedNodeRelMaskClasses::CONTROL_SLOT ||
+                !occupancy_cell_view.IsCellValid || occupancy_cell_view.PageClass != APCPagedNodeSegmentClasses::CONTROL_SLOT ||
                 occupancy_cell_view.CellMode != PackedMode::MODE_CLKVAL48 ||
                 occupancy_cell_view.LocalityOfCell != desired_cell_locality ||
                 !occupancy_cell_view.RelationOffsetForMode48.has_value() ||
@@ -201,53 +201,53 @@ namespace PredictedAdaptedEncoding
     {
         uint32_t BeginIndex = APCDataStructure::BRANCH_SENTINAL;
         uint32_t EndIndex = APCDataStructure::BRANCH_SENTINAL;
-        APCPagedNodeRelMaskClasses PAGE_LAYOUT_CLASS = APCPagedNodeRelMaskClasses::NANNULL;
+        APCPagedNodeSegmentClasses PAGE_LAYOUT_CLASS = APCPagedNodeSegmentClasses::NANNULL;
         float InitialOrCurrentPercentage = 0u;
         uint16_t VersionNumber = 0u;
 
         static inline MetaIndexOfAPCNode GetLayoutCellMetaIndexForPageClass(
-            APCPagedNodeRelMaskClasses page_class
+            APCPagedNodeSegmentClasses page_class
         ) noexcept
         {
             switch (page_class)
             {
-                case APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE:
+                case APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE:
                     return MetaIndexOfAPCNode::MESSAGE_FEEDFORWARD_BOUNDS_VERSION;
 
-                case APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE:
+                case APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE:
                     return MetaIndexOfAPCNode::MESSAGE_FEEDBACKWARD_BOUNDS_VERSION;
 
-                case APCPagedNodeRelMaskClasses::LATERAL_MESAGE:
+                case APCPagedNodeSegmentClasses::LATERAL_MESAGE:
                     return MetaIndexOfAPCNode::LATERAL_BOUNDS_VERSION;
 
-                case APCPagedNodeRelMaskClasses::STATE_SLOT:
+                case APCPagedNodeSegmentClasses::STATE_SLOT:
                     return MetaIndexOfAPCNode::STATE_BOUNDS_VERSION;
 
-                case APCPagedNodeRelMaskClasses::ERROR_SLOT:
+                case APCPagedNodeSegmentClasses::ERROR_SLOT:
                     return MetaIndexOfAPCNode::ERROR_BOUNDS_VERSION;
 
-                case APCPagedNodeRelMaskClasses::EDGE_DESCRIPTOR:
+                case APCPagedNodeSegmentClasses::EDGE_DESCRIPTOR:
                     return MetaIndexOfAPCNode::EDGE_DESCRIPTIOR_BOUNDS_VERSION;
 
-                case APCPagedNodeRelMaskClasses::WEIGHT_SLOT:
+                case APCPagedNodeSegmentClasses::WEIGHT_SLOT:
                     return MetaIndexOfAPCNode::WEIGHT_BOUNDS_VERSION;
 
-                case APCPagedNodeRelMaskClasses::AUX_SLOT:
+                case APCPagedNodeSegmentClasses::AUX_SLOT:
                     return MetaIndexOfAPCNode::AUX_BOUNDS_VERSION;
 
-                case APCPagedNodeRelMaskClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT:
+                case APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT:
                     return MetaIndexOfAPCNode::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT_BOUNDS_VERSION;
                     
-                case APCPagedNodeRelMaskClasses::PAIRED_POINTER_LOCAL_MEMORY:
+                case APCPagedNodeSegmentClasses::PAIRED_POINTER_LOCAL_MEMORY:
                     return MetaIndexOfAPCNode::PAIRED_POINTER_LOCAL_MEMORY_BOUNDS_VERSION;
 
-                case APCPagedNodeRelMaskClasses::PAIRED_POINTER_DISTANCE_MEMORY:
+                case APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY:
                     return MetaIndexOfAPCNode::PAIRED_POINTER_DISTANCE_MEMORY_BOUNDS_VERSION;
 
-                case APCPagedNodeRelMaskClasses::UNDEFINED:
+                case APCPagedNodeSegmentClasses::UNDEFINED:
                     return MetaIndexOfAPCNode::UNDEFINED_BOUNDS_VERSION;
 
-                case APCPagedNodeRelMaskClasses::FREE_SLOT:
+                case APCPagedNodeSegmentClasses::FREE_SLOT:
                     return MetaIndexOfAPCNode::FREE_BOUNDS_VERSION;
 
                 default:
@@ -263,12 +263,12 @@ namespace PredictedAdaptedEncoding
 
         constexpr bool IsValid(uint32_t payload_begain, uint32_t payload_end) const noexcept
         {
-            return BeginIndex >= payload_begain && EndIndex >= BeginIndex && EndIndex <= payload_end && PAGE_LAYOUT_CLASS!= APCPagedNodeRelMaskClasses::NANNULL;
+            return BeginIndex >= payload_begain && EndIndex >= BeginIndex && EndIndex <= payload_end && PAGE_LAYOUT_CLASS!= APCPagedNodeSegmentClasses::NANNULL;
         }
 
         bool IsEmpty() const noexcept
         {
-            return EndIndex <= BeginIndex || PAGE_LAYOUT_CLASS == APCPagedNodeRelMaskClasses::NANNULL;
+            return EndIndex <= BeginIndex || PAGE_LAYOUT_CLASS == APCPagedNodeSegmentClasses::NANNULL;
         }
 
         uint32_t GetPayloadSpan() const noexcept
@@ -278,12 +278,12 @@ namespace PredictedAdaptedEncoding
 
         constexpr bool CanBorrowRightFrom(const LayoutBoundsOfSingleRelNodeClass& right) const noexcept
         {
-            return EndIndex == right.BeginIndex && right.GetPayloadSpan() > 0u && right.PAGE_LAYOUT_CLASS != APCPagedNodeRelMaskClasses::NANNULL;
+            return EndIndex == right.BeginIndex && right.GetPayloadSpan() > 0u && right.PAGE_LAYOUT_CLASS != APCPagedNodeSegmentClasses::NANNULL;
         }
 
         constexpr bool CanBorrowLeftFrom(const LayoutBoundsOfSingleRelNodeClass& left) const noexcept
         {
-            return BeginIndex == left.EndIndex && left.GetPayloadSpan() > 0u && left.PAGE_LAYOUT_CLASS != APCPagedNodeRelMaskClasses::NANNULL;
+            return BeginIndex == left.EndIndex && left.GetPayloadSpan() > 0u && left.PAGE_LAYOUT_CLASS != APCPagedNodeSegmentClasses::NANNULL;
         }
 
         bool TryGrowRight(uint32_t amount, LayoutBoundsOfSingleRelNodeClass& right) noexcept
@@ -366,7 +366,7 @@ namespace PredictedAdaptedEncoding
     struct CompleteAPCNodeRegionsLayout
     {
         static constexpr LayoutBoundsOfSingleRelNodeClass MakeDefaultDesiredLayout(
-            APCPagedNodeRelMaskClasses desired_layout_class,
+            APCPagedNodeSegmentClasses desired_layout_class,
             uint8_t initial_percentage
         ) noexcept
         {
@@ -378,19 +378,19 @@ namespace PredictedAdaptedEncoding
             };
         }
 
-        LayoutBoundsOfSingleRelNodeClass FeedForwardLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE, FEEDFOEWARD_PERCENTAGE)};
-        LayoutBoundsOfSingleRelNodeClass FeedBackwardLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE, FEEDBACKWARD_PERCENTAGE)};
-        LayoutBoundsOfSingleRelNodeClass LateralLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::LATERAL_MESAGE, UNSIGNED_ZERO)};
-        LayoutBoundsOfSingleRelNodeClass StateLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::STATE_SLOT, STATESLOT_PERCENTAGE)};
-        LayoutBoundsOfSingleRelNodeClass ErrorLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::ERROR_SLOT, ERRORSLOT_PERCENTAGE)};
-        LayoutBoundsOfSingleRelNodeClass EdgeDescriptorLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::EDGE_DESCRIPTOR, EDGEDESCRIPTOR_PERCENTAGE)};
-        LayoutBoundsOfSingleRelNodeClass WeightLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::WEIGHT_SLOT, WEIGHTSLOT_PERCENTAGE)};
-        LayoutBoundsOfSingleRelNodeClass AUXLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::AUX_SLOT, AUXSLOT_PERCENTAGE)};
-        LayoutBoundsOfSingleRelNodeClass HeterogenousMemoryLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT, UNSIGNED_ZERO)};
-        LayoutBoundsOfSingleRelNodeClass LocalPairedPointerLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::PAIRED_POINTER_LOCAL_MEMORY, UNSIGNED_ZERO)};
-        LayoutBoundsOfSingleRelNodeClass DistancePairedLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::PAIRED_POINTER_DISTANCE_MEMORY, UNSIGNED_ZERO)};
-        LayoutBoundsOfSingleRelNodeClass UndefinedLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::UNDEFINED, UNSIGNED_ZERO)};
-        LayoutBoundsOfSingleRelNodeClass FreeLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::FREE_SLOT, FREE_PERCENTAGE)};
+        LayoutBoundsOfSingleRelNodeClass FeedForwardLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, FEEDFOEWARD_PERCENTAGE)};
+        LayoutBoundsOfSingleRelNodeClass FeedBackwardLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE, FEEDBACKWARD_PERCENTAGE)};
+        LayoutBoundsOfSingleRelNodeClass LateralLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::LATERAL_MESAGE, UNSIGNED_ZERO)};
+        LayoutBoundsOfSingleRelNodeClass StateLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::STATE_SLOT, STATESLOT_PERCENTAGE)};
+        LayoutBoundsOfSingleRelNodeClass ErrorLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::ERROR_SLOT, ERRORSLOT_PERCENTAGE)};
+        LayoutBoundsOfSingleRelNodeClass EdgeDescriptorLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::EDGE_DESCRIPTOR, EDGEDESCRIPTOR_PERCENTAGE)};
+        LayoutBoundsOfSingleRelNodeClass WeightLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::WEIGHT_SLOT, WEIGHTSLOT_PERCENTAGE)};
+        LayoutBoundsOfSingleRelNodeClass AUXLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::AUX_SLOT, AUXSLOT_PERCENTAGE)};
+        LayoutBoundsOfSingleRelNodeClass HeterogenousMemoryLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT, UNSIGNED_ZERO)};
+        LayoutBoundsOfSingleRelNodeClass LocalPairedPointerLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::PAIRED_POINTER_LOCAL_MEMORY, UNSIGNED_ZERO)};
+        LayoutBoundsOfSingleRelNodeClass DistancePairedLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY, UNSIGNED_ZERO)};
+        LayoutBoundsOfSingleRelNodeClass UndefinedLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::UNDEFINED, UNSIGNED_ZERO)};
+        LayoutBoundsOfSingleRelNodeClass FreeLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::FREE_SLOT, FREE_PERCENTAGE)};
         //we can add 8 more threrritically rel_mask = 4 bit ->16 classes 
         static constexpr uint8_t CURRENT_TOTAL_APC_REL_NODE_CLASSES = 13u;
 
@@ -470,49 +470,49 @@ namespace PredictedAdaptedEncoding
             return true;
         }
 
-        LayoutBoundsOfSingleRelNodeClass* GetALayoutByRelMask(APCPagedNodeRelMaskClasses desired_rel_mask) noexcept
+        LayoutBoundsOfSingleRelNodeClass* GetALayoutByRelMask(APCPagedNodeSegmentClasses desired_rel_mask) noexcept
         {
             switch (desired_rel_mask)
             {
-                case APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE:  return &FeedForwardLayout;
-                case APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE: return &FeedBackwardLayout;
-                case APCPagedNodeRelMaskClasses::LATERAL_MESAGE     :  return &LateralLayout;
-                case APCPagedNodeRelMaskClasses::STATE_SLOT:           return &StateLayout;
-                case APCPagedNodeRelMaskClasses::ERROR_SLOT:           return &ErrorLayout;
-                case APCPagedNodeRelMaskClasses::EDGE_DESCRIPTOR:      return &EdgeDescriptorLayout;
-                case APCPagedNodeRelMaskClasses::WEIGHT_SLOT:          return &WeightLayout;
-                case APCPagedNodeRelMaskClasses::AUX_SLOT:             return &AUXLayout;
-                case APCPagedNodeRelMaskClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT:
+                case APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE:  return &FeedForwardLayout;
+                case APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE: return &FeedBackwardLayout;
+                case APCPagedNodeSegmentClasses::LATERAL_MESAGE     :  return &LateralLayout;
+                case APCPagedNodeSegmentClasses::STATE_SLOT:           return &StateLayout;
+                case APCPagedNodeSegmentClasses::ERROR_SLOT:           return &ErrorLayout;
+                case APCPagedNodeSegmentClasses::EDGE_DESCRIPTOR:      return &EdgeDescriptorLayout;
+                case APCPagedNodeSegmentClasses::WEIGHT_SLOT:          return &WeightLayout;
+                case APCPagedNodeSegmentClasses::AUX_SLOT:             return &AUXLayout;
+                case APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT:
                     return &HeterogenousMemoryLayout;
-                case APCPagedNodeRelMaskClasses::PAIRED_POINTER_LOCAL_MEMORY: 
+                case APCPagedNodeSegmentClasses::PAIRED_POINTER_LOCAL_MEMORY: 
                     return &LocalPairedPointerLayout;
-                case APCPagedNodeRelMaskClasses::PAIRED_POINTER_DISTANCE_MEMORY:
+                case APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY:
                     return &DistancePairedLayout;
-                case APCPagedNodeRelMaskClasses::UNDEFINED:            return &UndefinedLayout;
-                case APCPagedNodeRelMaskClasses::FREE_SLOT:            return &FreeLayout;
+                case APCPagedNodeSegmentClasses::UNDEFINED:            return &UndefinedLayout;
+                case APCPagedNodeSegmentClasses::FREE_SLOT:            return &FreeLayout;
                 default:                                               return nullptr;
             }
         }
-        const LayoutBoundsOfSingleRelNodeClass* GetALayoutByRelMask(APCPagedNodeRelMaskClasses desired_rel_mask) const noexcept
+        const LayoutBoundsOfSingleRelNodeClass* GetALayoutByRelMask(APCPagedNodeSegmentClasses desired_rel_mask) const noexcept
         {
             switch (desired_rel_mask)
             {
-                case APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE:  return &FeedForwardLayout;
-                case APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE: return &FeedBackwardLayout;
-                case APCPagedNodeRelMaskClasses::LATERAL_MESAGE     :  return &LateralLayout;
-                case APCPagedNodeRelMaskClasses::STATE_SLOT:           return &StateLayout;
-                case APCPagedNodeRelMaskClasses::ERROR_SLOT:           return &ErrorLayout;
-                case APCPagedNodeRelMaskClasses::EDGE_DESCRIPTOR:      return &EdgeDescriptorLayout;
-                case APCPagedNodeRelMaskClasses::WEIGHT_SLOT:          return &WeightLayout;
-                case APCPagedNodeRelMaskClasses::AUX_SLOT:             return &AUXLayout;
-                case APCPagedNodeRelMaskClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT:
+                case APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE:  return &FeedForwardLayout;
+                case APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE: return &FeedBackwardLayout;
+                case APCPagedNodeSegmentClasses::LATERAL_MESAGE     :  return &LateralLayout;
+                case APCPagedNodeSegmentClasses::STATE_SLOT:           return &StateLayout;
+                case APCPagedNodeSegmentClasses::ERROR_SLOT:           return &ErrorLayout;
+                case APCPagedNodeSegmentClasses::EDGE_DESCRIPTOR:      return &EdgeDescriptorLayout;
+                case APCPagedNodeSegmentClasses::WEIGHT_SLOT:          return &WeightLayout;
+                case APCPagedNodeSegmentClasses::AUX_SLOT:             return &AUXLayout;
+                case APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT:
                     return &HeterogenousMemoryLayout;
-                case APCPagedNodeRelMaskClasses::PAIRED_POINTER_LOCAL_MEMORY: 
+                case APCPagedNodeSegmentClasses::PAIRED_POINTER_LOCAL_MEMORY: 
                     return &LocalPairedPointerLayout;
-                case APCPagedNodeRelMaskClasses::PAIRED_POINTER_DISTANCE_MEMORY:
+                case APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY:
                     return &DistancePairedLayout;
-                case APCPagedNodeRelMaskClasses::UNDEFINED:            return &UndefinedLayout;
-                case APCPagedNodeRelMaskClasses::FREE_SLOT:            return &FreeLayout;
+                case APCPagedNodeSegmentClasses::UNDEFINED:            return &UndefinedLayout;
+                case APCPagedNodeSegmentClasses::FREE_SLOT:            return &FreeLayout;
                 default:                                               return nullptr;
             }
         }

@@ -75,60 +75,6 @@ protected:
     std::unique_ptr<MasterClockConf> OwnedMasterClockConfPtr_;
     size_t BranchCapacity_{0};
 
-    packed64_t PackValue32InPackedCellwithClock16_(
-        val32_t value32,
-        PriorityPhysics priority,
-        PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_PUBLISHED,
-        APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::NONE,
-        RelOffsetMode32 reloffset_mode32 = RelOffsetMode32::RELOFFSET_GENERIC_VALUE,
-        PackedCellDataType dtype = PackedCellDataType::UnsignedPCellDataType,
-        PackedCellNodeAuthority node_authority = PackedCellNodeAuthority::IDLE_OR_FREE
-    ) noexcept
-    {
-        if (OwnedMasterClockConfPtr_)
-        {
-            return OwnedMasterClockConfPtr_->ComposeValue32WithCurrentThreadStamp16(value32, page_class, priority, locality, reloffset_mode32, dtype);
-        }
-        meta16_t strl_moded32 = PackedCell64_t::MakeInCellMetaForMode_32t(priority, node_authority, locality, page_class, reloffset_mode32, dtype);
-        return PackedCell64_t::ComposeValue32u_64(value32, UNSIGNED_ZERO, strl_moded32);
-    }
-
-    void WriteMetaCellMode32_(
-        MetaIndexOfAPCNode idx,
-        uint32_t value32,
-        PriorityPhysics priority = PriorityPhysics::IDLE,
-        APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::CONTROL_SLOT
-    ) noexcept
-    {
-        size_t index = static_cast<size_t>(idx);
-        if (!ValidMetaIdx(idx))
-        {
-            return;
-        }
-        BackingPtr[index].store(PackValue32InPackedCellwithClock16_(value32, priority, PackedCellLocalityTypes::ST_PUBLISHED, page_class), MoStoreSeq_);
-        BackingPtr[index].notify_all();
-    }
-
-    void WritBranchMeta48_(
-        MetaIndexOfAPCNode idx,
-        uint64_t raw48_value,
-        APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::CONTROL_SLOT,
-        PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY,
-        RelOffsetMode48 rel_offset = RelOffsetMode48::THREE_16_BIT_SUB_DIVISION
-    ) noexcept
-    {
-        size_t index = static_cast<size_t>(idx);
-        if (!ValidMetaIdx(idx))
-        {
-            return;
-        }
-        const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(priority, PackedCellNodeAuthority::IDLE_OR_FREE, PackedCellLocalityTypes::ST_PUBLISHED, page_class, rel_offset);
-        const packed64_t packed_cell = PackedCell64_t::ComposeCLK48u_64(raw48_value & MaskLowNBits(CLK_B48), meta16);
-        BackingPtr[index].store(packed_cell, MoStoreSeq_);
-        BackingPtr[index].notify_all();
-    }
-
-
     bool TurnOnMultipleSegmentFlagsAtOnce_(uint32_t use_or_between_flags = UNSIGNED_ZERO) noexcept
     {
         return UpdateAPCModeFlagsInHeader_(use_or_between_flags, UNSIGNED_ZERO, MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
@@ -136,7 +82,6 @@ protected:
 
     bool UpdateAPCModeFlagsInHeader_(uint32_t flags_to_turn_on = UNSIGNED_ZERO, uint32_t flags_to_turn_off = UNSIGNED_ZERO, MetaIndexOfAPCNode desired_flag_idx = MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS) noexcept;
 
-    ////layout helpers
     bool WriteBoundsPairToHeader_(
         const LayoutBoundsOfSingleRelNodeClass layout_bound,
         std::optional<uint16_t> version_number = std::nullopt,
@@ -159,9 +104,9 @@ protected:
         bool caller_holds_the_flag = false
     ) noexcept;
 
-    bool TurnOnReadyBitForDesiredPagedNode_(APCPagedNodeRelMaskClasses desired_region_class) noexcept;
+    bool TurnOnReadyBitForDesiredPagedNode_(APCPagedNodeSegmentClasses desired_region_class) noexcept;
 
-    bool ClearTheDesiredPagedNodeReadyBit_(APCPagedNodeRelMaskClasses desired_region_class) noexcept;
+    bool ClearTheDesiredPagedNodeReadyBit_(APCPagedNodeSegmentClasses desired_region_class) noexcept;
 
     bool ClearMultipleControlFlags_(uint32_t use_or_between_flags = UNSIGNED_ZERO) noexcept
     {
@@ -172,12 +117,75 @@ protected:
 
     std::optional<LayoutBoundsOfSingleRelNodeClass> GetVirtualControlSlotLayout_() noexcept;
 
+    bool ApplyRegionalMigrationOccupancyTransitionCell(
+        PackedCellLocalityTypes from_locality_of_source_cell,
+        PackedCellLocalityTypes destination_locality_of_source_cell,
+        APCPagedNodeSegmentClasses source_page_class,
+        APCPagedNodeSegmentClasses destination_page_class
+    ) noexcept;
+
+    bool ValidateAPCOccupancyInvarient() noexcept;
+
+    packed64_t PackValue32InPackedCellwithClock16_(
+        val32_t value32,
+        PriorityPhysics priority,
+        PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_PUBLISHED,
+        APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::NONE,
+        RelOffsetMode32 reloffset_mode32 = RelOffsetMode32::RELOFFSET_GENERIC_VALUE,
+        PackedCellDataType dtype = PackedCellDataType::UnsignedPCellDataType,
+        PackedCellNodeAuthority node_authority = PackedCellNodeAuthority::IDLE_OR_FREE
+    ) noexcept
+    {
+        if (OwnedMasterClockConfPtr_)
+        {
+            return OwnedMasterClockConfPtr_->ComposeValue32WithCurrentThreadStamp16(value32, page_class, priority, locality, reloffset_mode32, dtype);
+        }
+        meta16_t strl_moded32 = PackedCell64_t::MakeInCellMetaForMode_32t(priority, node_authority, locality, page_class, reloffset_mode32, dtype);
+        return PackedCell64_t::ComposeValue32u_64(value32, UNSIGNED_ZERO, strl_moded32);
+    }
+
+    void WriteMetaCellMode32_(
+        MetaIndexOfAPCNode idx,
+        uint32_t value32,
+        PriorityPhysics priority = PriorityPhysics::IDLE,
+        APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT
+    ) noexcept
+    {
+        size_t index = static_cast<size_t>(idx);
+        if (!ValidMetaIdx(idx))
+        {
+            return;
+        }
+        BackingPtr[index].store(PackValue32InPackedCellwithClock16_(value32, priority, PackedCellLocalityTypes::ST_PUBLISHED, page_class), MoStoreSeq_);
+        BackingPtr[index].notify_all();
+    }
+
+    void WritBranchMeta48_(
+        MetaIndexOfAPCNode idx,
+        uint64_t raw48_value,
+        APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
+        PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY,
+        RelOffsetMode48 rel_offset = RelOffsetMode48::THREE_16_BIT_SUB_DIVISION
+    ) noexcept
+    {
+        size_t index = static_cast<size_t>(idx);
+        if (!ValidMetaIdx(idx))
+        {
+            return;
+        }
+        const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(priority, PackedCellNodeAuthority::IDLE_OR_FREE, PackedCellLocalityTypes::ST_PUBLISHED, page_class, rel_offset);
+        const packed64_t packed_cell = PackedCell64_t::ComposeCLK48u_64(raw48_value & MaskLowNBits(CLK_B48), meta16);
+        BackingPtr[index].store(packed_cell, MoStoreSeq_);
+        BackingPtr[index].notify_all();
+    }
+
+
 private:
 
     bool CasUpdateOccupancy3x16ThreeSubdivisionCell__(
         PackedCellLocalityTypes from_locality,
         PackedCellLocalityTypes to_locality,
-        std::optional<APCPagedNodeRelMaskClasses> page_class = std::nullopt,
+        std::optional<APCPagedNodeSegmentClasses> page_class = std::nullopt,
         PackedCellLocalityTypes control_cells_own_locality = PackedCellLocalityTypes::ST_PUBLISHED,
         bool is_this_cell_central_occupancy_counter = false
     ) noexcept;
@@ -188,7 +196,7 @@ public:
         std::optional<uint64_t> clock48 = std::nullopt,
         PriorityPhysics priority = PriorityPhysics::IDLE,
         PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_PUBLISHED,
-        APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::CONTROL_SLOT,
+        APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
         RelOffsetMode48 reloffset = RelOffsetMode48::RELOFFSET_PURE_TIMER,
         PackedCellDataType dtype = PackedCellDataType::UnsignedPCellDataType,
         PackedCellNodeAuthority node_authority = PackedCellNodeAuthority::IDLE_OR_FREE
@@ -202,7 +210,6 @@ public:
         uint32_t desired_value,
         bool refresh_clock16 = true
     ) noexcept;
-
 
 
     bool IsBound() const noexcept
@@ -257,34 +264,34 @@ public:
     uint32_t TotalCASFailForThisBranchIncreaseAndGet(uint32_t increment) noexcept;
 
     bool SetLayOutBounds(
-        APCPagedNodeRelMaskClasses page_class, 
+        APCPagedNodeSegmentClasses page_class, 
         uint16_t begain_index,
         uint16_t end_index,
         bool caller_already_holds_flag = false,
         std::optional<uint16_t> version_number = std::nullopt
     ) noexcept;
 
-    std::optional<LayoutBoundsOfSingleRelNodeClass> ReadLayoutBoundsAndVersion(APCPagedNodeRelMaskClasses desired_rel_mask, bool caller_holds_the_flag = false) noexcept;
+    std::optional<LayoutBoundsOfSingleRelNodeClass> ReadLayoutBoundsAndVersion(APCPagedNodeSegmentClasses desired_rel_mask, bool caller_holds_the_flag = false) noexcept;
     std::optional<CompleteAPCNodeRegionsLayout> ReadAndGetFullRegionLayout_(bool caller_holds_layout_flag = false) noexcept;
 
 
     bool TrySetLayoutMutationInFlight() noexcept;
 
-    bool TryExtendASegmentInOwnAPC(APCPagedNodeRelMaskClasses desired_rel_mask, uint32_t wanted_amount, ContainerConf::APCSegmentExtendOrder desired_apc_order) noexcept;
+    bool TryExtendASegmentInOwnAPC(APCPagedNodeSegmentClasses desired_rel_mask, uint32_t wanted_amount, ContainerConf::APCSegmentExtendOrder desired_apc_order) noexcept;
 
-    clk16_t ReadLastAcceptedClok16ForThisSegment(APCPagedNodeRelMaskClasses region_kind) noexcept;
-    clk16_t ReadLastEmittedClok16ForThisSegment(APCPagedNodeRelMaskClasses region_kind) noexcept;
+    clk16_t ReadLastAcceptedClok16ForThisSegment(APCPagedNodeSegmentClasses region_kind) noexcept;
+    clk16_t ReadLastEmittedClok16ForThisSegment(APCPagedNodeSegmentClasses region_kind) noexcept;
     size_t PayloadCapacityFromHeader() noexcept;
 
     bool ApplyCentralAndRegionOccupancyTransitionCell(
         packed64_t old_cell,
         packed64_t new_cell,
-        APCPagedNodeRelMaskClasses physical_page_class = APCPagedNodeRelMaskClasses::NANNULL
+        APCPagedNodeSegmentClasses physical_page_class = APCPagedNodeSegmentClasses::NANNULL
     ) noexcept;
 
-    bool RefreshReadyBitForRegionFromOccupancy(APCPagedNodeRelMaskClasses page_class) noexcept;
+    bool RefreshReadyBitForRegionFromOccupancy(APCPagedNodeSegmentClasses page_class) noexcept;
 
-    uint16_t ReadTotalOccuPancyOfAnyPageClass(APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::NANNULL) noexcept;
+    uint16_t ReadTotalOccuPancyOfAnyPageClass(APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::NANNULL) noexcept;
     
     bool WriteExactMetaCellJustNewValue(MetaIndexOfAPCNode idx, uint32_t value) noexcept;
 
@@ -365,7 +372,7 @@ public:
         WriteMetaCellMode32_(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH, UNSIGNED_ZERO, priority);
     }
 
-    bool SetSegmentRegionKind(APCPagedNodeRelMaskClasses region_kind) noexcept
+    bool SetSegmentRegionKind(APCPagedNodeSegmentClasses region_kind) noexcept
     {
         const uint32_t current_segment_kind = ReadMetaCellValue32(MetaIndexOfAPCNode::SEGMENT_KIND);
         return JustUpdateValueOfMeta32(MetaIndexOfAPCNode::SEGMENT_KIND, current_segment_kind, static_cast<uint32_t>(region_kind));
@@ -385,7 +392,7 @@ public:
         return ReadFullMetaCell(MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48);
     }
     
-    packed64_t ReadRegionOccupancyCombinedCell(APCPagedNodeRelMaskClasses page_class) noexcept
+    packed64_t ReadRegionOccupancyCombinedCell(APCPagedNodeSegmentClasses page_class) noexcept
     {
         return ReadFullMetaCell(
             APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(page_class)
@@ -406,31 +413,31 @@ public:
         return ok;
     }
 
-    uint16_t ReadRegionOccupancyOfALocality(PackedCellLocalityTypes locality_type, APCPagedNodeRelMaskClasses page_class) noexcept;
+    uint16_t ReadRegionOccupancyOfALocality(PackedCellLocalityTypes locality_type, APCPagedNodeSegmentClasses page_class) noexcept;
 
-    uint16_t ReadPublishedOccupancyOfAPageClass(APCPagedNodeRelMaskClasses page_class) noexcept
+    uint16_t ReadPublishedOccupancyOfAPageClass(APCPagedNodeSegmentClasses page_class) noexcept
     {
         return ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED, page_class);
     }
 
-    uint16_t ReadIdleOccupancyOfAPAgeClass(APCPagedNodeRelMaskClasses page_class) noexcept
+    uint16_t ReadIdleOccupancyOfAPAgeClass(APCPagedNodeSegmentClasses page_class) noexcept
     {
         return ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::ST_IDLE, page_class);
     }
 
 
-    uint16_t ReadClaimedOccupancyOfAPAgeClass(APCPagedNodeRelMaskClasses page_class) noexcept
+    uint16_t ReadClaimedOccupancyOfAPAgeClass(APCPagedNodeSegmentClasses page_class) noexcept
     {
         return ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::ST_CLAIMED, page_class);
     }
     
 
-    uint16_t ReadFaultyOccupancyOfAPAgeClass(APCPagedNodeRelMaskClasses page_class) noexcept
+    uint16_t ReadFaultyOccupancyOfAPAgeClass(APCPagedNodeSegmentClasses page_class) noexcept
     {
         return ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY, page_class);
     }
 
-    uint16_t ReadTotalUsedOccupancyOfARegion(APCPagedNodeRelMaskClasses page_class) noexcept
+    uint16_t ReadTotalUsedOccupancyOfARegion(APCPagedNodeSegmentClasses page_class) noexcept
     {
         return ReadPublishedOccupancyOfAPageClass(page_class) +
             ReadClaimedOccupancyOfAPAgeClass(page_class) +

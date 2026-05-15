@@ -141,7 +141,7 @@ namespace PredictedAdaptedEncoding {
         ERROR_DEPENDENCY = 7
     };
 
-    enum class APCPagedNodeRelMaskClasses : tag8_t
+    enum class APCPagedNodeSegmentClasses : tag8_t
     {
         NONE = 0x0,
         FEEDFORWARD_MESSAGE  = 0x1,

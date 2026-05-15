@@ -71,7 +71,7 @@ namespace PredictedAdaptedEncoding
                 return;
             }
 
-            if (one.PAGE_LAYOUT_CLASS == APCPagedNodeRelMaskClasses::FREE_SLOT)
+            if (one.PAGE_LAYOUT_CLASS == APCPagedNodeSegmentClasses::FREE_SLOT)
             {
                 return;
             }
@@ -99,7 +99,7 @@ namespace PredictedAdaptedEncoding
             {
                 return;
             }
-            if (one->PAGE_LAYOUT_CLASS == APCPagedNodeRelMaskClasses::FREE_SLOT)
+            if (one->PAGE_LAYOUT_CLASS == APCPagedNodeSegmentClasses::FREE_SLOT)
             {
                 continue;
             }
@@ -108,7 +108,7 @@ namespace PredictedAdaptedEncoding
         
         full_layout.FreeLayout.BeginIndex = initial_cursor;
         full_layout.FreeLayout.EndIndex = payload_end;
-        full_layout.FreeLayout.PAGE_LAYOUT_CLASS = APCPagedNodeRelMaskClasses::FREE_SLOT;
+        full_layout.FreeLayout.PAGE_LAYOUT_CLASS = APCPagedNodeSegmentClasses::FREE_SLOT;
         full_layout.FreeLayout.VersionNumber = current_or_start_version;
     }
 
@@ -122,7 +122,7 @@ namespace PredictedAdaptedEncoding
             APCAndPagedNodeHelpers::IsDataConsumablePageClass(
                 layout_bound.PAGE_LAYOUT_CLASS
             ) ||
-            layout_bound.PAGE_LAYOUT_CLASS == APCPagedNodeRelMaskClasses::FREE_SLOT;
+            layout_bound.PAGE_LAYOUT_CLASS == APCPagedNodeSegmentClasses::FREE_SLOT;
 
         if (!valid_layout_class)
         {
@@ -229,7 +229,7 @@ namespace PredictedAdaptedEncoding
             return std::nullopt;
         }
          
-        auto LoadOne = [&](APCPagedNodeRelMaskClasses desired_rel_mask, LayoutBoundsOfSingleRelNodeClass& out_one) noexcept->bool
+        auto LoadOne = [&](APCPagedNodeSegmentClasses desired_rel_mask, LayoutBoundsOfSingleRelNodeClass& out_one) noexcept->bool
         {
             auto maybe_one = ReadLayoutBoundsAndVersion(desired_rel_mask, caller_holds_layout_flag);
             if (!maybe_one)
@@ -242,19 +242,19 @@ namespace PredictedAdaptedEncoding
 
         CompleteAPCNodeRegionsLayout out_layout{};
         bool ok = true;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE, out_layout.FeedForwardLayout) && ok;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE, out_layout.FeedBackwardLayout) && ok;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::LATERAL_MESAGE, out_layout.LateralLayout) && ok;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::STATE_SLOT, out_layout.StateLayout) && ok;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::ERROR_SLOT, out_layout.ErrorLayout) && ok;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::EDGE_DESCRIPTOR, out_layout.EdgeDescriptorLayout) && ok;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::WEIGHT_SLOT, out_layout.WeightLayout) && ok;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::AUX_SLOT, out_layout.AUXLayout) && ok;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT, out_layout.HeterogenousMemoryLayout) && ok;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::PAIRED_POINTER_LOCAL_MEMORY, out_layout.LocalPairedPointerLayout) && ok;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::PAIRED_POINTER_DISTANCE_MEMORY, out_layout.DistancePairedLayout) && ok;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::UNDEFINED, out_layout.UndefinedLayout) && ok;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::FREE_SLOT, out_layout.FreeLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, out_layout.FeedForwardLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE, out_layout.FeedBackwardLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::LATERAL_MESAGE, out_layout.LateralLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::STATE_SLOT, out_layout.StateLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::ERROR_SLOT, out_layout.ErrorLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::EDGE_DESCRIPTOR, out_layout.EdgeDescriptorLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::WEIGHT_SLOT, out_layout.WeightLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::AUX_SLOT, out_layout.AUXLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT, out_layout.HeterogenousMemoryLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::PAIRED_POINTER_LOCAL_MEMORY, out_layout.LocalPairedPointerLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY, out_layout.DistancePairedLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::UNDEFINED, out_layout.UndefinedLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::FREE_SLOT, out_layout.FreeLayout) && ok;
         if (!ok)
         {
             return std::nullopt;
@@ -388,7 +388,7 @@ namespace PredictedAdaptedEncoding
         return true;
     }
 
-    bool SegmentIODefinition::TurnOnReadyBitForDesiredPagedNode_(APCPagedNodeRelMaskClasses desired_region_class) noexcept
+    bool SegmentIODefinition::TurnOnReadyBitForDesiredPagedNode_(APCPagedNodeSegmentClasses desired_region_class) noexcept
     {
         const uint32_t anew_readybit = APCAndPagedNodeHelpers::MakeOneAPCNodeClassReadyBit(desired_region_class);
         if (anew_readybit == 0)
@@ -411,7 +411,7 @@ namespace PredictedAdaptedEncoding
         return false;
     }
 
-    bool SegmentIODefinition::ClearTheDesiredPagedNodeReadyBit_(APCPagedNodeRelMaskClasses desired_region_class) noexcept
+    bool SegmentIODefinition::ClearTheDesiredPagedNodeReadyBit_(APCPagedNodeSegmentClasses desired_region_class) noexcept
     {
         const uint32_t anew_readybit = APCAndPagedNodeHelpers::MakeOneAPCNodeClassReadyBit(desired_region_class);
         if (anew_readybit == 0)
@@ -443,7 +443,7 @@ namespace PredictedAdaptedEncoding
 
         auto StoreCount = [&](
             MetaIndexOfAPCNode meta_idx,
-            APCPagedNodeRelMaskClasses page_class,
+            APCPagedNodeSegmentClasses page_class,
             uint16_t published,
             uint16_t claimed,
             uint16_t faulty
@@ -457,7 +457,7 @@ namespace PredictedAdaptedEncoding
             }
             const packed64_t wanted_cell = ComposeAPCOccupancyModel_16x3_48t(
                 published, claimed, faulty,
-                APCPagedNodeRelMaskClasses ::CONTROL_SLOT,
+                APCPagedNodeSegmentClasses ::CONTROL_SLOT,
                 PackedCellLocalityTypes::ST_PUBLISHED
             );
             BackingPtr[static_cast<size_t>(meta_idx)].store(wanted_cell, MoStoreSeq_);
@@ -471,7 +471,7 @@ namespace PredictedAdaptedEncoding
 
         StoreCount(
             MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48,
-            APCPagedNodeRelMaskClasses::CONTROL_SLOT,
+            APCPagedNodeSegmentClasses::CONTROL_SLOT,
             meta_published,
             UNSIGNED_ZERO,
             UNSIGNED_ZERO
@@ -479,7 +479,7 @@ namespace PredictedAdaptedEncoding
 
         for (uint8_t i = 0; i < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses; i++)
         {
-            const APCPagedNodeRelMaskClasses current_page_class = static_cast<APCPagedNodeRelMaskClasses>(i);
+            const APCPagedNodeSegmentClasses current_page_class = static_cast<APCPagedNodeSegmentClasses>(i);
             if (!APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(current_page_class))
             {
                 continue;
@@ -497,7 +497,7 @@ namespace PredictedAdaptedEncoding
         
         StoreCount(
             MetaIndexOfAPCNode::REGION_OCCUPANCY_CONTROL,
-            APCPagedNodeRelMaskClasses::CONTROL_SLOT,
+            APCPagedNodeSegmentClasses::CONTROL_SLOT,
             meta_published,
             UNSIGNED_ZERO,
             UNSIGNED_ZERO
@@ -564,7 +564,7 @@ namespace PredictedAdaptedEncoding
         out_virtual_control_slot.BeginIndex = 0u;
         out_virtual_control_slot.EndIndex = static_cast<uint32_t>(METACELL_COUNT);
         out_virtual_control_slot.VersionNumber = ReadGlobalLayoutVersion_().value_or(static_cast<uint16_t>(BRANCH_VERSION));
-        out_virtual_control_slot.PAGE_LAYOUT_CLASS = APCPagedNodeRelMaskClasses::CONTROL_SLOT;
+        out_virtual_control_slot.PAGE_LAYOUT_CLASS = APCPagedNodeSegmentClasses::CONTROL_SLOT;
         out_virtual_control_slot.SetOrResetPercentage(
             static_cast<uint32_t>(GetTotalCapacityForThisAPC() == UNSIGNED_ZERO ? METACELL_COUNT : GetTotalCapacityForThisAPC())
         );

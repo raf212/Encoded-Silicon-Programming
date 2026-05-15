@@ -145,7 +145,7 @@ namespace PredictedAdaptedEncoding
             uint16_t published_count,
             uint16_t claimed_count,
             uint16_t faulty_count,
-            APCPagedNodeRelMaskClasses page_class,
+            APCPagedNodeSegmentClasses page_class,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_PUBLISHED,
             PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY,
             PackedCellNodeAuthority authority = PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT
@@ -219,7 +219,7 @@ namespace PredictedAdaptedEncoding
             uint16_t begin_low,
             uint16_t end_mid,
             uint16_t version_high,
-            APCPagedNodeRelMaskClasses page_class,
+            APCPagedNodeSegmentClasses page_class,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_PUBLISHED,
             PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY,
             PackedCellNodeAuthority authority = PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT

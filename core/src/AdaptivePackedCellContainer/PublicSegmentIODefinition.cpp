@@ -42,7 +42,7 @@ namespace PredictedAdaptedEncoding
         std::optional<uint64_t> clock48,
         PriorityPhysics priority,
         PackedCellLocalityTypes locality,
-        APCPagedNodeRelMaskClasses page_class,
+        APCPagedNodeSegmentClasses page_class,
         RelOffsetMode48 reloffset,
         PackedCellDataType dtype,
         PackedCellNodeAuthority node_authority
@@ -184,7 +184,7 @@ namespace PredictedAdaptedEncoding
         
         WriteMetaCellMode32_(MetaIndexOfAPCNode::MAGIC_ID, BRANCH_MAGIC, write_cell_priority);
         WriteMetaCellMode32_(MetaIndexOfAPCNode::BRANCH_ID, static_cast<uint32_t>(std::min<uint32_t>(branch_id, BRANCH_SENTINAL)), write_cell_priority);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION, BRANCH_VERSION, write_cell_priority, APCPagedNodeRelMaskClasses::CONTROL_SLOT);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION, BRANCH_VERSION, write_cell_priority, APCPagedNodeSegmentClasses::CONTROL_SLOT);
 
         WriteMetaCellMode32_(MetaIndexOfAPCNode::BRANCH_DEPTH, branch_depth, write_cell_priority);
         WriteMetaCellMode32_(MetaIndexOfAPCNode::BRANCH_PRIORITY, branch_priority, write_cell_priority);
@@ -192,7 +192,7 @@ namespace PredictedAdaptedEncoding
         WriteMetaCellMode32_(MetaIndexOfAPCNode::CURRENT_ACTIVE_THREADS, UNSIGNED_ZERO, write_cell_priority);
         WritBranchMeta48_(MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48, UNSIGNED_ZERO);
         WriteMetaCellMode32_(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE, container_configuration.BranchSplitThresholdPercentage, write_cell_priority);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::SEGMENT_KIND, static_cast<uint32_t>(APCPagedNodeRelMaskClasses::FREE_SLOT), write_cell_priority);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::SEGMENT_KIND, static_cast<uint32_t>(APCPagedNodeSegmentClasses::FREE_SLOT), write_cell_priority);
         WriteMetaCellMode32_(MetaIndexOfAPCNode::MAX_DEPTH, container_configuration.BranchMaxDepth, write_cell_priority);
         WriteMetaCellMode32_(MetaIndexOfAPCNode::TOTAL_CAPACITY_OF_THIS_SEGEMENT, safe_capacity, write_cell_priority);                                                                                        
         WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_SPLIT_EPOCH, UNSIGNED_ZERO, write_cell_priority);
@@ -214,7 +214,7 @@ namespace PredictedAdaptedEncoding
         for (uint8_t i = 0; i < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses; i++)
         {
             WriteMetaCellMode32_(static_cast<MetaIndexOfAPCNode>(static_cast<size_t>(MetaIndexOfAPCNode::REGION_OCCUPANCY_NONE) + i), 
-                            UNSIGNED_ZERO, write_cell_priority, APCPagedNodeRelMaskClasses::CONTROL_SLOT
+                            UNSIGNED_ZERO, write_cell_priority, APCPagedNodeSegmentClasses::CONTROL_SLOT
                         );
         }
 
@@ -315,7 +315,7 @@ namespace PredictedAdaptedEncoding
         CompleteAPCNodeRegionsLayout compleate_layout_of_this_apc = *maybe_compleate_layout;
         for (size_t rel_class = 0; rel_class < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses; rel_class++)
         {
-            const LayoutBoundsOfSingleRelNodeClass* current_layout = compleate_layout_of_this_apc.GetALayoutByRelMask(static_cast<APCPagedNodeRelMaskClasses>(rel_class));
+            const LayoutBoundsOfSingleRelNodeClass* current_layout = compleate_layout_of_this_apc.GetALayoutByRelMask(static_cast<APCPagedNodeSegmentClasses>(rel_class));
             if (!current_layout || current_layout->IsEmpty())
             {
                 continue;
@@ -395,11 +395,11 @@ namespace PredictedAdaptedEncoding
 
     std::optional<LayoutBoundsOfSingleRelNodeClass>
     SegmentIODefinition::ReadLayoutBoundsAndVersion(
-        APCPagedNodeRelMaskClasses page_class,
+        APCPagedNodeSegmentClasses page_class,
         bool caller_holds_the_flag
     ) noexcept
     {
-        if (page_class == APCPagedNodeRelMaskClasses::CONTROL_SLOT)
+        if (page_class == APCPagedNodeSegmentClasses::CONTROL_SLOT)
         {
             return GetVirtualControlSlotLayout_();
         }
@@ -479,7 +479,7 @@ namespace PredictedAdaptedEncoding
     }
 
     bool SegmentIODefinition::SetLayOutBounds(
-        APCPagedNodeRelMaskClasses page_class, 
+        APCPagedNodeSegmentClasses page_class, 
         uint16_t begain_index,
         uint16_t end_index,
         bool caller_already_holds_flag,
@@ -609,7 +609,7 @@ namespace PredictedAdaptedEncoding
         }
     }
 
-    bool SegmentIODefinition::TryExtendASegmentInOwnAPC(APCPagedNodeRelMaskClasses desired_rel_mask, uint32_t wanted_amount, ContainerConf::APCSegmentExtendOrder desired_apc_order) noexcept
+    bool SegmentIODefinition::TryExtendASegmentInOwnAPC(APCPagedNodeSegmentClasses desired_rel_mask, uint32_t wanted_amount, ContainerConf::APCSegmentExtendOrder desired_apc_order) noexcept
     {
         if (wanted_amount == 0)
         {
@@ -644,7 +644,7 @@ namespace PredictedAdaptedEncoding
         CompleteAPCNodeRegionsLayout current_complete_layout = *maybe_current_complete_node_layout;
 
         LayoutBoundsOfSingleRelNodeClass* target_layout_of_increment = current_complete_layout.GetALayoutByRelMask(desired_rel_mask);
-        LayoutBoundsOfSingleRelNodeClass* free_slot_layout = current_complete_layout.GetALayoutByRelMask(APCPagedNodeRelMaskClasses::FREE_SLOT);
+        LayoutBoundsOfSingleRelNodeClass* free_slot_layout = current_complete_layout.GetALayoutByRelMask(APCPagedNodeSegmentClasses::FREE_SLOT);
 
         if (!target_layout_of_increment || !free_slot_layout)
         {
@@ -791,11 +791,11 @@ namespace PredictedAdaptedEncoding
         return FailedWrite();
     }
 
-    clk16_t SegmentIODefinition::ReadLastAcceptedClok16ForThisSegment(APCPagedNodeRelMaskClasses region_kind) noexcept
+    clk16_t SegmentIODefinition::ReadLastAcceptedClok16ForThisSegment(APCPagedNodeSegmentClasses region_kind) noexcept
     {
         switch (region_kind)
         {
-            case APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE :
+            case APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE :
                 return static_cast<clk16_t>(ReadMetaCellValue32(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_BACKWARD_CLOCK16));
         
         default:
@@ -803,11 +803,11 @@ namespace PredictedAdaptedEncoding
         }
     }
 
-    clk16_t SegmentIODefinition::ReadLastEmittedClok16ForThisSegment(APCPagedNodeRelMaskClasses region_kind) noexcept
+    clk16_t SegmentIODefinition::ReadLastEmittedClok16ForThisSegment(APCPagedNodeSegmentClasses region_kind) noexcept
     {
         switch (region_kind)
         {
-            case APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE :
+            case APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE :
                 return static_cast<clk16_t>(ReadMetaCellValue32(MetaIndexOfAPCNode::LAST_EMITTED_FEED_BACKWARD_CLOCK16));
         
         default:
@@ -831,7 +831,7 @@ namespace PredictedAdaptedEncoding
         }
     }
 
-    uint16_t SegmentIODefinition::ReadRegionOccupancyOfALocality(PackedCellLocalityTypes locality_type, APCPagedNodeRelMaskClasses page_class) noexcept
+    uint16_t SegmentIODefinition::ReadRegionOccupancyOfALocality(PackedCellLocalityTypes locality_type, APCPagedNodeSegmentClasses page_class) noexcept
     {
 
         if (!APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(page_class))
@@ -841,7 +841,7 @@ namespace PredictedAdaptedEncoding
         const packed64_t packed_cell = ReadRegionOccupancyCombinedCell(page_class);
 
         uint16_t max_for_a_page = UNSIGNED_ZERO;
-        if (page_class == APCPagedNodeRelMaskClasses::CONTROL_SLOT)
+        if (page_class == APCPagedNodeSegmentClasses::CONTROL_SLOT)
         {
             max_for_a_page = static_cast<uint16_t>(
                 std::min<size_t>(METACELL_COUNT, APC_MAX_LENGTH_OR_COUNTER)
@@ -873,7 +873,7 @@ namespace PredictedAdaptedEncoding
     bool SegmentIODefinition::CasUpdateOccupancy3x16ThreeSubdivisionCell__(
         PackedCellLocalityTypes from_locality,
         PackedCellLocalityTypes to_locality,
-        std::optional<APCPagedNodeRelMaskClasses> page_class,
+        std::optional<APCPagedNodeSegmentClasses> page_class,
         PackedCellLocalityTypes control_or_meta_cells_own_locality,
         bool is_this_cell_central_occupancy_counter
     ) noexcept
@@ -1005,7 +1005,7 @@ namespace PredictedAdaptedEncoding
 
             const packed64_t desired_cell = ComposeAPCOccupancyModel_16x3_48t(
                 published_count, claimed_count, faulty_count, 
-                APCPagedNodeRelMaskClasses::CONTROL_SLOT,
+                APCPagedNodeSegmentClasses::CONTROL_SLOT,
                 control_or_meta_cells_own_locality
             );
 
@@ -1034,7 +1034,7 @@ namespace PredictedAdaptedEncoding
     bool SegmentIODefinition::ApplyCentralAndRegionOccupancyTransitionCell(
         packed64_t old_cell,
         packed64_t new_cell,
-        APCPagedNodeRelMaskClasses physical_page_class
+        APCPagedNodeSegmentClasses physical_page_class
     ) noexcept
     {
         const PackedCellLocalityTypes from_locality = PackedCell64_t::ExtractLocalityFromPacked(old_cell);
@@ -1046,38 +1046,42 @@ namespace PredictedAdaptedEncoding
 
         if (!APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(physical_page_class))
         {
-            return true;
-        }
-        
-        const bool total_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(from_locality, to_locality, std::nullopt, PackedCellLocalityTypes::ST_PUBLISHED, true);
-
-        if (!total_ok)
-        {
             return false;
         }
+        
+
 
         
         const bool region_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(from_locality, to_locality, physical_page_class, PackedCellLocalityTypes::ST_PUBLISHED, false);
 
         if (!region_ok)
         {
+            return false;
+        }
+
+        const bool central_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(from_locality, to_locality, std::nullopt, PackedCellLocalityTypes::ST_PUBLISHED, true);
+
+        if (!central_ok)
+        {
             CasUpdateOccupancy3x16ThreeSubdivisionCell__(
                 to_locality,
                 from_locality,
-                std::nullopt,
+                physical_page_class,
                 PackedCellLocalityTypes::ST_PUBLISHED,
-                true
+                false
             );
+            return false;
         }
+
         RefreshReadyBitForRegionFromOccupancy(physical_page_class);
         return region_ok;
     }
 
-    bool SegmentIODefinition::RefreshReadyBitForRegionFromOccupancy(APCPagedNodeRelMaskClasses page_class) noexcept
+    bool SegmentIODefinition::RefreshReadyBitForRegionFromOccupancy(APCPagedNodeSegmentClasses page_class) noexcept
     {
         if (!APCAndPagedNodeHelpers::IsDataConsumablePageClass(page_class))
         {
-            return false;
+            return true;
         }
         const uint32_t published = ReadPublishedOccupancyOfAPageClass(page_class);
         if (published > UNSIGNED_ZERO)
@@ -1098,10 +1102,10 @@ namespace PredictedAdaptedEncoding
         return UNSIGNED_ZERO;
     }
 
-    uint16_t SegmentIODefinition::ReadTotalOccuPancyOfAnyPageClass(APCPagedNodeRelMaskClasses page_class) noexcept
+    uint16_t SegmentIODefinition::ReadTotalOccuPancyOfAnyPageClass(APCPagedNodeSegmentClasses page_class) noexcept
     {
 
-        const packed64_t packed_cell = page_class != APCPagedNodeRelMaskClasses::NANNULL ?
+        const packed64_t packed_cell = page_class != APCPagedNodeSegmentClasses::NANNULL ?
             ReadRegionOccupancyCombinedCell(page_class) : ReadCentralAPCOccupancyCellForThisPagedNode();
 
         const uint16_t full_combined_occupancy = GetTootalOccupancyFromPackedCell(packed_cell);

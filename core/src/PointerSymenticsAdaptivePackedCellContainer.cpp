@@ -194,7 +194,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    PublishResult PointerSymenticsAdaptivePackedCellContainer::PublishHeapPtrPair_(void* object_ptr, APCPagedNodeRelMaskClasses rel_mask_with_ptrflag, int max_probs) noexcept
+    PublishResult PointerSymenticsAdaptivePackedCellContainer::PublishHeapPtrPair_(void* object_ptr, APCPagedNodeSegmentClasses rel_mask_with_ptrflag, int max_probs) noexcept
     {
         if (!IfAPCBranchValid())
         {
@@ -276,7 +276,7 @@ namespace PredictedAdaptedEncoding
 
         while (publish_attempt <= max_retries)
         {
-            PublishResult publish_result = PublishHeapPtrPair_(target_publishable_ptr, APCPagedNodeRelMaskClasses::FREE_SLOT);
+            PublishResult publish_result = PublishHeapPtrPair_(target_publishable_ptr, APCPagedNodeSegmentClasses::FREE_SLOT);
             if (publish_result.ResultStatus == PublishStatus::OK)
             {
                 return true;
