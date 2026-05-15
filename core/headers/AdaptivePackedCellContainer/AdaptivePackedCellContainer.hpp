@@ -44,13 +44,13 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         std::optional<packed64_t> TryConsumeAndIdleFromRegionLocal_(
             APCPagedNodeRelMaskClasses region_kind, size_t& scan_cursor,
-            PackedCellNodeAuthority desired_authority_of_updated_cell = PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM
+            PackedCellNodeAuthority desired_authority_of_updated_cell = PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT
         ) noexcept;
 
         PublishResult TryPublishToRegionLocal_(
             packed64_t packed_cell_for_publish, 
             APCPagedNodeRelMaskClasses region_kind = APCPagedNodeRelMaskClasses::FREE_SLOT,
-            PackedCellNodeAuthority node_authority = PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM,
+            PackedCellNodeAuthority node_authority = PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT,
             uint16_t max_tries = APC_MAX_LENGTH_OR_COUNTER / (APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses)
         ) noexcept;
 
@@ -66,6 +66,8 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
         bool RebuildRegionIndexFromPayload_() noexcept;
 
         uint32_t SuggestedInternalAPCExpension_(CompleteAPCNodeRegionsLayout* complete_layout, uint8_t prefared_percentage_of_free = 50) noexcept;
+
+        uint16_t ComputeAdaptivemaxTreies_(packed64_t packed_cell) noexcept;
 
 
         packed64_t NormalizeDesiredPublishedCellForRegion_(
@@ -141,7 +143,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         PublishResult PublishCellByRegionMAskTraverseStartsFromThisAPC(
             APCPagedNodeRelMaskClasses region_kind, packed64_t cell_to_publish, 
-            PackedCellNodeAuthority authority = PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM,
+            PackedCellNodeAuthority authority = PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT,
             std::optional<uint16_t> max_tries = std::nullopt
         ) noexcept;
 
@@ -166,8 +168,6 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
         size_t NextProducerSequence() noexcept;
 
         void ClearAllManagerLinksAndFlags() noexcept;
-
-        uint32_t GetLocalTotalOccupancy() noexcept;
 
         uint32_t CountExactLocalRegionalOccupancy(APCPagedNodeRelMaskClasses desired_region_class) noexcept;
 
@@ -282,6 +282,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
         {
             CleanupNextAPCPtr_.store(apc_ptr, MoStoreSeq_);
         }
+
 
 };
 

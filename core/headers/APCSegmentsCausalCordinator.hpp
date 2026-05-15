@@ -9,12 +9,26 @@ namespace PredictedAdaptedEncoding
 class APCSegmentsCausalCordinator : public AdaptivePackedCellContainer
 {
 private:
-    static MetaIndexOfAPCNode AcceptedClockIndex_(APCPagedNodeRelMaskClasses region) noexcept
-    {
-        return region == APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE
-            ? MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_BACKWARD_CLOCK16
-            : MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_FORWARD_CLOCK16;
-    }
+
+     static MetaIndexOfAPCNode AcceptedClockIndex_(APCPagedNodeRelMaskClasses region) noexcept
+     {
+         switch (region)
+         {
+         case APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE:
+             return MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_BACKWARD_CLOCK16;
+    
+
+         case APCPagedNodeRelMaskClasses::STATE_SLOT:
+         case APCPagedNodeRelMaskClasses::ERROR_SLOT:
+         case APCPagedNodeRelMaskClasses::AUX_SLOT:
+         case APCPagedNodeRelMaskClasses::LATERAL_MESAGE:
+         case APCPagedNodeRelMaskClasses::EDGE_DESCRIPTOR:
+         case APCPagedNodeRelMaskClasses::WEIGHT_SLOT:
+         case APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE:
+         default:
+             return MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_FORWARD_CLOCK16;
+         }
+     }
 
     static MetaIndexOfAPCNode EmittedClockIndex_(APCPagedNodeRelMaskClasses region) noexcept
     {
@@ -83,26 +97,28 @@ public:
         bool drop_older = false
     ) noexcept
     {
-        while (true)
+        const size_t max_drops = drop_older
+            ? (static_cast<size_t>(PayloadCapacityFromHeader()) * 2u + 16u)
+            : 1u;
+        size_t drops = 0;
+
+        while (drops < max_drops)
         {
             auto maybe = ConsumeCellByRegionMaskTraverseStartFromThisAPC(region, scan_cursor);
             if (!maybe) return std::nullopt;
 
             if (AcceptCausalCell(region, *maybe))
-            {
                 return maybe;
-            }
 
             if (older_counter)
-            {
                 older_counter->fetch_add(1, std::memory_order_relaxed);
-            }
 
             if (!drop_older)
-            {
                 return maybe;
-            }
+
+            ++drops;
         }
+        return std::nullopt;  // drop budget exhausted — caller should back off
     }
 
     uint32_t CountPublishedInRegion(APCPagedNodeRelMaskClasses region) noexcept

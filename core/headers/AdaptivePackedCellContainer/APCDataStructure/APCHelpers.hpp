@@ -78,14 +78,11 @@ namespace PredictedAdaptedEncoding
 
         static inline bool IsEmbededControlCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
-            if (a_cell_view.CellMode == PackedMode::MODE_VALUE32 && a_cell_view.RelationOffsetForMode32.has_value())
+            if (a_cell_view.PageClass == APCPagedNodeRelMaskClasses::CONTROL_SLOT)
             {
-                return *a_cell_view.RelationOffsetForMode32 == RelOffsetMode32::CONTROL_SLOT;
+                return true;
             }
-            if (a_cell_view.CellMode == PackedMode::MODE_CLKVAL48 && a_cell_view.RelationOffsetForMode48.has_value())
-            {
-                return *a_cell_view.RelationOffsetForMode48 == RelOffsetMode48::CONTROL_SLOT;
-            }
+            
             return false;
         }
 
@@ -96,47 +93,79 @@ namespace PredictedAdaptedEncoding
                 *a_cell_view.RelationOffsetForMode48 == RelOffsetMode48::RELOFFSET_PURE_TIMER;
         }
 
-        static inline bool IsValidAccountingPageClass(
-            APCPagedNodeRelMaskClasses page_class
-        ) noexcept
-        {
-            return page_class != APCPagedNodeRelMaskClasses::NONE &&
-                page_class != APCPagedNodeRelMaskClasses::NANNULL &&
-                page_class != APCPagedNodeRelMaskClasses::FREE_SLOT &&
-                page_class != APCPagedNodeRelMaskClasses::CONTROL_SLOT;
-        }
-
-        static inline bool DoesPublishedCellContributeToRegionOccupancy(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        static inline bool IsThisCellAppropriateAndGenericToConsume(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
             if (!a_cell_view.IsCellValid)
             {
                 return false;
             }
+
             if (a_cell_view.LocalityOfCell != PackedCellLocalityTypes::ST_PUBLISHED)
             {
                 return false;
             }
+
             if (!IsValidAccountingPageClass(a_cell_view.PageClass))
             {
                 return false;
             }
+
             if (IsEmbededControlCell(a_cell_view) || IsEmbededTimerCell(a_cell_view))
             {
                 return false;
             }
+
+            if (!IsGenericPayloadOffset(a_cell_view))
+            {
+                return false;
+            }
+            
             return true;
         }
 
-        static inline bool IsPublishedDataCellForRegion(
+        static inline bool IsCellAppropriatelyPagedAndPublishedAsGeneric(
             const PackedCell64_t::AuthoritiveCellView& view,
             APCPagedNodeRelMaskClasses region_kind
         ) noexcept
         {
-            return DoesPublishedCellContributeToRegionOccupancy(view) &&
+            return IsThisCellAppropriateAndGenericToConsume(view) &&
                 view.PageClass == region_kind;
         }    
 
+        static inline bool IsValidLayoutPageClass(APCPagedNodeRelMaskClasses page_class) noexcept
+        {
+            return page_class != APCPagedNodeRelMaskClasses::NONE &&
+                page_class != APCPagedNodeRelMaskClasses::NANNULL;
+        }
 
+        static inline bool IsValidAccountingPageClass(APCPagedNodeRelMaskClasses page_class) noexcept
+        {
+            /*
+                Accounting-valid means this region can contain data cells whose
+                published / claimed / faulty counts are tracked.
+
+                CONTROL_SLOT is excluded because control cells must survive scans.
+                FREE_SLOT is excluded because free capacity is derived from layout.
+                UNDEFINED is included as the quarantine/emergence region.
+            */
+            return page_class != APCPagedNodeRelMaskClasses::NONE &&
+                page_class != APCPagedNodeRelMaskClasses::NANNULL &&
+                page_class != APCPagedNodeRelMaskClasses::CONTROL_SLOT &&
+                page_class != APCPagedNodeRelMaskClasses::FREE_SLOT;
+        }
+
+        static inline bool IsGenericPayloadOffset(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        {
+            if (a_cell_view.CellMode == PackedMode::MODE_VALUE32)
+            {
+                return a_cell_view.RelationOffsetForMode32.has_value() && *a_cell_view.RelationOffsetForMode32 == RelOffsetMode32::RELOFFSET_GENERIC_VALUE;
+            }
+            if (a_cell_view.CellMode == PackedMode::MODE_CLKVAL48)
+            {
+                return a_cell_view.RelationOffsetForMode48.has_value() && *a_cell_view.RelationOffsetForMode48 == RelOffsetMode48::RELOFFSET_GENERIC_VALUE;
+            }
+            return false;
+        }
 
 };
     
@@ -273,16 +302,35 @@ namespace PredictedAdaptedEncoding
         {
             return index >= BeginIndex && index < EndIndex;
         }
+        
         inline bool CanCellBEConsumedForThisPhysicalRegion(
             packed64_t packed_cell,
-            APCPagedNodeRelMaskClasses region_kind,
             size_t idx
         ) noexcept
         {
-            return DoseThisIndexPhysicallyExistInThisRegion(idx) && 
-                PackedCell64_t::ExtractLocalityFromPacked(packed_cell) == PackedCellLocalityTypes::ST_PUBLISHED &&
-                APCAndPagedNodeHelpers::ExtractPagedRelMaskFromPacked(packed_cell) == region_kind &&
-                PackedCell64_t::ExtractRelOffset32FromPacked(packed_cell) == RelOffsetMode32::RELOFFSET_GENERIC_VALUE;
+            if (!DoseThisIndexPhysicallyExistInThisRegion(idx))
+            {
+                return false;
+            }
+
+            const PackedCell64_t::AuthoritiveCellView a_cell_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
+
+            if (!a_cell_view.IsCellValid)
+            {
+                return false;
+            }
+
+            if (a_cell_view.PageClass != PAGE_LAYOUT_CLASS)
+            {
+                return false;
+            }
+            
+            if (APCAndPagedNodeHelpers::IsEmbededControlCell(a_cell_view) || APCAndPagedNodeHelpers::IsEmbededTimerCell(a_cell_view))
+            {
+                return false;
+            }
+            
+            return APCAndPagedNodeHelpers::IsCellAppropriatelyPagedAndPublishedAsGeneric(a_cell_view, PAGE_LAYOUT_CLASS);
         }
 
     };
@@ -304,22 +352,54 @@ namespace PredictedAdaptedEncoding
 
         LayoutBoundsOfSingleRelNodeClass FeedForwardLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE, FEEDFOEWARD_PERCENTAGE)};
         LayoutBoundsOfSingleRelNodeClass FeedBackwardLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE, FEEDBACKWARD_PERCENTAGE)};
+        LayoutBoundsOfSingleRelNodeClass LateralLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::LATERAL_MESAGE, UNSIGNED_ZERO)};
         LayoutBoundsOfSingleRelNodeClass StateLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::STATE_SLOT, STATESLOT_PERCENTAGE)};
         LayoutBoundsOfSingleRelNodeClass ErrorLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::ERROR_SLOT, ERRORSLOT_PERCENTAGE)};
         LayoutBoundsOfSingleRelNodeClass EdgeDescriptorLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::EDGE_DESCRIPTOR, EDGEDESCRIPTOR_PERCENTAGE)};
         LayoutBoundsOfSingleRelNodeClass WeightLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::WEIGHT_SLOT, WEIGHTSLOT_PERCENTAGE)};
         LayoutBoundsOfSingleRelNodeClass AUXLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::AUX_SLOT, AUXSLOT_PERCENTAGE)};
+        LayoutBoundsOfSingleRelNodeClass HeterogenousMemoryLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT, UNSIGNED_ZERO)};
+        LayoutBoundsOfSingleRelNodeClass LocalPairedPointerLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::PAIRED_POINTER_LOCAL_MEMORY, UNSIGNED_ZERO)};
+        LayoutBoundsOfSingleRelNodeClass DistancePairedLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::PAIRED_POINTER_DISTANCE_MEMORY, UNSIGNED_ZERO)};
         LayoutBoundsOfSingleRelNodeClass FreeLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::FREE_SLOT, FREE_PERCENTAGE)};
         //we can add 8 more threrritically rel_mask = 4 bit ->16 classes 
-        static constexpr uint8_t CURRENT_TOTAL_APC_REL_NODE_CLASSES = 8u;
+        static constexpr uint8_t CURRENT_TOTAL_APC_REL_NODE_CLASSES = 12u;
 
         constexpr float SumOfPercentage() const noexcept
         {
-            return FeedForwardLayout.InitialOrCurrentPercentage + FeedBackwardLayout.InitialOrCurrentPercentage + StateLayout.InitialOrCurrentPercentage +
-                    ErrorLayout.InitialOrCurrentPercentage + EdgeDescriptorLayout.InitialOrCurrentPercentage + WeightLayout.InitialOrCurrentPercentage +
-                    AUXLayout.InitialOrCurrentPercentage + FreeLayout.InitialOrCurrentPercentage;//+8more if
+            return FeedForwardLayout.InitialOrCurrentPercentage + FeedBackwardLayout.InitialOrCurrentPercentage + 
+                    LateralLayout.InitialOrCurrentPercentage + StateLayout.InitialOrCurrentPercentage +
+                    ErrorLayout.InitialOrCurrentPercentage + EdgeDescriptorLayout.InitialOrCurrentPercentage + 
+                    WeightLayout.InitialOrCurrentPercentage + AUXLayout.InitialOrCurrentPercentage + 
+                    HeterogenousMemoryLayout.InitialOrCurrentPercentage + LocalPairedPointerLayout.InitialOrCurrentPercentage +
+                    DistancePairedLayout.InitialOrCurrentPercentage + FreeLayout.InitialOrCurrentPercentage;
         }
 
+        bool DoseAllPhysicalLayoutCarrySameVersionNumberAsGlobal(
+            uint16_t global_version_number
+        ) noexcept
+        {
+            if (global_version_number == UNSIGNED_ZERO ||
+                global_version_number == APCDataStructure::APC_INDEX_SENTINAL)
+            {
+                return false;
+            }
+
+            return
+                FeedForwardLayout.VersionNumber == global_version_number &&
+                FeedBackwardLayout.VersionNumber == global_version_number &&
+                LateralLayout.VersionNumber == global_version_number &&
+                StateLayout.VersionNumber == global_version_number &&
+                ErrorLayout.VersionNumber == global_version_number &&
+                EdgeDescriptorLayout.VersionNumber == global_version_number &&
+                WeightLayout.VersionNumber == global_version_number &&
+                AUXLayout.VersionNumber == global_version_number &&
+                HeterogenousMemoryLayout.VersionNumber == global_version_number &&
+                LocalPairedPointerLayout.VersionNumber == global_version_number &&
+                DistancePairedLayout.VersionNumber == global_version_number &&
+                FreeLayout.VersionNumber == global_version_number;
+        }
+        
         bool NormalizePercentagesIfNeeded() noexcept
         {
             const float sum_of_default = SumOfPercentage();
@@ -339,13 +419,16 @@ namespace PredictedAdaptedEncoding
             
             NormalizeOne(FeedForwardLayout);
             NormalizeOne(FeedBackwardLayout);
+            NormalizeOne(LateralLayout);
             NormalizeOne(StateLayout);
             NormalizeOne(ErrorLayout);
             NormalizeOne(EdgeDescriptorLayout);
             NormalizeOne(WeightLayout);
             NormalizeOne(AUXLayout);
+            NormalizeOne(HeterogenousMemoryLayout);
+            NormalizeOne(LocalPairedPointerLayout);
+            NormalizeOne(DistancePairedLayout);
             NormalizeOne(FreeLayout);
-            //noramalize 8 morfe if
 
             float repaired_sum = SumOfPercentage();
             if (repaired_sum < 100)
@@ -361,11 +444,18 @@ namespace PredictedAdaptedEncoding
             {
                 case APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE:  return &FeedForwardLayout;
                 case APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE: return &FeedBackwardLayout;
+                case APCPagedNodeRelMaskClasses::LATERAL_MESAGE     :  return &LateralLayout;
                 case APCPagedNodeRelMaskClasses::STATE_SLOT:           return &StateLayout;
                 case APCPagedNodeRelMaskClasses::ERROR_SLOT:           return &ErrorLayout;
                 case APCPagedNodeRelMaskClasses::EDGE_DESCRIPTOR:      return &EdgeDescriptorLayout;
                 case APCPagedNodeRelMaskClasses::WEIGHT_SLOT:          return &WeightLayout;
                 case APCPagedNodeRelMaskClasses::AUX_SLOT:             return &AUXLayout;
+                case APCPagedNodeRelMaskClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT:
+                    return &HeterogenousMemoryLayout;
+                case APCPagedNodeRelMaskClasses::PAIRED_POINTER_LOCAL_MEMORY: 
+                    return &LocalPairedPointerLayout;
+                case APCPagedNodeRelMaskClasses::PAIRED_POINTER_DISTANCE_MEMORY:
+                    return &DistancePairedLayout;
                 case APCPagedNodeRelMaskClasses::FREE_SLOT:            return &FreeLayout;
                 default:                                               return nullptr;
             }
@@ -376,11 +466,18 @@ namespace PredictedAdaptedEncoding
             {
                 case APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE:  return &FeedForwardLayout;
                 case APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE: return &FeedBackwardLayout;
+                case APCPagedNodeRelMaskClasses::LATERAL_MESAGE     :  return &LateralLayout;
                 case APCPagedNodeRelMaskClasses::STATE_SLOT:           return &StateLayout;
                 case APCPagedNodeRelMaskClasses::ERROR_SLOT:           return &ErrorLayout;
                 case APCPagedNodeRelMaskClasses::EDGE_DESCRIPTOR:      return &EdgeDescriptorLayout;
                 case APCPagedNodeRelMaskClasses::WEIGHT_SLOT:          return &WeightLayout;
                 case APCPagedNodeRelMaskClasses::AUX_SLOT:             return &AUXLayout;
+                case APCPagedNodeRelMaskClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT:
+                    return &HeterogenousMemoryLayout;
+                case APCPagedNodeRelMaskClasses::PAIRED_POINTER_LOCAL_MEMORY: 
+                    return &LocalPairedPointerLayout;
+                case APCPagedNodeRelMaskClasses::PAIRED_POINTER_DISTANCE_MEMORY:
+                    return &DistancePairedLayout;
                 case APCPagedNodeRelMaskClasses::FREE_SLOT:            return &FreeLayout;
                 default:                                               return nullptr;
             }
@@ -389,8 +486,12 @@ namespace PredictedAdaptedEncoding
         std::array<LayoutBoundsOfSingleRelNodeClass*, CURRENT_TOTAL_APC_REL_NODE_CLASSES> OrderedViewsFIFO() noexcept
         {
             return {
-                &FeedForwardLayout, &FeedBackwardLayout, &StateLayout, 
-                &ErrorLayout, &EdgeDescriptorLayout, &WeightLayout, &AUXLayout, &FreeLayout
+                &FeedForwardLayout, &FeedBackwardLayout, 
+                &LateralLayout, &StateLayout,  
+                &ErrorLayout, &EdgeDescriptorLayout,
+                &WeightLayout, &AUXLayout, 
+                &HeterogenousMemoryLayout, &LocalPairedPointerLayout,
+                &DistancePairedLayout, &FreeLayout
             };
         }
     };

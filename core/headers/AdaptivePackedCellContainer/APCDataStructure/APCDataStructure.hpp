@@ -77,9 +77,9 @@ namespace PredictedAdaptedEncoding
         HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT_BOUNDS_VERSION = 51,
         PAIRED_POINTER_LOCAL_MEMORY_BOUNDS_VERSION = 52,
         PAIRED_POINTER_DISTANCE_MEMORY_BOUNDS_VERSION = 53,
-        FREE_BOUNDS_VERSION = 54,
-        UNDEFINED_BOUNDS_VERSION = 55,
-        RESERVED_56 = 56,
+        UNDEFINED_BOUNDS_VERSION = 54,
+        FREE_BOUNDS_VERSION = 55,
+        GLOBAL_CURRENT_VERSION = 56,
 
         // region occupancy
         REGION_OCCUPANCY_NONE = 57,
@@ -148,7 +148,7 @@ namespace PredictedAdaptedEncoding
             APCPagedNodeRelMaskClasses page_class,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_PUBLISHED,
             PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY,
-            PackedCellNodeAuthority authority = PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM
+            PackedCellNodeAuthority authority = PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT
         ) noexcept
         {
             const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(
@@ -205,8 +205,13 @@ namespace PredictedAdaptedEncoding
                 return UNSIGNED_ZERO;
             }
             const uint64_t raw48 = PackedCell64_t::ExtractClk48(packed_cell);
-            uint16_t published, claimed, faulty = UNSIGNED_ZERO;
-            ExtractLowMidHighFromMode48_(raw48, published, claimed, faulty);
+            uint16_t published = UNSIGNED_ZERO;
+            uint16_t claimed = UNSIGNED_ZERO;
+            uint16_t faulty = UNSIGNED_ZERO;
+            if(!ExtractLowMidHighFromMode48_(raw48, published, claimed, faulty))
+            {
+                return UNSIGNED_ZERO;
+            }
             return published + claimed + faulty;
         }
 
@@ -217,7 +222,7 @@ namespace PredictedAdaptedEncoding
             APCPagedNodeRelMaskClasses page_class,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_PUBLISHED,
             PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY,
-            PackedCellNodeAuthority authority = PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM
+            PackedCellNodeAuthority authority = PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT
         ) noexcept
         {
             const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(priority, authority, locality, page_class, RelOffsetMode48::THREE_16_BIT_SUB_DIVISION, PackedCellDataType::UnsignedPCellDataType);
