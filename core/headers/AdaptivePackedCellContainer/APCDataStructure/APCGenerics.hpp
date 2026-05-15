@@ -226,11 +226,11 @@ namespace PredictedAdaptedEncoding
                 case APCPagedNodeRelMaskClasses::PAIRED_POINTER_DISTANCE_MEMORY:
                     return MetaIndexOfAPCNode::PAIRED_POINTER_DISTANCE_MEMORY_BOUNDS_VERSION;
 
-                case APCPagedNodeRelMaskClasses::FREE_SLOT:
-                    return MetaIndexOfAPCNode::FREE_BOUNDS_VERSION;
-
                 case APCPagedNodeRelMaskClasses::UNDEFINED:
                     return MetaIndexOfAPCNode::UNDEFINED_BOUNDS_VERSION;
+
+                case APCPagedNodeRelMaskClasses::FREE_SLOT:
+                    return MetaIndexOfAPCNode::FREE_BOUNDS_VERSION;
 
                 default:
                     return MetaIndexOfAPCNode::EOF_APC_HEADER;
@@ -371,9 +371,10 @@ namespace PredictedAdaptedEncoding
         LayoutBoundsOfSingleRelNodeClass HeterogenousMemoryLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT, UNSIGNED_ZERO)};
         LayoutBoundsOfSingleRelNodeClass LocalPairedPointerLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::PAIRED_POINTER_LOCAL_MEMORY, UNSIGNED_ZERO)};
         LayoutBoundsOfSingleRelNodeClass DistancePairedLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::PAIRED_POINTER_DISTANCE_MEMORY, UNSIGNED_ZERO)};
+        LayoutBoundsOfSingleRelNodeClass UndefinedLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::UNDEFINED, UNSIGNED_ZERO)};
         LayoutBoundsOfSingleRelNodeClass FreeLayout{MakeDefaultDesiredLayout(APCPagedNodeRelMaskClasses::FREE_SLOT, FREE_PERCENTAGE)};
         //we can add 8 more threrritically rel_mask = 4 bit ->16 classes 
-        static constexpr uint8_t CURRENT_TOTAL_APC_REL_NODE_CLASSES = 12u;
+        static constexpr uint8_t CURRENT_TOTAL_APC_REL_NODE_CLASSES = 13u;
 
         constexpr float SumOfPercentage() const noexcept
         {
@@ -382,7 +383,8 @@ namespace PredictedAdaptedEncoding
                     ErrorLayout.InitialOrCurrentPercentage + EdgeDescriptorLayout.InitialOrCurrentPercentage + 
                     WeightLayout.InitialOrCurrentPercentage + AUXLayout.InitialOrCurrentPercentage + 
                     HeterogenousMemoryLayout.InitialOrCurrentPercentage + LocalPairedPointerLayout.InitialOrCurrentPercentage +
-                    DistancePairedLayout.InitialOrCurrentPercentage + FreeLayout.InitialOrCurrentPercentage;
+                    DistancePairedLayout.InitialOrCurrentPercentage + UndefinedLayout.InitialOrCurrentPercentage +
+                    FreeLayout.InitialOrCurrentPercentage;
         }
 
         bool DoseAllPhysicalLayoutCarrySameVersionNumberAsGlobal(
@@ -407,6 +409,7 @@ namespace PredictedAdaptedEncoding
                 HeterogenousMemoryLayout.VersionNumber == global_version_number &&
                 LocalPairedPointerLayout.VersionNumber == global_version_number &&
                 DistancePairedLayout.VersionNumber == global_version_number &&
+                UndefinedLayout.VersionNumber == global_version_number &&
                 FreeLayout.VersionNumber == global_version_number;
         }
         
@@ -438,6 +441,7 @@ namespace PredictedAdaptedEncoding
             NormalizeOne(HeterogenousMemoryLayout);
             NormalizeOne(LocalPairedPointerLayout);
             NormalizeOne(DistancePairedLayout);
+            NormalizeOne(UndefinedLayout);
             NormalizeOne(FreeLayout);
 
             float repaired_sum = SumOfPercentage();
@@ -466,6 +470,7 @@ namespace PredictedAdaptedEncoding
                     return &LocalPairedPointerLayout;
                 case APCPagedNodeRelMaskClasses::PAIRED_POINTER_DISTANCE_MEMORY:
                     return &DistancePairedLayout;
+                case APCPagedNodeRelMaskClasses::UNDEFINED:            return &UndefinedLayout;
                 case APCPagedNodeRelMaskClasses::FREE_SLOT:            return &FreeLayout;
                 default:                                               return nullptr;
             }
@@ -488,6 +493,7 @@ namespace PredictedAdaptedEncoding
                     return &LocalPairedPointerLayout;
                 case APCPagedNodeRelMaskClasses::PAIRED_POINTER_DISTANCE_MEMORY:
                     return &DistancePairedLayout;
+                case APCPagedNodeRelMaskClasses::UNDEFINED:            return &UndefinedLayout;
                 case APCPagedNodeRelMaskClasses::FREE_SLOT:            return &FreeLayout;
                 default:                                               return nullptr;
             }
@@ -501,7 +507,8 @@ namespace PredictedAdaptedEncoding
                 &ErrorLayout, &EdgeDescriptorLayout,
                 &WeightLayout, &AUXLayout, 
                 &HeterogenousMemoryLayout, &LocalPairedPointerLayout,
-                &DistancePairedLayout, &FreeLayout
+                &DistancePairedLayout, &UndefinedLayout,
+                &FreeLayout
             };
         }
     };

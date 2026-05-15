@@ -253,6 +253,7 @@ namespace PredictedAdaptedEncoding
         ok = LoadOne(APCPagedNodeRelMaskClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT, out_layout.HeterogenousMemoryLayout) && ok;
         ok = LoadOne(APCPagedNodeRelMaskClasses::PAIRED_POINTER_LOCAL_MEMORY, out_layout.LocalPairedPointerLayout) && ok;
         ok = LoadOne(APCPagedNodeRelMaskClasses::PAIRED_POINTER_DISTANCE_MEMORY, out_layout.DistancePairedLayout) && ok;
+        ok = LoadOne(APCPagedNodeRelMaskClasses::UNDEFINED, out_layout.UndefinedLayout) && ok;
         ok = LoadOne(APCPagedNodeRelMaskClasses::FREE_SLOT, out_layout.FreeLayout) && ok;
         if (!ok)
         {
@@ -370,6 +371,7 @@ namespace PredictedAdaptedEncoding
             WriteBoundsPairToHeader_(full_layout.HeterogenousMemoryLayout, commit_version, true) &&
             WriteBoundsPairToHeader_(full_layout.LocalPairedPointerLayout, commit_version, true) &&
             WriteBoundsPairToHeader_(full_layout.DistancePairedLayout, commit_version, true) &&
+            WriteBoundsPairToHeader_(full_layout.UndefinedLayout, commit_version, true) &&
             WriteBoundsPairToHeader_(full_layout.FreeLayout, commit_version, true);
 
         if (!ok)
