@@ -571,4 +571,145 @@ namespace PredictedAdaptedEncoding
         return out_virtual_control_slot;
     }
 
+    bool SegmentIODefinition::ApplyRegionalMigrationOccupancyTransitionCell(
+        PackedCellLocalityTypes from_locality_of_source_cell,
+        PackedCellLocalityTypes destination_to_locality_of_source_cell,
+        APCPagedNodeSegmentClasses source_page_class,
+        APCPagedNodeSegmentClasses destination_page_class
+    ) noexcept
+    {
+        if (!APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(source_page_class) || !APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(destination_page_class))
+        {
+            return false;
+        }
+
+        /*
+            1. source region: source_from -> idle
+        */
+        const bool source_region_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(
+            from_locality_of_source_cell,
+            PackedCellLocalityTypes::ST_IDLE, source_page_class,
+            PackedCellLocalityTypes::ST_PUBLISHED, false
+        );
+
+        if (!source_region_ok)
+        {
+            return false;
+        }
+
+        /*
+            2. destination region: idle -> destination_to
+        */
+        const bool destination_region_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(
+            PackedCellLocalityTypes::ST_IDLE,
+            destination_to_locality_of_source_cell, destination_page_class,
+            PackedCellLocalityTypes::ST_PUBLISHED, false
+        );
+
+        if (!destination_region_ok)
+        {
+            CasUpdateOccupancy3x16ThreeSubdivisionCell__(
+                PackedCellLocalityTypes::ST_IDLE,
+                from_locality_of_source_cell, source_page_class,
+                PackedCellLocalityTypes::ST_PUBLISHED, false
+            );
+            return false;
+        }
+        
+        /*
+            3. central source decrement
+        */
+       const bool central_source_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(
+        from_locality_of_source_cell,
+        PackedCellLocalityTypes::ST_IDLE, std::nullopt,
+        PackedCellLocalityTypes::ST_PUBLISHED, true
+       );
+
+       if (!central_source_ok)
+       {
+            CasUpdateOccupancy3x16ThreeSubdivisionCell__(
+                destination_to_locality_of_source_cell,
+                PackedCellLocalityTypes::ST_IDLE,
+                destination_page_class,
+                PackedCellLocalityTypes::ST_PUBLISHED,
+                false
+            );
+            
+            CasUpdateOccupancy3x16ThreeSubdivisionCell__(
+                PackedCellLocalityTypes::ST_IDLE,
+                from_locality_of_source_cell,
+                source_page_class,
+                PackedCellLocalityTypes::ST_PUBLISHED,
+                false
+            );
+            return false;
+       }
+       
+        /*
+            4. central destination increment
+        */
+        
+        const bool central_destination_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(
+            PackedCellLocalityTypes::ST_IDLE, destination_to_locality_of_source_cell,
+            std::nullopt, PackedCellLocalityTypes::ST_PUBLISHED,
+            true
+        );
+
+        if (!central_destination_ok)
+        {
+            CasUpdateOccupancy3x16ThreeSubdivisionCell__(
+                PackedCellLocalityTypes::ST_IDLE, from_locality_of_source_cell,
+                std::nullopt, PackedCellLocalityTypes::ST_PUBLISHED,
+                true
+            );
+            CasUpdateOccupancy3x16ThreeSubdivisionCell__(
+                destination_to_locality_of_source_cell,
+                PackedCellLocalityTypes::ST_IDLE, destination_page_class,
+                PackedCellLocalityTypes::ST_PUBLISHED,
+                false
+            );
+            CasUpdateOccupancy3x16ThreeSubdivisionCell__(
+                PackedCellLocalityTypes::ST_IDLE,
+                from_locality_of_source_cell,
+                source_page_class,
+                PackedCellLocalityTypes::ST_PUBLISHED,
+                false
+            );
+            return false;
+        }
+        RefreshReadyBitForRegionFromOccupancy(source_page_class);
+        RefreshReadyBitForRegionFromOccupancy(destination_page_class);
+        return true;
+    }
+
+
+    bool SegmentIODefinition::ValidateAPCOccupancyInvarient() noexcept
+    {
+        uint32_t published_sum = 0;
+        uint32_t claimed_sum = 0;
+        uint32_t faulty_sum = 0;
+
+        for (size_t i = 0; i < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses; i++)
+        {
+            const APCPagedNodeSegmentClasses page_class = static_cast<APCPagedNodeSegmentClasses>(i);
+            if (!APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(page_class))
+            {
+                continue;
+            }
+            
+            published_sum += ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED, page_class);
+            claimed_sum += ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::ST_CLAIMED, page_class);
+            faulty_sum += ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY, page_class);
+        }
+
+        const uint32_t central_published = ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED);
+        const uint32_t central_claimed = ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_CLAIMED);
+        const uint32_t central_faulty = ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY);
+
+        return central_published == published_sum &&
+            central_claimed == claimed_sum &&
+            central_faulty == faulty_sum;
+    }
+
+
 }
