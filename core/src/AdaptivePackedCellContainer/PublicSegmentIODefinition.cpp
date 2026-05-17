@@ -136,11 +136,10 @@ namespace PredictedAdaptedEncoding
     }
 
     void SegmentIODefinition::InitNodeSemantics(
-        APCNodeComputeKind compute_kind_of_node,
         uint32_t aux_param_uint32
     ) noexcept
     {
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::NODE_COMPUTE_KIND, static_cast<uint32_t>(compute_kind_of_node), PriorityPhysics::IDLE);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::NODE_COMPUTE_KIND, UNSIGNED_ZERO, PriorityPhysics::IDLE);
         WriteMetaCellMode32_(MetaIndexOfAPCNode::NODE_AUX_PARAM_U32, aux_param_uint32, PriorityPhysics::IDLE);
         WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_FORWARD_CLOCK16, UNSIGNED_ZERO, PriorityPhysics::IDLE);
         WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_BACKWARD_CLOCK16, UNSIGNED_ZERO, PriorityPhysics::IDLE);
@@ -164,7 +163,6 @@ namespace PredictedAdaptedEncoding
         size_t total_capacity,
         const ContainerConf& container_configuration,
         bool is_root_shared,
-        APCNodeComputeKind node_compute_kind,
         uint32_t aux_param_uint32,
         uint32_t branch_depth,
         uint8_t branch_priority,
@@ -209,7 +207,7 @@ namespace PredictedAdaptedEncoding
         WriteMetaCellMode32_(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH, UNSIGNED_ZERO, write_cell_priority);
         WriteMetaCellMode32_(MetaIndexOfAPCNode::NODE_GROUP_SIZE, container_configuration.NodeGroupSize, write_cell_priority);
         InitLogicalNodeIdentity(logical_node_id, resolve_shared_id, is_root_shared);
-        InitNodeSemantics(node_compute_kind, aux_param_uint32);
+        InitNodeSemantics(aux_param_uint32);
         InitDefaultAPCSegmentedNodeLayout_();
         for (uint8_t i = 0; i < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses; i++)
         {

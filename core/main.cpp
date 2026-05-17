@@ -606,7 +606,6 @@ namespace
         APCSegmentsCausalCordinator& node,
         PackedCellContainerManager& manager,
         const ContainerConf& cfg,
-        SegmentIODefinition::APCNodeComputeKind kind,
         uint32_t aux = 0
     )
     {
@@ -615,7 +614,6 @@ namespace
         node.InitAPCAsNode(
             cfg.BranchMinChildCapacity,
             cfg,
-            kind,
             aux
         );
     }
@@ -721,36 +719,31 @@ int main()
     InitNode(
         Sensor,
         manager,
-        cfg,
-        SegmentIODefinition::APCNodeComputeKind::GENERATOR_UINT32
+        cfg
     );
 
     InitNode(
         Predictor,
         manager,
-        cfg,
-        SegmentIODefinition::APCNodeComputeKind::BIDIRECTIONAL_PREDECTIVE
+        cfg
     );
 
     InitNode(
         Comparator,
         manager,
-        cfg,
-        SegmentIODefinition::APCNodeComputeKind::BIDIRECTIONAL_PREDECTIVE
+        cfg
     );
 
     InitNode(
         Integrator,
         manager,
-        cfg,
-        SegmentIODefinition::APCNodeComputeKind::GENERIC_VECTOR
+        cfg
     );
 
     InitNode(
         Motor,
         manager,
-        cfg,
-        SegmentIODefinition::APCNodeComputeKind::GENERIC_VECTOR
+        cfg
     );
 
     std::atomic<uint64_t> grow_sensor{0};

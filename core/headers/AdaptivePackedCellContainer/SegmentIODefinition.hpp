@@ -13,18 +13,6 @@ public:
     
     std::atomic<packed64_t>* BackingPtr{nullptr};
 
-    enum class APCNodeComputeKind : uint32_t
-    {
-        NONE = 0u,
-        GENERATOR_UINT32 = 1u,
-        SQUARE_UINT32 = 2u,
-        ADD_UINT32 = 3u,
-        DIV_UINT32 = 4u,
-        BIDIRECTIONAL_PREDECTIVE = 6u,
-        GENERIC_VECTOR = 7u
-    };
-
-
     enum class ControlEnumOfAPCSegment : uint32_t
     {
         NONE = 0u,
@@ -228,7 +216,6 @@ public:
     ) noexcept;
 
     void InitNodeSemantics(
-        APCNodeComputeKind compute_kind_of_node,
         uint32_t aux_param_uint32 = UNSIGNED_ZERO
     ) noexcept;
 
@@ -240,7 +227,6 @@ public:
         size_t total_capacity,
         const ContainerConf& container_configuration,
         bool is_root_shared = true,
-        APCNodeComputeKind node_compute_kind = APCNodeComputeKind::NONE,
         uint32_t aux_param_uint32 = UNSIGNED_ZERO,
         uint32_t branch_depth = UNSIGNED_ZERO,
         uint8_t branch_priority = UNSIGNED_ZERO,

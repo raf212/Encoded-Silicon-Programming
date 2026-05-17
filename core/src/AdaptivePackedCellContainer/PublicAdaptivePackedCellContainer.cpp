@@ -158,7 +158,6 @@ namespace PredictedAdaptedEncoding
             container_capacity,
             container_cfg,
             true,
-            APCNodeComputeKind::NONE,
             UNSIGNED_ZERO,
             UNSIGNED_ZERO
         );
@@ -177,12 +176,11 @@ namespace PredictedAdaptedEncoding
     void AdaptivePackedCellContainer::InitAPCAsNode(
         size_t capacity,
         const ContainerConf& container_configuration,
-        APCNodeComputeKind compute_kind,
         uint32_t aux_param_u32
     )
     {
         InitOwned(capacity, container_configuration);
-        InitNodeSemantics(compute_kind, aux_param_u32);
+        InitNodeSemantics(aux_param_u32);
         SetGraphNodeFlag();
     }
 
@@ -613,9 +611,6 @@ namespace PredictedAdaptedEncoding
             new_child_segment_ptr->GetTotalCapacityForThisAPC(),
             child_configuration,
             false,
-            static_cast<APCNodeComputeKind>(
-                root_apc_ptr->ReadMetaCellValue32(MetaIndexOfAPCNode::NODE_COMPUTE_KIND)
-            ),
             root_apc_ptr->ReadMetaCellValue32(MetaIndexOfAPCNode::NODE_AUX_PARAM_U32),
             child_depth,
             static_cast<uint8_t>(root_apc_ptr->ReadMetaCellValue32(MetaIndexOfAPCNode::BRANCH_PRIORITY))
