@@ -855,8 +855,12 @@ namespace PredictedAdaptedEncoding
                 return UNSIGNED_ZERO;
             }
             max_for_a_page = static_cast<uint16_t>(
-                maybe_bounds_of_the_page_class->GetPayloadSpan(),
-                APC_MAX_LENGTH_OR_COUNTER
+                static_cast<uint16_t>(
+                    std::min<uint32_t>(
+                        maybe_bounds_of_the_page_class->GetPayloadSpan(),
+                        APC_MAX_LENGTH_OR_COUNTER
+                    )
+                )
             );
         }
         

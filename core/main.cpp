@@ -1,12 +1,15 @@
 #include <iostream>
+#include <iomanip>
 #include <vector>
-#include <thread>
+#include <array>
+#include <optional>
 #include <atomic>
 #include <chrono>
-#include <mutex>
-#include <algorithm>
-#include <optional>
+#include <thread>
 #include <cstdint>
+#include <cstring>
+#include <algorithm>
+#include <string>
 
 #include "APCSegmentsCausalCordinator.hpp"
 #include "PackedCellContainerManager.hpp"
@@ -15,77 +18,183 @@ using namespace PredictedAdaptedEncoding;
 
 namespace
 {
-    constexpr uint32_t VALUE_COUNT = 256u;
-    constexpr uint32_t PRODUCER_COUNT = 2u;
-    constexpr uint32_t FF_WORKER_COUNT = 3u;
-    constexpr uint32_t FB_WORKER_COUNT = 2u;
-    constexpr uint32_t FINAL_WORKER_COUNT = 1u;
-    constexpr uint32_t PUBLISH_BUDGET = 4096u;
+    /*
+        APC Growth-Oriented Tiny Predictive Neural Fabric Test
 
-    struct GraphStats
+        Purpose:
+            1. Force shared-chain growth.
+            2. Validate updated APC occupancy invariant:
+                   central(PUBLISHED/CLAIMED/FAULTY)
+                   ==
+                   sum(all region PUBLISHED/CLAIMED/FAULTY)
+            3. Validate that CONTROL_SLOT metacells remain counted.
+            4. Validate that payload exact counts match non-control region metadata.
+            5. Demonstrate a tiny multidirectional predictive neural flow.
+
+        Why this version grows:
+            The previous test consumed each cell quickly.
+            That kept every region below pressure.
+            This version publishes large bursts first, then drains later.
+
+        Neural flow:
+
+            Sensor.FF burst
+                -> Comparator.FF
+
+            Predictor.FB burst
+                -> Comparator.FB
+
+            Comparator:
+                error = sensor - prediction
+                state = prediction + 0.5 * error
+
+                -> Integrator.STATE
+                -> Integrator.ERROR
+
+            Integrator:
+                motor = state + 0.25 * error
+                feedback = 0.20 * error
+
+                -> Motor.FF
+                -> Predictor.FB
+
+            Final:
+                drain Motor.FF
+                drain Predictor.FB
+
+        Important:
+            This is not a speed benchmark.
+            This is a correctness/growth/invariant test.
+    */
+
+    constexpr size_t NODE_CAPACITY = 256;
+    constexpr uint32_t BURST_N = 320;
+    constexpr uint32_t MAX_RETRY = 20000;
+
+    struct ExactPayloadLocalityCount
     {
-        std::atomic<uint64_t> SensorFFProduced{0};
-        std::atomic<uint64_t> PredictorFBProduced{0};
-
-        std::atomic<uint64_t> StateIntegrated{0};
-        std::atomic<uint64_t> ErrorComputed{0};
-
-        std::atomic<uint64_t> ForwardEmitted{0};
-        std::atomic<uint64_t> FeedbackEmitted{0};
-
-        std::atomic<uint64_t> FinalCollected{0};
-
-        std::atomic<uint64_t> GrowFF{0};
-        std::atomic<uint64_t> GrowFB{0};
-        std::atomic<uint64_t> GrowSTATE{0};
-        std::atomic<uint64_t> GrowERROR{0};
-
-        std::atomic<uint64_t> Retry{0};
-        std::atomic<uint64_t> TerminalFail{0};
-
-        std::atomic<uint64_t> OlderFFObserved{0};
-        std::atomic<uint64_t> OlderFBObserved{0};
-    };
-
-    struct ExactLocalityCount
-    {
-        uint32_t Idle{0};
-        uint32_t Published{0};
-        uint32_t Claimed{0};
-        uint32_t Faulty{0};
+        uint32_t Idle = 0;
+        uint32_t Published = 0;
+        uint32_t Claimed = 0;
+        uint32_t Faulty = 0;
 
         uint32_t Sum() const noexcept
         {
             return Idle + Published + Claimed + Faulty;
         }
+
+        uint32_t Used() const noexcept
+        {
+            return Published + Claimed + Faulty;
+        }
     };
 
-    static packed64_t PackU32(
-        MasterClockConf& clock,
-        uint32_t value,
-        APCPagedNodeSegmentClasses region,
-        PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY
-    )
+    struct OccupancyTriple
     {
-        return clock.ComposeValue32WithCurrentThreadStamp16(
-            value,
-            region,
-            priority,
-            PackedCellLocalityTypes::ST_PUBLISHED,
-            RelOffsetMode32::RELOFFSET_GENERIC_VALUE,
-            PackedCellDataType::UnsignedPCellDataType,
-            PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM
-        );
+        uint32_t Published = 0;
+        uint32_t Claimed = 0;
+        uint32_t Faulty = 0;
+
+        uint32_t Used() const noexcept
+        {
+            return Published + Claimed + Faulty;
+        }
+    };
+
+    struct NeuralTrace
+    {
+        uint32_t Index = 0;
+        float Sensor = 0.0f;
+        float Prediction = 0.0f;
+        float Error = 0.0f;
+        float State = 0.0f;
+        float Motor = 0.0f;
+        float Feedback = 0.0f;
+    };
+
+    template <typename To, typename From>
+    To BitCastPortable(const From& src) noexcept
+    {
+        static_assert(sizeof(To) == sizeof(From));
+        static_assert(std::is_trivially_copyable_v<To>);
+        static_assert(std::is_trivially_copyable_v<From>);
+
+        To out{};
+        std::memcpy(&out, &src, sizeof(To));
+        return out;
     }
 
-    static packed64_t PackFloat32(
+    const char* RegionName(APCPagedNodeSegmentClasses r) noexcept
+    {
+        switch (r)
+        {
+            case APCPagedNodeSegmentClasses::NONE: return "NONE";
+            case APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE: return "FF";
+            case APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE: return "FB";
+            case APCPagedNodeSegmentClasses::LATERAL_MESAGE: return "LATERAL";
+            case APCPagedNodeSegmentClasses::STATE_SLOT: return "STATE";
+            case APCPagedNodeSegmentClasses::ERROR_SLOT: return "ERROR";
+            case APCPagedNodeSegmentClasses::EDGE_DESCRIPTOR: return "EDGE";
+            case APCPagedNodeSegmentClasses::WEIGHT_SLOT: return "WEIGHT";
+            case APCPagedNodeSegmentClasses::CONTROL_SLOT: return "CONTROL";
+            case APCPagedNodeSegmentClasses::AUX_SLOT: return "AUX";
+            case APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT: return "HETERO_MEM";
+            case APCPagedNodeSegmentClasses::PAIRED_POINTER_LOCAL_MEMORY: return "LOCAL_PTR";
+            case APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY: return "DIST_PTR";
+            case APCPagedNodeSegmentClasses::FREE_SLOT: return "FREE";
+            case APCPagedNodeSegmentClasses::UNDEFINED: return "UNDEFINED";
+            case APCPagedNodeSegmentClasses::NANNULL: return "NANNULL";
+            default: return "UNKNOWN";
+        }
+    }
+
+    const char* PassFail(bool ok) noexcept
+    {
+        return ok ? "PASS" : "FAIL";
+    }
+
+    std::array<APCPagedNodeSegmentClasses, 14> TrackedRegionsNoNoneNoNan() noexcept
+    {
+        return {
+            APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
+            APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
+            APCPagedNodeSegmentClasses::LATERAL_MESAGE,
+            APCPagedNodeSegmentClasses::STATE_SLOT,
+            APCPagedNodeSegmentClasses::ERROR_SLOT,
+            APCPagedNodeSegmentClasses::EDGE_DESCRIPTOR,
+            APCPagedNodeSegmentClasses::WEIGHT_SLOT,
+            APCPagedNodeSegmentClasses::CONTROL_SLOT,
+            APCPagedNodeSegmentClasses::AUX_SLOT,
+            APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT,
+            APCPagedNodeSegmentClasses::PAIRED_POINTER_LOCAL_MEMORY,
+            APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY,
+            APCPagedNodeSegmentClasses::FREE_SLOT,
+            APCPagedNodeSegmentClasses::UNDEFINED
+        };
+    }
+
+    std::array<APCPagedNodeSegmentClasses, 8> PrintedRegions() noexcept
+    {
+        return {
+            APCPagedNodeSegmentClasses::CONTROL_SLOT,
+            APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
+            APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
+            APCPagedNodeSegmentClasses::LATERAL_MESAGE,
+            APCPagedNodeSegmentClasses::STATE_SLOT,
+            APCPagedNodeSegmentClasses::ERROR_SLOT,
+            APCPagedNodeSegmentClasses::AUX_SLOT,
+            APCPagedNodeSegmentClasses::UNDEFINED
+        };
+    }
+
+    packed64_t PackF32(
         MasterClockConf& clock,
         float value,
         APCPagedNodeSegmentClasses region,
         PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY
     )
     {
-        const uint32_t bits = BitCastMaybe<uint32_t>(value);
+        const uint32_t bits = BitCastPortable<uint32_t>(value);
 
         return clock.ComposeValue32WithCurrentThreadStamp16(
             bits,
@@ -98,34 +207,15 @@ namespace
         );
     }
 
-    static bool PublishBudgeted(
-        APCSegmentsCausalCordinator& apc,
-        APCPagedNodeSegmentClasses region,
-        packed64_t cell,
-        PackedCellContainerManager& manager,
-        std::atomic<uint64_t>* grow_counter,
-        GraphStats& stats,
-        uint32_t budget = PUBLISH_BUDGET
-    )
+    float UnpackF32(packed64_t cell, float fallback = 0.0f)
     {
-        for (uint32_t attempt = 0; attempt < budget; ++attempt)
-        {
-            if (apc.PublishCausal(region, cell, grow_counter))
-            {
-                return true;
-            }
-
-            stats.Retry.fetch_add(1, std::memory_order_relaxed);
-            manager.GetCellsAdaptiveBackoffFromManager(cell);
-        }
-
-        stats.TerminalFail.fetch_add(1, std::memory_order_relaxed);
-        return false;
+        const auto maybe = PackedCell64_t::ExtractAnyPackedValueX<float>(cell);
+        return maybe ? *maybe : fallback;
     }
 
-    static ExactLocalityCount CountExactLocality(APCSegmentsCausalCordinator& apc)
+    ExactPayloadLocalityCount CountExactLocalPayload(AdaptivePackedCellContainer& apc)
     {
-        ExactLocalityCount out{};
+        ExactPayloadLocalityCount out{};
 
         if (!apc.IfAPCBranchValid())
         {
@@ -137,8 +227,7 @@ namespace
             const packed64_t cell = apc.BackingPtr[i].load(MoLoad_);
             const auto view = PackedCell64_t::GetAuthoritiveViewsForACell(cell);
 
-            if (!view.IsCellValid ||
-                view.LocalityOfCell == PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY)
+            if (!view.IsCellValid)
             {
                 ++out.Faulty;
                 continue;
@@ -168,115 +257,431 @@ namespace
         return out;
     }
 
-    static uint16_t HeaderUsedSum(APCSegmentsCausalCordinator& apc)
+    ExactPayloadLocalityCount CountExactChainPayload(APCSegmentsCausalCordinator& root)
     {
-        return apc.ReadTotalOccuPancyOfAnyPageClass();
-    }
+        ExactPayloadLocalityCount sum{};
 
-    static uint32_t HeaderLocalitySum(APCSegmentsCausalCordinator& apc)
-    {
-        return
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_IDLE) +
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED) +
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_CLAIMED) +
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY);
-    }
+        AdaptivePackedCellContainer* current = &root;
+        uint32_t guard = 0;
 
-    static uint32_t RegionMeta(
-        APCSegmentsCausalCordinator& apc,
-        APCPagedNodeSegmentClasses region
-    )
-    {
-        return apc.ReadPublishedOccupancyOfAPageClass(region);
-    }
-
-    static void PrintRegion(
-        const char* label,
-        APCSegmentsCausalCordinator& apc,
-        APCPagedNodeSegmentClasses region
-    )
-    {
-        const auto maybe = apc.ReadLayoutBoundsAndVersion(region);
-
-        std::cout << "    " << label
-                  << " meta_pub=" << RegionMeta(apc, region);
-
-        if (maybe)
+        while (current && guard++ < 1024)
         {
-            std::cout << " span=[" << maybe->BeginIndex
-                      << "," << maybe->EndIndex
-                      << ") size=" << maybe->GetPayloadSpan();
+            const ExactPayloadLocalityCount local = CountExactLocalPayload(*current);
+
+            sum.Idle += local.Idle;
+            sum.Published += local.Published;
+            sum.Claimed += local.Claimed;
+            sum.Faulty += local.Faulty;
+
+            AdaptivePackedCellContainer* next = current->GetNextSharedSegment();
+
+            if (!next || next == current)
+            {
+                break;
+            }
+
+            current = next;
+        }
+
+        return sum;
+    }
+
+    uint32_t ChainLength(APCSegmentsCausalCordinator& root)
+    {
+        uint32_t count = 0;
+
+        AdaptivePackedCellContainer* current = &root;
+        uint32_t guard = 0;
+
+        while (current && guard++ < 1024)
+        {
+            ++count;
+
+            AdaptivePackedCellContainer* next = current->GetNextSharedSegment();
+
+            if (!next || next == current)
+            {
+                break;
+            }
+
+            current = next;
+        }
+
+        return count;
+    }
+
+    OccupancyTriple ReadCentral(AdaptivePackedCellContainer& apc)
+    {
+        OccupancyTriple out{};
+
+        out.Published = apc.ReadCentralAPCOccupancyOfALocality(
+            PackedCellLocalityTypes::ST_PUBLISHED
+        );
+
+        out.Claimed = apc.ReadCentralAPCOccupancyOfALocality(
+            PackedCellLocalityTypes::ST_CLAIMED
+        );
+
+        out.Faulty = apc.ReadCentralAPCOccupancyOfALocality(
+            PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY
+        );
+
+        return out;
+    }
+
+    OccupancyTriple ReadRegion(
+        AdaptivePackedCellContainer& apc,
+        APCPagedNodeSegmentClasses region
+    )
+    {
+        OccupancyTriple out{};
+
+        out.Published = apc.ReadRegionOccupancyOfALocality(
+            PackedCellLocalityTypes::ST_PUBLISHED,
+            region
+        );
+
+        out.Claimed = apc.ReadRegionOccupancyOfALocality(
+            PackedCellLocalityTypes::ST_CLAIMED,
+            region
+        );
+
+        out.Faulty = apc.ReadRegionOccupancyOfALocality(
+            PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY,
+            region
+        );
+
+        return out;
+    }
+
+    uint32_t LocalPayloadMetaUsed(AdaptivePackedCellContainer& apc)
+    {
+        uint32_t used = 0;
+
+        for (const APCPagedNodeSegmentClasses region : TrackedRegionsNoNoneNoNan())
+        {
+            if (region == APCPagedNodeSegmentClasses::CONTROL_SLOT)
+            {
+                continue;
+            }
+
+            const OccupancyTriple r = ReadRegion(apc, region);
+            used += r.Used();
+        }
+
+        return used;
+    }
+
+    bool LocalStrongInvariant(AdaptivePackedCellContainer& apc)
+    {
+        const bool central_sum_ok = apc.ValidateAPCOccupancyInvarient();
+
+        const ExactPayloadLocalityCount exact = CountExactLocalPayload(apc);
+        const bool exact_sum_ok = exact.Sum() == apc.PayloadCapacityFromHeader();
+
+        const uint32_t payload_meta_used = LocalPayloadMetaUsed(apc);
+        const bool payload_meta_ok = exact.Used() == payload_meta_used;
+
+        return central_sum_ok && exact_sum_ok && payload_meta_ok;
+    }
+
+    bool ChainStrongInvariant(APCSegmentsCausalCordinator& root)
+    {
+        AdaptivePackedCellContainer* current = &root;
+        uint32_t guard = 0;
+
+        while (current && guard++ < 1024)
+        {
+            if (!LocalStrongInvariant(*current))
+            {
+                return false;
+            }
+
+            AdaptivePackedCellContainer* next = current->GetNextSharedSegment();
+
+            if (!next || next == current)
+            {
+                break;
+            }
+
+            current = next;
+        }
+
+        return true;
+    }
+
+    void PrintLocalSegmentLine(
+        AdaptivePackedCellContainer& seg,
+        const char* prefix
+    )
+    {
+        const OccupancyTriple central = ReadCentral(seg);
+        const OccupancyTriple control = ReadRegion(seg, APCPagedNodeSegmentClasses::CONTROL_SLOT);
+        const ExactPayloadLocalityCount exact = CountExactLocalPayload(seg);
+
+        std::cout
+            << prefix
+            << "branch=" << seg.GetBranchId()
+            << " logical=" << seg.GetLogicalId()
+            << " shared=" << seg.GetSharedId()
+            << " group=" << seg.ReadMetaCellValue32(MetaIndexOfAPCNode::NODE_GROUP_SIZE)
+            << " cap=" << seg.GetTotalCapacityForThisAPC()
+            << " payload=" << seg.PayloadCapacityFromHeader()
+            << " ready=0x" << std::hex
+            << seg.ReadMetaCellValue32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT)
+            << std::dec
+            << " central(pub=" << central.Published
+            << ",claim=" << central.Claimed
+            << ",fault=" << central.Faulty
+            << ") control(pub=" << control.Published
+            << ",claim=" << control.Claimed
+            << ",fault=" << control.Faulty
+            << ") exact_payload(pub=" << exact.Published
+            << ",claim=" << exact.Claimed
+            << ",fault=" << exact.Faulty
+            << ",idle=" << exact.Idle
+            << ") inv=" << PassFail(LocalStrongInvariant(seg))
+            << "\n";
+    }
+
+    void PrintRegionPressure(
+        APCSegmentsCausalCordinator& node,
+        APCPagedNodeSegmentClasses region
+    )
+    {
+        const uint32_t exact_chain_pub =
+            node.CountExactTotalChainOccupancy(region);
+
+        std::cout
+            << "    "
+            << std::left << std::setw(12) << RegionName(region)
+            << " exact_chain_pub=" << std::setw(5) << exact_chain_pub;
+
+        AdaptivePackedCellContainer* current = &node;
+        uint32_t seg_index = 0;
+        uint32_t guard = 0;
+
+        while (current && guard++ < 1024)
+        {
+            const OccupancyTriple local = ReadRegion(*current, region);
+
+            std::cout
+                << " | s" << seg_index
+                << "(p=" << local.Published
+                << ",c=" << local.Claimed
+                << ",f=" << local.Faulty
+                << ")";
+
+            AdaptivePackedCellContainer* next = current->GetNextSharedSegment();
+
+            if (!next || next == current)
+            {
+                break;
+            }
+
+            current = next;
+            ++seg_index;
         }
 
         std::cout << "\n";
     }
 
-    static void PrintNode(
-        const char* name,
-        APCSegmentsCausalCordinator& apc
+    void PrintNodeSnapshot(
+        const char* label,
+        APCSegmentsCausalCordinator& node,
+        bool print_segments = true
     )
     {
-        const ExactLocalityCount exact = CountExactLocality(apc);
+        std::cout << "\n[" << label << "]\n";
+        std::cout
+            << "  chain_length=" << ChainLength(node)
+            << " chain_invariant=" << PassFail(ChainStrongInvariant(node))
+            << "\n";
 
-        const uint32_t header_idle =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_IDLE);
-        const uint32_t header_pub =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED);
-        const uint32_t header_claim =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_CLAIMED);
-        const uint32_t header_fault =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY);
+        const ExactPayloadLocalityCount chain_exact = CountExactChainPayload(node);
 
-        const uint32_t header_sum = HeaderLocalitySum(apc);
-        const uint32_t header_used = HeaderUsedSum(apc);
-        const uint32_t payload = static_cast<uint32_t>(apc.PayloadCapacityFromHeader());
+        std::cout
+            << "  exact_chain_payload: idle=" << chain_exact.Idle
+            << " pub=" << chain_exact.Published
+            << " claim=" << chain_exact.Claimed
+            << " faulty=" << chain_exact.Faulty
+            << " used=" << chain_exact.Used()
+            << "\n";
 
-        std::cout << "\n[" << name << "]\n";
-        std::cout << "  branch=" << apc.GetBranchId()
-                  << " logical=" << apc.GetLogicalId()
-                  << " shared=" << apc.GetSharedId()
-                  << " group=" << apc.ReadMetaCellValue32(MetaIndexOfAPCNode::NODE_GROUP_SIZE)
-                  << "\n";
+        std::cout << "  region chain pressure:\n";
 
-        std::cout << "  payload_capacity=" << payload
-                  << " total_capacity=" << apc.GetTotalCapacityForThisAPC()
-                  << " ready_bit=0x" << std::hex
-                  << apc.ReadMetaCellValue32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT)
-                  << std::dec
-                  << "\n";
+        for (const APCPagedNodeSegmentClasses region : PrintedRegions())
+        {
+            PrintRegionPressure(node, region);
+        }
 
-        std::cout << "  header locality: "
-                  << "idle=" << header_idle
-                  << " pub=" << header_pub
-                  << " claim=" << header_claim
-                  << " faulty=" << header_fault
-                  << " used=" << header_used
-                  << " sum=" << header_sum
-                  << " invariant=" << (header_sum == payload ? "OK" : "BAD")
-                  << "\n";
+        if (print_segments)
+        {
+            std::cout << "  local segments:\n";
 
-        std::cout << "  exact  locality: "
-                  << "idle=" << exact.Idle
-                  << " pub=" << exact.Published
-                  << " claim=" << exact.Claimed
-                  << " faulty=" << exact.Faulty
-                  << " sum=" << exact.Sum()
-                  << " invariant=" << (exact.Sum() == payload ? "OK" : "BAD")
-                  << "\n";
+            AdaptivePackedCellContainer* current = &node;
+            uint32_t index = 0;
+            uint32_t guard = 0;
 
-        std::cout << "  region published-data pressure:\n";
-        PrintRegion("FF   ", apc, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE);
-        PrintRegion("FB   ", apc, APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE);
-        PrintRegion("STATE", apc, APCPagedNodeSegmentClasses::STATE_SLOT);
-        PrintRegion("ERROR", apc, APCPagedNodeSegmentClasses::ERROR_SLOT);
-        PrintRegion("AUX  ", apc, APCPagedNodeSegmentClasses::AUX_SLOT);
+            while (current && guard++ < 4)
+            {
+                std::string prefix = "    seg[" + std::to_string(index) + "] ";
+                PrintLocalSegmentLine(*current, prefix.c_str());
 
-        std::cout << "  clocks: "
-                  << "accFF=" << apc.ReadLastAcceptedClok16ForThisSegment(APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE)
-                  << " emitFF=" << apc.ReadLastEmittedClok16ForThisSegment(APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE)
-                  << " accFB=" << apc.ReadLastAcceptedClok16ForThisSegment(APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE)
-                  << " emitFB=" << apc.ReadLastEmittedClok16ForThisSegment(APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE)
-                  << "\n";
+                AdaptivePackedCellContainer* next = current->GetNextSharedSegment();
+
+                if (!next || next == current)
+                {
+                    break;
+                }
+
+                current = next;
+                ++index;
+            }
+        }
+    }
+
+    bool PublishWithRetry(
+        APCSegmentsCausalCordinator& node,
+        APCPagedNodeSegmentClasses region,
+        packed64_t cell,
+        PackedCellContainerManager& manager,
+        std::atomic<uint64_t>& growth_counter,
+        const char* label
+    )
+    {
+        for (uint32_t attempt = 0; attempt < MAX_RETRY; ++attempt)
+        {
+            if (node.PublishCausal(region, cell, &growth_counter))
+            {
+                return true;
+            }
+
+            manager.GetManagersAdaptiveBackoff().AutoBackoff();
+        }
+
+        std::cerr
+            << "[FATAL] publish failed: " << label
+            << " region=" << RegionName(region)
+            << "\n";
+
+        return false;
+    }
+
+    std::optional<packed64_t> ConsumeWithRetry(
+        APCSegmentsCausalCordinator& node,
+        APCPagedNodeSegmentClasses region,
+        size_t& cursor,
+        PackedCellContainerManager& manager,
+        std::atomic<uint64_t>& older_counter,
+        const char* label
+    )
+    {
+        for (uint32_t attempt = 0; attempt < MAX_RETRY; ++attempt)
+        {
+            auto maybe = node.ConsumeCausal(
+                region,
+                cursor,
+                &older_counter,
+                false
+            );
+
+            if (maybe)
+            {
+                return maybe;
+            }
+
+            manager.GetManagersAdaptiveBackoff().AutoBackoff();
+        }
+
+        std::cerr
+            << "[FATAL] consume failed: " << label
+            << " region=" << RegionName(region)
+            << "\n";
+
+        return std::nullopt;
+    }
+
+    void InitNode(
+        APCSegmentsCausalCordinator& node,
+        PackedCellContainerManager& manager,
+        const ContainerConf& cfg,
+        SegmentIODefinition::APCNodeComputeKind kind,
+        uint32_t aux = 0
+    )
+    {
+        node.SetManagerForGlobalAPC(&manager);
+
+        node.InitAPCAsNode(
+            cfg.BranchMinChildCapacity,
+            cfg,
+            kind,
+            aux
+        );
+    }
+
+    bool PublishSensorBurst(
+        APCSegmentsCausalCordinator& sensor,
+        PackedCellContainerManager& manager,
+        MasterClockConf& clock,
+        std::atomic<uint64_t>& growth_counter
+    )
+    {
+        for (uint32_t i = 0; i < BURST_N; ++i)
+        {
+            const float value = 1.0f + static_cast<float>(i) * 0.03125f;
+
+            if (!PublishWithRetry(
+                    sensor,
+                    APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
+                    PackF32(
+                        clock,
+                        value,
+                        APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
+                        PriorityPhysics::TIME_DEPENDENCY
+                    ),
+                    manager,
+                    growth_counter,
+                    "Sensor.FF burst"
+                ))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    bool PublishPredictionBurst(
+        APCSegmentsCausalCordinator& predictor,
+        PackedCellContainerManager& manager,
+        MasterClockConf& clock,
+        std::atomic<uint64_t>& growth_counter
+    )
+    {
+        for (uint32_t i = 0; i < BURST_N; ++i)
+        {
+            const float prediction = 0.5f + static_cast<float>(i) * 0.015625f;
+
+            if (!PublishWithRetry(
+                    predictor,
+                    APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
+                    PackF32(
+                        clock,
+                        prediction,
+                        APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
+                        PriorityPhysics::STRUCTURAL_DEPENDENCY
+                    ),
+                    manager,
+                    growth_counter,
+                    "Predictor.FB burst"
+                ))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
 
@@ -286,6 +691,11 @@ int main()
     std::cout.setf(std::ios::unitbuf);
     std::cerr.setf(std::ios::unitbuf);
 
+    std::cout << "\n";
+    std::cout << "============================================================\n";
+    std::cout << " APC Growth-Oriented Predictive Neural Fabric Test\n";
+    std::cout << "============================================================\n";
+
     auto& manager = PackedCellContainerManager::Instance();
     manager.StartAPCManager();
 
@@ -294,12 +704,12 @@ int main()
 
     ContainerConf cfg;
     cfg.InitialMode = PackedMode::MODE_VALUE32;
-    cfg.ProducerBlockSize = 8;
-    cfg.RegionSize = 16;
+    cfg.ProducerBlockSize = 4;
+    cfg.RegionSize = 8;
     cfg.EnableBranching = true;
-    cfg.BranchSplitThresholdPercentage = 40;
-    cfg.BranchMaxDepth = 6;
-    cfg.BranchMinChildCapacity = 256;
+    cfg.BranchSplitThresholdPercentage = 25;
+    cfg.BranchMaxDepth = 8;
+    cfg.BranchMinChildCapacity = NODE_CAPACITY;
     cfg.NodeGroupSize = 1u;
 
     APCSegmentsCausalCordinator Sensor;
@@ -308,462 +718,415 @@ int main()
     APCSegmentsCausalCordinator Integrator;
     APCSegmentsCausalCordinator Motor;
 
-    Sensor.SetManagerForGlobalAPC(&manager);
-    Predictor.SetManagerForGlobalAPC(&manager);
-    Comparator.SetManagerForGlobalAPC(&manager);
-    Integrator.SetManagerForGlobalAPC(&manager);
-    Motor.SetManagerForGlobalAPC(&manager);
-
-    Sensor.InitAPCAsNode(
-        cfg.BranchMinChildCapacity,
+    InitNode(
+        Sensor,
+        manager,
         cfg,
-        SegmentIODefinition::APCNodeComputeKind::GENERATOR_UINT32,
-        0
+        SegmentIODefinition::APCNodeComputeKind::GENERATOR_UINT32
     );
 
-    Predictor.InitAPCAsNode(
-        cfg.BranchMinChildCapacity,
+    InitNode(
+        Predictor,
+        manager,
         cfg,
-        SegmentIODefinition::APCNodeComputeKind::BIDIRECTIONAL_PREDECTIVE,
-        0
+        SegmentIODefinition::APCNodeComputeKind::BIDIRECTIONAL_PREDECTIVE
     );
 
-    Comparator.InitAPCAsNode(
-        cfg.BranchMinChildCapacity,
+    InitNode(
+        Comparator,
+        manager,
         cfg,
-        SegmentIODefinition::APCNodeComputeKind::ADD_UINT32,
-        0
+        SegmentIODefinition::APCNodeComputeKind::BIDIRECTIONAL_PREDECTIVE
     );
 
-    Integrator.InitAPCAsNode(
-        cfg.BranchMinChildCapacity,
+    InitNode(
+        Integrator,
+        manager,
         cfg,
-        SegmentIODefinition::APCNodeComputeKind::GENERIC_VECTOR,
-        0
+        SegmentIODefinition::APCNodeComputeKind::GENERIC_VECTOR
     );
 
-    Motor.InitAPCAsNode(
-        cfg.BranchMinChildCapacity,
+    InitNode(
+        Motor,
+        manager,
         cfg,
-        SegmentIODefinition::APCNodeComputeKind::GENERIC_VECTOR,
-        0
+        SegmentIODefinition::APCNodeComputeKind::GENERIC_VECTOR
     );
 
-    GraphStats stats;
+    std::atomic<uint64_t> grow_sensor{0};
+    std::atomic<uint64_t> grow_predictor{0};
+    std::atomic<uint64_t> grow_comparator{0};
+    std::atomic<uint64_t> grow_integrator{0};
+    std::atomic<uint64_t> grow_motor{0};
+    std::atomic<uint64_t> older_counter{0};
 
-    std::atomic<bool> producers_done{false};
-    std::atomic<bool> ff_stage_done{false};
-    std::atomic<bool> fb_stage_done{false};
+    size_t sensor_ff_cursor = Sensor.PayloadBegin();
+    size_t predictor_fb_cursor = Predictor.PayloadBegin();
+    size_t comparator_ff_cursor = Comparator.PayloadBegin();
+    size_t comparator_fb_cursor = Comparator.PayloadBegin();
+    size_t integrator_state_cursor = Integrator.PayloadBegin();
+    size_t integrator_error_cursor = Integrator.PayloadBegin();
+    size_t motor_ff_cursor = Motor.PayloadBegin();
+    size_t predictor_feedback_cursor = Predictor.PayloadBegin();
 
-    std::atomic<uint64_t> ff_consumed{0};
-    std::atomic<uint64_t> fb_consumed{0};
-    std::atomic<uint64_t> state_consumed{0};
-    std::atomic<uint64_t> error_consumed{0};
-    std::atomic<uint64_t> final_done{0};
+    std::vector<NeuralTrace> traces;
+    traces.reserve(BURST_N);
 
-    std::vector<float> collected;
-    std::mutex collected_mutex;
+    bool ok = true;
 
-    const auto start_time = std::chrono::steady_clock::now();
+    const auto start = std::chrono::steady_clock::now();
 
-    std::vector<std::thread> producers;
-    std::vector<std::thread> ff_workers;
-    std::vector<std::thread> fb_workers;
-    std::vector<std::thread> final_workers;
+    std::cout << "\nInitial snapshots:\n";
+    PrintNodeSnapshot("Sensor initial", Sensor, false);
+    PrintNodeSnapshot("Predictor initial", Predictor, false);
+    PrintNodeSnapshot("Comparator initial", Comparator, false);
+    PrintNodeSnapshot("Integrator initial", Integrator, false);
+    PrintNodeSnapshot("Motor initial", Motor, false);
 
-    for (uint32_t p = 0; p < PRODUCER_COUNT; ++p)
+    std::cout << "\n============================================================\n";
+    std::cout << "Phase 1: burst-fill Sensor.FF and Predictor.FB\n";
+    std::cout << "============================================================\n";
+
+    ok = ok && PublishSensorBurst(Sensor, manager, clock, grow_sensor);
+    ok = ok && PublishPredictionBurst(Predictor, manager, clock, grow_predictor);
+
+    PrintNodeSnapshot("Sensor after FF burst", Sensor, true);
+    PrintNodeSnapshot("Predictor after initial FB burst", Predictor, true);
+
+    std::cout << "\n============================================================\n";
+    std::cout << "Phase 2: move bursts into Comparator.FF and Comparator.FB\n";
+    std::cout << "============================================================\n";
+
+    for (uint32_t i = 0; i < BURST_N && ok; ++i)
     {
-        producers.emplace_back([&, p]()
+        auto sensor_cell = ConsumeWithRetry(
+            Sensor,
+            APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
+            sensor_ff_cursor,
+            manager,
+            older_counter,
+            "Sensor drain FF"
+        );
+
+        auto prediction_cell = ConsumeWithRetry(
+            Predictor,
+            APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
+            predictor_fb_cursor,
+            manager,
+            older_counter,
+            "Predictor drain initial FB"
+        );
+
+        if (!sensor_cell || !prediction_cell)
         {
-            auto th = manager.RegisterAPCThread();
+            ok = false;
+            break;
+        }
 
-            for (uint32_t i = p + 1; i <= VALUE_COUNT; i += PRODUCER_COUNT)
-            {
-                const packed64_t ff =
-                    PackU32(clock, i, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, PriorityPhysics::IMPORTANT);
+        ok = ok && PublishWithRetry(
+            Comparator,
+            APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
+            *sensor_cell,
+            manager,
+            grow_comparator,
+            "Comparator receive FF"
+        );
 
-                const packed64_t fb =
-                    PackU32(clock, i + 1u, APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE, PriorityPhysics::TIME_DEPENDENCY);
-
-                if (PublishBudgeted(
-                        Sensor,
-                        APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                        ff,
-                        manager,
-                        &stats.GrowFF,
-                        stats))
-                {
-                    stats.SensorFFProduced.fetch_add(1, std::memory_order_release);
-                    stats.ForwardEmitted.fetch_add(1, std::memory_order_release);
-                }
-
-                if (PublishBudgeted(
-                        Predictor,
-                        APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
-                        fb,
-                        manager,
-                        &stats.GrowFB,
-                        stats))
-                {
-                    stats.PredictorFBProduced.fetch_add(1, std::memory_order_release);
-                    stats.FeedbackEmitted.fetch_add(1, std::memory_order_release);
-                }
-            }
-
-            manager.UnRegisterAPCThread(th);
-        });
+        ok = ok && PublishWithRetry(
+            Comparator,
+            APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
+            *prediction_cell,
+            manager,
+            grow_comparator,
+            "Comparator receive FB"
+        );
     }
 
-    for (uint32_t w = 0; w < FF_WORKER_COUNT; ++w)
+    PrintNodeSnapshot("Sensor after drain", Sensor, true);
+    PrintNodeSnapshot("Predictor after initial prediction drain", Predictor, true);
+    PrintNodeSnapshot("Comparator after FF+FB burst", Comparator, true);
+
+    std::cout << "\n============================================================\n";
+    std::cout << "Phase 3: Comparator computes ERROR and STATE into Integrator\n";
+    std::cout << "============================================================\n";
+
+    for (uint32_t i = 0; i < BURST_N && ok; ++i)
     {
-        ff_workers.emplace_back([&]()
+        auto ff = ConsumeWithRetry(
+            Comparator,
+            APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
+            comparator_ff_cursor,
+            manager,
+            older_counter,
+            "Comparator consume FF"
+        );
+
+        auto fb = ConsumeWithRetry(
+            Comparator,
+            APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
+            comparator_fb_cursor,
+            manager,
+            older_counter,
+            "Comparator consume FB"
+        );
+
+        if (!ff || !fb)
         {
-            auto th = manager.RegisterAPCThread();
-            size_t cursor = Sensor.PayloadBegin();
+            ok = false;
+            break;
+        }
 
-            while (true)
-            {
-                if (producers_done.load(std::memory_order_acquire) &&
-                    ff_consumed.load(std::memory_order_acquire) >=
-                        stats.SensorFFProduced.load(std::memory_order_acquire))
-                {
-                    break;
-                }
+        const float sensor_value = UnpackF32(*ff);
+        const float prediction = UnpackF32(*fb);
 
-                auto maybe =
-                    Sensor.ConsumeCausal(
-                        APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                        cursor,
-                        &stats.OlderFFObserved,
-                        false
-                    );
+        const float error = sensor_value - prediction;
+        const float state = prediction + 0.50f * error;
 
-                if (!maybe)
-                {
-                    manager.GetManagersAdaptiveBackoff().AutoBackoff();
-                    continue;
-                }
+        NeuralTrace t{};
+        t.Index = i;
+        t.Sensor = sensor_value;
+        t.Prediction = prediction;
+        t.Error = error;
+        t.State = state;
+        traces.push_back(t);
 
-                ff_consumed.fetch_add(1, std::memory_order_release);
+        ok = ok && PublishWithRetry(
+            Integrator,
+            APCPagedNodeSegmentClasses::STATE_SLOT,
+            PackF32(
+                clock,
+                state,
+                APCPagedNodeSegmentClasses::STATE_SLOT,
+                PriorityPhysics::STRUCTURAL_DEPENDENCY
+            ),
+            manager,
+            grow_integrator,
+            "Integrator receive STATE"
+        );
 
-                const auto maybe_x =
-                    PackedCell64_t::ExtractAnyPackedValueX<uint32_t>(*maybe);
-
-                if (!maybe_x)
-                {
-                    stats.TerminalFail.fetch_add(1, std::memory_order_relaxed);
-                    continue;
-                }
-
-                const uint32_t state_value = maybe_x.value() + 1u;
-
-                const packed64_t state_cell =
-                    PackU32(
-                        clock,
-                        state_value,
-                        APCPagedNodeSegmentClasses::STATE_SLOT,
-                        PriorityPhysics::STRUCTURAL_DEPENDENCY
-                    );
-
-                if (PublishBudgeted(
-                        Integrator,
-                        APCPagedNodeSegmentClasses::STATE_SLOT,
-                        state_cell,
-                        manager,
-                        &stats.GrowSTATE,
-                        stats))
-                {
-                    stats.StateIntegrated.fetch_add(1, std::memory_order_release);
-                }
-            }
-
-            manager.UnRegisterAPCThread(th);
-        });
+        ok = ok && PublishWithRetry(
+            Integrator,
+            APCPagedNodeSegmentClasses::ERROR_SLOT,
+            PackF32(
+                clock,
+                error,
+                APCPagedNodeSegmentClasses::ERROR_SLOT,
+                PriorityPhysics::ERROR_DEPENDENCY
+            ),
+            manager,
+            grow_integrator,
+            "Integrator receive ERROR"
+        );
     }
 
-    for (uint32_t w = 0; w < FB_WORKER_COUNT; ++w)
+    PrintNodeSnapshot("Comparator after drain", Comparator, true);
+    PrintNodeSnapshot("Integrator after STATE+ERROR burst", Integrator, true);
+
+    std::cout << "\n============================================================\n";
+    std::cout << "Phase 4: Integrator emits Motor.FF and Predictor.FB feedback\n";
+    std::cout << "============================================================\n";
+
+    for (uint32_t i = 0; i < BURST_N && ok; ++i)
     {
-        fb_workers.emplace_back([&]()
+        auto state_cell = ConsumeWithRetry(
+            Integrator,
+            APCPagedNodeSegmentClasses::STATE_SLOT,
+            integrator_state_cursor,
+            manager,
+            older_counter,
+            "Integrator consume STATE"
+        );
+
+        auto error_cell = ConsumeWithRetry(
+            Integrator,
+            APCPagedNodeSegmentClasses::ERROR_SLOT,
+            integrator_error_cursor,
+            manager,
+            older_counter,
+            "Integrator consume ERROR"
+        );
+
+        if (!state_cell || !error_cell)
         {
-            auto th = manager.RegisterAPCThread();
-            size_t cursor = Predictor.PayloadBegin();
+            ok = false;
+            break;
+        }
 
-            while (true)
-            {
-                if (producers_done.load(std::memory_order_acquire) &&
-                    fb_consumed.load(std::memory_order_acquire) >=
-                        stats.PredictorFBProduced.load(std::memory_order_acquire))
-                {
-                    break;
-                }
+        const float state = UnpackF32(*state_cell);
+        const float error = UnpackF32(*error_cell);
 
-                auto maybe =
-                    Predictor.ConsumeCausal(
-                        APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
-                        cursor,
-                        &stats.OlderFBObserved,
-                        false
-                    );
+        const float motor = state + 0.25f * error;
+        const float feedback = 0.20f * error;
 
-                if (!maybe)
-                {
-                    manager.GetManagersAdaptiveBackoff().AutoBackoff();
-                    continue;
-                }
-
-                fb_consumed.fetch_add(1, std::memory_order_release);
-
-                const auto maybe_y =
-                    PackedCell64_t::ExtractAnyPackedValueX<uint32_t>(*maybe);
-
-                if (!maybe_y)
-                {
-                    stats.TerminalFail.fetch_add(1, std::memory_order_relaxed);
-                    continue;
-                }
-
-                const packed64_t error_cell =
-                    PackU32(
-                        clock,
-                        maybe_y.value(),
-                        APCPagedNodeSegmentClasses::ERROR_SLOT,
-                        PriorityPhysics::ERROR_DEPENDENCY
-                    );
-
-                if (PublishBudgeted(
-                        Comparator,
-                        APCPagedNodeSegmentClasses::ERROR_SLOT,
-                        error_cell,
-                        manager,
-                        &stats.GrowERROR,
-                        stats))
-                {
-                    stats.ErrorComputed.fetch_add(1, std::memory_order_release);
-                }
-            }
-
-            manager.UnRegisterAPCThread(th);
-        });
-    }
-
-    for (uint32_t w = 0; w < FINAL_WORKER_COUNT; ++w)
-    {
-        final_workers.emplace_back([&]()
+        if (i < traces.size())
         {
-            auto th = manager.RegisterAPCThread();
+            traces[i].Motor = motor;
+            traces[i].Feedback = feedback;
+        }
 
-            size_t state_cursor = Integrator.PayloadBegin();
-            size_t error_cursor = Comparator.PayloadBegin();
-            size_t motor_cursor = Motor.PayloadBegin();
+        ok = ok && PublishWithRetry(
+            Motor,
+            APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
+            PackF32(
+                clock,
+                motor,
+                APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
+                PriorityPhysics::IMPORTANT
+            ),
+            manager,
+            grow_motor,
+            "Motor receive FF"
+        );
 
-            while (true)
-            {
-                bool did_work = false;
-
-                auto maybe_state =
-                    Integrator.ConsumeCausal(
-                        APCPagedNodeSegmentClasses::STATE_SLOT,
-                        state_cursor,
-                        nullptr,
-                        false
-                    );
-
-                if (maybe_state)
-                {
-                    did_work = true;
-                    state_consumed.fetch_add(1, std::memory_order_release);
-
-                    const auto maybe_state_u32 =
-                        PackedCell64_t::ExtractAnyPackedValueX<uint32_t>(*maybe_state);
-
-                    if (!maybe_state_u32)
-                    {
-                        stats.TerminalFail.fetch_add(1, std::memory_order_relaxed);
-                    }
-                    else
-                    {
-                        const float motor_value =
-                            static_cast<float>(maybe_state_u32.value()) + 0.5f;
-
-                        const packed64_t motor_cell =
-                            PackFloat32(
-                                clock,
-                                motor_value,
-                                APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                                PriorityPhysics::HANDLE_NOW
-                            );
-
-                        (void)PublishBudgeted(
-                            Motor,
-                            APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                            motor_cell,
-                            manager,
-                            nullptr,
-                            stats
-                        );
-                    }
-                }
-
-                auto maybe_error =
-                    Comparator.ConsumeCausal(
-                        APCPagedNodeSegmentClasses::ERROR_SLOT,
-                        error_cursor,
-                        nullptr,
-                        false
-                    );
-
-                if (maybe_error)
-                {
-                    did_work = true;
-                    error_consumed.fetch_add(1, std::memory_order_release);
-
-                    const auto maybe_error_u32 =
-                        PackedCell64_t::ExtractAnyPackedValueX<uint32_t>(*maybe_error);
-
-                    if (!maybe_error_u32)
-                    {
-                        stats.TerminalFail.fetch_add(1, std::memory_order_relaxed);
-                    }
-                }
-
-                auto maybe_final =
-                    Motor.ConsumeCausal(
-                        APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                        motor_cursor,
-                        nullptr,
-                        false
-                    );
-
-                if (maybe_final)
-                {
-                    did_work = true;
-
-                    const auto maybe_float =
-                        PackedCell64_t::ExtractAnyPackedValueX<float>(*maybe_final);
-
-                    if (maybe_float)
-                    {
-                        {
-                            std::lock_guard<std::mutex> lock(collected_mutex);
-                            collected.push_back(maybe_float.value());
-                        }
-
-                        stats.FinalCollected.fetch_add(1, std::memory_order_release);
-                        final_done.fetch_add(1, std::memory_order_release);
-                    }
-                    else
-                    {
-                        stats.TerminalFail.fetch_add(1, std::memory_order_relaxed);
-                    }
-                }
-
-                const bool state_closed =
-                    ff_stage_done.load(std::memory_order_acquire) &&
-                    state_consumed.load(std::memory_order_acquire) >=
-                        stats.StateIntegrated.load(std::memory_order_acquire) &&
-                    !Integrator.HasAnyPublishedInChain(APCPagedNodeSegmentClasses::STATE_SLOT);
-
-                const bool error_closed =
-                    fb_stage_done.load(std::memory_order_acquire) &&
-                    error_consumed.load(std::memory_order_acquire) >=
-                        stats.ErrorComputed.load(std::memory_order_acquire) &&
-                    !Comparator.HasAnyPublishedInChain(APCPagedNodeSegmentClasses::ERROR_SLOT);
-
-                const bool motor_closed =
-                    !Motor.HasAnyPublishedInChain(APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE);
-
-                if (state_closed && error_closed && motor_closed)
-                {
-                    break;
-                }
-
-                if (!did_work)
-                {
-                    manager.GetManagersAdaptiveBackoff().AutoBackoff();
-                }
-            }
-
-            manager.UnRegisterAPCThread(th);
-        });
+        ok = ok && PublishWithRetry(
+            Predictor,
+            APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
+            PackF32(
+                clock,
+                feedback,
+                APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
+                PriorityPhysics::ERROR_DEPENDENCY
+            ),
+            manager,
+            grow_predictor,
+            "Predictor receive feedback"
+        );
     }
 
-    for (auto& t : producers)
+    PrintNodeSnapshot("Integrator after drain", Integrator, true);
+    PrintNodeSnapshot("Motor after motor burst", Motor, true);
+    PrintNodeSnapshot("Predictor after feedback burst", Predictor, true);
+
+    std::cout << "\n============================================================\n";
+    std::cout << "Phase 5: final drain Motor.FF and Predictor.FB\n";
+    std::cout << "============================================================\n";
+
+    std::vector<float> motor_outputs;
+    std::vector<float> feedback_outputs;
+    motor_outputs.reserve(BURST_N);
+    feedback_outputs.reserve(BURST_N);
+
+    for (uint32_t i = 0; i < BURST_N && ok; ++i)
     {
-        t.join();
+        auto motor_cell = ConsumeWithRetry(
+            Motor,
+            APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
+            motor_ff_cursor,
+            manager,
+            older_counter,
+            "Motor final drain FF"
+        );
+
+        auto feedback_cell = ConsumeWithRetry(
+            Predictor,
+            APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
+            predictor_feedback_cursor,
+            manager,
+            older_counter,
+            "Predictor final drain feedback"
+        );
+
+        if (!motor_cell || !feedback_cell)
+        {
+            ok = false;
+            break;
+        }
+
+        motor_outputs.push_back(UnpackF32(*motor_cell));
+        feedback_outputs.push_back(UnpackF32(*feedback_cell));
     }
+    const size_t sample_count = std::min<size_t>(traces.size(), 8);
+    
+    PrintNodeSnapshot("Motor after final drain", Motor, true);
+    PrintNodeSnapshot("Predictor after final feedback drain", Predictor, true);
 
-    producers_done.store(true, std::memory_order_release);
-    std::cout << "All producers joined\n";
+    const auto end = std::chrono::steady_clock::now();
 
-    for (auto& t : ff_workers)
+    const uint64_t runtime_us =
+        static_cast<uint64_t>(
+            std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
+        );
+
+    const bool final_sensor_ok = ChainStrongInvariant(Sensor);
+    const bool final_predictor_ok = ChainStrongInvariant(Predictor);
+    const bool final_comparator_ok = ChainStrongInvariant(Comparator);
+    const bool final_integrator_ok = ChainStrongInvariant(Integrator);
+    const bool final_motor_ok = ChainStrongInvariant(Motor);
+
+    const bool final_ok =
+        ok &&
+        final_sensor_ok &&
+        final_predictor_ok &&
+        final_comparator_ok &&
+        final_integrator_ok &&
+        final_motor_ok;
+
+    std::cout << "\n============================================================\n";
+    std::cout << "Trace sample\n";
+    std::cout << "============================================================\n";
+
+        
+    std::cout
+        << std::left
+        << std::setw(8) << "i"
+        << std::setw(12) << "sensor"
+        << std::setw(12) << "pred"
+        << std::setw(12) << "error"
+        << std::setw(12) << "state"
+        << std::setw(12) << "motor"
+        << std::setw(12) << "feedback"
+        << "\n";
+
+
+    for (size_t i = 0; i < sample_count; ++i)
     {
-        t.join();
+        const NeuralTrace& t = traces[i];
+
+        std::cout
+            << std::left
+            << std::setw(8) << t.Index
+            << std::setw(12) << std::fixed << std::setprecision(4) << t.Sensor
+            << std::setw(12) << t.Prediction
+            << std::setw(12) << t.Error
+            << std::setw(12) << t.State
+            << std::setw(12) << t.Motor
+            << std::setw(12) << t.Feedback
+            << "\n";
     }
 
-    ff_stage_done.store(true, std::memory_order_release);
+    std::cout << "\n============================================================\n";
+    std::cout << "Growth summary\n";
+    std::cout << "============================================================\n";
 
-    for (auto& t : fb_workers)
-    {
-        t.join();
-    }
+    std::cout << "runtime_us              : " << runtime_us << "\n";
+    std::cout << "BURST_N                 : " << BURST_N << "\n";
+    std::cout << "NODE_CAPACITY           : " << NODE_CAPACITY << "\n";
+    std::cout << "sensor_chain_length     : " << ChainLength(Sensor) << "\n";
+    std::cout << "predictor_chain_length  : " << ChainLength(Predictor) << "\n";
+    std::cout << "comparator_chain_length : " << ChainLength(Comparator) << "\n";
+    std::cout << "integrator_chain_length : " << ChainLength(Integrator) << "\n";
+    std::cout << "motor_chain_length      : " << ChainLength(Motor) << "\n";
+    std::cout << "grow_sensor             : " << grow_sensor.load() << "\n";
+    std::cout << "grow_predictor          : " << grow_predictor.load() << "\n";
+    std::cout << "grow_comparator         : " << grow_comparator.load() << "\n";
+    std::cout << "grow_integrator         : " << grow_integrator.load() << "\n";
+    std::cout << "grow_motor              : " << grow_motor.load() << "\n";
+    std::cout << "older_cells_observed    : " << older_counter.load() << "\n";
+    std::cout << "motor_outputs           : " << motor_outputs.size() << "\n";
+    std::cout << "feedback_outputs        : " << feedback_outputs.size() << "\n";
 
-    fb_stage_done.store(true, std::memory_order_release);
+    std::cout << "\n============================================================\n";
+    std::cout << "Final invariant summary\n";
+    std::cout << "============================================================\n";
 
-    for (auto& t : final_workers)
-    {
-        t.join();
-    }
-
-    std::cout << "All workers joined\n";
-
-    const auto end_time = std::chrono::steady_clock::now();
-    const auto runtime_us =
-        std::chrono::duration_cast<std::chrono::microseconds>(
-            end_time - start_time
-        ).count();
-
-    std::sort(collected.begin(), collected.end());
-
-    std::cout << "\n==== APC Strict Authoritative Occupancy / Bidirectional Causal Test ====\n";
-    std::cout << "Runtime us             : " << runtime_us << "\n";
-    std::cout << "Sensor FF produced     : " << stats.SensorFFProduced.load() << "\n";
-    std::cout << "Predictor FB produced  : " << stats.PredictorFBProduced.load() << "\n";
-    std::cout << "FF consumed            : " << ff_consumed.load() << "\n";
-    std::cout << "FB consumed            : " << fb_consumed.load() << "\n";
-    std::cout << "State integrated       : " << stats.StateIntegrated.load() << "\n";
-    std::cout << "Error computed         : " << stats.ErrorComputed.load() << "\n";
-    std::cout << "State consumed         : " << state_consumed.load() << "\n";
-    std::cout << "Error consumed         : " << error_consumed.load() << "\n";
-    std::cout << "Forward emitted        : " << stats.ForwardEmitted.load() << "\n";
-    std::cout << "Feedback emitted       : " << stats.FeedbackEmitted.load() << "\n";
-    std::cout << "Final collected        : " << stats.FinalCollected.load() << "\n";
-    std::cout << "Grow FF                : " << stats.GrowFF.load() << "\n";
-    std::cout << "Grow FB                : " << stats.GrowFB.load() << "\n";
-    std::cout << "Grow STATE             : " << stats.GrowSTATE.load() << "\n";
-    std::cout << "Grow ERROR             : " << stats.GrowERROR.load() << "\n";
-    std::cout << "Retry                  : " << stats.Retry.load() << "\n";
-    std::cout << "Terminal fail          : " << stats.TerminalFail.load() << "\n";
-    std::cout << "Older FF observed      : " << stats.OlderFFObserved.load() << "\n";
-    std::cout << "Older FB observed      : " << stats.OlderFBObserved.load() << "\n";
-
-    PrintNode("Sensor", Sensor);
-    PrintNode("Predictor", Predictor);
-    PrintNode("Comparator", Comparator);
-    PrintNode("Integrator", Integrator);
-    PrintNode("Motor", Motor);
-
-    std::cout << "\nFirst 16 collected values:\n";
-    for (size_t i = 0; i < std::min<size_t>(16, collected.size()); ++i)
-    {
-        std::cout << i << " -> " << collected[i] << "\n";
-    }
-
-    Motor.FreeAll();
-    Integrator.FreeAll();
-    Comparator.FreeAll();
-    Predictor.FreeAll();
-    Sensor.FreeAll();
+    std::cout << "Sensor     : " << PassFail(final_sensor_ok) << "\n";
+    std::cout << "Predictor  : " << PassFail(final_predictor_ok) << "\n";
+    std::cout << "Comparator : " << PassFail(final_comparator_ok) << "\n";
+    std::cout << "Integrator : " << PassFail(final_integrator_ok) << "\n";
+    std::cout << "Motor      : " << PassFail(final_motor_ok) << "\n";
+    std::cout << "overall    : " << PassFail(final_ok) << "\n";
 
     manager.StopAPCManager();
-    return 0;
+
+    return final_ok ? 0 : 1;
 }

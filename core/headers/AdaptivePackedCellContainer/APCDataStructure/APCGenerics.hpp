@@ -187,7 +187,7 @@ namespace PredictedAdaptedEncoding
                 occupancy_cell_view.CellMode != PackedMode::MODE_CLKVAL48 ||
                 occupancy_cell_view.LocalityOfCell != desired_cell_locality ||
                 !occupancy_cell_view.RelationOffsetForMode48.has_value() ||
-                *occupancy_cell_view.RelationOffsetForMode48 != RelOffsetMode48::RELOFFSET_GENERIC_VALUE
+                *occupancy_cell_view.RelationOffsetForMode48 != RelOffsetMode48::THREE_16_BIT_SUB_DIVISION
             )
             {
                 return false;

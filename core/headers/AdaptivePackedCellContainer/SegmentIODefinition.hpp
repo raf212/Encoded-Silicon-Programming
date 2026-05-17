@@ -124,7 +124,6 @@ protected:
         APCPagedNodeSegmentClasses destination_page_class
     ) noexcept;
 
-    bool ValidateAPCOccupancyInvarient() noexcept;
 
     packed64_t PackValue32InPackedCellwithClock16_(
         val32_t value32,
@@ -295,6 +294,7 @@ public:
     
     bool WriteExactMetaCellJustNewValue(MetaIndexOfAPCNode idx, uint32_t value) noexcept;
 
+    bool ValidateAPCOccupancyInvarient() noexcept;
 
     bool  TryBindShareNext(uint32_t shared_next_id) noexcept
     {
