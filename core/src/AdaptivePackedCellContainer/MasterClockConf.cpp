@@ -121,7 +121,7 @@ std::optional<uint64_t> MasterClockConf::ReconstructCellClock16toFull48BySegment
         {
             return false;
         }
-        packed64_t wanted_pure_clock48 = ComposePureClockCell48(PriorityPhysics::TIME_DEPENDENCY);
+        packed64_t wanted_pure_clock48 = ComposePureClockCell48(PriorityPhysics::OLDEST_CLOCK_FIRST);
         APCPtr_->BackingPtr[static_cast<size_t>(MetaIndexOfAPCNode::LOCAL_CLOCK48)].store(wanted_pure_clock48, MoStoreSeq_);
         APCPtr_->BackingPtr[static_cast<size_t>(MetaIndexOfAPCNode::LOCAL_CLOCK48)].notify_all();
         return true;

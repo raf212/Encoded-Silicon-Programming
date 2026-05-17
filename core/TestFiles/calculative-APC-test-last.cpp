@@ -386,7 +386,7 @@ int main()
                     PackU32(clock, i, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, PriorityPhysics::IMPORTANT);
 
                 const packed64_t fb =
-                    PackU32(clock, i + 1u, APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE, PriorityPhysics::TIME_DEPENDENCY);
+                    PackU32(clock, i + 1u, APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE, PriorityPhysics::OLDEST_CLOCK_FIRST);
 
                 if (PublishBudgeted(
                         Sensor,
@@ -454,7 +454,7 @@ int main()
                         clock,
                         state_value,
                         APCPagedNodeSegmentClasses::STATE_SLOT,
-                        PriorityPhysics::STRUCTURAL_DEPENDENCY
+                        PriorityPhysics::MAX_OF_SOURCE_AND_TARGET
                     );
 
                 if (PublishBudgeted(
@@ -511,7 +511,7 @@ int main()
                         clock,
                         error_value,
                         APCPagedNodeSegmentClasses::ERROR_SLOT,
-                        PriorityPhysics::ERROR_DEPENDENCY
+                        PriorityPhysics::ERROR_FIRST
                     );
 
                 if (PublishBudgeted(
@@ -592,7 +592,7 @@ int main()
                         clock,
                         motor_value,
                         APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                        PriorityPhysics::HANDLE_NOW
+                        PriorityPhysics::INHERIT_SOURCE_PRIORITY
                     );
 
                 if (PublishBudgeted(

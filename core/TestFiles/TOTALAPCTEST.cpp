@@ -516,7 +516,7 @@ namespace
         );
 
         const packed64_t f32_cell =
-            PackFloat32(clock, 3.25f, APCPagedNodeSegmentClasses::STATE_SLOT, PriorityPhysics::STRUCTURAL_DEPENDENCY);
+            PackFloat32(clock, 3.25f, APCPagedNodeSegmentClasses::STATE_SLOT, PriorityPhysics::MAX_OF_SOURCE_AND_TARGET);
 
         const auto f32_value =
             PackedCell64_t::ExtractAnyPackedValueX<float>(f32_cell);
@@ -1105,7 +1105,7 @@ namespace
                         PackU32(clock, i, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, PriorityPhysics::IMPORTANT);
 
                     const packed64_t fb =
-                        PackU32(clock, i + 1u, APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE, PriorityPhysics::TIME_DEPENDENCY);
+                        PackU32(clock, i + 1u, APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE, PriorityPhysics::OLDEST_CLOCK_FIRST);
 
                     if (PublishBudgeted(Sensor, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, ff, manager, &grow_ff))
                     {
@@ -1149,7 +1149,7 @@ namespace
                     }
 
                     const packed64_t state_cell =
-                        PackU32(clock, *value + 1u, APCPagedNodeSegmentClasses::STATE_SLOT, PriorityPhysics::STRUCTURAL_DEPENDENCY);
+                        PackU32(clock, *value + 1u, APCPagedNodeSegmentClasses::STATE_SLOT, PriorityPhysics::MAX_OF_SOURCE_AND_TARGET);
 
                     if (PublishBudgeted(Integrator, APCPagedNodeSegmentClasses::STATE_SLOT, state_cell, manager, &grow_state))
                     {
@@ -1189,7 +1189,7 @@ namespace
                     }
 
                     const packed64_t error_cell =
-                        PackU32(clock, 1u, APCPagedNodeSegmentClasses::ERROR_SLOT, PriorityPhysics::ERROR_DEPENDENCY);
+                        PackU32(clock, 1u, APCPagedNodeSegmentClasses::ERROR_SLOT, PriorityPhysics::ERROR_FIRST);
 
                     if (PublishBudgeted(Comparator, APCPagedNodeSegmentClasses::ERROR_SLOT, error_cell, manager, &grow_error))
                     {
@@ -1266,7 +1266,7 @@ namespace
                     pending_error.reset();
 
                     const packed64_t motor_cell =
-                        PackFloat32(clock, motor_value, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, PriorityPhysics::HANDLE_NOW);
+                        PackFloat32(clock, motor_value, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, PriorityPhysics::INHERIT_SOURCE_PRIORITY);
 
                     if (!PublishBudgeted(Motor, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, motor_cell, manager, nullptr))
                     {

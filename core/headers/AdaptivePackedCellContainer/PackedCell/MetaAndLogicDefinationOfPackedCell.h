@@ -134,11 +134,11 @@ namespace PredictedAdaptedEncoding {
         IDLE = 0,
         DEFAULT_PRIORITY = 1,
         IMPORTANT = 2,
-        URGENT = 3,
-        HANDLE_NOW = 4,
-        STRUCTURAL_DEPENDENCY = 5,
-        TIME_DEPENDENCY = 6,
-        ERROR_DEPENDENCY = 7
+        INHERIT_SOURCE_PRIORITY = 3,
+        MAX_OF_SOURCE_AND_TARGET = 4,
+        ERROR_FIRST = 5,
+        OLDEST_CLOCK_FIRST = 6,
+        PRESSURE_FIRST = 7
     };
 
     enum class APCPagedNodeSegmentClasses : tag8_t

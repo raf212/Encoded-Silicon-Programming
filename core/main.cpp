@@ -636,7 +636,7 @@ namespace
                         clock,
                         value,
                         APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                        PriorityPhysics::TIME_DEPENDENCY
+                        PriorityPhysics::OLDEST_CLOCK_FIRST
                     ),
                     manager,
                     growth_counter,
@@ -668,7 +668,7 @@ namespace
                         clock,
                         prediction,
                         APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
-                        PriorityPhysics::STRUCTURAL_DEPENDENCY
+                        PriorityPhysics::MAX_OF_SOURCE_AND_TARGET
                     ),
                     manager,
                     growth_counter,
@@ -890,7 +890,7 @@ int main()
                 clock,
                 state,
                 APCPagedNodeSegmentClasses::STATE_SLOT,
-                PriorityPhysics::STRUCTURAL_DEPENDENCY
+                PriorityPhysics::MAX_OF_SOURCE_AND_TARGET
             ),
             manager,
             grow_integrator,
@@ -904,7 +904,7 @@ int main()
                 clock,
                 error,
                 APCPagedNodeSegmentClasses::ERROR_SLOT,
-                PriorityPhysics::ERROR_DEPENDENCY
+                PriorityPhysics::ERROR_FIRST
             ),
             manager,
             grow_integrator,
@@ -978,7 +978,7 @@ int main()
                 clock,
                 feedback,
                 APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
-                PriorityPhysics::ERROR_DEPENDENCY
+                PriorityPhysics::ERROR_FIRST
             ),
             manager,
             grow_predictor,

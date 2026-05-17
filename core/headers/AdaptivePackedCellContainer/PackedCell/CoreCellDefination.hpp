@@ -44,7 +44,7 @@ namespace PredictedAdaptedEncoding
                 PackedMode::MODE_VALUE32,
                 UINT32_MAX,
                 UINT16_MAX,
-                PriorityPhysics::ERROR_DEPENDENCY,
+                PriorityPhysics::ERROR_FIRST,
                 PackedCellNodeAuthority::IDLE_OR_FREE,
                 PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY
             );
