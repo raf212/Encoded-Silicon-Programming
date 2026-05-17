@@ -160,7 +160,7 @@ namespace PredictedAdaptedEncoding
 
 
     std::optional<packed64_t> AdaptivePackedCellContainer::TryConsumeAndIdleFromRegionLocal_(
-        APCPagedNodeRelMaskClasses region_kind, size_t& scan_cursor,
+        APCPagedNodeSegmentClasses region_kind, size_t& scan_cursor,
         PackedCellNodeAuthority desired_authority_of_updated_cell
     ) noexcept
     {
@@ -171,7 +171,7 @@ namespace PredictedAdaptedEncoding
             return std::nullopt;
         }
 
-        if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(region_kind))
+        if (!APCAndPagedNodeHelpers::IsDataConsumablePageClass(region_kind))
         {
             return std::nullopt;
         }
@@ -200,8 +200,8 @@ namespace PredictedAdaptedEncoding
         {
             const size_t idx = current_region_bounds.BeginIndex + ((scan_cursor - current_region_bounds.BeginIndex + prob) % region_capacity);
             packed64_t current_cell = BackingPtr[idx].load(MoLoad_);
-            const PackedCell64_t::AuthoritiveCellView current_cell_view = PackedCell64_t::InspectPackedCell(current_cell);
-            if (!APCAndPagedNodeHelpers::IsPublishedDataCellForRegion(current_cell_view, region_kind))
+            const PackedCell64_t::AuthoritiveCellView current_cell_view = PackedCell64_t::GetAuthoritiveViewsForACell(current_cell);
+            if (!APCAndPagedNodeHelpers::IsCellAppropriatelyPagedAndPublishedAsGeneric(current_cell_view, region_kind))
             {
                 continue;
             }
@@ -219,7 +219,7 @@ namespace PredictedAdaptedEncoding
                 continue;
             }
 
-            APPLYCentralAndRegionOccupancyTransitionCell(current_cell, idle_cell, region_kind);
+            ApplyCentralAndRegionOccupancyTransitionCell(current_cell, idle_cell, region_kind);
             BackingPtr[idx].notify_all();
             TouchLocalMetaClock48();
             RefreshAPCMeta_();
@@ -234,7 +234,7 @@ namespace PredictedAdaptedEncoding
         return std::nullopt;
     }
 
-    void AdaptivePackedCellContainer::UpdateRegionRelMaskForIdx_(APCPagedNodeRelMaskClasses rel_mask) noexcept
+    void AdaptivePackedCellContainer::UpdateRegionRelMaskForIdx_(APCPagedNodeSegmentClasses rel_mask) noexcept
     {
         if (!IfAPCBranchValid())
         {
@@ -263,7 +263,7 @@ namespace PredictedAdaptedEncoding
 
     PublishResult AdaptivePackedCellContainer::TryPublishToRegionLocal_(
         packed64_t packed_cell_for_publish, 
-        APCPagedNodeRelMaskClasses region_kind,
+        APCPagedNodeSegmentClasses region_kind,
         PackedCellNodeAuthority node_authority, 
         uint16_t max_tries
     ) noexcept
@@ -274,7 +274,7 @@ namespace PredictedAdaptedEncoding
             return failed_result;
         }
 
-        if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(region_kind))
+        if (!APCAndPagedNodeHelpers::IsDataConsumablePageClass(region_kind))
         {
             return failed_result;
         }
@@ -324,7 +324,7 @@ namespace PredictedAdaptedEncoding
         {
             const size_t current_index = begin_idx + ((base - begin_idx + tries * step) % span);
             packed64_t observed_cell = BackingPtr[current_index].load(MoLoad_);
-            const PackedCell64_t::AuthoritiveCellView observed_cell_view = PackedCell64_t::InspectPackedCell(observed_cell);
+            const PackedCell64_t::AuthoritiveCellView observed_cell_view = PackedCell64_t::GetAuthoritiveViewsForACell(observed_cell);
 
             if (observed_cell_view.LocalityOfCell != PackedCellLocalityTypes::ST_IDLE)
             {
@@ -349,10 +349,10 @@ namespace PredictedAdaptedEncoding
                 continue;
             }
 
-            APPLYCentralAndRegionOccupancyTransitionCell(observed_cell, claimd_local_inplace_cell, region_kind);
+            ApplyCentralAndRegionOccupancyTransitionCell(observed_cell, claimd_local_inplace_cell, region_kind);
             BackingPtr[current_index].store(packed_cell_for_publish, MoStoreSeq_);
             BackingPtr[current_index].notify_all();
-            APPLYCentralAndRegionOccupancyTransitionCell(claimd_local_inplace_cell, packed_cell_for_publish, region_kind);
+            ApplyCentralAndRegionOccupancyTransitionCell(claimd_local_inplace_cell, packed_cell_for_publish, region_kind);
             TouchLocalMetaClock48();
             RefreshAPCMeta_();
 
@@ -372,7 +372,7 @@ namespace PredictedAdaptedEncoding
         prefared_percentage_of_free = std::min<uint8_t>(prefared_percentage_of_free, 100u);
         
         complete_layout->NormalizePercentagesIfNeeded();
-        LayoutBoundsOfSingleRelNodeClass* free_layout = complete_layout->GetALayoutByRelMask(APCPagedNodeRelMaskClasses::FREE_SLOT);
+        LayoutBoundsOfSingleRelNodeClass* free_layout = complete_layout->GetALayoutByRelMask(APCPagedNodeSegmentClasses::FREE_SLOT);
         if (!free_layout || free_layout->IsEmpty())
         {
             return UNSIGNED_ZERO;
@@ -458,7 +458,7 @@ namespace PredictedAdaptedEncoding
                 {
                     continue;
                 }
-                const APCPagedNodeRelMaskClasses absolute_cell_relation_mask = APCAndPagedNodeHelpers::ExtractPagedRelMaskFromPacked(absolute_packed_cell);
+                const APCPagedNodeSegmentClasses absolute_cell_relation_mask = APCAndPagedNodeHelpers::ExtractPagedRelMaskFromPacked(absolute_packed_cell);
                 region_ready_mask |= APCAndPagedNodeHelpers::MakeOneAPCNodeClassReadyBit(absolute_cell_relation_mask);
                 region_epoch = std::max<uint64_t>(region_epoch, PackedCell64_t::ExtractClk16(absolute_packed_cell));
 
@@ -493,7 +493,7 @@ namespace PredictedAdaptedEncoding
 
     packed64_t AdaptivePackedCellContainer::NormalizeDesiredPublishedCellForRegion_(
         packed64_t out_going_cell,
-        APCPagedNodeRelMaskClasses region_kind,
+        APCPagedNodeSegmentClasses region_kind,
         PackedCellNodeAuthority node_authority
     ) noexcept
     {
@@ -515,10 +515,10 @@ namespace PredictedAdaptedEncoding
 
     uint16_t AdaptivePackedCellContainer::ComputeAdaptivemaxTreies_(packed64_t packed_cell) noexcept
     {
-        const APCPagedNodeRelMaskClasses page_class =
+        const APCPagedNodeSegmentClasses page_class =
             PackedCell64_t::ExtractRelMaskFromPacked(packed_cell);
 
-        if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(page_class))
+        if (!APCAndPagedNodeHelpers::IsDataConsumablePageClass(page_class))
         {
             return 1u;
         }

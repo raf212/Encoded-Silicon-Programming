@@ -43,19 +43,19 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
         size_t SuggestedChildCapacity_() noexcept;
 
         std::optional<packed64_t> TryConsumeAndIdleFromRegionLocal_(
-            APCPagedNodeRelMaskClasses region_kind, size_t& scan_cursor,
+            APCPagedNodeSegmentClasses region_kind, size_t& scan_cursor,
             PackedCellNodeAuthority desired_authority_of_updated_cell = PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT
         ) noexcept;
 
         PublishResult TryPublishToRegionLocal_(
             packed64_t packed_cell_for_publish, 
-            APCPagedNodeRelMaskClasses region_kind = APCPagedNodeRelMaskClasses::FREE_SLOT,
+            APCPagedNodeSegmentClasses region_kind = APCPagedNodeSegmentClasses::FREE_SLOT,
             PackedCellNodeAuthority node_authority = PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT,
             uint16_t max_tries = APC_MAX_LENGTH_OR_COUNTER / (APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses)
         ) noexcept;
 
         //not used
-        void UpdateRegionRelMaskForIdx_(APCPagedNodeRelMaskClasses rel_mask) noexcept;
+        void UpdateRegionRelMaskForIdx_(APCPagedNodeSegmentClasses rel_mask) noexcept;
 
         static size_t FindGreatestCommonDivisor_(size_t a, size_t b) noexcept;
 
@@ -72,7 +72,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         packed64_t NormalizeDesiredPublishedCellForRegion_(
             packed64_t out_going_cell,
-            APCPagedNodeRelMaskClasses region_kind,
+            APCPagedNodeSegmentClasses region_kind,
             PackedCellNodeAuthority node_authority
         ) noexcept;
 
@@ -135,21 +135,21 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         void InitRegionIdx(size_t region_size) noexcept;
 
-        void TryCreateBranchIfNeeded(APCPagedNodeRelMaskClasses rel_mask_hint = APCPagedNodeRelMaskClasses::FREE_SLOT) noexcept;
+        void TryCreateBranchIfNeeded(APCPagedNodeSegmentClasses rel_mask_hint = APCPagedNodeSegmentClasses::FREE_SLOT) noexcept;
 
         void SetManagerForGlobalAPC(PackedCellContainerManager* pointer_of_global_apc_manager) noexcept;
 
-        bool TryPublishRegionalSharedGrowthOnce(APCPagedNodeRelMaskClasses region_kind, packed64_t packed_cell, std::atomic<uint64_t>* growth_counter = nullptr) noexcept;
+        bool TryPublishRegionalSharedGrowthOnce(APCPagedNodeSegmentClasses region_kind, packed64_t packed_cell, std::atomic<uint64_t>* growth_counter = nullptr) noexcept;
 
         PublishResult PublishCellByRegionMAskTraverseStartsFromThisAPC(
-            APCPagedNodeRelMaskClasses region_kind, packed64_t cell_to_publish, 
+            APCPagedNodeSegmentClasses region_kind, packed64_t cell_to_publish, 
             PackedCellNodeAuthority authority = PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT,
             std::optional<uint16_t> max_tries = std::nullopt
         ) noexcept;
 
-        AdaptivePackedCellContainer* GrowSharedNodeByRegionKind(APCPagedNodeRelMaskClasses desired_region_kind, bool enable_branching = true) noexcept;
+        AdaptivePackedCellContainer* GrowSharedNodeByRegionKind(APCPagedNodeSegmentClasses desired_region_kind, bool enable_branching = true) noexcept;
 
-        std::optional<packed64_t> ConsumeCellByRegionMaskTraverseStartFromThisAPC(APCPagedNodeRelMaskClasses region_kind, size_t& scan_cursor) noexcept;
+        std::optional<packed64_t> ConsumeCellByRegionMaskTraverseStartFromThisAPC(APCPagedNodeSegmentClasses region_kind, size_t& scan_cursor) noexcept;
 
         AdaptivePackedCellContainer* FindSharedRootOrThis() noexcept;
 
@@ -169,9 +169,9 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         void ClearAllManagerLinksAndFlags() noexcept;
 
-        uint32_t CountExactLocalRegionalOccupancy(APCPagedNodeRelMaskClasses desired_region_class) noexcept;
+        uint32_t CountExactLocalRegionalOccupancy(APCPagedNodeSegmentClasses desired_region_class) noexcept;
 
-        uint32_t CountExactTotalChainOccupancy(APCPagedNodeRelMaskClasses desired_region_class) noexcept;
+        uint32_t CountExactTotalChainOccupancy(APCPagedNodeSegmentClasses desired_region_class) noexcept;
         
         bool RebuildExectReadyMask() noexcept;
 

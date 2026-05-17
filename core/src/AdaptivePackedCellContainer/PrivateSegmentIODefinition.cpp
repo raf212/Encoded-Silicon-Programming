@@ -63,14 +63,15 @@ namespace PredictedAdaptedEncoding
         
         auto AssignOne = [&](LayoutBoundsOfSingleRelNodeClass& one) noexcept
         {
-            if (!APCAndPagedNodeHelpers::IsValidAccountingPageClass(one.PAGE_LAYOUT_CLASS))
+            if (!APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(one.PAGE_LAYOUT_CLASS))
             {
                 one.BeginIndex = initial_cursor;
                 one.EndIndex = initial_cursor;
+                one.VersionNumber = current_or_start_version;
                 return;
             }
 
-            if (one.PAGE_LAYOUT_CLASS == APCPagedNodeRelMaskClasses::FREE_SLOT)
+            if (one.PAGE_LAYOUT_CLASS == APCPagedNodeSegmentClasses::FREE_SLOT)
             {
                 return;
             }
@@ -98,7 +99,7 @@ namespace PredictedAdaptedEncoding
             {
                 return;
             }
-            if (one->PAGE_LAYOUT_CLASS == APCPagedNodeRelMaskClasses::FREE_SLOT)
+            if (one->PAGE_LAYOUT_CLASS == APCPagedNodeSegmentClasses::FREE_SLOT)
             {
                 continue;
             }
@@ -107,7 +108,7 @@ namespace PredictedAdaptedEncoding
         
         full_layout.FreeLayout.BeginIndex = initial_cursor;
         full_layout.FreeLayout.EndIndex = payload_end;
-        full_layout.FreeLayout.PAGE_LAYOUT_CLASS = APCPagedNodeRelMaskClasses::FREE_SLOT;
+        full_layout.FreeLayout.PAGE_LAYOUT_CLASS = APCPagedNodeSegmentClasses::FREE_SLOT;
         full_layout.FreeLayout.VersionNumber = current_or_start_version;
     }
 
@@ -118,10 +119,10 @@ namespace PredictedAdaptedEncoding
     ) noexcept
     {
         const bool valid_layout_class =
-            APCAndPagedNodeHelpers::IsValidAccountingPageClass(
+            APCAndPagedNodeHelpers::IsDataConsumablePageClass(
                 layout_bound.PAGE_LAYOUT_CLASS
             ) ||
-            layout_bound.PAGE_LAYOUT_CLASS == APCPagedNodeRelMaskClasses::FREE_SLOT;
+            layout_bound.PAGE_LAYOUT_CLASS == APCPagedNodeSegmentClasses::FREE_SLOT;
 
         if (!valid_layout_class)
         {
@@ -228,7 +229,7 @@ namespace PredictedAdaptedEncoding
             return std::nullopt;
         }
          
-        auto LoadOne = [&](APCPagedNodeRelMaskClasses desired_rel_mask, LayoutBoundsOfSingleRelNodeClass& out_one) noexcept->bool
+        auto LoadOne = [&](APCPagedNodeSegmentClasses desired_rel_mask, LayoutBoundsOfSingleRelNodeClass& out_one) noexcept->bool
         {
             auto maybe_one = ReadLayoutBoundsAndVersion(desired_rel_mask, caller_holds_layout_flag);
             if (!maybe_one)
@@ -241,18 +242,19 @@ namespace PredictedAdaptedEncoding
 
         CompleteAPCNodeRegionsLayout out_layout{};
         bool ok = true;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE, out_layout.FeedForwardLayout) && ok;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE, out_layout.FeedBackwardLayout) && ok;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::LATERAL_MESAGE, out_layout.LateralLayout) && ok;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::STATE_SLOT, out_layout.StateLayout) && ok;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::ERROR_SLOT, out_layout.ErrorLayout) && ok;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::EDGE_DESCRIPTOR, out_layout.EdgeDescriptorLayout) && ok;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::WEIGHT_SLOT, out_layout.WeightLayout) && ok;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::AUX_SLOT, out_layout.AUXLayout) && ok;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT, out_layout.HeterogenousMemoryLayout) && ok;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::PAIRED_POINTER_LOCAL_MEMORY, out_layout.LocalPairedPointerLayout) && ok;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::PAIRED_POINTER_DISTANCE_MEMORY, out_layout.DistancePairedLayout) && ok;
-        ok = LoadOne(APCPagedNodeRelMaskClasses::FREE_SLOT, out_layout.FreeLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, out_layout.FeedForwardLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE, out_layout.FeedBackwardLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::LATERAL_MESAGE, out_layout.LateralLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::STATE_SLOT, out_layout.StateLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::ERROR_SLOT, out_layout.ErrorLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::EDGE_DESCRIPTOR, out_layout.EdgeDescriptorLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::WEIGHT_SLOT, out_layout.WeightLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::AUX_SLOT, out_layout.AUXLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT, out_layout.HeterogenousMemoryLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::PAIRED_POINTER_LOCAL_MEMORY, out_layout.LocalPairedPointerLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY, out_layout.DistancePairedLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::UNDEFINED, out_layout.UndefinedLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::FREE_SLOT, out_layout.FreeLayout) && ok;
         if (!ok)
         {
             return std::nullopt;
@@ -369,6 +371,7 @@ namespace PredictedAdaptedEncoding
             WriteBoundsPairToHeader_(full_layout.HeterogenousMemoryLayout, commit_version, true) &&
             WriteBoundsPairToHeader_(full_layout.LocalPairedPointerLayout, commit_version, true) &&
             WriteBoundsPairToHeader_(full_layout.DistancePairedLayout, commit_version, true) &&
+            WriteBoundsPairToHeader_(full_layout.UndefinedLayout, commit_version, true) &&
             WriteBoundsPairToHeader_(full_layout.FreeLayout, commit_version, true);
 
         if (!ok)
@@ -385,7 +388,7 @@ namespace PredictedAdaptedEncoding
         return true;
     }
 
-    bool SegmentIODefinition::TurnOnReadyBitForDesiredPagedNode_(APCPagedNodeRelMaskClasses desired_region_class) noexcept
+    bool SegmentIODefinition::TurnOnReadyBitForDesiredPagedNode_(APCPagedNodeSegmentClasses desired_region_class) noexcept
     {
         const uint32_t anew_readybit = APCAndPagedNodeHelpers::MakeOneAPCNodeClassReadyBit(desired_region_class);
         if (anew_readybit == 0)
@@ -408,7 +411,7 @@ namespace PredictedAdaptedEncoding
         return false;
     }
 
-    bool SegmentIODefinition::ClearTheDesiredPagedNodeReadyBit_(APCPagedNodeRelMaskClasses desired_region_class) noexcept
+    bool SegmentIODefinition::ClearTheDesiredPagedNodeReadyBit_(APCPagedNodeSegmentClasses desired_region_class) noexcept
     {
         const uint32_t anew_readybit = APCAndPagedNodeHelpers::MakeOneAPCNodeClassReadyBit(desired_region_class);
         if (anew_readybit == 0)
@@ -437,18 +440,69 @@ namespace PredictedAdaptedEncoding
         {
             return false;
         }
-        WritBranchMeta48_(MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48, UNSIGNED_ZERO);
+
+        auto StoreCount = [&](
+            MetaIndexOfAPCNode meta_idx,
+            APCPagedNodeSegmentClasses page_class,
+            uint16_t published,
+            uint16_t claimed,
+            uint16_t faulty
+        )
+        {
+            (void) page_class;
+            
+            if (!ValidMetaIdx(meta_idx))
+            {
+                return false;
+            }
+            const packed64_t wanted_cell = ComposeAPCOccupancyModel_16x3_48t(
+                published, claimed, faulty,
+                APCPagedNodeSegmentClasses ::CONTROL_SLOT,
+                PackedCellLocalityTypes::ST_PUBLISHED
+            );
+            BackingPtr[static_cast<size_t>(meta_idx)].store(wanted_cell, MoStoreSeq_);
+            BackingPtr[static_cast<size_t>(meta_idx)].notify_all();
+            return true;
+        };
+
+        const uint16_t meta_published = static_cast<uint16_t>(
+            std::min<size_t>(METACELL_COUNT, APC_MAX_LENGTH_OR_COUNTER)
+        );
+
+        StoreCount(
+            MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48,
+            APCPagedNodeSegmentClasses::CONTROL_SLOT,
+            meta_published,
+            UNSIGNED_ZERO,
+            UNSIGNED_ZERO
+        );
 
         for (uint8_t i = 0; i < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses; i++)
         {
-            const APCPagedNodeRelMaskClasses blind_page = static_cast<APCPagedNodeRelMaskClasses>(i);
-            const MetaIndexOfAPCNode idx = APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(blind_page);
-            if (!ValidMetaIdx(idx))
+            const APCPagedNodeSegmentClasses current_page_class = static_cast<APCPagedNodeSegmentClasses>(i);
+            if (!APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(current_page_class))
             {
                 continue;
             }
-            WritBranchMeta48_(idx, UNSIGNED_ZERO);
+
+            const MetaIndexOfAPCNode idx_of_current_page_class = APCAndPagedNodeHelpers::GetOccupancyMetIndexByRegionClass(current_page_class);
+            StoreCount(
+                idx_of_current_page_class,
+                current_page_class,
+                UNSIGNED_ZERO,
+                UNSIGNED_ZERO,
+                UNSIGNED_ZERO
+            );
         }
+        
+        StoreCount(
+            MetaIndexOfAPCNode::REGION_OCCUPANCY_CONTROL,
+            APCPagedNodeSegmentClasses::CONTROL_SLOT,
+            meta_published,
+            UNSIGNED_ZERO,
+            UNSIGNED_ZERO
+        );
+
         WriteExactMetaCellJustNewValue(
             MetaIndexOfAPCNode::PAGED_NODE_READY_BIT,
             UNSIGNED_ZERO
@@ -456,6 +510,206 @@ namespace PredictedAdaptedEncoding
         return true;
     }
 
+
+    std::optional<uint16_t> SegmentIODefinition::ReadGlobalLayoutVersion_() noexcept
+    {
+        const uint32_t raw = ReadMetaCellValue32(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
+        if (raw == BRANCH_SENTINAL || raw == UNSIGNED_ZERO)
+        {
+            return std::nullopt;
+        }
+        return static_cast<uint16_t>(raw);
+    }
+
+    bool SegmentIODefinition::WriteGlobalLayoutVersion_(uint16_t layout_version) noexcept
+    {
+        if (layout_version == 0)
+        {
+            return false;
+        }
+
+        while (true)
+        {
+            const uint32_t current_version = ReadMetaCellValue32(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
+            if ((current_version) == layout_version)
+            {
+                return true;
+            }
+            if (JustUpdateValueOfMeta32(
+                MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION,
+                current_version,
+                static_cast<uint32_t>(layout_version)
+            ))
+            {
+                return true;
+            }
+        }
+    }
+    
+    std::optional<uint16_t> SegmentIODefinition::NextGlobalLayoutVersion_() noexcept
+    {
+        std::optional<uint16_t> maybe_current_layout_version = ReadGlobalLayoutVersion_();
+        uint16_t current_global_version = maybe_current_layout_version.has_value() ? *maybe_current_layout_version : static_cast<uint16_t>(BRANCH_VERSION);
+        uint16_t next_global_layout_version = current_global_version + 1;
+        if (next_global_layout_version == APC_INDEX_SENTINAL || next_global_layout_version == UNSIGNED_ZERO)
+        {
+            return static_cast<uint16_t>(BRANCH_VERSION);
+        }
+        return next_global_layout_version;
+    }
+
+    std::optional<LayoutBoundsOfSingleRelNodeClass> SegmentIODefinition::GetVirtualControlSlotLayout_() noexcept
+    {
+        LayoutBoundsOfSingleRelNodeClass out_virtual_control_slot{};
+        out_virtual_control_slot.BeginIndex = 0u;
+        out_virtual_control_slot.EndIndex = static_cast<uint32_t>(METACELL_COUNT);
+        out_virtual_control_slot.VersionNumber = ReadGlobalLayoutVersion_().value_or(static_cast<uint16_t>(BRANCH_VERSION));
+        out_virtual_control_slot.PAGE_LAYOUT_CLASS = APCPagedNodeSegmentClasses::CONTROL_SLOT;
+        out_virtual_control_slot.SetOrResetPercentage(
+            static_cast<uint32_t>(GetTotalCapacityForThisAPC() == UNSIGNED_ZERO ? METACELL_COUNT : GetTotalCapacityForThisAPC())
+        );
+        return out_virtual_control_slot;
+    }
+
+    bool SegmentIODefinition::ApplyRegionalMigrationOccupancyTransitionCell(
+        PackedCellLocalityTypes from_locality_of_source_cell,
+        PackedCellLocalityTypes destination_to_locality_of_source_cell,
+        APCPagedNodeSegmentClasses source_page_class,
+        APCPagedNodeSegmentClasses destination_page_class
+    ) noexcept
+    {
+        if (!APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(source_page_class) || !APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(destination_page_class))
+        {
+            return false;
+        }
+
+        /*
+            1. source region: source_from -> idle
+        */
+        const bool source_region_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(
+            from_locality_of_source_cell,
+            PackedCellLocalityTypes::ST_IDLE, source_page_class,
+            PackedCellLocalityTypes::ST_PUBLISHED, false
+        );
+
+        if (!source_region_ok)
+        {
+            return false;
+        }
+
+        /*
+            2. destination region: idle -> destination_to
+        */
+        const bool destination_region_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(
+            PackedCellLocalityTypes::ST_IDLE,
+            destination_to_locality_of_source_cell, destination_page_class,
+            PackedCellLocalityTypes::ST_PUBLISHED, false
+        );
+
+        if (!destination_region_ok)
+        {
+            CasUpdateOccupancy3x16ThreeSubdivisionCell__(
+                PackedCellLocalityTypes::ST_IDLE,
+                from_locality_of_source_cell, source_page_class,
+                PackedCellLocalityTypes::ST_PUBLISHED, false
+            );
+            return false;
+        }
+        
+        /*
+            3. central source decrement
+        */
+       const bool central_source_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(
+        from_locality_of_source_cell,
+        PackedCellLocalityTypes::ST_IDLE, std::nullopt,
+        PackedCellLocalityTypes::ST_PUBLISHED, true
+       );
+
+       if (!central_source_ok)
+       {
+            CasUpdateOccupancy3x16ThreeSubdivisionCell__(
+                destination_to_locality_of_source_cell,
+                PackedCellLocalityTypes::ST_IDLE,
+                destination_page_class,
+                PackedCellLocalityTypes::ST_PUBLISHED,
+                false
+            );
+            
+            CasUpdateOccupancy3x16ThreeSubdivisionCell__(
+                PackedCellLocalityTypes::ST_IDLE,
+                from_locality_of_source_cell,
+                source_page_class,
+                PackedCellLocalityTypes::ST_PUBLISHED,
+                false
+            );
+            return false;
+       }
+       
+        /*
+            4. central destination increment
+        */
+        
+        const bool central_destination_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(
+            PackedCellLocalityTypes::ST_IDLE, destination_to_locality_of_source_cell,
+            std::nullopt, PackedCellLocalityTypes::ST_PUBLISHED,
+            true
+        );
+
+        if (!central_destination_ok)
+        {
+            CasUpdateOccupancy3x16ThreeSubdivisionCell__(
+                PackedCellLocalityTypes::ST_IDLE, from_locality_of_source_cell,
+                std::nullopt, PackedCellLocalityTypes::ST_PUBLISHED,
+                true
+            );
+            CasUpdateOccupancy3x16ThreeSubdivisionCell__(
+                destination_to_locality_of_source_cell,
+                PackedCellLocalityTypes::ST_IDLE, destination_page_class,
+                PackedCellLocalityTypes::ST_PUBLISHED,
+                false
+            );
+            CasUpdateOccupancy3x16ThreeSubdivisionCell__(
+                PackedCellLocalityTypes::ST_IDLE,
+                from_locality_of_source_cell,
+                source_page_class,
+                PackedCellLocalityTypes::ST_PUBLISHED,
+                false
+            );
+            return false;
+        }
+        RefreshReadyBitForRegionFromOccupancy(source_page_class);
+        RefreshReadyBitForRegionFromOccupancy(destination_page_class);
+        return true;
+    }
+
+
+    bool SegmentIODefinition::ValidateAPCOccupancyInvarient() noexcept
+    {
+        uint32_t published_sum = 0;
+        uint32_t claimed_sum = 0;
+        uint32_t faulty_sum = 0;
+
+        for (size_t i = 0; i < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses; i++)
+        {
+            const APCPagedNodeSegmentClasses page_class = static_cast<APCPagedNodeSegmentClasses>(i);
+            if (!APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(page_class))
+            {
+                continue;
+            }
+            
+            published_sum += ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED, page_class);
+            claimed_sum += ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::ST_CLAIMED, page_class);
+            faulty_sum += ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY, page_class);
+        }
+
+        const uint32_t central_published = ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED);
+        const uint32_t central_claimed = ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_CLAIMED);
+        const uint32_t central_faulty = ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY);
+
+        return central_published == published_sum &&
+            central_claimed == claimed_sum &&
+            central_faulty == faulty_sum;
+    }
 
 
 }

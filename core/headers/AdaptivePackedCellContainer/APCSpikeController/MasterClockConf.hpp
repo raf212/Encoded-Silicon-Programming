@@ -1,11 +1,11 @@
 #pragma once 
 #include "../PackedCell/CoreCellDefination.hpp"
-#include "../APCDataStructure/APCHelpers.hpp"
+#include "../APCDataStructure/APCGenerics.hpp"
 
 
 namespace PredictedAdaptedEncoding
 {
-enum class APCPagedNodeRelMaskClasses : tag8_t;
+enum class APCPagedNodeSegmentClasses : tag8_t;
 
 class SegmentIODefinition;
 class AdaptivePackedCellContainer;
@@ -41,19 +41,19 @@ class AdaptivePackedCellContainer;
 
         packed64_t RefreshPackedCellClockOnly(
             packed64_t provided_packed_cell,
-            APCPagedNodeRelMaskClasses force_rel_mask = APCPagedNodeRelMaskClasses::NANNULL,
+            APCPagedNodeSegmentClasses force_rel_mask = APCPagedNodeSegmentClasses::NANNULL,
             std::optional<PackedCellLocalityTypes> override_locality = std::nullopt
         ) noexcept;
 
         std::optional<packed64_t> TouchPackedCellClockAndGetCellWithNewClock(
             size_t index_of_packed_cell,
-            APCPagedNodeRelMaskClasses force_rel_mask = APCPagedNodeRelMaskClasses::NANNULL,
+            APCPagedNodeSegmentClasses force_rel_mask = APCPagedNodeSegmentClasses::NANNULL,
             std::optional<PackedCellLocalityTypes> override_locality = std::nullopt
         ) noexcept;
 
         bool TouchSegmentLocalClock48HighPriority() noexcept;
 
-        bool TryAdvanceSegmentsLastAcceptedClock(APCPagedNodeRelMaskClasses desired_rel_class) noexcept;
+        bool TryAdvanceSegmentsLastAcceptedClock(APCPagedNodeSegmentClasses desired_rel_class) noexcept;
 
 
         MasterClockConf* GetMasterClockConfPtr() noexcept
@@ -81,7 +81,7 @@ class AdaptivePackedCellContainer;
 
         inline packed64_t ComposeValue32WithCurrentThreadStamp16(
             val32_t provided_cell_value32,
-            APCPagedNodeRelMaskClasses desired_page_class = APCPagedNodeRelMaskClasses::NONE,
+            APCPagedNodeSegmentClasses desired_page_class = APCPagedNodeSegmentClasses::NONE,
             PriorityPhysics desired_priority = PriorityPhysics::IDLE,
             PackedCellLocalityTypes desired_locality = PackedCellLocalityTypes::ST_PUBLISHED,
             RelOffsetMode32 desired_reloffset = RelOffsetMode32::RELOFFSET_GENERIC_VALUE,
@@ -103,7 +103,7 @@ class AdaptivePackedCellContainer;
             const meta16_t strl_for_pure48_clock = PackedCell64_t::MakeInCellMetaForMode_48t(desired_priority, 
                                 PackedCellNodeAuthority::IDLE_OR_FREE,
                                 desired_locality, 
-                                APCPagedNodeRelMaskClasses::CONTROL_SLOT,
+                                APCPagedNodeSegmentClasses::CONTROL_SLOT,
                                 RelOffsetMode48::RELOFFSET_PURE_TIMER,
                                 PackedCellDataType::UnsignedPCellDataType
                             );

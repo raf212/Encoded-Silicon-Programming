@@ -273,7 +273,7 @@ namespace PredictedAdaptedEncoding
 
 
 
-    void AdaptivePackedCellContainer::TryCreateBranchIfNeeded(APCPagedNodeRelMaskClasses rel_mask_hint) noexcept
+    void AdaptivePackedCellContainer::TryCreateBranchIfNeeded(APCPagedNodeSegmentClasses rel_mask_hint) noexcept
     {
         if (!IfAPCBranchValid() || !APCManagerPtr_)
         {
@@ -393,7 +393,7 @@ namespace PredictedAdaptedEncoding
         return true;
     }
 
-    bool AdaptivePackedCellContainer::TryPublishRegionalSharedGrowthOnce(APCPagedNodeRelMaskClasses region_kind, packed64_t packed_cell, std::atomic<uint64_t>* growth_counter) noexcept
+    bool AdaptivePackedCellContainer::TryPublishRegionalSharedGrowthOnce(APCPagedNodeSegmentClasses region_kind, packed64_t packed_cell, std::atomic<uint64_t>* growth_counter) noexcept
     {
         PublishResult local_result = PublishCellByRegionMAskTraverseStartsFromThisAPC(region_kind, packed_cell);
         if (local_result.ResultStatus == PublishStatus::OK)
@@ -433,7 +433,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    std::optional<packed64_t> AdaptivePackedCellContainer::ConsumeCellByRegionMaskTraverseStartFromThisAPC(APCPagedNodeRelMaskClasses region_kind, size_t& scan_cursor) noexcept
+    std::optional<packed64_t> AdaptivePackedCellContainer::ConsumeCellByRegionMaskTraverseStartFromThisAPC(APCPagedNodeSegmentClasses region_kind, size_t& scan_cursor) noexcept
     {
         if (!IfAPCBranchValid())
         {
@@ -474,7 +474,7 @@ namespace PredictedAdaptedEncoding
     }
 
     PublishResult AdaptivePackedCellContainer::PublishCellByRegionMAskTraverseStartsFromThisAPC(
-        APCPagedNodeRelMaskClasses page_class, packed64_t cell_to_publish,
+        APCPagedNodeSegmentClasses page_class, packed64_t cell_to_publish,
         PackedCellNodeAuthority authority,
         std::optional<uint16_t> max_tries
     ) noexcept
@@ -523,7 +523,7 @@ namespace PredictedAdaptedEncoding
         return local_result;
     }
 
-    AdaptivePackedCellContainer* AdaptivePackedCellContainer::GrowSharedNodeByRegionKind(APCPagedNodeRelMaskClasses desired_region_kind, bool enable_recursive_branching) noexcept
+    AdaptivePackedCellContainer* AdaptivePackedCellContainer::GrowSharedNodeByRegionKind(APCPagedNodeSegmentClasses desired_region_kind, bool enable_recursive_branching) noexcept
     {
         if (!IfAPCBranchValid() || !APCManagerPtr_)
         {
@@ -809,7 +809,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    uint32_t AdaptivePackedCellContainer::CountExactLocalRegionalOccupancy(APCPagedNodeRelMaskClasses desired_region_class) noexcept
+    uint32_t AdaptivePackedCellContainer::CountExactLocalRegionalOccupancy(APCPagedNodeSegmentClasses desired_region_class) noexcept
     {
         if (!IfAPCBranchValid())
         {
@@ -826,7 +826,7 @@ namespace PredictedAdaptedEncoding
         for (size_t i = maybe_desired_class_bounds->BeginIndex; i < maybe_desired_class_bounds->EndIndex; i++)
         {
             const packed64_t current_packed_cell = BackingPtr[i].load(MoLoad_);
-            if (maybe_desired_class_bounds->CanCellBEConsumedForThisPhysicalRegion(current_packed_cell, desired_region_class, i))
+            if (maybe_desired_class_bounds->CanCellBEConsumedForThisPhysicalRegion(current_packed_cell, i))
             {
                 count++;
             }
@@ -834,7 +834,7 @@ namespace PredictedAdaptedEncoding
         return count;
     }
 
-    uint32_t AdaptivePackedCellContainer::CountExactTotalChainOccupancy(APCPagedNodeRelMaskClasses desired_region_class) noexcept
+    uint32_t AdaptivePackedCellContainer::CountExactTotalChainOccupancy(APCPagedNodeSegmentClasses desired_region_class) noexcept
     {
         uint32_t total = 0;
         AdaptivePackedCellContainer* current_apc = FindSharedRootOrThis();
@@ -862,7 +862,7 @@ namespace PredictedAdaptedEncoding
         uint32_t mask = 0;
         for (uint8_t rel_class = 0; rel_class < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses; rel_class++)
         {
-            const auto current_region = static_cast<APCPagedNodeRelMaskClasses>(rel_class);
+            const auto current_region = static_cast<APCPagedNodeSegmentClasses>(rel_class);
             if (CountExactTotalChainOccupancy(current_region) > UNSIGNED_ZERO)
             {
                 mask |= APCAndPagedNodeHelpers::MakeOneAPCNodeClassReadyBit(current_region);

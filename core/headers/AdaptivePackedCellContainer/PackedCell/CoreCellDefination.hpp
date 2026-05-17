@@ -28,7 +28,7 @@ namespace PredictedAdaptedEncoding
             PackedCellNodeAuthority NodeAuthority{PackedCellNodeAuthority::IDLE_OR_FREE};
             PackedCellLocalityTypes LocalityOfCell{PackedCellLocalityTypes::ST_IDLE};
             PackedMode CellMode{PackedMode::MODE_VALUE32};
-            APCPagedNodeRelMaskClasses PageClass{APCPagedNodeRelMaskClasses::NONE};
+            APCPagedNodeSegmentClasses PageClass{APCPagedNodeSegmentClasses::NONE};
             std::optional<RelOffsetMode32> RelationOffsetForMode32{std::nullopt};
             std::optional<RelOffsetMode48> RelationOffsetForMode48{std::nullopt};
             PackedCellDataType CellValueDataType{PackedCellDataType::UnsignedPCellDataType};
@@ -85,7 +85,7 @@ namespace PredictedAdaptedEncoding
             PackedMode cell_mode,
             PriorityPhysics cell_priority = PriorityPhysics::IDLE,
             PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::ST_IDLE,
-            APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::FREE_SLOT,
+            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
             PackedCellDataType cell_data_type = PackedCellDataType::UnsignedPCellDataType
         ) noexcept
         {
@@ -208,9 +208,9 @@ namespace PredictedAdaptedEncoding
             return static_cast<PackedCellNodeAuthority>(ExtractCellLocalNodeAuthotityFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
         }
 
-        static inline APCPagedNodeRelMaskClasses ExtractRelMaskFromPacked(packed64_t packed_cell) noexcept
+        static inline APCPagedNodeSegmentClasses ExtractRelMaskFromPacked(packed64_t packed_cell) noexcept
         {
-            return static_cast<APCPagedNodeRelMaskClasses>(ExtractRelMaskFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
+            return static_cast<APCPagedNodeSegmentClasses>(ExtractRelMaskFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
         }
 
         static inline RelOffsetMode32 ExtractRelOffset32FromPacked(packed64_t packed_cell) noexcept
@@ -234,7 +234,7 @@ namespace PredictedAdaptedEncoding
         }
 
 
-        static inline AuthoritiveCellView InspectPackedCell(packed64_t packed_cell) noexcept
+        static inline AuthoritiveCellView GetAuthoritiveViewsForACell(packed64_t packed_cell) noexcept
         {
             const meta16_t meta16 = ExtractMeta16fromPackedCell(packed_cell);
             AuthoritiveCellView out_packed_cell_view{};
@@ -245,7 +245,7 @@ namespace PredictedAdaptedEncoding
             out_packed_cell_view.NodeAuthority =  static_cast<PackedCellNodeAuthority>(ExtractCellLocalNodeAuthotityFromMETA16_U_(meta16));
             out_packed_cell_view.LocalityOfCell = static_cast<PackedCellLocalityTypes>(ExtractLocalityFromMETA16_U_(meta16));
             out_packed_cell_view.CellMode = static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16));
-            out_packed_cell_view.PageClass = static_cast<APCPagedNodeRelMaskClasses>(ExtractRelMaskFromMETA16_U_(meta16));
+            out_packed_cell_view.PageClass = static_cast<APCPagedNodeSegmentClasses>(ExtractRelMaskFromMETA16_U_(meta16));
             if (IsPackedCellVal32(packed_cell))
             {
                 out_packed_cell_view.RelationOffsetForMode32 = static_cast<RelOffsetMode32>(ExtractRelOffsetFromMETA16_U_(meta16));
@@ -324,7 +324,7 @@ namespace PredictedAdaptedEncoding
 
         static inline constexpr meta16_t SetPageClassInMETA16(
             meta16_t meta16,
-            APCPagedNodeRelMaskClasses page_class
+            APCPagedNodeSegmentClasses page_class
         ) noexcept
         {
             return SetIndicatedMetaInMeta16(
@@ -413,7 +413,7 @@ namespace PredictedAdaptedEncoding
         }
 
 
-        static inline packed64_t SetPageClassInPacked(packed64_t packed_cell, APCPagedNodeRelMaskClasses page_class) noexcept
+        static inline packed64_t SetPageClassInPacked(packed64_t packed_cell, APCPagedNodeSegmentClasses page_class) noexcept
         {
             const meta16_t new_desired_meta = SetPageClassInMETA16(ExtractMeta16fromPackedCell(packed_cell), page_class);
             return SetMETA16InPacked(packed_cell, new_desired_meta);
@@ -441,7 +441,7 @@ namespace PredictedAdaptedEncoding
             PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY, 
             PackedCellNodeAuthority authority = PackedCellNodeAuthority::IDLE_OR_FREE,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_IDLE,
-            APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::FREE_SLOT,
+            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
             RelOffsetMode32 rel_offset_32 = RelOffsetMode32::RELOFFSET_GENERIC_VALUE,
             PackedCellDataType cell_data_type = PackedCellDataType::UnsignedPCellDataType
         ) noexcept
@@ -461,7 +461,7 @@ namespace PredictedAdaptedEncoding
             PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY, 
             PackedCellNodeAuthority authority = PackedCellNodeAuthority::IDLE_OR_FREE,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_IDLE,
-            APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::FREE_SLOT,
+            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
             RelOffsetMode48 rel_offset_48 = RelOffsetMode48::RELOFFSET_GENERIC_VALUE,
             PackedCellDataType cell_data_type = PackedCellDataType::UnsignedPCellDataType
         ) noexcept
@@ -541,7 +541,7 @@ namespace PredictedAdaptedEncoding
             PriorityPhysics cell_priority = PriorityPhysics::DEFAULT_PRIORITY,
             PackedCellNodeAuthority node_authority = PackedCellNodeAuthority::IDLE_OR_FREE,
             PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::ST_IDLE, 
-            APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::FREE_SLOT,
+            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
             tag8_t rel_offset = 0,
             PackedCellDataType cell_data_type = PackedCellDataType::UnsignedPCellDataType
         ) noexcept
@@ -583,7 +583,7 @@ namespace PredictedAdaptedEncoding
             PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY, 
             PackedCellNodeAuthority authority = PackedCellNodeAuthority::IDLE_OR_FREE,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_IDLE,
-            APCPagedNodeRelMaskClasses page_class = APCPagedNodeRelMaskClasses::FREE_SLOT,
+            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
             tag8_t rel_offset_any = static_cast<tag8_t>(RelOffsetMode32::RELOFFSET_GENERIC_VALUE),
             PackedCellDataType cell_data_type = PackedCellDataType::UnsignedPCellDataType
         ) noexcept

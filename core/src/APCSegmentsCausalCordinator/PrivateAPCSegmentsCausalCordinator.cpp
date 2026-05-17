@@ -5,7 +5,7 @@
 namespace PredictedAdaptedEncoding
 {
 
-    // bool APCSegmentsCausalCordinator::RegionWakeUrgency_(APCPagedNodeRelMaskClasses region_kind, packed64_t packed_cell, tag8_t min_wake_threshold) noexcept
+    // bool APCSegmentsCausalCordinator::RegionWakeUrgency_(APCPagedNodeSegmentClasses region_kind, packed64_t packed_cell, tag8_t min_wake_threshold) noexcept
     // {
     //     if (APCAndPagedNodeHelpers::CanCellBeConsumedForThisRegion(packed_cell, region_kind))
     //     {

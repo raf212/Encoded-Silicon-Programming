@@ -5,7 +5,7 @@ namespace PredictedAdaptedEncoding
 
     packed64_t MasterClockConf::RefreshPackedCellClockOnly(
         packed64_t provided_packed_cell,
-        APCPagedNodeRelMaskClasses force_rel_mask,
+        APCPagedNodeSegmentClasses force_rel_mask,
         std::optional<PackedCellLocalityTypes> override_locality
     ) noexcept
     {
@@ -19,7 +19,7 @@ namespace PredictedAdaptedEncoding
         {
             locality_of_provided_cell = *override_locality;
         }
-        const APCPagedNodeRelMaskClasses rel_mask = (force_rel_mask == APCPagedNodeRelMaskClasses::NANNULL) ? 
+        const APCPagedNodeSegmentClasses rel_mask = (force_rel_mask == APCPagedNodeSegmentClasses::NANNULL) ? 
                         PackedCell64_t::ExtractRelMaskFromPacked(provided_packed_cell) : force_rel_mask;
         const PackedCellDataType dtype_of_provided_cell = PackedCell64_t::ExtractPCellDataTypeFromPacked(provided_packed_cell);
         const PackedMode mode_of_provided_cell = PackedCell64_t::ExtractModeOfPackedCellFromPacked(provided_packed_cell);
@@ -49,7 +49,7 @@ namespace PredictedAdaptedEncoding
 
     std::optional<packed64_t> MasterClockConf::TouchPackedCellClockAndGetCellWithNewClock(
         size_t index_of_packed_cell,
-        APCPagedNodeRelMaskClasses force_rel_mask,
+        APCPagedNodeSegmentClasses force_rel_mask,
         std::optional<PackedCellLocalityTypes> override_locality
     ) noexcept
     {
@@ -127,18 +127,18 @@ std::optional<uint64_t> MasterClockConf::ReconstructCellClock16toFull48BySegment
         return true;
     }
 
-    bool MasterClockConf::TryAdvanceSegmentsLastAcceptedClock(APCPagedNodeRelMaskClasses desired_rel_class) noexcept
+    bool MasterClockConf::TryAdvanceSegmentsLastAcceptedClock(APCPagedNodeSegmentClasses desired_rel_class) noexcept
     {
         if (!APCPtr_)
         {
             return false;
         }
         MetaIndexOfAPCNode idx = MetaIndexOfAPCNode::MAGIC_ID;
-        if (desired_rel_class == APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE)
+        if (desired_rel_class == APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE)
         {
             idx = MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_FORWARD_CLOCK16;
         }
-        else if(desired_rel_class == APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE)
+        else if(desired_rel_class == APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE)
         {
             idx = MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_BACKWARD_CLOCK16;
         }
