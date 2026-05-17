@@ -296,10 +296,6 @@ The result is mixed:
 
 ## Chain-growth line graph
 
-![APC shared-chain growth line graph](apc_growth_line_graph.png)
-
-The same graph in Mermaid form:
-
 ```mermaid
 xychart-beta
     title "APC shared-chain growth across updated predictive fabric test"
@@ -459,19 +455,6 @@ A typical APC test or application has this lifecycle:
 10. Free all nodes and stop the manager.
 
 For beginners, the important idea is: **do not treat APC as a normal array**. Treat it as a node with control header, payload regions, clocks, occupancy summaries, and shared-chain growth.
-
-## Recommended next development order
-
-1. Fix the occupancy-scope model and rename counters by scope.
-2. Make central/regional/exact occupancy checks agree under active payload, not only after drain.
-3. Fix or reconnect growth counters so they match actual shared-chain allocation.
-4. Improve region packing before shared-chain growth.
-5. Add per-region published bitmaps to reduce scanning.
-6. Make layout mutation fully transactional and versioned.
-7. Add stress tests for concurrent publish/consume/growth/cleanup.
-8. Formalize clock semantics: compressed physical timestamp, logical Lamport-like clock, or hybrid clock.
-9. Separate APC control-plane logic from heavy tensor/matrix computation.
-10. Add heterogeneous-memory tests only after pointer ownership and QSBR are verified.
 
 ## Future ML / neuromorphic direction
 
