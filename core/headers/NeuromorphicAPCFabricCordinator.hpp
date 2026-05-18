@@ -197,107 +197,166 @@ namespace PredictedAdaptedEncoding
         std::atomic<uint64_t> PackedHandle{UNSIGNED_ZERO};
     };
 
-
-    ///old PackedCellContainerManager
     class AdaptivePackedCellContainer;
 
-    class PackedCellContainerManager
+    class NeuromorphicAPCFabricCordinator
     {
         public :
-            struct ThreadHandlePCCM
-            {
-                size_t QSBRIdx = SIZE_MAX;
-                std::atomic<uint64_t>* WaitSlotPtr = nullptr;
-                uint64_t NodeTokenOfAPC = 0;
-            };
 
-            static PackedCellContainerManager& Instance()
-            {
-                // intentionally leaked singleton to avoid static-destruction order problems
-                static PackedCellContainerManager* inst = []() {
-                    return new PackedCellContainerManager();
-                }();
-                return *inst;
-            }
+            static constexpr size_t DEFAULT_FABRIC_SLAM_BYTES = 1 << 20;
+            static constexpr size_t DEFAULT_TABLE_CAPACITY = 4096;
+            static constexpr uint32_t DEFAULT_RELATION_CAPACITY = 16384u;
+            static constexpr uint32_t DEFAULT_WORK_RING_CAPACITY = 8192u;
+            static constexpr uint32_t DEFAULT_ACTIVE_VIEW_CAPACITY = 1024u;
+            static constexpr uint32_t DEFAULT_ACTIVE_VIEW_CELL_CAPACITY = 65536u;
 
-            void StartAPCManager();
-            void StopAPCManager();
-            ThreadHandlePCCM RegisterAPCThread();
-            void UnRegisterAPCThread(const ThreadHandlePCCM& thread_handle) noexcept;
-            void EnterCriticalContainer(const ThreadHandlePCCM& thread_handle) noexcept;
-            void ExtitCriticalContainer(const ThreadHandlePCCM& thread_handle) noexcept;
+            bool IsFabricInitialized() const noexcept;
+            
+            bool IsFabricShuttingDown() const noexcept;
 
-            void NotifySlotIdxOfAPC(size_t idx, uint64_t thread_token) noexcept;
-            void NotifyAllActiveAPCThreads(uint64_t thread_token) noexcept;
+            size_t FebricSlotCapacityCell() noexcept;
 
-            void RegisterAPCFromManager_(AdaptivePackedCellContainer* adaptive_p_c_ptr) noexcept;
-            void UnRegisterAPCFromManager_(AdaptivePackedCellContainer* adaptive_p_c_ptr) noexcept;
-            void RequestAPCSegmentCreationFromManager_(AdaptivePackedCellContainer* adaptive_p_c_ptr) noexcept;
-            void ReclaimationRequestOfAPCSegmentFromManager_(AdaptivePackedCellContainer* adaptive_p_c_ptr) noexcept;
-            AdaptivePackedCellContainer* GetAPCPtrFromBranchId(uint32_t) noexcept;
-            uint64_t ComputeMinThreadEpoch() const noexcept;
+            bool InitializeStorageFabric(
+                size_t slot_cell_capacity = MINIMUM_BRANCH_CAPACITY,
+                size_t slab_bytes = DEFAULT_FABRIC_SLAM_BYTES,
+                uint32_t branch_table_capacity = DEFAULT_TABLE_CAPACITY,
+                uint32_t logical_table_capacity = DEFAULT_TABLE_CAPACITY,
+                uint32_t shared_table_capacity = DEFAULT_TABLE_CAPACITY,
+                uint32_t relation_capacity = DEFAULT_RELATION_CAPACITY,
+                uint32_t work_Ring_capacity = DEFAULT_WORK_RING_CAPACITY,
+                uint32_t view_capacity = DEFAULT_ACTIVE_VIEW_CAPACITY,
+                uint32_t view_cell_capacity = DEFAULT_ACTIVE_VIEW_CELL_CAPACITY
+            ); 
 
+            AdaptivePackedCellContainer* AllocateAPCObjectFromFabricManager() noexcept;
+            
+            bool BindExternalRootAPC(AdaptivePackedCellContainer* apc_ptr, size_t wanted_capacity) noexcept;
 
-            void PushTOAPCManagerStack_(
-                std::atomic<AdaptivePackedCellContainer*>& head_stack,
-                AdaptivePackedCellContainer* apc_ptr, bool is_cleanup_stack
+            HandleOfAPC ResolveBranchHandle(uint32_t branch_id) noexcept;
+
+            AdaptivePackedCellContainer* ResolveAPCPtr(HandleOfAPC handle) noexcept;
+
+            uint32_t CreateRelation(
+                HandleOfAPC source_handle,
+                HandleOfAPC target_handle,
+                IntraRelationshipKindOfAPCFabric relation_kind,                                                                                                                                                                                                                                                     
+                APCPagedNodeSegmentClasses source_region,
+                APCPagedNodeSegmentClasses target_kind,
+                PriorityPhysics priority_policy = PriorityPhysics::INHERIT_SOURCE_PRIORITY,
+                APCFabricDeviceHint device_hint = APCFabricDeviceHint::HOST_PROCESSOR,
+                uint32_t weight_or_view_id = UNSIGNED_ZERO,
+                uint32_t tensor_referance_id = UNSIGNED_ZERO
             ) noexcept;
 
-            AdaptivePackedCellContainer* PopAllAPC_S(std::atomic<AdaptivePackedCellContainer*>& head_stack) noexcept
-            {
-                return head_stack.exchange(nullptr, std::memory_order_acq_rel);
-            }
+            bool LinkSharedNext(HandleOfAPC source, HandleOfAPC target) noexcept;
 
-            AtomicAdaptiveBackoff& GetManagersAdaptiveBackoff() noexcept
-            {
-                return AdaptiveBackOffOfAPCManager_;
-            }
+            SharedChainRecordOfAPCFabric* ResolveSharedChainRecordPtr(uint32_t shared_id) noexcept;
 
-            AtomicAdaptiveBackoff::PCBDecision GetCellsAdaptiveBackoffFromManager(packed64_t packed_cell) noexcept
-            {
-                return AdaptiveBackOffOfAPCManager_.AdaptiveBackOffPacked(packed_cell);
-            }
+            bool UpdateSharedChainAfterAppend(HandleOfAPC root, HandleOfAPC tail, HandleOfAPC child) noexcept;
+
+            bool EnqueueFabricWork(
+                uint32_t branch_id,
+                WorkRecordOfAPCFabric work_kind,
+                APCPagedNodeSegmentClasses region_kind = APCPagedNodeSegmentClasses::FREE_SLOT,
+                uint64_t packed_handle = UNSIGNED_ZERO
+            );
+
+            uint32_t BuildFloat32Activeview(
+                HandleOfAPC source,
+                APCPagedNodeSegmentClasses page_class,
+                APCFabricDeviceHint target_device = APCFabricDeviceHint::SYCL_SHARED_USM  
+            ) noexcept;
+
+            FabricViewOfAPC* GetActiveAPCViewPtr(uint32_t view_id) noexcept;
+
+            uint32_t* GetCellIdxPtr(uint32_t view_id) noexcept;
+
+            float* GetViewFloat32Ptr(uint32_t view_idd) noexcept;
+
+            packed64_t* GetViewOfOrriginalPackedPtr(uint32_t view_id) noexcept;
+
+            uint16_t* GetViewClock16Ptr(uint32_t view_id) noexcept;
+
+            uint16_t* GetViewMeta16Ptr(uint32_t view_id) noexcept;
+
+        private:
+
+            size_t FabricSlotCapacityCells_{UNSIGNED_ZERO};
+            size_t FabricSlotCount_{UNSIGNED_ZERO};
+            size_t FabricSlabCells_{UNSIGNED_ZERO};
+            uint32_t BranchTableCapacity_{UNSIGNED_ZERO};
+            uint32_t LogicalTableCapacity_{UNSIGNED_ZERO};
+            uint32_t SharedTableCapacity_{UNSIGNED_ZERO};
+            uint32_t RelationTableCapacity_{UNSIGNED_ZERO};
+            uint32_t WorkingTableCapacity_{UNSIGNED_ZERO};
+            uint32_t ActiveViewCapacity_{UNSIGNED_ZERO};
+            uint32_t CellInActiveCapacity{UNSIGNED_ZERO};
+
+            std::unique_ptr<std::atomic<packed64_t>[]> FabricCellsPtrs_;
+            std::unique_ptr<AdaptivePackedCellContainer[]> FabricObjectPoolPtrs_;
+            std::unique_ptr<SlotRecordOfAPCFabric[]> SlotTablePtrs_;
+            std::unique_ptr<HashEntryOfAPC[]> BranchTablePtrs_;
+            std::unique_ptr<HashEntryOfAPC[]> LogicalTablePtrs_;
+            std::unique_ptr<SharedChainRecordOfAPCFabric[]> SharedTablePtrs_;
+            std::unique_ptr<RelationRecordOfAPCFabric[]> RelationTablePtrs_;
+            std::unique_ptr<WorkRecordOfAPCFabric[]> WorkRingPtrs_;
+            std::unique_ptr<FabricViewOfAPC[]> FabricActiveViewPtrs_;
+
+            std::unique_ptr<uint32_t[]> CellIndicesViewPtrs_;
+            std::unique_ptr <float []> Float32CellViewPtrs_;
+            std::unique_ptr<packed64_t[]> OriginalPacked64ViewPtrs_;
+            std::unique_ptr<uint16_t[]> Clock16ViewPtrs_;
+            std::unique_ptr<uint16_t[]> Meta16ViewPtrs_;
+
+            std::atomic<bool> FabricInitialized_{false};
+            std::atomic<bool> FabricShuttingDown_{false};
+            std::atomic<uint64_t> WorkWriteCursor_{UNSIGNED_ZERO};
+            std::atomic<uint64_t> WorkReadCursor_{UNSIGNED_ZERO};
+            std::atomic<uint32_t> VuewCellCursor_{UNSIGNED_ZERO};
+            std::atomic<size_t> FreeSlotHeadOfFabricPtr_{SIZE_MAX};
+            std::atomic<uint32_t> RelationFreeHead_{APCDataStructure::BRANCH_SENTINAL};
+            std::atomic<uint32_t> NextValidId_{APCDataStructure::BRANCH_VERSION};
+
+            static uint32_t HashUnsigned32_(uint32_t given_value) noexcept;
+
+            static uint32_t NextPowerOf2Unsigned32_(uint32_t given_value) noexcept;
+
+            size_t PopFreeSlot_() noexcept;
+
+            void PushFreeSlot_(size_t slot) noexcept;
+
+            bool InsertAHash_(
+                HashEntryOfAPC* table_ptr, uint32_t capacity, 
+                uint32_t hash_key, uint64_t packed_handle
+            ) noexcept;
+
+            uint64_t LookupAHashKey_(
+                HashEntryOfAPC* table_ptr, uint32_t capacity,
+                uint32_t key
+            ) noexcept;
+
+            bool EraseAHash_(
+                HashEntryOfAPC* table_ptr, uint32_t capacity,
+                uint32_t key, uint64_t expected_handle = UNSIGNED_ZERO
+            ) noexcept;
+
+            FabricViewOfAPC* GetOtCreateSharedChain_(uint32_t shared_id) noexcept;
+
+            uint32_t PopFreeRelationSlot_() noexcept;
+
+            uint32_t PushFreeRelationSlot_(uint32_t slot) noexcept;
+
+            void ResetRelationSlot_(uint32_t slot) noexcept;
+
+            bool EnqueueFabricWork_(
+                uint32_t branch_id, APCFabricWorkKind work_kind,
+                APCPagedNodeSegmentClasses page_class, uint64_t packed_handle
+            ) noexcept;
 
 
-            void UsePreAllocatedNodePoolOfAdaptivePackedCellContainer(size_t pool_size_of_preallocated_adaptive_packed_cell_container) noexcept;
+            bool DequeueFabricwork_(APCFabricWorkKind& out_record) noexcept;
 
-        private :
-            PackedCellContainerManager();
-            ~PackedCellContainerManager();
-            PackedCellContainerManager(const PackedCellContainerManager&) = delete;
-            PackedCellContainerManager& operator=(const PackedCellContainerManager&) = delete;
-
-            std::atomic<AdaptivePackedCellContainer*> RegistryHeadAPC_{nullptr};
-            std::atomic<AdaptivePackedCellContainer*> WorkStackHeadAPC_{nullptr};
-            std::atomic<AdaptivePackedCellContainer*> CleanupStackHeadAPC_{nullptr};
-
-            std::atomic<size_t>ThreadFreelistHead_{SIZE_MAX};
-            size_t MaxThreads_ = 4096;
-            size_t  ThreadTableCapacity_{0};
-            std::unique_ptr<std::atomic<size_t>[]> ThreadNextIdxPtr_;
-            std::unique_ptr<std::atomic<uint64_t>[]> ThreadEpochArrayPtr_;
-            std::unique_ptr<std::atomic<uint64_t>[]> ThreadWaitSlotArrayPtr_;
-            // bool UseNodePool_ = false;
-
-            std::atomic<bool> RunningManager_{false};
-            std::thread ManagerThread_;
-            std::atomic<uint64_t>GlobalEpoch_{1};
-
-            AtomicAdaptiveBackoff AdaptiveBackOffOfAPCManager_;
-            std::atomic<uint64_t> ManagerWakeCounter_{0};
-
-
-            size_t AllocateThreadSlots_() noexcept;
-            void FreeThreadSlots_(size_t idx) noexcept;
-            void PushFreeThreadIndex_(size_t idx) noexcept;
-            size_t PopFreeThreadIndex_() noexcept;
-
-
-            void ManagerManinLoop_() noexcept;
-            void ProcessRemainingWorkOfAPC_(AdaptivePackedCellContainer* batch_head_of_adaptive_packed_cell_container_ptr, uint64_t min_epoch = 64) noexcept;
-            void ProcessCleanUpBatchOfAdaptivePackedCellContainer_(AdaptivePackedCellContainer* batch_head_of_adaptive_packed_cell_container, uint64_t min_epoch) noexcept;
-            void TryCompactRegistryInPlace_() noexcept;
-            static constexpr uint64_t THREAD_SENTINEL_ = std::numeric_limits<uint64_t>::max();
+            void ProcessFabricWork_(const WorkRecordOfAPCFabric& work_record, uint64_t min_epoch) noexcept;
 
     };
 }

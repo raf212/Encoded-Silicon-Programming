@@ -13,7 +13,7 @@ namespace PredictedAdaptedEncoding
     #define MIN_RETIRE_BATCH_THRESHOLD 16
     #define MIN_BACKGROUND_EPOCH_MS 50
     #define INITIAL_BRANCH_SPLIT_THRESHOLD_PERCENTAGE 70
-    #define MINIMUM_BRANCH_CAPACITY 128
+    #define MINIMUM_BRANCH_CAPACITY 256
     #define MAX_BRANCH_DEPTH 10
     //default Rel Class percentage
     #define FEEDFOEWARD_PERCENTAGE 8u
