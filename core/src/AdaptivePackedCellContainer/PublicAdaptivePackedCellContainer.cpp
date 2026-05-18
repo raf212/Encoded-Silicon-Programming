@@ -27,12 +27,12 @@ namespace PredictedAdaptedEncoding
     {
         if (!IfAPCBranchValid() || number_of_slots == 0)
         {
-            return SIZE_MAX;
+            return APCDataStructure::APC_SIZE_SENTINAL;
         }
         const size_t payload_capacity = PayloadCapacityFromHeader();
         if (payload_capacity == 0)
         {
-            return SIZE_MAX;
+            return APCDataStructure::APC_SIZE_SENTINAL;
         }
 
         if (payload_capacity == 1)
@@ -87,7 +87,7 @@ namespace PredictedAdaptedEncoding
         }
 
         TotalCASFailForThisBranchIncreaseAndGet(1);
-        return SIZE_MAX;
+        return APCDataStructure::APC_SIZE_SENTINAL;
     }
 
     void AdaptivePackedCellContainer::SetManagerForGlobalAPC(PackedCellContainerManager* pointer_of_global_apc_manager) noexcept
@@ -218,7 +218,7 @@ namespace PredictedAdaptedEncoding
     {
         if (!IfAPCBranchValid())
         {
-            return SIZE_MAX;
+            return APCDataStructure::APC_SIZE_SENTINAL;
         }
 
         struct ProducerBlockCacheTLS
@@ -243,7 +243,7 @@ namespace PredictedAdaptedEncoding
         const size_t payload_capacity = PayloadCapacityFromHeader();
         if (payload_capacity == UNSIGNED_ZERO)
         {
-            return SIZE_MAX;
+            return APCDataStructure::APC_SIZE_SENTINAL;
         }
         
 
@@ -256,9 +256,9 @@ namespace PredictedAdaptedEncoding
         if (cache.BlockLeft == 0)
         {
             const size_t base = ReserveProducerSlots(safe_block);
-            if (base == SIZE_MAX)
+            if (base == APCDataStructure::APC_SIZE_SENTINAL)
             {
-                return SIZE_MAX;
+                return APCDataStructure::APC_SIZE_SENTINAL;
             }
             cache.BlockBase = base;
             cache.BlockLeft = safe_block;

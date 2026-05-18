@@ -534,7 +534,7 @@ namespace
         auto handle = manager.RegisterAPCThread();
 
         suite.Check(
-            handle.QSBRIdx != SIZE_MAX && handle.WaitSlotPtr != nullptr,
+            handle.QSBRIdx != APCDataStructure::APC_SIZE_SENTINAL && handle.WaitSlotPtr != nullptr,
             "Manager: RegisterAPCThread returns valid handle"
         );
 

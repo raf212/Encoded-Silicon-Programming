@@ -83,7 +83,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         inline void QSBRCurThreadRegisterIfNeed_() noexcept
         {
-            if (ThreadHandleAPCTL_.QSBRIdx != SIZE_MAX && ThreadHandleAPCTL_.WaitSlotPtr != nullptr)
+            if (ThreadHandleAPCTL_.QSBRIdx != APCDataStructure::APC_SIZE_SENTINAL && ThreadHandleAPCTL_.WaitSlotPtr != nullptr)
             {
                 return;
             }
@@ -93,7 +93,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
         inline void QSBREnterCritical_() noexcept
         {
             QSBRCurThreadRegisterIfNeed_();
-            if (ThreadHandleAPCTL_.QSBRIdx == SIZE_MAX)
+            if (ThreadHandleAPCTL_.QSBRIdx == APCDataStructure::APC_SIZE_SENTINAL)
             {
                 return;
             }
@@ -102,7 +102,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         inline void QSBRExitCritical_() noexcept
         {
-            if (ThreadHandleAPCTL_.QSBRIdx == SIZE_MAX)
+            if (ThreadHandleAPCTL_.QSBRIdx == APCDataStructure::APC_SIZE_SENTINAL)
             {
                 return;
             }

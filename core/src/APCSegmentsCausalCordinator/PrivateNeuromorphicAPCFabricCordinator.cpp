@@ -93,7 +93,7 @@ namespace PredictedAdaptedEncoding
                 SlotTablePtrs_[i].Generation.store(APCDataStructure::BRANCH_VERSION, MoStoreSeq_);
                 SlotTablePtrs_[i].ObjectProbableAPCPtr.store(reinterpret_cast<uintptr_t>(&FabricObjectPoolPtrs_[i]), MoStoreSeq_);
                 SlotTablePtrs_[i].NextFree.store(
-                    (i + 1u < FabricSlotCount_) ? i + 1u : SIZE_MAX,
+                    (i + 1u < FabricSlotCount_) ? i + 1u : APCDataStructure::APC_SIZE_SENTINAL,
                     MoStoreSeq_
                 );
             }
@@ -146,6 +146,15 @@ namespace PredictedAdaptedEncoding
         
     }
 
+
+    // size_t NeuromorphicAPCFabricCordinator::PopFreeSlot_() noexcept
+    // {
+    //     if (!)
+    //     {
+    //         /* code */
+    //     }
+        
+    // }
 
 }
 

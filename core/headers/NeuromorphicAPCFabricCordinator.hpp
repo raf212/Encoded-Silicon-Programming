@@ -1,5 +1,7 @@
 #pragma once 
 #include "AdaptivePackedCellContainer/SegmentIODefinition.hpp"
+#include "PackedCellContainerManager.hpp"
+
 # include <functional>
 
 namespace PredictedAdaptedEncoding
@@ -101,7 +103,7 @@ namespace PredictedAdaptedEncoding
         std::atomic<uint32_t> IntraRelationshipFlags{UNSIGNED_ZERO};
         std::atomic<uint32_t> Generation{UNSIGNED_ZERO};
         std::atomic<uint32_t> RetireEpochLow32{UNSIGNED_ZERO};
-        std::atomic<size_t> NextFree{SIZE_MAX};
+        std::atomic<size_t> NextFree{APCDataStructure::APC_SIZE_SENTINAL};
         std::atomic<uintptr_t> ObjectProbableAPCPtr{UNSIGNED_ZERO};
         std::atomic<uint32_t> FirstOutboundRelation{UNSIGNED_ZERO};
         std::atomic<uint32_t> FirstInboundRelation{UNSIGNED_ZERO};
@@ -197,12 +199,11 @@ namespace PredictedAdaptedEncoding
         std::atomic<uint64_t> PackedHandle{UNSIGNED_ZERO};
     };
 
-    class AdaptivePackedCellContainer;
 
-    class NeuromorphicAPCFabricCordinator
+    class NeuromorphicAPCFabricCordinator : public PackedCellContainerManager
     {
         public :
-            static constexpr size_t DEFAULT_FABRIC_SLAM_BYTES = 1 << 20;
+            static constexpr size_t DEFAULT_FABRIC_SLBM_BYTES = 1 << 20;
             static constexpr size_t DEFAULT_TABLE_CAPACITY = 4096;
             static constexpr uint32_t DEFAULT_RELATION_CAPACITY = 16384u;
             static constexpr uint32_t DEFAULT_WORK_RING_CAPACITY = 8192u;
@@ -211,7 +212,7 @@ namespace PredictedAdaptedEncoding
 
             bool InitializeStorageFabric(
                 size_t slot_cell_capacity = MINIMUM_BRANCH_CAPACITY,
-                size_t slab_bytes = DEFAULT_FABRIC_SLAM_BYTES,
+                size_t slab_bytes = DEFAULT_FABRIC_SLBM_BYTES,
                 uint32_t branch_table_capacity = DEFAULT_TABLE_CAPACITY,
                 uint32_t logical_table_capacity = DEFAULT_TABLE_CAPACITY,
                 uint32_t shared_table_capacity = DEFAULT_TABLE_CAPACITY,
@@ -272,6 +273,8 @@ namespace PredictedAdaptedEncoding
 
             uint16_t* GetViewMeta16Ptr(uint32_t view_id) noexcept;
 
+            bool UsePreAllocatedNodePoolOfAPC(size_t requested_apc_size) noexcept;
+
             void ShutDownTheFabricCordinator() noexcept;
 
             bool IsFabricInitialized() const noexcept
@@ -331,7 +334,7 @@ namespace PredictedAdaptedEncoding
             std::atomic<uint64_t> WorkWriteCursor_{UNSIGNED_ZERO};
             std::atomic<uint64_t> WorkReadCursor_{UNSIGNED_ZERO};
             std::atomic<uint32_t> ViewCellCursor_{UNSIGNED_ZERO};
-            std::atomic<size_t> FreeSlotHeadOfFabric_{SIZE_MAX};
+            std::atomic<size_t> FreeSlotHeadOfFabric_{APCDataStructure::APC_SIZE_SENTINAL};
             std::atomic<uint32_t> PageClassesFreeHead_{APCDataStructure::BRANCH_SENTINAL};
             std::atomic<uint32_t> NextValidViewId_{APCDataStructure::BRANCH_VERSION};
 

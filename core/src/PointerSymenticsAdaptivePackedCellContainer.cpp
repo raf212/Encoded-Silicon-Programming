@@ -31,8 +31,8 @@ namespace PredictedAdaptedEncoding
         {
             packed64_t packed_cell_value64 = BackingPtr[probable_idx].load(MoLoad_);
             RelOffsetMode32 curent_ptr_position = PackedCell64_t::ExtractRelOffset32FromPacked(packed_cell_value64);
-            size_t head_idx = SIZE_MAX;
-            size_t tail_idx = SIZE_MAX;
+            size_t head_idx = APCDataStructure::APC_SIZE_SENTINAL;
+            size_t tail_idx = APCDataStructure::APC_SIZE_SENTINAL;
             if (curent_ptr_position == RelOffsetMode32::REL_OFFSET_HEAD_PTR)
             {
                 head_idx = probable_idx;
@@ -198,20 +198,20 @@ namespace PredictedAdaptedEncoding
     {
         if (!IfAPCBranchValid())
         {
-            return { PublishStatus::INVALID, SIZE_MAX};
+            return { PublishStatus::INVALID, APCDataStructure::APC_SIZE_SENTINAL};
         }
         if (PayloadCapacityFromHeader() < MINIMUM_BRANCH_CAPACITY)
         {
-            return {PublishStatus::FULL, SIZE_MAX};
+            return {PublishStatus::FULL, APCDataStructure::APC_SIZE_SENTINAL};
         }
         
         uint64_t full_ptrval = reinterpret_cast<uint64_t>(object_ptr);
         uint32_t low32_half = static_cast<uint32_t>(full_ptrval & MaskLowNBits(VALBITS));
         uint32_t high32_half = static_cast<uint32_t>((full_ptrval >> VALBITS) & MaskLowNBits(VALBITS));
         size_t next_sequence = NextProducerSequence();
-        if (next_sequence == SIZE_MAX)
+        if (next_sequence == APCDataStructure::APC_SIZE_SENTINAL)
         {
-            return {PublishStatus::INVALID, SIZE_MAX};
+            return {PublishStatus::INVALID, APCDataStructure::APC_SIZE_SENTINAL};
         }
         
         size_t start = PayloadBegin() + ((next_sequence - PayloadBegin()) % PayloadCapacityFromHeader());
@@ -264,7 +264,7 @@ namespace PredictedAdaptedEncoding
             ++probes;
             if ((max_probs >=0 && probes >= max_probs) || probes >= static_cast<int>(PayloadCapacityFromHeader()))
             {
-                return {PublishStatus::FULL, SIZE_MAX};
+                return {PublishStatus::FULL, APCDataStructure::APC_SIZE_SENTINAL};
             }
             idx = (((idx - PayloadBegin()) + step) % PayloadCapacityFromHeader()) + PayloadBegin();
         }

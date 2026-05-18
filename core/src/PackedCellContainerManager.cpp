@@ -17,7 +17,7 @@ namespace PredictedAdaptedEncoding
             ThreadWaitSlotArrayPtr_[i].store(UNSIGNED_ZERO, MoStoreUnSeq_);
             ThreadNextIdxPtr_[i].store(i+1, MoStoreUnSeq_);
         }
-        ThreadNextIdxPtr_[ThreadTableCapacity_ - 1].store(SIZE_MAX, MoStoreUnSeq_);
+        ThreadNextIdxPtr_[ThreadTableCapacity_ - 1].store(APCDataStructure::APC_SIZE_SENTINAL, MoStoreUnSeq_);
         ThreadFreelistHead_.store(0, MoStoreUnSeq_);
     }
 
@@ -57,7 +57,7 @@ namespace PredictedAdaptedEncoding
     size_t PackedCellContainerManager::PopFreeThreadIndex_() noexcept
     {
         size_t head_of_thread_freeList = ThreadFreelistHead_.load(MoLoad_);
-        while (head_of_thread_freeList != SIZE_MAX)
+        while (head_of_thread_freeList != APCDataStructure::APC_SIZE_SENTINAL)
         {
             size_t next_thread_idx = ThreadNextIdxPtr_[head_of_thread_freeList].load(std::memory_order_relaxed);
             if (ThreadFreelistHead_.compare_exchange_strong(head_of_thread_freeList, next_thread_idx, OnExchangeSuccess, OnExchangeFailure))
@@ -65,7 +65,7 @@ namespace PredictedAdaptedEncoding
                 return head_of_thread_freeList;
             }            
         }
-        return SIZE_MAX;
+        return APCDataStructure::APC_SIZE_SENTINAL;
     }
 
     void PackedCellContainerManager::PushFreeThreadIndex_(size_t idx) noexcept
@@ -81,9 +81,9 @@ namespace PredictedAdaptedEncoding
     size_t PackedCellContainerManager::AllocateThreadSlots_() noexcept
     {
         size_t idx = PopFreeThreadIndex_();
-        if (idx == SIZE_MAX)
+        if (idx == APCDataStructure::APC_SIZE_SENTINAL)
         {
-            return SIZE_MAX;
+            return APCDataStructure::APC_SIZE_SENTINAL;
         }
         ThreadWaitSlotArrayPtr_[idx].store(UNSIGNED_ZERO, MoStoreSeq_);
         ThreadEpochArrayPtr_[idx].store(THREAD_SENTINEL_, MoStoreSeq_);
@@ -92,7 +92,7 @@ namespace PredictedAdaptedEncoding
 
     void PackedCellContainerManager::FreeThreadSlots_(size_t idx) noexcept
     {
-        if (idx == SIZE_MAX || idx >= ThreadTableCapacity_)
+        if (idx == APCDataStructure::APC_SIZE_SENTINAL || idx >= ThreadTableCapacity_)
         {
             return;
         }
@@ -105,7 +105,7 @@ namespace PredictedAdaptedEncoding
     {
         ThreadHandlePCCM thread_handle;
         size_t idx = AllocateThreadSlots_();
-        if (idx == SIZE_MAX)
+        if (idx == APCDataStructure::APC_SIZE_SENTINAL)
         {
             return thread_handle;
         }
@@ -119,7 +119,7 @@ namespace PredictedAdaptedEncoding
 
     void PackedCellContainerManager::UnRegisterAPCThread(const ThreadHandlePCCM& thread_handle) noexcept
     {
-        if (thread_handle.QSBRIdx == SIZE_MAX)
+        if (thread_handle.QSBRIdx == APCDataStructure::APC_SIZE_SENTINAL)
         {
             return;
         }
@@ -128,7 +128,7 @@ namespace PredictedAdaptedEncoding
 
     void PackedCellContainerManager::EnterCriticalContainer(const ThreadHandlePCCM& thread_handle) noexcept
     {
-        if (thread_handle.QSBRIdx == SIZE_MAX)
+        if (thread_handle.QSBRIdx == APCDataStructure::APC_SIZE_SENTINAL)
         {
             return;
         }
@@ -138,7 +138,7 @@ namespace PredictedAdaptedEncoding
 
     void PackedCellContainerManager::ExtitCriticalContainer(const ThreadHandlePCCM& thread_handle) noexcept
     {
-        if (thread_handle.QSBRIdx == SIZE_MAX)
+        if (thread_handle.QSBRIdx == APCDataStructure::APC_SIZE_SENTINAL)
         {
             return;
         }
@@ -187,11 +187,6 @@ namespace PredictedAdaptedEncoding
             
         } while (!head_stack.compare_exchange_weak(head, apc_ptr, std::memory_order_release, std::memory_order_relaxed));
         
-    }
-
-    void PackedCellContainerManager::UsePreAllocatedNodePoolOfAdaptivePackedCellContainer(size_t pool_size_of_apc) noexcept
-    {
-        (void) pool_size_of_apc;
     }
 
 

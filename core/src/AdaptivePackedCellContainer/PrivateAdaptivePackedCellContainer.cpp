@@ -268,7 +268,7 @@ namespace PredictedAdaptedEncoding
         uint16_t max_tries
     ) noexcept
     {
-        const PublishResult failed_result{PublishStatus::INVALID, SIZE_MAX};
+        const PublishResult failed_result{PublishStatus::INVALID, APCDataStructure::APC_SIZE_SENTINAL};
         if (!IfAPCBranchValid())
         {
             return failed_result;
@@ -280,7 +280,7 @@ namespace PredictedAdaptedEncoding
         }
         if (HasThisControlEnumFlag(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT))
         {
-            return {PublishStatus::FULL, SIZE_MAX};
+            return {PublishStatus::FULL, APCDataStructure::APC_SIZE_SENTINAL};
         }
         
 
@@ -302,13 +302,13 @@ namespace PredictedAdaptedEncoding
 
         if (span == 0)
         {
-            return {PublishStatus::FULL, SIZE_MAX};
+            return {PublishStatus::FULL, APCDataStructure::APC_SIZE_SENTINAL};
         }
         
         const size_t next_producer_sequense = NextProducerSequence();
-        if (next_producer_sequense == SIZE_MAX)
+        if (next_producer_sequense == APCDataStructure::APC_SIZE_SENTINAL)
         {
-            return {PublishStatus::FULL, SIZE_MAX};
+            return {PublishStatus::FULL, APCDataStructure::APC_SIZE_SENTINAL};
         }
 
         const size_t seed_idx = (next_producer_sequense >= PayloadBegin()) ? (next_producer_sequense - PayloadBegin()) : 0;
@@ -359,7 +359,7 @@ namespace PredictedAdaptedEncoding
             return {PublishStatus::OK, current_index};
         }
 
-        return {PublishStatus::FULL, SIZE_MAX};
+        return {PublishStatus::FULL, APCDataStructure::APC_SIZE_SENTINAL};
     }
 
     uint32_t AdaptivePackedCellContainer::SuggestedInternalAPCExpension_(CompleteAPCNodeRegionsLayout* complete_layout, uint8_t prefared_percentage_of_free) noexcept

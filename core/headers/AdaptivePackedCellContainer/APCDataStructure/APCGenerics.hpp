@@ -536,8 +536,8 @@ namespace PredictedAdaptedEncoding
     struct AcquirePairedPointerStruct
     {
         uint64_t AssembeledPtr = 0;
-        size_t HeadIdx = SIZE_MAX;
-        size_t TailIdx = SIZE_MAX;
+        size_t HeadIdx = APCDataStructure::APC_SIZE_SENTINAL;
+        size_t TailIdx = APCDataStructure::APC_SIZE_SENTINAL;
         packed64_t HeadScreenshot = 0;
         packed64_t TailScreenshot = 0;
         RelOffsetMode32 Position = RelOffsetMode32::RELOFFSET_GENERIC_VALUE;
@@ -554,7 +554,7 @@ namespace PredictedAdaptedEncoding
     struct PublishResult
     {
         PublishStatus ResultStatus{PublishStatus::INVALID};
-        size_t Index{SIZE_MAX};
+        size_t Index{APCDataStructure::APC_SIZE_SENTINAL};
     };
     
 }
