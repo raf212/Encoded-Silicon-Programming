@@ -118,7 +118,7 @@ namespace PredictedAdaptedEncoding
         }
     };
 
-    struct RelationRecordOfAPCFabric
+    struct PageClassesRecordOfAPCFabric
     {
         std::atomic<uint64_t> SourcePackedHandle{UNSIGNED_ZERO};
         std::atomic<uint64_t> TargetPackedHandle{UNSIGNED_ZERO};
@@ -139,7 +139,7 @@ namespace PredictedAdaptedEncoding
         APCFebricClockPolicy ClockPolicy{APCFebricClockPolicy::ACCEPT_NEWER_ONLY};
         APCFabricDeviceHint DeviceHint{APCFabricDeviceHint::HOST_PROCESSOR};
 
-        void ResetRelationRecord() noexcept
+        void ResetPageClassRecord() noexcept
         {
             SourcePackedHandle.store(UNSIGNED_ZERO, MoStoreUnSeq_);
             TargetPackedHandle.store(UNSIGNED_ZERO, MoStoreUnSeq_);
@@ -202,19 +202,12 @@ namespace PredictedAdaptedEncoding
     class NeuromorphicAPCFabricCordinator
     {
         public :
-
             static constexpr size_t DEFAULT_FABRIC_SLAM_BYTES = 1 << 20;
             static constexpr size_t DEFAULT_TABLE_CAPACITY = 4096;
             static constexpr uint32_t DEFAULT_RELATION_CAPACITY = 16384u;
             static constexpr uint32_t DEFAULT_WORK_RING_CAPACITY = 8192u;
             static constexpr uint32_t DEFAULT_ACTIVE_VIEW_CAPACITY = 1024u;
             static constexpr uint32_t DEFAULT_ACTIVE_VIEW_CELL_CAPACITY = 65536u;
-
-            bool IsFabricInitialized() const noexcept;
-            
-            bool IsFabricShuttingDown() const noexcept;
-
-            size_t FebricSlotCapacityCell() noexcept;
 
             bool InitializeStorageFabric(
                 size_t slot_cell_capacity = MINIMUM_BRANCH_CAPACITY,
@@ -226,7 +219,7 @@ namespace PredictedAdaptedEncoding
                 uint32_t work_Ring_capacity = DEFAULT_WORK_RING_CAPACITY,
                 uint32_t view_capacity = DEFAULT_ACTIVE_VIEW_CAPACITY,
                 uint32_t view_cell_capacity = DEFAULT_ACTIVE_VIEW_CELL_CAPACITY
-            ); 
+            ) noexcept;
 
             AdaptivePackedCellContainer* AllocateAPCObjectFromFabricManager() noexcept;
             
@@ -279,7 +272,32 @@ namespace PredictedAdaptedEncoding
 
             uint16_t* GetViewMeta16Ptr(uint32_t view_id) noexcept;
 
+            void ShutDownTheFabricCordinator() noexcept;
+
+            bool IsFabricInitialized() const noexcept
+            {
+                return FabricInitialized_.load(MoLoad_);
+            }
+            
+            bool IsFabricShuttingDown() const noexcept
+            {
+                return FabricShuttingDown_.load(MoLoad_);
+            }
+
+            size_t FebricSlotCapacityCell() noexcept
+            {
+                return FabricSlotCapacityCells_;
+            }
+
         private:
+            NeuromorphicAPCFabricCordinator();
+            ~NeuromorphicAPCFabricCordinator()
+            {
+                FabricShuttingDown_.store(true, MoStoreSeq_);
+                ShutDownTheFabricCordinator();
+            }
+            NeuromorphicAPCFabricCordinator(const NeuromorphicAPCFabricCordinator&) = delete;
+            NeuromorphicAPCFabricCordinator& operator = (const NeuromorphicAPCFabricCordinator&) = delete;
 
             size_t FabricSlotCapacityCells_{UNSIGNED_ZERO};
             size_t FabricSlotCount_{UNSIGNED_ZERO};
@@ -287,10 +305,10 @@ namespace PredictedAdaptedEncoding
             uint32_t BranchTableCapacity_{UNSIGNED_ZERO};
             uint32_t LogicalTableCapacity_{UNSIGNED_ZERO};
             uint32_t SharedTableCapacity_{UNSIGNED_ZERO};
-            uint32_t RelationTableCapacity_{UNSIGNED_ZERO};
+            uint32_t PageClassesTableCapacity_{UNSIGNED_ZERO};
             uint32_t WorkingTableCapacity_{UNSIGNED_ZERO};
             uint32_t ActiveViewCapacity_{UNSIGNED_ZERO};
-            uint32_t CellInActiveCapacity{UNSIGNED_ZERO};
+            uint32_t CellInActiveViewCapacity_{UNSIGNED_ZERO};
 
             std::unique_ptr<std::atomic<packed64_t>[]> FabricCellsPtrs_;
             std::unique_ptr<AdaptivePackedCellContainer[]> FabricObjectPoolPtrs_;
@@ -298,24 +316,24 @@ namespace PredictedAdaptedEncoding
             std::unique_ptr<HashEntryOfAPC[]> BranchTablePtrs_;
             std::unique_ptr<HashEntryOfAPC[]> LogicalTablePtrs_;
             std::unique_ptr<SharedChainRecordOfAPCFabric[]> SharedTablePtrs_;
-            std::unique_ptr<RelationRecordOfAPCFabric[]> RelationTablePtrs_;
+            std::unique_ptr<PageClassesRecordOfAPCFabric[]> PageClassesTablePtrs_;
             std::unique_ptr<WorkRecordOfAPCFabric[]> WorkRingPtrs_;
             std::unique_ptr<FabricViewOfAPC[]> FabricActiveViewPtrs_;
 
             std::unique_ptr<uint32_t[]> CellIndicesViewPtrs_;
             std::unique_ptr <float []> Float32CellViewPtrs_;
             std::unique_ptr<packed64_t[]> OriginalPacked64ViewPtrs_;
-            std::unique_ptr<uint16_t[]> Clock16ViewPtrs_;
-            std::unique_ptr<uint16_t[]> Meta16ViewPtrs_;
+            std::unique_ptr<clk16_t> Clock16ViewPtrs_;
+            std::unique_ptr<meta16_t[]> Meta16ViewPtrs_;
 
             std::atomic<bool> FabricInitialized_{false};
             std::atomic<bool> FabricShuttingDown_{false};
             std::atomic<uint64_t> WorkWriteCursor_{UNSIGNED_ZERO};
             std::atomic<uint64_t> WorkReadCursor_{UNSIGNED_ZERO};
-            std::atomic<uint32_t> VuewCellCursor_{UNSIGNED_ZERO};
-            std::atomic<size_t> FreeSlotHeadOfFabricPtr_{SIZE_MAX};
-            std::atomic<uint32_t> RelationFreeHead_{APCDataStructure::BRANCH_SENTINAL};
-            std::atomic<uint32_t> NextValidId_{APCDataStructure::BRANCH_VERSION};
+            std::atomic<uint32_t> ViewCellCursor_{UNSIGNED_ZERO};
+            std::atomic<size_t> FreeSlotHeadOfFabric_{SIZE_MAX};
+            std::atomic<uint32_t> PageClassesFreeHead_{APCDataStructure::BRANCH_SENTINAL};
+            std::atomic<uint32_t> NextValidViewId_{APCDataStructure::BRANCH_VERSION};
 
             static uint32_t HashUnsigned32_(uint32_t given_value) noexcept;
 

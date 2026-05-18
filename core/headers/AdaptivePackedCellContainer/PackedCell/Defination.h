@@ -13,7 +13,6 @@ namespace PredictedAdaptedEncoding
     #define MIN_RETIRE_BATCH_THRESHOLD 16
     #define MIN_BACKGROUND_EPOCH_MS 50
     #define INITIAL_BRANCH_SPLIT_THRESHOLD_PERCENTAGE 70
-    #define MINIMUM_BRANCH_CAPACITY 256
     #define MAX_BRANCH_DEPTH 10
     //default Rel Class percentage
     #define FEEDFOEWARD_PERCENTAGE 8u
@@ -40,5 +39,8 @@ namespace PredictedAdaptedEncoding
 
     static constexpr unsigned UNSIGNED_ZERO = 0u;
     static constexpr uint32_t APC_FABRIC_HASH_TOMBSTONE_KEY = UINT32_MAX;
+    static constexpr uint32_t DEFAULT_HAS_CONST_1 = 0x7feb352du;
+    static constexpr uint32_t DEFAULT_HAS_CONST_2 = 0x846ca68bu;
+    static constexpr unsigned MINIMUM_BRANCH_CAPACITY = 256u;
 
 }
