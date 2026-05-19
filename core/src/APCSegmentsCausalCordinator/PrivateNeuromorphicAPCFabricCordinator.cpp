@@ -89,10 +89,10 @@ namespace PredictedAdaptedEncoding
 
             for (size_t i = 0; i < FabricSlotCount_; i++)
             {
-                SlotTablePtrs_[i].ResetSlotRecord();
+                SlotTablePtrs_[i].ResetSlotRecordForReuse();
                 SlotTablePtrs_[i].Generation.store(APCDataStructure::BRANCH_VERSION, MoStoreSeq_);
                 SlotTablePtrs_[i].ObjectProbableAPCPtr.store(reinterpret_cast<uintptr_t>(&FabricObjectPoolPtrs_[i]), MoStoreSeq_);
-                SlotTablePtrs_[i].NextFree.store(
+                SlotTablePtrs_[i].NextFreeIdx.store(
                     (i + 1u < FabricSlotCount_) ? i + 1u : APCDataStructure::APC_SIZE_SENTINAL,
                     MoStoreSeq_
                 );
@@ -147,14 +147,49 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    // size_t NeuromorphicAPCFabricCordinator::PopFreeSlot_() noexcept
-    // {
-    //     if (!)
-    //     {
-    //         /* code */
-    //     }
+    size_t NeuromorphicAPCFabricCordinator::PopFreeSlotRecordOfAPCFabric_() noexcept
+    {
+        if (!SlotTablePtrs_)
+        {
+            return APCDataStructure::APC_SIZE_SENTINAL;
+        }
+
+        size_t head_idx = FreeSlotHeadOfFabric_.load(MoLoad_);
+        while (head_idx != APCDataStructure::APC_SIZE_SENTINAL)
+        {
+            if (head_idx > FabricSlotCount_)
+            {
+                return APCDataStructure::APC_SIZE_SENTINAL;
+            }
+            const size_t next_free_idx = SlotTablePtrs_[head_idx].NextFreeIdx.load(MoLoad_);
+            if (FreeSlotHeadOfFabric_.compare_exchange_weak(head_idx, next_free_idx, OnExchangeSuccess, OnExchangeFailure))
+            {
+                SlotTablePtrs_[head_idx].NextFreeIdx.store(APCDataStructure::APC_SIZE_SENTINAL, MoStoreSeq_);
+                SlotTablePtrs_[head_idx].StateOfSlot.store(static_cast<uint32_t>(APCFabricSlotState::ALLOCATED), MoStoreSeq_);
+                return head_idx;
+            }
+        }
         
-    // }
+        return APCDataStructure::APC_SIZE_SENTINAL;
+    }
+
+    void NeuromorphicAPCFabricCordinator::PushFreeSlotRecordOfAPCFabric_(size_t slot_idx) noexcept
+    {
+        if (!SlotTablePtrs_ || slot_idx >= FabricSlotCount_)
+        {
+            return;   
+        }
+        
+        SlotTablePtrs_[slot_idx].ResetSlotRecordForReuse();
+
+        size_t head_idx = FreeSlotHeadOfFabric_.load(MoLoad_);
+        do
+        {
+            SlotTablePtrs_[slot_idx].NextFreeIdx.store(head_idx, MoStoreSeq_);
+        } while (!FreeSlotHeadOfFabric_.compare_exchange_weak(head_idx, slot_idx, std::memory_order_release, std::memory_order_relaxed));
+    }
+
+
 
 }
 

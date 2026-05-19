@@ -103,19 +103,20 @@ namespace PredictedAdaptedEncoding
         std::atomic<uint32_t> IntraRelationshipFlags{UNSIGNED_ZERO};
         std::atomic<uint32_t> Generation{UNSIGNED_ZERO};
         std::atomic<uint32_t> RetireEpochLow32{UNSIGNED_ZERO};
-        std::atomic<size_t> NextFree{APCDataStructure::APC_SIZE_SENTINAL};
+        std::atomic<size_t> NextFreeIdx{APCDataStructure::APC_SIZE_SENTINAL};
         std::atomic<uintptr_t> ObjectProbableAPCPtr{UNSIGNED_ZERO};
         std::atomic<uint32_t> FirstOutboundRelation{UNSIGNED_ZERO};
         std::atomic<uint32_t> FirstInboundRelation{UNSIGNED_ZERO};
 
-        void ResetSlotRecord() noexcept
+        void ResetSlotRecordForReuse() noexcept
         {
             BranchId.store(UNSIGNED_ZERO, MoStoreUnSeq_);
             LogicalId.store(UNSIGNED_ZERO, MoStoreUnSeq_);
             SharedId.store(UNSIGNED_ZERO, MoStoreUnSeq_);
             IntraRelationshipFlags.store(UNSIGNED_ZERO, MoStoreUnSeq_);
             RetireEpochLow32.store(UNSIGNED_ZERO, MoStoreUnSeq_);
-            FirstInboundRelation.store(UNSIGNED_ZERO, MoStoreUnSeq_);
+            FirstOutboundRelation.store(APCDataStructure::BRANCH_SENTINAL, MoStoreSeq_);
+            FirstInboundRelation.store(APCDataStructure::BRANCH_SENTINAL, MoStoreUnSeq_);
             StateOfSlot.store(static_cast<uint32_t>(APCFabricSlotState::REUSEABLE), MoStoreUnSeq_);
         }
     };
@@ -342,9 +343,9 @@ namespace PredictedAdaptedEncoding
 
             static uint32_t NextPowerOf2Unsigned32_(uint32_t given_value) noexcept;
 
-            size_t PopFreeSlot_() noexcept;
+            size_t PopFreeSlotRecordOfAPCFabric_() noexcept;
 
-            void PushFreeSlot_(size_t slot) noexcept;
+            void PushFreeSlotRecordOfAPCFabric_(size_t slot_idx) noexcept;
 
             bool InsertAHash_(
                 HashEntryOfAPC* table_ptr, uint32_t capacity, 
