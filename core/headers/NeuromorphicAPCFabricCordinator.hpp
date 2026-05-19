@@ -66,21 +66,6 @@ namespace PredictedAdaptedEncoding
         RETIRE_HANDLE = 5u
     };
 
-    struct HandleOfAPC
-    {
-        uint32_t SlabId{UNSIGNED_ZERO};
-        uint32_t SlotIndex{APCDataStructure::BRANCH_SENTINAL};
-        uint32_t Genaration{UNSIGNED_ZERO};
-        uint32_t flags{UNSIGNED_ZERO};
-        uint32_t BranchId{UNSIGNED_ZERO};
-        uint32_t LogicalId{UNSIGNED_ZERO};
-        uint32_t ShharedId{UNSIGNED_ZERO};
-
-        bool IsInvalidHandler() const noexcept
-        {
-            return SlotIndex != APCDataStructure::BRANCH_SENTINAL && Genaration != UNSIGNED_ZERO && BranchId != UNSIGNED_ZERO;
-        }
-    };
 
     struct HashEntryOfAPC
     {
@@ -225,7 +210,7 @@ namespace PredictedAdaptedEncoding
 
             AdaptivePackedCellContainer* AllocateAPCObjectFromFabricManager() noexcept;
             
-            bool BindExternalRootAPC(AdaptivePackedCellContainer* apc_ptr, size_t wanted_capacity) noexcept;
+            bool BindExternalRootAPCToFabric(AdaptivePackedCellContainer* apc_ptr, size_t wanted_capacity) noexcept;
 
             HandleOfAPC ResolveBranchHandle(uint32_t branch_id) noexcept;
 
@@ -343,23 +328,23 @@ namespace PredictedAdaptedEncoding
 
             static uint32_t NextPowerOf2Unsigned32_(uint32_t given_value) noexcept;
 
-            size_t PopFreeSlotRecordOfAPCFabric_() noexcept;
+            size_t PopFreeSlotRecordHeadOfAPCFabric_() noexcept;
 
             void PushFreeSlotRecordOfAPCFabric_(size_t slot_idx) noexcept;
 
-            bool InsertAHash_(
+            bool InsertAHashInHashEntryOfAPC_(
                 HashEntryOfAPC* table_ptr, uint32_t capacity, 
                 uint32_t hash_key, uint64_t packed_handle
             ) noexcept;
 
-            uint64_t LookupAHashKey_(
+            uint64_t LookupAHashKeyFromHashEntryOfAPC_(
                 HashEntryOfAPC* table_ptr, uint32_t capacity,
-                uint32_t key
+                uint32_t hash_key
             ) noexcept;
 
-            bool EraseAHash_(
+            bool EraseAHashFromHashEntryOfAPC_(
                 HashEntryOfAPC* table_ptr, uint32_t capacity,
-                uint32_t key, uint64_t expected_handle = UNSIGNED_ZERO
+                uint32_t hash_key, uint64_t expected_handle = UNSIGNED_ZERO
             ) noexcept;
 
             FabricViewOfAPC* GetOtCreateSharedChain_(uint32_t shared_id) noexcept;

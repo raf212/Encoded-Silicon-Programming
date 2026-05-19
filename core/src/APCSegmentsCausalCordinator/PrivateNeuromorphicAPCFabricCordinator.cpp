@@ -15,6 +15,23 @@ namespace PredictedAdaptedEncoding
         return given_value;
     }
 
+    uint32_t NeuromorphicAPCFabricCordinator::NextPowerOf2Unsigned32_(uint32_t given_value) noexcept
+    {
+        if (given_value <= 2u)
+        {
+            return 2u;
+        }
+        --given_value;
+        given_value |= given_value >> 1u;
+        given_value |= given_value >> 2u;
+        given_value |= given_value >> 4u;
+        given_value |= given_value >> 8u;
+        given_value |= given_value >> 16u;
+
+        return given_value + 1u;
+    }
+
+
     bool NeuromorphicAPCFabricCordinator::InitializeStorageFabric(
         size_t slot_cell_capacity,
         size_t slab_bytes,
@@ -147,7 +164,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    size_t NeuromorphicAPCFabricCordinator::PopFreeSlotRecordOfAPCFabric_() noexcept
+    size_t NeuromorphicAPCFabricCordinator::PopFreeSlotRecordHeadOfAPCFabric_() noexcept
     {
         if (!SlotTablePtrs_)
         {
@@ -189,7 +206,117 @@ namespace PredictedAdaptedEncoding
         } while (!FreeSlotHeadOfFabric_.compare_exchange_weak(head_idx, slot_idx, std::memory_order_release, std::memory_order_relaxed));
     }
 
+    bool NeuromorphicAPCFabricCordinator::InsertAHashInHashEntryOfAPC_(
+        HashEntryOfAPC* table_ptr, uint32_t capacity, 
+        uint32_t hash_key, uint64_t packed_handle
+    ) noexcept
+    {
+        if (
+            !table_ptr || capacity == UNSIGNED_ZERO ||
+            hash_key == UNSIGNED_ZERO || hash_key == APC_FABRIC_HASH_TOMBSTONE_KEY
+        )
+        {
+            return false;
+        }
 
+        uint32_t current_hash_entry_idx = HashUnsigned32_(hash_key) & (capacity - 1u);
+        for (uint32_t prob = 0; prob < capacity; prob++)
+        {
+            uint32_t observed_current_hash_entry_idx_value = table_ptr[current_hash_entry_idx].HashKey.load(MoLoad_);
+            if (observed_current_hash_entry_idx_value == hash_key)
+            {
+                table_ptr[current_hash_entry_idx].PackedHandle.store(packed_handle, MoStoreSeq_);
+                return true;
+            }
+
+            if (
+                observed_current_hash_entry_idx_value == UNSIGNED_ZERO ||
+                observed_current_hash_entry_idx_value == APC_FABRIC_HASH_TOMBSTONE_KEY
+            )
+            {
+                uint32_t expected = observed_current_hash_entry_idx_value;
+                if (table_ptr[current_hash_entry_idx].HashKey.compare_exchange_strong(
+                    expected, hash_key, OnExchangeSuccess, OnExchangeFailure
+                ))
+                {
+                    table_ptr[current_hash_entry_idx].PackedHandle.store(packed_handle, MoStoreSeq_);
+                    return true;
+                }
+            }
+            
+            current_hash_entry_idx = (current_hash_entry_idx + 1u) & (capacity - 1u);
+        }
+        
+        return false;
+    }
+
+    uint64_t NeuromorphicAPCFabricCordinator::LookupAHashKeyFromHashEntryOfAPC_(
+        HashEntryOfAPC* table_ptr, uint32_t capacity,
+        uint32_t hash_key
+    ) noexcept
+    {
+        if (
+            !table_ptr || capacity == UNSIGNED_ZERO ||
+            hash_key == UNSIGNED_ZERO || hash_key == APC_FABRIC_HASH_TOMBSTONE_KEY
+        )
+        {
+            return UNSIGNED_ZERO;
+        }
+
+        uint32_t current_hash_entry_idx = HashUnsigned32_(hash_key) & (capacity - 1u);
+        for (uint32_t prob = 0; prob < capacity; prob++)
+        {
+            const uint32_t observed_current_hash_entry_idx_value = table_ptr[current_hash_entry_idx].HashKey.load(MoLoad_);
+            if (observed_current_hash_entry_idx_value == hash_key)
+            {
+                return table_ptr[current_hash_entry_idx].HashKey.load(MoLoad_);
+            }
+
+            if (observed_current_hash_entry_idx_value == UNSIGNED_ZERO)
+            {
+                return UNSIGNED_ZERO;
+            }
+            
+            current_hash_entry_idx = (current_hash_entry_idx + 1u) & (capacity - 1u);
+        }
+        return UNSIGNED_ZERO;
+    }
+
+    bool NeuromorphicAPCFabricCordinator::EraseAHashFromHashEntryOfAPC_(
+        HashEntryOfAPC* table_ptr, uint32_t capacity,
+        uint32_t hash_key, uint64_t expected_handle
+    ) noexcept
+    {
+        if (!table_ptr || capacity == UNSIGNED_ZERO)
+        {
+            return false;
+        }
+
+        uint32_t current_hash_entry_idx = HashUnsigned32_(hash_key) & (capacity - 1u);
+        for (uint32_t prob = 0; prob < capacity; prob++)
+        {
+            const uint32_t observed_current_hash_entry_idx_value = table_ptr[current_hash_entry_idx].HashKey.load(MoLoad_);
+            if (observed_current_hash_entry_idx_value == hash_key)
+            {
+                const uint64_t current_packed_handle = table_ptr[current_hash_entry_idx].PackedHandle.load(MoLoad_);
+                if (expected_handle == UNSIGNED_ZERO || current_packed_handle == expected_handle)
+                {
+                    table_ptr[current_hash_entry_idx].PackedHandle.store(UNSIGNED_ZERO, MoStoreSeq_);
+                    table_ptr[current_hash_entry_idx].HashKey.store(APC_FABRIC_HASH_TOMBSTONE_KEY, MoStoreSeq_);
+                    return true;
+                }
+                return false;
+            }
+            
+            if (observed_current_hash_entry_idx_value == UNSIGNED_ZERO)
+            {
+                return false;
+            }
+            current_hash_entry_idx = (current_hash_entry_idx + 1u) & (capacity - 1);
+        }
+        
+        return false;
+    }
 
 }
 

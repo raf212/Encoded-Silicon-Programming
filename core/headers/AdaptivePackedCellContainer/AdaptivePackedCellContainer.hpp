@@ -33,6 +33,11 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
         std::atomic<AdaptivePackedCellContainer*> RegistryNextAPCPtr_{nullptr};
         std::atomic<AdaptivePackedCellContainer*> WorkNextAPCPtr_{nullptr};
         std::atomic<AdaptivePackedCellContainer*> CleanupNextAPCPtr_{nullptr};
+
+        //for new cordinator
+        bool FabricCordinatorAvailable_{false};
+        bool FabricObjectOwnedbyCordinator_{false};
+        HandleOfAPC FabricHandlerOfThisAPC_{};
         
         size_t GetHashedRendomizedStep_(size_t sequense_number) noexcept;
 
@@ -281,6 +286,13 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
         {
             CleanupNextAPCPtr_.store(apc_ptr, MoStoreSeq_);
         }
+
+        bool BindExternalAPCBackingPtr(
+            std::atomic<packed64_t>* backing_ptr,
+            size_t capacity,
+            HandleOfAPC handle,
+            bool object_owned_by_manager 
+        ) noexcept;
 
 
 };

@@ -360,5 +360,22 @@ namespace PredictedAdaptedEncoding
 
 
     };
+
+
+    struct HandleOfAPC
+    {
+        uint32_t SlabId{UNSIGNED_ZERO};
+        uint32_t SlotIndex{APCDataStructure::BRANCH_SENTINAL};
+        uint32_t Genaration{UNSIGNED_ZERO};
+        uint32_t flags{UNSIGNED_ZERO};
+        uint32_t BranchId{UNSIGNED_ZERO};
+        uint32_t LogicalId{UNSIGNED_ZERO};
+        uint32_t ShharedId{UNSIGNED_ZERO};
+
+        bool IsInvalidHandler() const noexcept
+        {
+            return SlotIndex != APCDataStructure::BRANCH_SENTINAL && Genaration != UNSIGNED_ZERO && BranchId != UNSIGNED_ZERO;
+        }
+    };
     
 }
