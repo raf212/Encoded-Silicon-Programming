@@ -11,7 +11,7 @@
 #include <algorithm>
 #include <string>
 
-#include "APCSegmentsCausalCordinator.hpp"
+#include "NeuromorphicTimeSpace/APCSegmentsCausalCordinator.hpp"
 #include "PackedCellContainerManager.hpp"
 
 using namespace PredictedAdaptedEncoding;
