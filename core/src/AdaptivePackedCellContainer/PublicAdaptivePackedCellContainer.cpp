@@ -868,30 +868,4 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    bool AdaptivePackedCellContainer::BindExternalAPCBackingPtr(
-        std::atomic<packed64_t>* backing_ptr,
-        size_t capacity,
-        HandleOfAPC handle,
-        bool object_owned_by_manager 
-    ) noexcept
-    {
-        if (!backing_ptr || capacity < PayloadBegin())
-        {
-            return false;
-        }
-
-        if (BackingPtr && !FabricCordinatorAvailable_)
-        {
-            return false;
-        }
-
-        BackingPtr = backing_ptr;
-        BranchCapacity_ = BranchCapacity_;
-        FabricCordinatorAvailable_ = true;
-        FabricObjectOwnedbyCordinator_ = object_owned_by_manager;
-        FabricHandlerOfThisAPC_ = handle;
-        return true;
-        
-    }
-
 }
