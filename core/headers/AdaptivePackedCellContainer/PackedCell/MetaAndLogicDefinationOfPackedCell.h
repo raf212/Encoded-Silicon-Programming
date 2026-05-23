@@ -154,7 +154,7 @@ namespace PredictedAdaptedEncoding {
         CONTROL_SLOT = 0x8,
         AUX_SLOT = 0x9,
         HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT = 0xA,
-        PAIRED_POINTER_LOCAL_MEMORY = 0xB,
+        SLOT_TABLE_DESCRIPTOR = 0xB,
         PAIRED_POINTER_DISTANCE_MEMORY = 0xC,
         FREE_SLOT     = 0xD,
         UNDEFINED = 0xE,

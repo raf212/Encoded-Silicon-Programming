@@ -251,7 +251,7 @@ namespace PredictedAdaptedEncoding
         ok = LoadOne(APCPagedNodeSegmentClasses::WEIGHT_SLOT, out_layout.WeightLayout) && ok;
         ok = LoadOne(APCPagedNodeSegmentClasses::AUX_SLOT, out_layout.AUXLayout) && ok;
         ok = LoadOne(APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT, out_layout.HeterogenousMemoryLayout) && ok;
-        ok = LoadOne(APCPagedNodeSegmentClasses::PAIRED_POINTER_LOCAL_MEMORY, out_layout.LocalPairedPointerLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::SLOT_TABLE_DESCRIPTOR, out_layout.LocalPairedPointerLayout) && ok;
         ok = LoadOne(APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY, out_layout.DistancePairedLayout) && ok;
         ok = LoadOne(APCPagedNodeSegmentClasses::UNDEFINED, out_layout.UndefinedLayout) && ok;
         ok = LoadOne(APCPagedNodeSegmentClasses::FREE_SLOT, out_layout.FreeLayout) && ok;

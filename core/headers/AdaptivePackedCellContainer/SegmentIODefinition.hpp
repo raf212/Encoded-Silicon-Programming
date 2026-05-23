@@ -430,6 +430,18 @@ public:
             ReadFaultyOccupancyOfAPAgeClass(page_class);
     }
 
+    void BindExternalStorage_(std::atomic<packed64_t>* packed_ptr, size_t cell_count) noexcept
+    {
+        BackingPtr = packed_ptr;
+        BranchCapacity_ = cell_count;
+    }
+
+    void UnbindExternalStorage_() noexcept
+    {
+        BackingPtr = nullptr;
+        BranchCapacity_ = UNSIGNED_ZERO;
+    }
+
 };
 
 }

@@ -38,9 +38,7 @@ namespace PredictedAdaptedEncoding
     #define BIT_PATTERN_THREAD_TOKEN_GENERATOR 0xA5A5A5A5u
 
     static constexpr unsigned UNSIGNED_ZERO = 0u;
-    static constexpr uint32_t APC_FABRIC_HASH_TOMBSTONE_KEY = UINT32_MAX;
-    static constexpr uint32_t DEFAULT_HAS_CONST_1 = 0x7feb352du;
-    static constexpr uint32_t DEFAULT_HAS_CONST_2 = 0x846ca68bu;
     static constexpr unsigned MINIMUM_BRANCH_CAPACITY = 256u;
 
+    
 }

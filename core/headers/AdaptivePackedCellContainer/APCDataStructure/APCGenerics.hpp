@@ -238,7 +238,7 @@ namespace PredictedAdaptedEncoding
                 case APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT:
                     return MetaIndexOfAPCNode::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT_BOUNDS_VERSION;
                     
-                case APCPagedNodeSegmentClasses::PAIRED_POINTER_LOCAL_MEMORY:
+                case APCPagedNodeSegmentClasses::SLOT_TABLE_DESCRIPTOR:
                     return MetaIndexOfAPCNode::PAIRED_POINTER_LOCAL_MEMORY_BOUNDS_VERSION;
 
                 case APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY:
@@ -387,7 +387,7 @@ namespace PredictedAdaptedEncoding
         LayoutBoundsOfSingleRelNodeClass WeightLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::WEIGHT_SLOT, WEIGHTSLOT_PERCENTAGE)};
         LayoutBoundsOfSingleRelNodeClass AUXLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::AUX_SLOT, AUXSLOT_PERCENTAGE)};
         LayoutBoundsOfSingleRelNodeClass HeterogenousMemoryLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT, UNSIGNED_ZERO)};
-        LayoutBoundsOfSingleRelNodeClass LocalPairedPointerLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::PAIRED_POINTER_LOCAL_MEMORY, UNSIGNED_ZERO)};
+        LayoutBoundsOfSingleRelNodeClass LocalPairedPointerLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::SLOT_TABLE_DESCRIPTOR, UNSIGNED_ZERO)};
         LayoutBoundsOfSingleRelNodeClass DistancePairedLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY, UNSIGNED_ZERO)};
         LayoutBoundsOfSingleRelNodeClass UndefinedLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::UNDEFINED, UNSIGNED_ZERO)};
         LayoutBoundsOfSingleRelNodeClass FreeLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::FREE_SLOT, FREE_PERCENTAGE)};
@@ -484,7 +484,7 @@ namespace PredictedAdaptedEncoding
                 case APCPagedNodeSegmentClasses::AUX_SLOT:             return &AUXLayout;
                 case APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT:
                     return &HeterogenousMemoryLayout;
-                case APCPagedNodeSegmentClasses::PAIRED_POINTER_LOCAL_MEMORY: 
+                case APCPagedNodeSegmentClasses::SLOT_TABLE_DESCRIPTOR: 
                     return &LocalPairedPointerLayout;
                 case APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY:
                     return &DistancePairedLayout;
@@ -507,7 +507,7 @@ namespace PredictedAdaptedEncoding
                 case APCPagedNodeSegmentClasses::AUX_SLOT:             return &AUXLayout;
                 case APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT:
                     return &HeterogenousMemoryLayout;
-                case APCPagedNodeSegmentClasses::PAIRED_POINTER_LOCAL_MEMORY: 
+                case APCPagedNodeSegmentClasses::SLOT_TABLE_DESCRIPTOR: 
                     return &LocalPairedPointerLayout;
                 case APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY:
                     return &DistancePairedLayout;

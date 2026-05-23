@@ -139,7 +139,7 @@ namespace
             case APCPagedNodeSegmentClasses::CONTROL_SLOT: return "CONTROL";
             case APCPagedNodeSegmentClasses::AUX_SLOT: return "AUX";
             case APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT: return "HETERO_MEM";
-            case APCPagedNodeSegmentClasses::PAIRED_POINTER_LOCAL_MEMORY: return "LOCAL_PTR";
+            case APCPagedNodeSegmentClasses::SLOT_TABLE_DESCRIPTOR: return "LOCAL_PTR";
             case APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY: return "DIST_PTR";
             case APCPagedNodeSegmentClasses::FREE_SLOT: return "FREE";
             case APCPagedNodeSegmentClasses::UNDEFINED: return "UNDEFINED";
@@ -166,7 +166,7 @@ namespace
             APCPagedNodeSegmentClasses::CONTROL_SLOT,
             APCPagedNodeSegmentClasses::AUX_SLOT,
             APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT,
-            APCPagedNodeSegmentClasses::PAIRED_POINTER_LOCAL_MEMORY,
+            APCPagedNodeSegmentClasses::SLOT_TABLE_DESCRIPTOR,
             APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY,
             APCPagedNodeSegmentClasses::FREE_SLOT,
             APCPagedNodeSegmentClasses::UNDEFINED
