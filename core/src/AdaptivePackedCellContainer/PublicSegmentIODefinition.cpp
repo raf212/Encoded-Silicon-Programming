@@ -925,7 +925,7 @@ namespace PredictedAdaptedEncoding
 
             const uint64_t raw48 = PackedCell64_t::ExtractClk48(observed_cell);
 
-            if (!ExtractLowMidHighFromMode48_(raw48, published_count, claimed_count, faulty_count))
+            if (!PackedModel16x3_MODE_CLKVAL48::ExtractLowMidHighFromMode48_(raw48, published_count, claimed_count, faulty_count))
             {
                 return false;
             }

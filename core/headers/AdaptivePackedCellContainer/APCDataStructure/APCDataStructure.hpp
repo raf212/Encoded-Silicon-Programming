@@ -2,7 +2,7 @@
 #pragma once 
 #include <array>
 #include <utility>
-#include "../PackedCell/CoreCellDefination.hpp"
+#include "../PackedCell/Mode48CellModels.hpp"
 #include "../../NeuromorphicTimeSpace/CoreOfFabricCoordinator.hpp"
 
 namespace PredictedAdaptedEncoding
@@ -115,74 +115,8 @@ namespace PredictedAdaptedEncoding
         EOF_APC_HEADER = 95
     };
 
-    class PackedModel16x3_MODE_CLKVAL48
-    {
-    public:
-        static constexpr uint64_t MASK_LOW_16 = MaskLowNBits(16);
 
-        static  packed64_t Compose3Unsigned16bitIndependentInMode48(
-            uint16_t low16_bits,
-            uint16_t mid_16_bits,
-            uint16_t high_16_bits,
-            meta16_t meta16
-        ) noexcept
-        {
-            const uint64_t raw48 = (PackUnsigned16x3ToMode48_(low16_bits, mid_16_bits, high_16_bits) & MaskLowNBits(CLK_B48));
-            return PackedCell64_t::ComposeCLK48u_64(raw48, meta16);
-        }
-
-    protected:
-        static constexpr unsigned PACK3XU16TOMODE48_SHIFT_LOW = 0u;
-        static constexpr unsigned PACK3XU16TOMODE48_SHIFT_MID = 16u;
-        static constexpr unsigned PACK3XU16TOMODE48_SHIFT_HIGH = 32u;
-
-        static uint64_t PackUnsigned16x3ToMode48_(
-            uint16_t low16_bits,
-            uint16_t mid_16_bits,
-            uint16_t high_16_bits
-        ) noexcept
-        {
-            return (uint64_t{low16_bits} << PACK3XU16TOMODE48_SHIFT_LOW)    |
-                (uint64_t{mid_16_bits} << PACK3XU16TOMODE48_SHIFT_MID)      |
-                (uint64_t(high_16_bits) << PACK3XU16TOMODE48_SHIFT_HIGH);
-        }
-
-        static uint16_t ExtractLow16FromUnsigned48_(uint64_t raw48) noexcept
-        {
-            return static_cast<uint16_t>((raw48 >> PACK3XU16TOMODE48_SHIFT_LOW) & MASK_LOW_16);
-        }
-
-        static uint16_t ExtractMid16FromUnsigned48_(uint64_t raw48) noexcept
-        {
-            return static_cast<uint16_t>((raw48 >> PACK3XU16TOMODE48_SHIFT_MID) & MASK_LOW_16);
-        }
-
-        static uint16_t ExtractHigh16FromUnsigned48_(uint64_t raw48) noexcept
-        {
-            return static_cast<uint16_t>((raw48 >> PACK3XU16TOMODE48_SHIFT_HIGH) & MASK_LOW_16);
-        }
-
-        static bool IsThisCellASubdevision_3x16_48t(packed64_t packed_cell) noexcept
-        {
-            return PackedCell64_t::ExtractModeOfPackedCellFromPacked(packed_cell) == PackedMode::MODE_CLKVAL48 &&
-                PackedCell64_t::ExtractRelOffset48FromPacked(packed_cell) == RelOffsetMode48::THREE_16_BIT_SUB_DIVISION &&
-                PackedCell64_t::ExtractLocalityFromPacked(packed_cell) != PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY;
-        }
-
-        static bool ExtractLowMidHighFromMode48_(uint64_t raw48, uint16_t& low, uint16_t& mid, uint16_t& high)
-        {
-            if (raw48 == PackedCell64_t::PACKED_CELL_SENTINAL)
-            {
-                return false;
-            }
-            low = ExtractLow16FromUnsigned48_(raw48);
-            mid = ExtractMid16FromUnsigned48_(raw48);
-            high = ExtractHigh16FromUnsigned48_(raw48);
-            return true;
-        }
-    };
-
-    class APCDataStructure : public PackedModel16x3_MODE_CLKVAL48
+    class APCDataStructure 
     {
     public:
         static constexpr size_t METACELL_COUNT = 96;
@@ -197,7 +131,7 @@ namespace PredictedAdaptedEncoding
         static constexpr size_t APC_SIZE_SENTINAL = SIZE_MAX;
 
 
-        static  packed64_t ComposeAPCOccupancyModel_16x3_48t(
+        static packed64_t ComposeAPCOccupancyModel_16x3_48t(
             uint16_t published_count,
             uint16_t claimed_count,
             uint16_t faulty_count,
@@ -215,7 +149,7 @@ namespace PredictedAdaptedEncoding
                 RelOffsetMode48::THREE_16_BIT_SUB_DIVISION,
                 PackedCellDataType::UnsignedPCellDataType
             );
-            return Compose3Unsigned16bitIndependentInMode48(
+            return PackedModel16x3_MODE_CLKVAL48::Compose3Unsigned16bitIndependentInMode48(
                 published_count,
                 claimed_count,
                 faulty_count,
@@ -223,13 +157,13 @@ namespace PredictedAdaptedEncoding
             );
         }
 
-        static  std::optional<uint16_t>GetOccuupancyFromPackedCellMode48(
+        static std::optional<uint16_t>GetOccuupancyFromPackedCellMode48(
             packed64_t packed_cell,
             PackedCellLocalityTypes desired_occupancy_bucket,
             uint16_t physical_capacity
         ) noexcept
         {
-            if (!IsThisCellASubdevision_3x16_48t(packed_cell))
+            if (!PackedModel16x3_MODE_CLKVAL48::IsThisCellASubdevision_3x16_48t(packed_cell))
             {
                 return std::nullopt;
             }
@@ -242,11 +176,11 @@ namespace PredictedAdaptedEncoding
             switch (desired_occupancy_bucket)
             {
             case PackedCellLocalityTypes::ST_PUBLISHED :
-                return ExtractLow16FromUnsigned48_(raw48);
+                return PackedModel16x3_MODE_CLKVAL48::ExtractLow16FromUnsigned48_(raw48);
             case PackedCellLocalityTypes::ST_CLAIMED :
-                return ExtractMid16FromUnsigned48_(raw48);
+                return PackedModel16x3_MODE_CLKVAL48::ExtractMid16FromUnsigned48_(raw48);
             case PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY :
-                return ExtractHigh16FromUnsigned48_(raw48);
+                return PackedModel16x3_MODE_CLKVAL48::ExtractHigh16FromUnsigned48_(raw48);
             case PackedCellLocalityTypes::ST_IDLE :
                 return DerivedIdleFromPackedCell48(packed_cell, physical_capacity);
             default:
@@ -254,9 +188,9 @@ namespace PredictedAdaptedEncoding
             }
         }
 
-        static  uint16_t GetTootalOccupancyFromPackedCell(packed64_t packed_cell) noexcept
+        static uint16_t GetTootalOccupancyFromPackedCell(packed64_t packed_cell) noexcept
         {
-            if (!IsThisCellASubdevision_3x16_48t(packed_cell))
+            if (!PackedModel16x3_MODE_CLKVAL48::IsThisCellASubdevision_3x16_48t(packed_cell))
             {
                 return UNSIGNED_ZERO;
             }
@@ -264,14 +198,14 @@ namespace PredictedAdaptedEncoding
             uint16_t published = UNSIGNED_ZERO;
             uint16_t claimed = UNSIGNED_ZERO;
             uint16_t faulty = UNSIGNED_ZERO;
-            if(!ExtractLowMidHighFromMode48_(raw48, published, claimed, faulty))
+            if(!PackedModel16x3_MODE_CLKVAL48::ExtractLowMidHighFromMode48_(raw48, published, claimed, faulty))
             {
                 return UNSIGNED_ZERO;
             }
             return published + claimed + faulty;
         }
 
-        static  packed64_t ComposeLayoutModelof16x3(
+        static packed64_t ComposeLayoutModelof16x3(
             uint16_t begin_low,
             uint16_t end_mid,
             uint16_t version_high,
@@ -282,19 +216,19 @@ namespace PredictedAdaptedEncoding
         ) noexcept
         {
             const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(priority, authority, locality, page_class, RelOffsetMode48::THREE_16_BIT_SUB_DIVISION, PackedCellDataType::UnsignedPCellDataType);
-            return Compose3Unsigned16bitIndependentInMode48(begin_low, end_mid, version_high, meta16);
+            return PackedModel16x3_MODE_CLKVAL48::Compose3Unsigned16bitIndependentInMode48(begin_low, end_mid, version_high, meta16);
         }
 
         static  bool ExtractLayoutModel_BegainL_EndM_VersionH(packed64_t packed_cell, uint16_t& begin_index, uint16_t& end_index, uint16_t& version_count) noexcept
         {
-            if (!IsThisCellASubdevision_3x16_48t(packed_cell))
+            if (!PackedModel16x3_MODE_CLKVAL48::IsThisCellASubdevision_3x16_48t(packed_cell))
             {
                 return false;
             }
 
             const uint64_t raw48 = PackedCell64_t::ExtractClk48(packed_cell);
             
-            return ExtractLowMidHighFromMode48_(raw48, begin_index, end_index, version_count);
+            return PackedModel16x3_MODE_CLKVAL48::ExtractLowMidHighFromMode48_(raw48, begin_index, end_index, version_count);
         }
 
         static  bool IsCapacityOfAPCLegal(size_t total_capacity) noexcept
@@ -307,7 +241,9 @@ namespace PredictedAdaptedEncoding
 
         static uint32_t SumOf3PartOccupancyOf48Bit_(uint64_t raw48) noexcept
         {
-            return ExtractLow16FromUnsigned48_(raw48) + ExtractMid16FromUnsigned48_(raw48) + ExtractHigh16FromUnsigned48_(raw48);
+            return PackedModel16x3_MODE_CLKVAL48::ExtractLow16FromUnsigned48_(raw48) + 
+                PackedModel16x3_MODE_CLKVAL48::ExtractMid16FromUnsigned48_(raw48) + 
+                PackedModel16x3_MODE_CLKVAL48::ExtractHigh16FromUnsigned48_(raw48);
         }
 
         static uint16_t DeriveIdleCoundtFromRaw48General_(uint64_t raw48, uint16_t physical_capacity) noexcept

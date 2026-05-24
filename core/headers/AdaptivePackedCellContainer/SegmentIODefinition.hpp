@@ -395,7 +395,7 @@ public:
     {
         const packed64_t central_occupancy_cell = ReadCentralAPCOccupancyCellForThisPagedNode();
         const uint64_t raw48 = PackedCell64_t::ExtractClk48(central_occupancy_cell);
-        bool ok = ExtractLowMidHighFromMode48_(raw48, published_occupancy, claimed_occupancy, faulty_occupancy);
+        bool ok = PackedModel16x3_MODE_CLKVAL48::ExtractLowMidHighFromMode48_(raw48, published_occupancy, claimed_occupancy, faulty_occupancy);
         return ok;
     }
 
