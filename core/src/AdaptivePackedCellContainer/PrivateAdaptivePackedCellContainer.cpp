@@ -441,7 +441,7 @@ namespace PredictedAdaptedEncoding
         const size_t number_of_regions = (PayloadCapacityFromHeader() + region_size - 1u) / region_size;
         RegionRelArray_.reset(new std::atomic<uint8_t>[number_of_regions]);
         RegionEpochArray_.reset(new std::atomic<uint64_t>[number_of_regions]);
-        const size_t words = (number_of_regions + MAX_VAL - 1) / MAX_VAL;
+        const size_t words = (number_of_regions + BIT_LENGTH_OF_A_PACKED_CELL - 1) / BIT_LENGTH_OF_A_PACKED_CELL;
         RelBitmaps_.assign(APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses, std::vector<uint64_t>(words, 0ull));
         uint32_t global_ready_mask = UNSIGNED_ZERO;
         for (size_t region = 0; region < number_of_regions; region++)
@@ -465,8 +465,8 @@ namespace PredictedAdaptedEncoding
                 global_ready_mask |= region_ready_mask;
                 if (region_ready_mask != UNSIGNED_ZERO)
                 {
-                    const size_t word = region / MAX_VAL;
-                    const size_t bit = region % MAX_VAL;
+                    const size_t word = region / BIT_LENGTH_OF_A_PACKED_CELL;
+                    const size_t bit = region % BIT_LENGTH_OF_A_PACKED_CELL;
                     const uint64_t region_mask = (1ull << bit);
                     for (unsigned rel_class = 0; rel_class < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses; rel_class++)
                     {

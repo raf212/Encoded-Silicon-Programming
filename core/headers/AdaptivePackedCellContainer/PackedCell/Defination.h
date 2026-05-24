@@ -3,7 +3,6 @@
 namespace PredictedAdaptedEncoding
 {
     //packedCell
-    #define MAX_VAL 64u
     #define ID_HASH_GOLDEN_CONST 0x9E3779B97F4A7C15ull 
     #define DEFAULT_PAIRED_HEAD_HALF_PRIORITY 10u
     #define SIZE_OF_MODE_48 6u // 6 * 8 = 48
@@ -37,8 +36,10 @@ namespace PredictedAdaptedEncoding
     //manager
     #define BIT_PATTERN_THREAD_TOKEN_GENERATOR 0xA5A5A5A5u
 
+    static constexpr size_t BIT_LENGTH_OF_A_PACKED_CELL = 64;
     static constexpr unsigned UNSIGNED_ZERO = 0u;
     static constexpr unsigned MINIMUM_BRANCH_CAPACITY = 256u;
     static constexpr uint32_t IN_CELL_VALUE_MODE32_SENTINAL = UINT32_MAX;
+    
     
 }

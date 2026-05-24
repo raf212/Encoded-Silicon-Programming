@@ -164,7 +164,7 @@ namespace PredictedAdaptedEncoding {
     static inline constexpr packed64_t MaskLowNBits(unsigned n) noexcept
     {
         if (n == UNSIGNED_ZERO) return packed64_t(0);
-        if (n >= MAX_VAL) return ~packed64_t(0);
+        if (n >= BIT_LENGTH_OF_A_PACKED_CELL) return ~packed64_t(0);
         // produce low-n ones without shifting by >= width
         return ((packed64_t(1) << n) - 1u);                  
     }

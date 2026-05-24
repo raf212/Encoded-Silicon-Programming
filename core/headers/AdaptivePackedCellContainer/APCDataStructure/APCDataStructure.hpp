@@ -3,6 +3,7 @@
 #include <array>
 #include <utility>
 #include "../PackedCell/CoreCellDefination.hpp"
+#include "../../NeuromorphicTimeSpace/CoreOf FabricCoordinator.hpp"
 
 namespace PredictedAdaptedEncoding
 {
