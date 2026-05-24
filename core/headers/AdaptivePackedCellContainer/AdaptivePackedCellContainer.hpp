@@ -77,12 +77,12 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
             PackedCellNodeAuthority node_authority
         ) noexcept;
 
-        inline bool IfValidPayloadIndex_(size_t idx) noexcept
+         bool IfValidPayloadIndex_(size_t idx) noexcept
         {
             return (BackingPtr && idx >= PayloadBegin() && idx < GetTotalCapacityForThisAPC());
         }
 
-        inline void QSBRCurThreadRegisterIfNeed_() noexcept
+         void QSBRCurThreadRegisterIfNeed_() noexcept
         {
             if (ThreadHandleAPCTL_.QSBRIdx != APCDataStructure::APC_SIZE_SENTINAL && ThreadHandleAPCTL_.WaitSlotPtr != nullptr)
             {
@@ -91,7 +91,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
             ThreadHandleAPCTL_ = PackedCellContainerManager::Instance().RegisterAPCThread();
         }
 
-        inline void QSBREnterCritical_() noexcept
+         void QSBREnterCritical_() noexcept
         {
             QSBRCurThreadRegisterIfNeed_();
             if (ThreadHandleAPCTL_.QSBRIdx == APCDataStructure::APC_SIZE_SENTINAL)
@@ -101,7 +101,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
             PackedCellContainerManager::Instance().EnterCriticalContainer(ThreadHandleAPCTL_);
         }
 
-        inline void QSBRExitCritical_() noexcept
+         void QSBRExitCritical_() noexcept
         {
             if (ThreadHandleAPCTL_.QSBRIdx == APCDataStructure::APC_SIZE_SENTINAL)
             {
@@ -182,7 +182,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
             return SegmentIODefinition::METACELL_COUNT;
         }
         
-        inline bool IfAPCBranchValid() noexcept
+         bool IfAPCBranchValid() noexcept
         {
             return (BackingPtr && PayloadCapacityFromHeader() >= MINIMUM_BRANCH_CAPACITY - PayloadBegin());
         }
@@ -229,7 +229,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
             return will_return;
         }
 
-        inline bool IfIndexValid(size_t idx) noexcept
+         bool IfIndexValid(size_t idx) noexcept
         {
             if (IfAPCBranchValid() && idx < GetTotalCapacityForThisAPC())
             {
@@ -238,7 +238,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
             return false;        
         }
 
-        inline AtomicAdaptiveBackoff* GetAtomicAdaptiveBackoffPtr() noexcept
+         AtomicAdaptiveBackoff* GetAtomicAdaptiveBackoffPtr() noexcept
         {
             return AdaptiveBackoffOfAPCPtr_;
         }
@@ -253,32 +253,32 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
             return APCManagerPtr_;
         }
 
-        inline AdaptivePackedCellContainer* LoadRegistryNextAPC() const noexcept
+         AdaptivePackedCellContainer* LoadRegistryNextAPC() const noexcept
         {
             return RegistryNextAPCPtr_.load(MoLoad_);
         }
 
-        inline void StoreRegistryNextAPC(AdaptivePackedCellContainer* apc_ptr) noexcept
+         void StoreRegistryNextAPC(AdaptivePackedCellContainer* apc_ptr) noexcept
         {
             RegistryNextAPCPtr_.store(apc_ptr, MoStoreSeq_);
         }
 
-        inline AdaptivePackedCellContainer* LoadWorkNextAPC() const noexcept
+         AdaptivePackedCellContainer* LoadWorkNextAPC() const noexcept
         {
             return WorkNextAPCPtr_.load(MoLoad_);
         }
 
-        inline void StoreWorkNextAPC(AdaptivePackedCellContainer* apc_ptr) noexcept
+         void StoreWorkNextAPC(AdaptivePackedCellContainer* apc_ptr) noexcept
         {
             WorkNextAPCPtr_.store(apc_ptr, MoStoreSeq_);
         }
 
-        inline AdaptivePackedCellContainer* LoadCleanupNextAPC() const noexcept
+         AdaptivePackedCellContainer* LoadCleanupNextAPC() const noexcept
         {
             return CleanupNextAPCPtr_.load(MoLoad_);
         }
 
-        inline void StoreCleanupNextAPC(AdaptivePackedCellContainer* apc_ptr) noexcept
+         void StoreCleanupNextAPC(AdaptivePackedCellContainer* apc_ptr) noexcept
         {
             CleanupNextAPCPtr_.store(apc_ptr, MoStoreSeq_);
         }

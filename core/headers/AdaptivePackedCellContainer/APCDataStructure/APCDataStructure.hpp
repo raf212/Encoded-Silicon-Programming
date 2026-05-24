@@ -132,7 +132,7 @@ namespace PredictedAdaptedEncoding
         static constexpr uint64_t MASK_LOW_16 = MaskLowNBits(16);
 
 
-        static inline packed64_t Compose3Unsigned16bitIndependentInMode48(
+        static  packed64_t Compose3Unsigned16bitIndependentInMode48(
             uint16_t low16_bits,
             uint16_t mid_16_bits,
             uint16_t high_16_bits,
@@ -143,7 +143,7 @@ namespace PredictedAdaptedEncoding
             return PackedCell64_t::ComposeCLK48u_64(raw48, meta16);
         }
 
-        static inline packed64_t ComposeAPCOccupancyModel_16x3_48t(
+        static  packed64_t ComposeAPCOccupancyModel_16x3_48t(
             uint16_t published_count,
             uint16_t claimed_count,
             uint16_t faulty_count,
@@ -169,7 +169,7 @@ namespace PredictedAdaptedEncoding
             );
         }
 
-        static inline std::optional<uint16_t>GetOccuupancyFromPackedCellMode48(
+        static  std::optional<uint16_t>GetOccuupancyFromPackedCellMode48(
             packed64_t packed_cell,
             PackedCellLocalityTypes desired_occupancy_bucket,
             uint16_t physical_capacity
@@ -200,7 +200,7 @@ namespace PredictedAdaptedEncoding
             }
         }
 
-        static inline uint16_t GetTootalOccupancyFromPackedCell(packed64_t packed_cell) noexcept
+        static  uint16_t GetTootalOccupancyFromPackedCell(packed64_t packed_cell) noexcept
         {
             if (!IsThisCellASubdevision_3x16_48t(packed_cell))
             {
@@ -217,7 +217,7 @@ namespace PredictedAdaptedEncoding
             return published + claimed + faulty;
         }
 
-        static inline packed64_t ComposeLayoutModelof16x3(
+        static  packed64_t ComposeLayoutModelof16x3(
             uint16_t begin_low,
             uint16_t end_mid,
             uint16_t version_high,
@@ -231,7 +231,7 @@ namespace PredictedAdaptedEncoding
             return Compose3Unsigned16bitIndependentInMode48(begin_low, end_mid, version_high, meta16);
         }
 
-        static inline bool ExtractLayoutModel_BegainL_EndM_VersionH(packed64_t packed_cell, uint16_t& begin_index, uint16_t& end_index, uint16_t& version_count) noexcept
+        static  bool ExtractLayoutModel_BegainL_EndM_VersionH(packed64_t packed_cell, uint16_t& begin_index, uint16_t& end_index, uint16_t& version_count) noexcept
         {
             if (!IsThisCellASubdevision_3x16_48t(packed_cell))
             {
@@ -243,7 +243,7 @@ namespace PredictedAdaptedEncoding
             return ExtractLowMidHighFromMode48_(raw48, begin_index, end_index, version_count);
         }
 
-        static inline bool IsCapacityOfAPCLegal(size_t total_capacity) noexcept
+        static  bool IsCapacityOfAPCLegal(size_t total_capacity) noexcept
         {
             return total_capacity > METACELL_COUNT && total_capacity <= APC_MAX_LENGTH_OR_COUNTER;
         }
@@ -254,12 +254,12 @@ namespace PredictedAdaptedEncoding
         static constexpr unsigned PACK3XU16TOMODE48_SHIFT_MID = 16u;
         static constexpr unsigned PACK3XU16TOMODE48_SHIFT_HIGH = 32u;
         
-        static inline bool DoseU32FitsInU16_(uint32_t value) noexcept
+        static bool DoseU32FitsInU16_(uint32_t value) noexcept
         {
             return value <= APC_MAX_LENGTH_OR_COUNTER;
         }
 
-        static inline uint64_t PackUnsigned16x3ToMode48_(
+        static uint64_t PackUnsigned16x3ToMode48_(
             uint16_t low16_bits,
             uint16_t mid_16_bits,
             uint16_t high_16_bits
@@ -270,33 +270,34 @@ namespace PredictedAdaptedEncoding
                 (uint64_t(high_16_bits) << PACK3XU16TOMODE48_SHIFT_HIGH);
         }
 
-        static inline uint16_t ExtractLow16FromUnsigned48_(uint64_t raw48) noexcept
+
+        static uint16_t ExtractLow16FromUnsigned48_(uint64_t raw48) noexcept
         {
             return static_cast<uint16_t>((raw48 >> PACK3XU16TOMODE48_SHIFT_LOW) & MASK_LOW_16);
         }
 
-        static inline uint16_t ExtractMid16FromUnsigned48_(uint64_t raw48) noexcept
+        static uint16_t ExtractMid16FromUnsigned48_(uint64_t raw48) noexcept
         {
             return static_cast<uint16_t>((raw48 >> PACK3XU16TOMODE48_SHIFT_MID) & MASK_LOW_16);
         }
 
-        static inline uint16_t ExtractHigh16FromUnsigned48_(uint64_t raw48) noexcept
+        static uint16_t ExtractHigh16FromUnsigned48_(uint64_t raw48) noexcept
         {
             return static_cast<uint16_t>((raw48 >> PACK3XU16TOMODE48_SHIFT_HIGH) & MASK_LOW_16);
         }
 
-        static inline uint32_t SumOf3PartOccupancyOf48Bit_(uint64_t raw48) noexcept
+        static uint32_t SumOf3PartOccupancyOf48Bit_(uint64_t raw48) noexcept
         {
             return ExtractLow16FromUnsigned48_(raw48) + ExtractMid16FromUnsigned48_(raw48) + ExtractHigh16FromUnsigned48_(raw48);
         }
 
-        static inline uint16_t DeriveIdleCoundtFromRaw48General_(uint64_t raw48, uint16_t physical_capacity) noexcept
+        static uint16_t DeriveIdleCoundtFromRaw48General_(uint64_t raw48, uint16_t physical_capacity) noexcept
         {
             const  uint32_t in_use_potion = SumOf3PartOccupancyOf48Bit_(raw48);
             return in_use_potion > physical_capacity ? UNSIGNED_ZERO : static_cast<uint16_t>(physical_capacity - in_use_potion);
         }
 
-        static inline uint16_t DerivedIdleFromPackedCell48(packed64_t packed_cell, uint16_t physical_capacity) noexcept
+        static uint16_t DerivedIdleFromPackedCell48(packed64_t packed_cell, uint16_t physical_capacity) noexcept
         {
             const uint64_t raw48 = PackedCell64_t::ExtractClk48(packed_cell);
             if (raw48 == PackedCell64_t::PACKED_CELL_SENTINAL)
@@ -306,14 +307,14 @@ namespace PredictedAdaptedEncoding
             return DeriveIdleCoundtFromRaw48General_(raw48, physical_capacity);
         }
 
-        static inline bool IsThisCellASubdevision_3x16_48t(packed64_t packed_cell) noexcept
+        static bool IsThisCellASubdevision_3x16_48t(packed64_t packed_cell) noexcept
         {
             return PackedCell64_t::ExtractModeOfPackedCellFromPacked(packed_cell) == PackedMode::MODE_CLKVAL48 &&
                 PackedCell64_t::ExtractRelOffset48FromPacked(packed_cell) == RelOffsetMode48::THREE_16_BIT_SUB_DIVISION &&
                 PackedCell64_t::ExtractLocalityFromPacked(packed_cell) != PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY;
         }
 
-        static inline bool ExtractLowMidHighFromMode48_(uint64_t raw48, uint16_t& low, uint16_t& mid, uint16_t& high)
+        static bool ExtractLowMidHighFromMode48_(uint64_t raw48, uint16_t& low, uint16_t& mid, uint16_t& high)
         {
             if (raw48 == PackedCell64_t::PACKED_CELL_SENTINAL)
             {

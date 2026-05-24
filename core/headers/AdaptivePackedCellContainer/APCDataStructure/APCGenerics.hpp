@@ -33,7 +33,7 @@ namespace PredictedAdaptedEncoding
         static constexpr uint8_t HIGH_ALL_EIGHT_NIBBLE = 0xFFu;
         static constexpr size_t SIZE_OF_APCPagedNodeRelMaskClasses = 16u;
 
-        static inline bool INewerClock16(clk16_t candidate, clk16_t baseline) noexcept
+        static  bool INewerClock16(clk16_t candidate, clk16_t baseline) noexcept
         {
             if (candidate == baseline)
             {
@@ -76,7 +76,7 @@ namespace PredictedAdaptedEncoding
                 );
         }
 
-        static inline bool IsEmbededControlCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        static  bool IsEmbededControlCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
             if (a_cell_view.PageClass == APCPagedNodeSegmentClasses::CONTROL_SLOT)
             {
@@ -86,14 +86,14 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-        static inline bool IsEmbededTimerCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        static  bool IsEmbededTimerCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
             return a_cell_view.CellMode == PackedMode::MODE_CLKVAL48 && 
                 a_cell_view.RelationOffsetForMode48.has_value() &&
                 *a_cell_view.RelationOffsetForMode48 == RelOffsetMode48::RELOFFSET_PURE_TIMER;
         }
 
-        static inline bool IsThisCellAppropriateAndGenericToConsume(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        static  bool IsThisCellAppropriateAndGenericToConsume(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
 
 
@@ -120,7 +120,7 @@ namespace PredictedAdaptedEncoding
             return true;
         }
 
-        static inline bool IsCellAppropriatelyPagedAndPublishedAsGeneric(
+        static  bool IsCellAppropriatelyPagedAndPublishedAsGeneric(
             const PackedCell64_t::AuthoritiveCellView& view,
             APCPagedNodeSegmentClasses region_kind
         ) noexcept
@@ -129,7 +129,7 @@ namespace PredictedAdaptedEncoding
                 view.PageClass == region_kind;
         }    
 
-        static inline bool IsTrackedOccupancyPageClass(APCPagedNodeSegmentClasses page_class) noexcept
+        static  bool IsTrackedOccupancyPageClass(APCPagedNodeSegmentClasses page_class) noexcept
         {
             /*
                 Occupancy-tracked means:
@@ -145,7 +145,7 @@ namespace PredictedAdaptedEncoding
                 page_class != APCPagedNodeSegmentClasses::NANNULL;
         }
 
-        static inline bool IsDataConsumablePageClass(APCPagedNodeSegmentClasses page_class) noexcept
+        static  bool IsDataConsumablePageClass(APCPagedNodeSegmentClasses page_class) noexcept
         {
             /*
                 These regions may contain normal user/runtime data.
@@ -159,7 +159,7 @@ namespace PredictedAdaptedEncoding
                 page_class != APCPagedNodeSegmentClasses::FREE_SLOT;
         }
 
-        static inline bool IsGenericPayloadOffset(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        static  bool IsGenericPayloadOffset(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
             if (!a_cell_view.IsCellValid)
             {
@@ -177,7 +177,7 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-        static inline bool DoseThisCellUpdateableAsOccupancy16x3(
+        static  bool DoseThisCellUpdateableAsOccupancy16x3(
             const PackedCell64_t::AuthoritiveCellView& occupancy_cell_view,
             PackedCellLocalityTypes desired_cell_locality = PackedCellLocalityTypes::ST_PUBLISHED
         ) noexcept
@@ -205,7 +205,7 @@ namespace PredictedAdaptedEncoding
         float InitialOrCurrentPercentage = 0u;
         uint16_t VersionNumber = 0u;
 
-        static inline MetaIndexOfAPCNode GetLayoutCellMetaIndexForPageClass(
+        static  MetaIndexOfAPCNode GetLayoutCellMetaIndexForPageClass(
             APCPagedNodeSegmentClasses page_class
         ) noexcept
         {
@@ -326,12 +326,12 @@ namespace PredictedAdaptedEncoding
             return (static_cast<uint32_t>(InitialOrCurrentPercentage) * total_payload_span) / 100u;
         }
 
-        inline bool DoseThisIndexPhysicallyExistInThisRegion(size_t index) const noexcept
+         bool DoseThisIndexPhysicallyExistInThisRegion(size_t index) const noexcept
         {
             return index >= BeginIndex && index < EndIndex;
         }
         
-        inline bool CanCellBEConsumedForThisPhysicalRegion(
+         bool CanCellBEConsumedForThisPhysicalRegion(
             packed64_t packed_cell,
             size_t idx
         ) noexcept

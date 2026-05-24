@@ -14,7 +14,7 @@ class AdaptivePackedCellContainer;
     {
         uint64_t TicksPerSec_ = A_BILLION;
 
-        inline uint64_t NowTicks() const noexcept
+         uint64_t NowTicks() const noexcept
         {
             using  cns = std::chrono::nanoseconds;
             auto d = std::chrono::steady_clock::now().time_since_epoch();
@@ -61,17 +61,17 @@ class AdaptivePackedCellContainer;
             return this;
         }
 
-        inline uint64_t NowTicks48() const noexcept
+         uint64_t NowTicks48() const noexcept
         {
             return MasterTimer48_.NowTicks();
         }
 
-        inline clk16_t GetImmidiateDownShiftedClock16(uint64_t now_ticks48) const noexcept
+         clk16_t GetImmidiateDownShiftedClock16(uint64_t now_ticks48) const noexcept
         {
             return static_cast<clk16_t>((now_ticks48 >> TimerDownShift_) & MaskLowNBits(CLK_B16));
         }
 
-        inline clk16_t NowClock16() const noexcept
+         clk16_t NowClock16() const noexcept
         {
             return GetImmidiateDownShiftedClock16(NowTicks48());
         }
@@ -79,7 +79,7 @@ class AdaptivePackedCellContainer;
         std::optional<uint64_t> ReconstructCellClock16toFull48BySegmentLocalClock48(size_t index_of_packed_cell) noexcept;
 
 
-        inline packed64_t ComposeValue32WithCurrentThreadStamp16(
+         packed64_t ComposeValue32WithCurrentThreadStamp16(
             val32_t provided_cell_value32,
             APCPagedNodeSegmentClasses desired_page_class = APCPagedNodeSegmentClasses::NONE,
             PriorityPhysics desired_priority = PriorityPhysics::IDLE,
@@ -94,7 +94,7 @@ class AdaptivePackedCellContainer;
             return PackedCell64_t::ComposeValue32u_64(provided_cell_value32, now_clock16, strlfor32);
         }
 
-        inline packed64_t ComposePureClockCell48(
+         packed64_t ComposePureClockCell48(
             PriorityPhysics desired_priority = PriorityPhysics::IDLE,
             PackedCellLocalityTypes desired_locality = PackedCellLocalityTypes::ST_PUBLISHED
         ) noexcept
@@ -110,7 +110,7 @@ class AdaptivePackedCellContainer;
             return PackedCell64_t::ComposeCLK48u_64(full_clock48, strl_for_pure48_clock);
         }
 
-        inline uint8_t SetAndGetTimerDownShift(unsigned down_shift_value = UNSIGNED_ZERO) noexcept
+         uint8_t SetAndGetTimerDownShift(unsigned down_shift_value = UNSIGNED_ZERO) noexcept
         {
             if (down_shift_value >= MIN_TIMER_DOWNSHIFT && down_shift_value <= MAX_TIMER_DOWNSHIFT)
             {

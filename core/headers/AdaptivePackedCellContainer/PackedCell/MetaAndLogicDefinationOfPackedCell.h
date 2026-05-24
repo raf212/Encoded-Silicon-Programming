@@ -161,7 +161,7 @@ namespace PredictedAdaptedEncoding {
         NANNULL     = 0xF
     };
 
-    static inline constexpr packed64_t MaskLowNBits(unsigned n) noexcept
+    static  constexpr packed64_t MaskLowNBits(unsigned n) noexcept
     {
         if (n == UNSIGNED_ZERO) return packed64_t(0);
         if (n >= BIT_LENGTH_OF_A_PACKED_CELL) return ~packed64_t(0);
@@ -194,11 +194,11 @@ namespace PredictedAdaptedEncoding {
 
 
     template<typename PCDT>
-    inline constexpr PackedCellDataType BridgeOfPackedCellDataType_v = PackedCellTypeBridge<PCDT>::DType;
+     constexpr PackedCellDataType BridgeOfPackedCellDataType_v = PackedCellTypeBridge<PCDT>::DType;
 
 
     template <typename To, typename From>
-    inline To BitCastMaybe(const From& from_address)
+     To BitCastMaybe(const From& from_address)
     {
         To out;
         if constexpr (sizeof(To) == sizeof(From))

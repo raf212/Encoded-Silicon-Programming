@@ -50,8 +50,8 @@ namespace PredictedAdaptedEncoding
         NeuromorphicSpaceTimeFabricCoordinator(const NeuromorphicSpaceTimeFabricCoordinator&) = delete;
         NeuromorphicSpaceTimeFabricCoordinator& operator = (const NeuromorphicSpaceTimeFabricCoordinator&) = delete;
 
-        
         void ShutDownFabric() noexcept;
+
     };
 
     

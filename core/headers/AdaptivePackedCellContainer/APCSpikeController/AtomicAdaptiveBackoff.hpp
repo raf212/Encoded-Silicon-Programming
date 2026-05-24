@@ -5,7 +5,7 @@
 namespace PredictedAdaptedEncoding
 {
 
-static inline void CpuRelaxHint()
+static  void CpuRelaxHint()
 {
 #if defined(_MSC_VER)
     _mm_pause();
@@ -19,11 +19,11 @@ struct SpinBackoff
     int Tries = 0;
     uint16_t MaxTries = 8;
     uint16_t MazLazySleepDurationUS = 200;
-    inline void Reset()
+     void Reset()
     {
         Tries = 0;
     }
-    inline void SpinOnce()
+     void SpinOnce()
     {
         if (Tries < MaxTries)
         {
@@ -120,8 +120,8 @@ public:
         double HazardAlpha = 0.08;    
     };
 public:
-    static inline constexpr uint8_t MIN_BIN_COUNT = 8;
-    static inline constexpr uint8_t MAX_BIN_COUNT = 64;
+    static  constexpr uint8_t MIN_BIN_COUNT = 8;
+    static  constexpr uint8_t MAX_BIN_COUNT = 64;
 
     HazardEstimatorPC() noexcept :
         HazardEstimatorPC(HECfg())
@@ -201,14 +201,14 @@ private :
     std::vector<uint64_t> HBNUpperUS_;
     uint64_t HSamples_;
 
-    inline unsigned BinIndexForUS_(uint64_t tus) const noexcept
+     unsigned BinIndexForUS_(uint64_t tus) const noexcept
     {
         unsigned i = 0;
         while(i + 1 < HBNUpperUS_.size() && tus >= HBNUpperUS_[i]) ++i;
         return i;
     }
 
-    inline uint64_t BinWidthForIndex_(unsigned idx) const noexcept
+     uint64_t BinWidthForIndex_(unsigned idx) const noexcept
     {
         if (idx == 0)
         {
@@ -269,7 +269,7 @@ private:
     SpinBackoff AdaptiveSpinBackoff_;
     std::atomic<bool>ActivityHints_{false};
 
-    static inline uint64_t JitterUS_(uint64_t base) noexcept
+    static  uint64_t JitterUS_(uint64_t base) noexcept
     {
         thread_local static std::mt19937_64 t_rand((std::random_device())());
         if (base <= 2)
@@ -298,7 +298,7 @@ private:
             C_OVER_P_ = Cfg_.CostSpinPerSec / Cfg_.CostPark;
         }
     }
-    inline uint64_t ReconstructPublishTicks_(uint64_t now_ticks, packed64_t packed, std::optional<size_t>master_clock_slot_id = std::nullopt) const noexcept
+     uint64_t ReconstructPublishTicks_(uint64_t now_ticks, packed64_t packed, std::optional<size_t>master_clock_slot_id = std::nullopt) const noexcept
     {
         if (PCMode_ == PackedMode::MODE_CLKVAL48)
         {
@@ -327,13 +327,13 @@ private:
         }
         
     }
-    inline uint64_t ReconstructPublishTicks_(packed64_t p) const noexcept
+     uint64_t ReconstructPublishTicks_(packed64_t p) const noexcept
     {
         uint64_t now = PublicTimer48.NowTicks();
         return ReconstructPublishTicks_(now, p);
     }
     
-    inline double FallbackHazard_(uint64_t age_ticks) const noexcept
+     double FallbackHazard_(uint64_t age_ticks) const noexcept
     {
         uint64_t age_us = age_ticks / 1000u; // ticks to micro sec
         double age_s = static_cast<double>(age_us) / 1e6;
