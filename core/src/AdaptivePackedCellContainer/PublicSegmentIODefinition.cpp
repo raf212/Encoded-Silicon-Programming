@@ -252,7 +252,7 @@ namespace PredictedAdaptedEncoding
         while (true)
         {
             uint32_t current_thread_count = ReadMetaCellValue32(MetaIndexOfAPCNode::CURRENT_ACTIVE_THREADS);
-            if (current_thread_count == UINT32_MAX)
+            if (current_thread_count == IN_CELL_VALUE_MODE32_SENTINAL)
             {
                 return false;
             }

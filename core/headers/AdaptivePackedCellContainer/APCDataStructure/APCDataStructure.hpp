@@ -124,7 +124,7 @@ namespace PredictedAdaptedEncoding
         static constexpr packed64_t PACKED_CELL_SENTENAL = UINT64_MAX;
         static constexpr uint32_t APC_MAX_LENGTH_OR_COUNTER = UINT16_MAX - 1;
         static constexpr uint32_t APC_INDEX_SENTINAL = UINT16_MAX;
-        static constexpr uint32_t BRANCH_SENTINAL = UINT32_MAX;
+        static constexpr uint32_t BRANCH_SENTINAL = IN_CELL_VALUE_MODE32_SENTINAL;
         static constexpr size_t APC_CACHELINE_SIZE = 64u;
         static constexpr size_t APC_SIZE_SENTINAL = SIZE_MAX;
 

@@ -42,7 +42,7 @@ namespace PredictedAdaptedEncoding
         {
             return MakeACell_(
                 PackedMode::MODE_VALUE32,
-                UINT32_MAX,
+                IN_CELL_VALUE_MODE32_SENTINAL,
                 UINT16_MAX,
                 PriorityPhysics::ERROR_FIRST,
                 PackedCellNodeAuthority::IDLE_OR_FREE,
@@ -170,7 +170,7 @@ namespace PredictedAdaptedEncoding
         {
             if (!IsPackedCellVal32(packed_cell))
             {
-                return UINT32_MAX;
+                return IN_CELL_VALUE_MODE32_SENTINAL;
             }
             return static_cast<val32_t>(packed_cell & MaskLowNBits(VALBITS));
         }
