@@ -95,7 +95,7 @@ namespace
     static ContainerConf MakeTestConfig()
     {
         ContainerConf cfg;
-        cfg.InitialMode = PackedMode::MODE_VALUE32;
+        cfg.InitialMode = PackedMode::VALUE32;
         cfg.ProducerBlockSize = 8;
         cfg.RegionSize = 16;
         cfg.EnableBranching = true;
@@ -483,8 +483,8 @@ namespace
             PackU32(clock, 0x12345678u, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, PriorityPhysics::IMPORTANT);
 
         suite.Check(
-            PackedCell64_t::ExtractModeOfPackedCellFromPacked(u32_cell) == PackedMode::MODE_VALUE32,
-            "PackedCell: MODE_VALUE32 is preserved"
+            PackedCell64_t::ExtractModeOfPackedCellFromPacked(u32_cell) == PackedMode::VALUE32,
+            "PackedCell: VALUE32 is preserved"
         );
 
         suite.Check(

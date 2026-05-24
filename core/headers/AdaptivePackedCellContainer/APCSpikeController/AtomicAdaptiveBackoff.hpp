@@ -300,7 +300,7 @@ private:
     }
      uint64_t ReconstructPublishTicks_(uint64_t now_ticks, packed64_t packed, std::optional<size_t>master_clock_slot_id = std::nullopt) const noexcept
     {
-        if (PCMode_ == PackedMode::MODE_CLKVAL48)
+        if (PCMode_ == PackedMode::CLOCK_OR_VALUE_48)
         {
             return (PackedCell64_t::ExtractClk48(packed) & MaskLowNBits(CLK_B48));
         }
@@ -346,12 +346,12 @@ private:
     /* data */
 public:
     AtomicAdaptiveBackoff() noexcept :
-        AtomicAdaptiveBackoff(PCBCfg(), PackedMode::MODE_VALUE32, nullptr)
+        AtomicAdaptiveBackoff(PCBCfg(), PackedMode::VALUE32, nullptr)
     {}
     explicit AtomicAdaptiveBackoff
                 (
                     const PCBCfg& cfg,
-                    PackedMode mode = PackedMode::MODE_VALUE32,
+                    PackedMode mode = PackedMode::VALUE32,
                     MasterClockConf* master_clock_ptr = nullptr
                 ) noexcept :
         Cfg_(cfg), PCMode_(mode), Ema_(cfg.EMACfg),

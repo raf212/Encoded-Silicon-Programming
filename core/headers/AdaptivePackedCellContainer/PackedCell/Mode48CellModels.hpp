@@ -7,7 +7,7 @@
 namespace PredictedAdaptedEncoding
 {
 
-    struct PackedModel16x3_MODE_CLKVAL48
+    struct Subdevision16x3InternalMode48CellModel
     {
         static constexpr uint64_t MASK_LOW_16 = MaskLowNBits(16);
         static constexpr unsigned PACK3XU16TOMODE48_SHIFT_LOW = 0u;
@@ -53,8 +53,8 @@ namespace PredictedAdaptedEncoding
 
         static bool IsThisCellASubdevision_3x16_48t(packed64_t packed_cell) noexcept
         {
-            return PackedCell64_t::ExtractModeOfPackedCellFromPacked(packed_cell) == PackedMode::MODE_CLKVAL48 &&
-                PackedCell64_t::ExtractRelOffset48FromPacked(packed_cell) == RelOffsetMode48::THREE_16_BIT_SUB_DIVISION &&
+            return PackedCell64_t::ExtractModeOfPackedCellFromPacked(packed_cell) == PackedMode::CLOCK_OR_VALUE_48 &&
+                PackedCell64_t::ExtractRelOffset48FromPacked(packed_cell) == RelOffsetMode48::SUBDIVISION16x3_INTERNAL_CELL_MODEL &&
                 PackedCell64_t::ExtractLocalityFromPacked(packed_cell) != PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY;
         }
 
@@ -70,6 +70,7 @@ namespace PredictedAdaptedEncoding
             return true;
         }
     };
+
 
 
 }

@@ -4,7 +4,7 @@
 namespace PredictedAdaptedEncoding
 {
 
-    class NeuromorphicSpaceTimeFabricCoordinator : private APCDataStructure
+    class NeuromorphicSpaceTimeFabricCoordinator
     {
     private:
         std::atomic<packed64_t>* SlabBasePtr_{nullptr};
@@ -12,8 +12,8 @@ namespace PredictedAdaptedEncoding
         size_t SlotCellCount_{UNSIGNED_ZERO};
         uint16_t SlotCount_{UNSIGNED_ZERO};
         uint16_t SlabId_{UNSIGNED_ZERO};
-        size_t SegmentPoolBegin_{METACELL_COUNT};
-        size_t SegmentPoolEnd_{METACELL_COUNT};
+        size_t SegmentPoolBegin_{APCDataStructure::METACELL_COUNT};
+        size_t SegmentPoolEnd_{APCDataStructure::METACELL_COUNT};
         uint32_t HashBucketCount_{UNSIGNED_ZERO};
         uint32_t RelationRecordCount_{UNSIGNED_ZERO};
         uint32_t DeviceViewRecordCount_{UNSIGNED_ZERO};

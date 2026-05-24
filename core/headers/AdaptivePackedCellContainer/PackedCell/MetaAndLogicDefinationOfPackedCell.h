@@ -109,8 +109,8 @@ namespace PredictedAdaptedEncoding {
 
     enum class PackedMode : tag8_t
     {
-        MODE_VALUE32 = 0,
-        MODE_CLKVAL48 = 1
+        VALUE32 = 0,
+        CLOCK_OR_VALUE_48 = 1
     };
 
     enum class RelOffsetMode32 : tag8_t
@@ -125,8 +125,8 @@ namespace PredictedAdaptedEncoding {
     {
         RELOFFSET_GENERIC_VALUE = 0,
         RELOFFSET_PURE_TIMER = 1,
-        THREE_16_BIT_SUB_DIVISION  = 2,
-        RESERVED = 3
+        SUBDIVISION16x3_INTERNAL_CELL_MODEL  = 2,
+        FOUR_SUBDIVISION_2x16_AND_2x8 = 3
     };
 
     enum class PriorityPhysics : tag8_t

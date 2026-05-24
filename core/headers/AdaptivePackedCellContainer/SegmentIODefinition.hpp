@@ -152,7 +152,7 @@ protected:
         uint64_t raw48_value,
         APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
         PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY,
-        RelOffsetMode48 rel_offset = RelOffsetMode48::THREE_16_BIT_SUB_DIVISION
+        RelOffsetMode48 rel_offset = RelOffsetMode48::SUBDIVISION16x3_INTERNAL_CELL_MODEL
     ) noexcept
     {
         size_t index = static_cast<size_t>(idx);
@@ -395,7 +395,7 @@ public:
     {
         const packed64_t central_occupancy_cell = ReadCentralAPCOccupancyCellForThisPagedNode();
         const uint64_t raw48 = PackedCell64_t::ExtractClk48(central_occupancy_cell);
-        bool ok = PackedModel16x3_MODE_CLKVAL48::ExtractLowMidHighFromMode48_(raw48, published_occupancy, claimed_occupancy, faulty_occupancy);
+        bool ok = Subdevision16x3InternalMode48CellModel::ExtractLowMidHighFromMode48_(raw48, published_occupancy, claimed_occupancy, faulty_occupancy);
         return ok;
     }
 

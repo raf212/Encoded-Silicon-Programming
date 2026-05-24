@@ -19,7 +19,7 @@ namespace PredictedAdaptedEncoding
         SlabCellCount_ = UNSIGNED_ZERO;
         SlotCellCount_ = UNSIGNED_ZERO;
         SlotCount_ = UNSIGNED_ZERO;
-        SlabId_ = BRANCH_VERSION;
+        SlabId_ = APCDataStructure::BRANCH_VERSION;
         SegmentPoolBegin_ = MINIMUM_BRANCH_CAPACITY;
         SegmentPoolEnd_ = MINIMUM_BRANCH_CAPACITY;
         HashBucketCount_ = UNSIGNED_ZERO;
