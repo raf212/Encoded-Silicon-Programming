@@ -285,7 +285,7 @@ namespace PredictedAdaptedEncoding
         ) noexcept;
 
         using FreeFunction = void (*)(
-            std::atomic<packed64_t>* Packed_cell_storage_ptr, 
+            std::atomic<packed64_t>* packed_cell_storage_ptr, 
             size_t count_of_cell, size_t alignment, void*user
         ) noexcept;
 
@@ -293,6 +293,28 @@ namespace PredictedAdaptedEncoding
         FreeFunction FreePackedCellStorage{nullptr};
         void* User{nullptr};
         size_t Alignment{BIT_LENGTH_OF_A_PACKED_CELL};
+
+        static void DefaultFreeAtomicCells(
+            std::atomic<packed64_t>* packed_cell_storage_ptr, 
+            size_t count_of_cell, size_t alignment, void*
+        ) noexcept
+        {
+            if (!packed_cell_storage_ptr)
+            {
+                return;
+            }
+            for (size_t i = 0; i < count_of_cell; i++)
+            {
+                packed_cell_storage_ptr[i].~atomic<packed64_t>();
+
+            }
+
+            if (alignment < alignof(std::atomic<packed64_t>))
+            {
+                alignment = alignof(std::atomic<packed64_t>);
+            }
+            ::operator delete[](packed_cell_storage_ptr, std::align_val_t(alignment));
+        }
     };
 
 
