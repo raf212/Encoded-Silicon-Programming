@@ -1,5 +1,5 @@
 #pragma once 
-#include "../AdaptivePackedCellContainer/SegmentIODefinition.hpp"
+#include "CoreOfFabricCoordinator.hpp"
 
 namespace PredictedAdaptedEncoding
 {
