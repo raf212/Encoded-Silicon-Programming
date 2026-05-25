@@ -33,40 +33,6 @@ namespace PredictedAdaptedEncoding
         RETIRED_SEGMENT_OF_FABRIC = 9,
         UNDEFINED_SEGMENT_OF_FABRIC = 10
     };
-
-    static constexpr APCPagedNodeSegmentClasses ConvertFabricToIOLinkerAsSegmentClasses(FabricToIoLinkerClasses fabric_class) noexcept
-    {
-        switch (fabric_class)
-        {
-            case FabricToIoLinkerClasses::META_DATA : 
-            case FabricToIoLinkerClasses::DIRECTORY :
-                return APCPagedNodeSegmentClasses::CONTROL_SLOT;
-            
-            case FabricToIoLinkerClasses::SLOT_TABLE :
-                return APCPagedNodeSegmentClasses::SLOT_TABLE_DESCRIPTOR;
-
-            case FabricToIoLinkerClasses::HASH_TABLE :
-            case FabricToIoLinkerClasses::RELATION_TABLE :
-                return APCPagedNodeSegmentClasses::EDGE_DESCRIPTOR;
-
-            case FabricToIoLinkerClasses::QUEUE_TABLE :
-                return APCPagedNodeSegmentClasses::AUX_SLOT;
-            
-            case FabricToIoLinkerClasses::DEVICE_VIEW:
-                return APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT;
-            
-            case FabricToIoLinkerClasses::SEGMENT_POOL:
-                return APCPagedNodeSegmentClasses::FREE_SLOT;
-            
-            case FabricToIoLinkerClasses::RETIRED_SEGMENT_OF_FABRIC:
-            case FabricToIoLinkerClasses::UNDEFINED_SEGMENT_OF_FABRIC:
-                return APCPagedNodeSegmentClasses::UNDEFINED;
-
-            default:
-                return APCPagedNodeSegmentClasses::NONE;
-        }
-    }
-
     
     enum class HandleStateOfAOCFabric : uint8_t
     {
@@ -76,73 +42,6 @@ namespace PredictedAdaptedEncoding
         RELATION_RECORD = 0x3u,
         DEVICE_VIEW = 0x4u,
         RETIRED_SLOT = 0x5u
-    };
-
-    enum class FabricMetaIndicies : size_t
-    {
-        MAGIC = 0,
-        VERSION = 1,
-        FLAGS = 2,
-        SLAB_ID = 3,
-        TOTAL_CELLS = 4,
-        CONTROL_CELLS_OF_FABRIC = 5,
-        SLOT_COUNT = 6,
-        SLOT_CELL_COUNT = 7,
-        SEGMENT_POOL_BEGIN_IDX = 8,
-        SEGMENT_POOL_END_IDX = 9,
-        
-        FREE_SLOT_HEAD = 10,
-        RETIRE_SLOT_HEAD = 11,
-        RELATION_FREE_HEAD = 12,
-
-        GLOBAL_EPOCH_LOW32 = 13,
-        GLOBAL_EPOCH_HIGH32 = 14,
-        MIN_SAFE_EPOCH_LOW32 = 15,
-        MIN_SAFE_EPOCH_HIGH32 = 16,
-
-        NEXT_BRANCH_ID = 17,
-        NEXT_RELATION_ID = 18,
-        NEXT_DEVICE_VIEW_ID = 19,
-        FABRIC_CLOCK16 = 20,
-
-        WORK_RETIRE_CURSOR = 21,
-        WORK_READ_CURSOR = 22,
-        READY_WRITE_CURSOR = 23,
-        READY_READ_CURSOR = 24,
-
-        TABLE_DIRECTORY_BEGIN = 25,
-        TABLE_DIRECTORY_END = 26,
-        TABLE_COUNT = 27,
-        TABLE_DIRECTORY_VERSION = 28,
-
-        FABRIC_OCCUPANCY_3x16_MODEl48 = 29,
-        CAS_FAILURE_COUNT = 30,
-        ERROR_COUNT = 31,
-        RETIRED_COUYNT = 32,
-        LIVE_SLOT_COUNT = 33,
-
-        HASH_TOMBSTONE_COUNT = 34,
-        HASH_COMPACTION_COUNT = 35,
-        WORK_QUEUE_OCCUPANCY = 36,
-        READY_QUEUE_OCCUPANCY = 37,
-
-        BACKOFF_SPIN_LIMIT = 38,
-        BACKOFF_YIELD_LIMIT = 39,
-        INITIALIZATION_STATE = 40,
-        HAS_COMPACTION_INFLIGHT = 41,
-        RELATION_RECLAIM_COUNT = 42,
-        WORK_QUEUE_DROPPED_COUNT = 43,
-        THREAD_TABLE_CAPACITY = 44,
-        THREAD_ACTIVE_COUNT = 45,
-        THREAD_REGISTRATION_FAILURE = 46,
-        RELATION_TOMBSTONE_COUNT = 47,
-        RELATION_UNLINK_FAILURES = 48,
-        WORK_QUEUE_CLAIM = 49,
-
-        RESERVED_50 = 50,
-
-        EOF_FABRIC_HEADER = 95
-
     };
 
     enum class TableIdOfAPCFabric : uint16_t //14
@@ -317,5 +216,103 @@ namespace PredictedAdaptedEncoding
         }
     };
 
+    static constexpr APCPagedNodeSegmentClasses ConvertFabricToIOLinkerAsSegmentClasses(FabricToIoLinkerClasses fabric_class) noexcept
+    {
+        switch (fabric_class)
+        {
+            case FabricToIoLinkerClasses::META_DATA : 
+            case FabricToIoLinkerClasses::DIRECTORY :
+                return APCPagedNodeSegmentClasses::CONTROL_SLOT;
+            
+            case FabricToIoLinkerClasses::SLOT_TABLE :
+                return APCPagedNodeSegmentClasses::SLOT_TABLE_DESCRIPTOR;
 
+            case FabricToIoLinkerClasses::HASH_TABLE :
+            case FabricToIoLinkerClasses::RELATION_TABLE :
+                return APCPagedNodeSegmentClasses::EDGE_DESCRIPTOR;
+
+            case FabricToIoLinkerClasses::QUEUE_TABLE :
+                return APCPagedNodeSegmentClasses::AUX_SLOT;
+            
+            case FabricToIoLinkerClasses::DEVICE_VIEW:
+                return APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT;
+            
+            case FabricToIoLinkerClasses::SEGMENT_POOL:
+                return APCPagedNodeSegmentClasses::FREE_SLOT;
+            
+            case FabricToIoLinkerClasses::RETIRED_SEGMENT_OF_FABRIC:
+            case FabricToIoLinkerClasses::UNDEFINED_SEGMENT_OF_FABRIC:
+                return APCPagedNodeSegmentClasses::UNDEFINED;
+
+            default:
+                return APCPagedNodeSegmentClasses::NONE;
+        }
+    }
+
+    enum class FabricMetaIndicies : size_t
+    {
+        MAGIC = 0,
+        VERSION = 1,
+        FLAGS = 2,
+        SLAB_ID = 3,
+        TOTAL_CELLS = 4,
+        CONTROL_CELLS_OF_FABRIC = 5,
+        SLOT_COUNT = 6,
+        SLOT_CELL_COUNT = 7,
+        SEGMENT_POOL_BEGIN_IDX = 8,
+        SEGMENT_POOL_END_IDX = 9,
+        
+        FREE_SLOT_HEAD = 10,
+        RETIRE_SLOT_HEAD = 11,
+        RELATION_FREE_HEAD = 12,
+
+        GLOBAL_EPOCH_LOW32 = 13,
+        GLOBAL_EPOCH_HIGH32 = 14,
+        MIN_SAFE_EPOCH_LOW32 = 15,
+        MIN_SAFE_EPOCH_HIGH32 = 16,
+
+        NEXT_BRANCH_ID = 17,
+        NEXT_RELATION_ID = 18,
+        NEXT_DEVICE_VIEW_ID = 19,
+        FABRIC_CLOCK16 = 20,
+
+        WORK_RETIRE_CURSOR = 21,
+        WORK_READ_CURSOR = 22,
+        READY_WRITE_CURSOR = 23,
+        READY_READ_CURSOR = 24,
+
+        TABLE_DIRECTORY_BEGIN = 25,
+        TABLE_DIRECTORY_END = 26,
+        TABLE_COUNT = 27,
+        TABLE_DIRECTORY_VERSION = 28,
+
+        FABRIC_OCCUPANCY_3x16_MODEl48 = 29,
+        CAS_FAILURE_COUNT = 30,
+        ERROR_COUNT = 31,
+        RETIRED_COUYNT = 32,
+        LIVE_SLOT_COUNT = 33,
+
+        HASH_TOMBSTONE_COUNT = 34,
+        HASH_COMPACTION_COUNT = 35,
+        WORK_QUEUE_OCCUPANCY = 36,
+        READY_QUEUE_OCCUPANCY = 37,
+
+        BACKOFF_SPIN_LIMIT = 38,
+        BACKOFF_YIELD_LIMIT = 39,
+        INITIALIZATION_STATE = 40,
+        HAS_COMPACTION_INFLIGHT = 41,
+        RELATION_RECLAIM_COUNT = 42,
+        WORK_QUEUE_DROPPED_COUNT = 43,
+        THREAD_TABLE_CAPACITY = 44,
+        THREAD_ACTIVE_COUNT = 45,
+        THREAD_REGISTRATION_FAILURE = 46,
+        RELATION_TOMBSTONE_COUNT = 47,
+        RELATION_UNLINK_FAILURES = 48,
+        WORK_QUEUE_CLAIM = 49,
+
+        RESERVED_50 = 50,
+
+        EOF_FABRIC_HEADER = 95
+
+    };
 }

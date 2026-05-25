@@ -118,7 +118,7 @@ namespace PredictedAdaptedEncoding {
         RELOFFSET_GENERIC_VALUE = 0,
         RELOFFSET_TAIL_PTR = 1,
         REL_OFFSET_HEAD_PTR = 2,
-        RESERVED = 3
+        SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 = 3
     };
 
     enum class RelOffsetMode48 : tag8_t
