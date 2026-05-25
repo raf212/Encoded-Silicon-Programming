@@ -2,7 +2,7 @@
 #pragma once 
 #include <array>
 #include <utility>
-#include "../PackedCell/Mode48CellModels.hpp"
+#include "../PackedCell/InternalCellModes/Mode48CellModels.hpp"
 
 namespace PredictedAdaptedEncoding
 {
