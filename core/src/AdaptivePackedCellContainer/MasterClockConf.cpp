@@ -13,7 +13,7 @@ namespace PredictedAdaptedEncoding
         const clk16_t now_clk16 = GetImmidiateDownShiftedClock16(now_ticks48);
 
         const PriorityPhysics priority_of_provided_cell = PackedCell64_t::ExtractPriorityFromPacked(provided_packed_cell);
-        const PackedCellNodeAuthority node_authority = PackedCell64_t::ExtractNodeAuthorityFromPacked(provided_packed_cell);
+        const PackedCellOwnership node_authority = PackedCell64_t::ExtractNodeAuthorityFromPacked(provided_packed_cell);
         PackedCellLocalityTypes locality_of_provided_cell = PackedCell64_t::ExtractLocalityFromPacked(provided_packed_cell);
         if (override_locality.has_value())
         {

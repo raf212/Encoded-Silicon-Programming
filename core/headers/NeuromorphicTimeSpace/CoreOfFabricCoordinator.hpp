@@ -9,13 +9,15 @@ namespace PredictedAdaptedEncoding
     static constexpr uint32_t DEFAULT_HAS_CONST_1 = 0x7feb352du;
     static constexpr uint32_t DEFAULT_HAS_CONST_2 = 0x846ca68bu;
 
-    static constexpr size_t FABRIC_CONTROLIO_LENGTH = 4096u;
+    static constexpr size_t DEFAULT_FABRIC_CONTROLIO_LENGTH = 1024u;
     static constexpr size_t TABLE_ENTRY_WIDTH_OF_FABRIC = 4u;
     static constexpr size_t HASH_BUCKED_WIDTH_OF_FABRIC = 2u;
     static constexpr size_t SLOT_RECORD_WIDTH_OF_FABRIC = 12u;
     static constexpr size_t RELATION_WIDTH_OF_FABRIC = 8u;
     static constexpr size_t QUEUE_RECORD_WIDTH_OF_FABRIC = 2u;
     static constexpr size_t WORK_RECORD_WIDTH_OF_FABRIC = 4u;
+    static constexpr size_t DEVICE_VIEW_WIDTH_OF_APC_FABRIC = 8u;
+    static constexpr size_t THREAD_TABLE_RECORD_WIDTH = 4u;
     static constexpr size_t DEFAULT_THREAD_SLOT_OF_FABRIC = 256u;
 
 
@@ -34,7 +36,7 @@ namespace PredictedAdaptedEncoding
         UNDEFINED_SEGMENT_OF_FABRIC = 10
     };
     
-    enum class HandleStateOfAOCFabric : uint8_t
+    enum class HandleStateOfAPCFabric : uint8_t
     {
         NONE = 0x0u,
         APC_SEGMENT = 0x1u,

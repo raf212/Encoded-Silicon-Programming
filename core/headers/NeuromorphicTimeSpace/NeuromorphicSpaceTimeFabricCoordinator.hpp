@@ -36,7 +36,14 @@ namespace PredictedAdaptedEncoding
 
         void FreeAtomicCells_(std::atomic<packed64_t>* packed_cell_memory_ptr) noexcept;
 
-        void ResetScalarsofTheFabric() noexcept;
+        void ResetScalarsofTheFabric_() noexcept;
+        uint32_t NextPowerOf2Unsigned32_(uint32_t given_value) noexcept;
+
+        static constexpr size_t DefaultFabricAlignment16Cell_(size_t value) noexcept
+        {
+            const uint8_t alignment_value_15 = 16 - 1;
+            return (value + alignment_value_15) & ~static_cast<size_t>(alignment_value_15);
+        }
 
 
     public:
@@ -51,6 +58,15 @@ namespace PredictedAdaptedEncoding
         NeuromorphicSpaceTimeFabricCoordinator& operator = (const NeuromorphicSpaceTimeFabricCoordinator&) = delete;
 
         void ShutDownFabric() noexcept;
+
+
+
+        bool InitializeFabric(
+            uint16_t slot_count,
+            size_t slot_cell_count = MINIMUM_BRANCH_CAPACITY,
+            uint8_t slab_id = APCDataStructure::BRANCH_VERSION,
+            uint32_t fabric_thread_capacity = DEFAULT_THREAD_SLOT_OF_FABRIC
+        ) noexcept;
 
     };
 

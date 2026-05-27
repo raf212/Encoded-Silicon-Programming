@@ -45,7 +45,7 @@ namespace PredictedAdaptedEncoding
         APCPagedNodeSegmentClasses page_class,
         RelOffsetMode48 reloffset,
         PackedCellDataType dtype,
-        PackedCellNodeAuthority node_authority
+        PackedCellOwnership node_authority
     ) noexcept
     {
         if ((reloffset != RelOffsetMode48::RELOFFSET_PURE_TIMER))

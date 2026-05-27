@@ -13,7 +13,7 @@ namespace PredictedAdaptedEncoding
         free_function(packed_cell_memory_ptr, SlabCellCount_, alignment, AllocatorOfFabric_.User);
     }
 
-    void NeuromorphicSpaceTimeFabricCoordinator::ResetScalarsofTheFabric() noexcept
+    void NeuromorphicSpaceTimeFabricCoordinator::ResetScalarsofTheFabric_() noexcept
     {
         SlabBasePtr_ = nullptr;
         SlabCellCount_ = UNSIGNED_ZERO;
@@ -31,6 +31,22 @@ namespace PredictedAdaptedEncoding
             table_cache = CacheEntryOfFabricTable{};
         }
         FabricInitialized_.store(false, MoStoreSeq_);
+    }
+
+    uint32_t NeuromorphicSpaceTimeFabricCoordinator::NextPowerOf2Unsigned32_(uint32_t given_value) noexcept
+    {
+        if (given_value <= 2u)
+        {
+            return 2u;
+        }
+        --given_value;
+        given_value |= given_value >> 1u;
+        given_value |= given_value >> 2u;
+        given_value |= given_value >> 4u;
+        given_value |= given_value >> 8u;
+        given_value |= given_value >> 16u;
+
+        return given_value + 1u;
     }
 
 

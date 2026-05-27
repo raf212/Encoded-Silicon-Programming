@@ -45,13 +45,13 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         std::optional<packed64_t> TryConsumeAndIdleFromRegionLocal_(
             APCPagedNodeSegmentClasses region_kind, size_t& scan_cursor,
-            PackedCellNodeAuthority desired_authority_of_updated_cell = PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT
+            PackedCellOwnership desired_authority_of_updated_cell = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
         ) noexcept;
 
         PublishResult TryPublishToRegionLocal_(
             packed64_t packed_cell_for_publish, 
             APCPagedNodeSegmentClasses region_kind = APCPagedNodeSegmentClasses::FREE_SLOT,
-            PackedCellNodeAuthority node_authority = PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT,
+            PackedCellOwnership node_authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
             uint16_t max_tries = APC_MAX_LENGTH_OR_COUNTER / (APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses)
         ) noexcept;
 
@@ -74,7 +74,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
         packed64_t NormalizeDesiredPublishedCellForRegion_(
             packed64_t out_going_cell,
             APCPagedNodeSegmentClasses region_kind,
-            PackedCellNodeAuthority node_authority
+            PackedCellOwnership node_authority
         ) noexcept;
 
          bool IfValidPayloadIndex_(size_t idx) noexcept
@@ -143,7 +143,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         PublishResult PublishCellByRegionMAskTraverseStartsFromThisAPC(
             APCPagedNodeSegmentClasses region_kind, packed64_t cell_to_publish, 
-            PackedCellNodeAuthority authority = PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT,
+            PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
             std::optional<uint16_t> max_tries = std::nullopt
         ) noexcept;
 

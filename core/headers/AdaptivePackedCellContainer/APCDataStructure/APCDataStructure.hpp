@@ -137,7 +137,7 @@ namespace PredictedAdaptedEncoding
             APCPagedNodeSegmentClasses page_class,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_PUBLISHED,
             PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY,
-            PackedCellNodeAuthority authority = PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT
+            PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
         ) noexcept
         {
             const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(
@@ -211,7 +211,7 @@ namespace PredictedAdaptedEncoding
             APCPagedNodeSegmentClasses page_class,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_PUBLISHED,
             PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY,
-            PackedCellNodeAuthority authority = PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT
+            PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
         ) noexcept
         {
             const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(priority, authority, locality, page_class, RelOffsetMode48::SUBDIVISION16x3_INTERNAL_CELL_MODEL, PackedCellDataType::UnsignedPCellDataType);

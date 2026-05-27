@@ -203,7 +203,7 @@ namespace
             PackedCellLocalityTypes::ST_PUBLISHED,
             RelOffsetMode32::RELOFFSET_GENERIC_VALUE,
             PackedCellDataType::FloatPCellDataType,
-            PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM
+            PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
         );
     }
 

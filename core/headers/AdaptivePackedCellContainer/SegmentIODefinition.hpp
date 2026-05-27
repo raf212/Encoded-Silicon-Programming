@@ -120,7 +120,7 @@ protected:
         APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::NONE,
         RelOffsetMode32 reloffset_mode32 = RelOffsetMode32::RELOFFSET_GENERIC_VALUE,
         PackedCellDataType dtype = PackedCellDataType::UnsignedPCellDataType,
-        PackedCellNodeAuthority node_authority = PackedCellNodeAuthority::IDLE_OR_FREE
+        PackedCellOwnership node_authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
     ) noexcept
     {
         if (OwnedMasterClockConfPtr_)
@@ -160,7 +160,7 @@ protected:
         {
             return;
         }
-        const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(priority, PackedCellNodeAuthority::IDLE_OR_FREE, PackedCellLocalityTypes::ST_PUBLISHED, page_class, rel_offset);
+        const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(priority, PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER, PackedCellLocalityTypes::ST_PUBLISHED, page_class, rel_offset);
         const packed64_t packed_cell = PackedCell64_t::ComposeCLK48u_64(raw48_value & MaskLowNBits(CLK_B48), meta16);
         BackingPtr[index].store(packed_cell, MoStoreSeq_);
         BackingPtr[index].notify_all();
@@ -186,7 +186,7 @@ public:
         APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
         RelOffsetMode48 reloffset = RelOffsetMode48::RELOFFSET_PURE_TIMER,
         PackedCellDataType dtype = PackedCellDataType::UnsignedPCellDataType,
-        PackedCellNodeAuthority node_authority = PackedCellNodeAuthority::IDLE_OR_FREE
+        PackedCellOwnership node_authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
     ) noexcept;
 
     void WriteOrUpdateMetaClock48(PriorityPhysics priority = PriorityPhysics::IDLE, std::optional<uint64_t>meta_clock_48 = std::nullopt) noexcept;

@@ -161,7 +161,7 @@ namespace PredictedAdaptedEncoding
 
     std::optional<packed64_t> AdaptivePackedCellContainer::TryConsumeAndIdleFromRegionLocal_(
         APCPagedNodeSegmentClasses region_kind, size_t& scan_cursor,
-        PackedCellNodeAuthority desired_authority_of_updated_cell
+        PackedCellOwnership desired_authority_of_updated_cell
     ) noexcept
     {
         (void) desired_authority_of_updated_cell;
@@ -264,7 +264,7 @@ namespace PredictedAdaptedEncoding
     PublishResult AdaptivePackedCellContainer::TryPublishToRegionLocal_(
         packed64_t packed_cell_for_publish, 
         APCPagedNodeSegmentClasses region_kind,
-        PackedCellNodeAuthority node_authority, 
+        PackedCellOwnership node_authority, 
         uint16_t max_tries
     ) noexcept
     {
@@ -494,7 +494,7 @@ namespace PredictedAdaptedEncoding
     packed64_t AdaptivePackedCellContainer::NormalizeDesiredPublishedCellForRegion_(
         packed64_t out_going_cell,
         APCPagedNodeSegmentClasses region_kind,
-        PackedCellNodeAuthority node_authority
+        PackedCellOwnership node_authority
     ) noexcept
     {
         out_going_cell = PackedCell64_t::SetPageClassInPacked(out_going_cell, region_kind);

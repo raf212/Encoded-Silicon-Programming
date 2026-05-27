@@ -12,8 +12,6 @@ namespace PredictedAdaptedEncoding
         static constexpr unsigned MID_4BIT_SHIFT = 8u;
         static constexpr unsigned HIGHIEST_4bit_SHIFT = 12u;
 
-        static constexpr uint16_t MASK_LOW_4 = 0xF;
-
         static packed64_t ComposeMode32WithThreeClock16Subdivision(
             uint32_t value32,
             uint8_t lowest_8_bit_of_clock16,
@@ -49,12 +47,12 @@ namespace PredictedAdaptedEncoding
 
         static uint8_t ExtractMid4Bit_(uint16_t raw16) noexcept
         {
-            return static_cast<uint8_t>((raw16 >>MID_4BIT_SHIFT) & MASK_LOW_4);
+            return static_cast<uint8_t>((raw16 >>MID_4BIT_SHIFT) & Subdivision2x16Plus2x8InternalMode48CellModel::MASK_LOW_4);
         }
 
         static uint8_t ExtractHighiest4Bit_(uint16_t raw16) noexcept
         {
-            return static_cast<uint8_t>((raw16 >>HIGHIEST_4bit_SHIFT) & MASK_LOW_4);
+            return static_cast<uint8_t>((raw16 >>HIGHIEST_4bit_SHIFT) & Subdivision2x16Plus2x8InternalMode48CellModel::MASK_LOW_4);
         }
 
         static bool IsThisCellA32BitMetaNoClock16Mode32(packed64_t packed_cell) noexcept

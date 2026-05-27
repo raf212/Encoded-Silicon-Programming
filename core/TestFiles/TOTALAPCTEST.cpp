@@ -120,7 +120,7 @@ namespace
             PackedCellLocalityTypes::ST_PUBLISHED,
             RelOffsetMode32::RELOFFSET_GENERIC_VALUE,
             PackedCellDataType::UnsignedPCellDataType,
-            PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT
+            PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
         );
     }
 
@@ -140,7 +140,7 @@ namespace
             PackedCellLocalityTypes::ST_PUBLISHED,
             RelOffsetMode32::RELOFFSET_GENERIC_VALUE,
             PackedCellDataType::FloatPCellDataType,
-            PackedCellNodeAuthority::CAUSAL_LINIAR_SAGMENT
+            PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
         );
     }
 

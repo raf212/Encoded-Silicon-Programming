@@ -87,16 +87,12 @@ namespace PredictedAdaptedEncoding {
         ST_EXCEPTION_BIT_FAULTY = 3
     };
 
-
-    static constexpr tag8_t REL_ALL_LOW_4   = static_cast<tag8_t>(RELMASK_MASK);
-    static constexpr tag8_t REL_MASK4_NONE = 0;
-
-    enum class PackedCellNodeAuthority : tag8_t
+    enum class PackedCellOwnership : tag8_t
     {
-        IDLE_OR_FREE = 0,
-        CAUSAL_LINIAR_SAGMENT = 1,
-        NEUROMORPHIC_PAGED_GRAPH = 2,
-        BIDIRECTIONAL_NEUROMORPHIC_SYSTEM = 3
+        ADAPTIVE_PACKED_CELL_CONTAINER = 0,
+        NEUROMORPHIC_SPACE_TIME_FABRIC = 1,
+        RESERVED_2 = 2,
+        RESERVED_3 = 3
     };
 
     enum class PackedCellDataType : tag8_t
