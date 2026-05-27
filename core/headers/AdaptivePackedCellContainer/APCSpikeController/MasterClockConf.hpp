@@ -82,8 +82,8 @@ class AdaptivePackedCellContainer;
             val32_t provided_cell_value32,
             APCPagedNodeSegmentClasses desired_page_class = APCPagedNodeSegmentClasses::NONE,
             PriorityPhysics desired_priority = PriorityPhysics::IDLE,
-            PackedCellLocalityTypes desired_locality = PackedCellLocalityTypes::ST_PUBLISHED,
-            SubClassesOfMode32 desired_reloffset = SubClassesOfMode32::RELOFFSET_GENERIC_VALUE,
+            PackedCellLocalityTypes desired_locality = PackedCellLocalityTypes::PUBLISHED,
+            SubClassesOfMode32 desired_reloffset = SubClassesOfMode32::SELF_CLASS,
             PackedCellDataType desired_dtype = PackedCellDataType::UnsignedPCellDataType,
             PackedCellOwnership desired_node_authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
         )
@@ -95,7 +95,7 @@ class AdaptivePackedCellContainer;
 
          packed64_t ComposePureClockCell48(
             PriorityPhysics desired_priority = PriorityPhysics::IDLE,
-            PackedCellLocalityTypes desired_locality = PackedCellLocalityTypes::ST_PUBLISHED
+            PackedCellLocalityTypes desired_locality = PackedCellLocalityTypes::PUBLISHED
         ) noexcept
         {
             const uint64_t full_clock48 = NowTicks48();
@@ -103,7 +103,7 @@ class AdaptivePackedCellContainer;
                                 PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
                                 desired_locality, 
                                 APCPagedNodeSegmentClasses::CONTROL_SLOT,
-                                SubClassesOfMode48::RELOFFSET_PURE_TIMER,
+                                SubClassesOfMode48::PURE_TIMER_48,
                                 PackedCellDataType::UnsignedPCellDataType
                             );
             return PackedCell64_t::ComposeCLK48u_64(full_clock48, strl_for_pure48_clock);

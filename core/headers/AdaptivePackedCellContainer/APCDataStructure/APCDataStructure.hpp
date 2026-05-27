@@ -135,7 +135,7 @@ namespace PredictedAdaptedEncoding
             uint16_t claimed_count,
             uint16_t faulty_count,
             APCPagedNodeSegmentClasses page_class,
-            PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_PUBLISHED,
+            PackedCellLocalityTypes locality = PackedCellLocalityTypes::PUBLISHED,
             PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY,
             PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
         ) noexcept
@@ -174,13 +174,13 @@ namespace PredictedAdaptedEncoding
             
             switch (desired_occupancy_bucket)
             {
-            case PackedCellLocalityTypes::ST_PUBLISHED :
+            case PackedCellLocalityTypes::PUBLISHED :
                 return Subdevision16x3InternalMode48CellModel::ExtractLow16FromUnsigned48_(raw48);
-            case PackedCellLocalityTypes::ST_CLAIMED :
+            case PackedCellLocalityTypes::CLAIMED :
                 return Subdevision16x3InternalMode48CellModel::ExtractMid16FromUnsigned48_(raw48);
-            case PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY :
+            case PackedCellLocalityTypes::FAULTY :
                 return Subdevision16x3InternalMode48CellModel::ExtractHigh16FromUnsigned48_(raw48);
-            case PackedCellLocalityTypes::ST_IDLE :
+            case PackedCellLocalityTypes::IDLE :
                 return DerivedIdleFromPackedCell48(packed_cell, physical_capacity);
             default:
                 return std::nullopt;
@@ -209,7 +209,7 @@ namespace PredictedAdaptedEncoding
             uint16_t end_mid,
             uint16_t version_high,
             APCPagedNodeSegmentClasses page_class,
-            PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_PUBLISHED,
+            PackedCellLocalityTypes locality = PackedCellLocalityTypes::PUBLISHED,
             PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY,
             PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
         ) noexcept

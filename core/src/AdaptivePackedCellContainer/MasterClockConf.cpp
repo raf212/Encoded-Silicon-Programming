@@ -23,7 +23,7 @@ namespace PredictedAdaptedEncoding
                         PackedCell64_t::ExtractRelMaskFromPacked(provided_packed_cell) : force_rel_mask;
         const PackedCellDataType dtype_of_provided_cell = PackedCell64_t::ExtractPCellDataTypeFromPacked(provided_packed_cell);
         const PackedMode mode_of_provided_cell = PackedCell64_t::ExtractModeOfPackedCellFromPacked(provided_packed_cell);
-        if (mode_of_provided_cell == PackedMode::VALUE32)
+        if (mode_of_provided_cell == PackedMode::MODE_32)
         {
             const val32_t value32_of_provided_cell = PackedCell64_t::ExtractValue32(provided_packed_cell);
             const SubClassesOfMode32 reloffset32_of_provided_cell = PackedCell64_t::ExtractRelOffset32FromPacked(provided_packed_cell);
@@ -36,7 +36,7 @@ namespace PredictedAdaptedEncoding
 
         const SubClassesOfMode48 reloffset48_of_provided_cell = PackedCell64_t::ExtractRelOffset48FromPacked(provided_packed_cell);
         
-        if (reloffset48_of_provided_cell == SubClassesOfMode48::RELOFFSET_PURE_TIMER)
+        if (reloffset48_of_provided_cell == SubClassesOfMode48::PURE_TIMER_48)
         {
             return PackedCell64_t::ComposeCLK48u_64(
                 now_ticks48,

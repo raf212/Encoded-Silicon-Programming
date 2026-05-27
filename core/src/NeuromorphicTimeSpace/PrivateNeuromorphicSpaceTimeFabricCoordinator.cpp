@@ -51,24 +51,55 @@ namespace PredictedAdaptedEncoding
 
     void NeuromorphicSpaceTimeFabricCoordinator::StorePackedCellUnchecked_(size_t idx, packed64_t packed_cell) noexcept
     {
-        if (!SlabBasePtr_ || idx  >= SlabCellCount_)
-        {
-            return;
-        }
         SlabBasePtr_[idx].store(packed_cell, MoStoreSeq_);
         SlabBasePtr_[idx].notify_all();
     }
 
-    void NeuromorphicSpaceTimeFabricCoordinator::StoreAValidPackedCell_(size_t idx, packed64_t packed_cell) noexcept
+    bool NeuromorphicSpaceTimeFabricCoordinator::StoreAValidPackedCell_(size_t idx, packed64_t packed_cell) noexcept
     {
         if (!PackedCell64_t::IsThisCellValid(packed_cell))
         {
-            return;
+            return false;
         }
+
+        if (!SlabBasePtr_ || idx  >= SlabCellCount_)
+        {
+            return false;
+        }
+
         StorePackedCellUnchecked_(idx, packed_cell);
+
+        return true;
     }
 
-    
+    bool NeuromorphicSpaceTimeFabricCoordinator::StoreAValidFabricMetaCellOnly_(
+        FabricMetaIndicies fabric_meta_idx, uint64_t value32_or_64, 
+        PackedMode cell_mode, tag8_t mode_sub_class,PackedCellDataType cell_data_type, 
+        PackedCellLocalityTypes locality_of_cell, PriorityPhysics priority, clk16_t extended_meta_value
+    ) noexcept
+    {
+        const packed64_t a_valid_fabric_meta_cell32 = PackedCell64_t::MakeInitialValidPackedCell(
+            cell_mode, locality_of_cell, PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC,
+            APCPagedNodeSegmentClasses::CONTROL_SLOT, cell_data_type, value32_or_64, extended_meta_value,
+            priority,(cell_mode == PackedMode::MODE_32) ? static_cast<SubClassesOfMode32>(mode_sub_class) : SubClassesOfMode32::SELF_CLASS,
+            (cell_mode == PackedMode::MODE_48) ? static_cast<SubClassesOfMode48>(mode_sub_class) : SubClassesOfMode48::SELF_CLASS
+        );
+
+        if (a_valid_fabric_meta_cell32 == PackedCell64_t::PACKED_CELL_SENTINAL)
+        {
+            return false;
+        }
+
+        if (static_cast<size_t>(fabric_meta_idx) < APCDataStructure::METACELL_COUNT)
+        {
+            //MakeInitialValidPackedCell::already checks validity
+            StorePackedCellUnchecked_(static_cast<size_t>(fabric_meta_idx), a_valid_fabric_meta_cell32);
+            return true;
+        }
+
+        return false;
+        
+    }
 
 
 }

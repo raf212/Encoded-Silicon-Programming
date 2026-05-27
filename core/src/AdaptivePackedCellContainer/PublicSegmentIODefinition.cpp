@@ -48,7 +48,7 @@ namespace PredictedAdaptedEncoding
         PackedCellOwnership node_authority
     ) noexcept
     {
-        if ((reloffset != SubClassesOfMode48::RELOFFSET_PURE_TIMER))
+        if ((reloffset != SubClassesOfMode48::PURE_TIMER_48))
         {
             return PackedCell64_t::MakeFaultyCell();
         }
@@ -70,7 +70,7 @@ namespace PredictedAdaptedEncoding
     void SegmentIODefinition::WriteOrUpdateMetaClock48(PriorityPhysics priority, std::optional<uint64_t>meta_clock_48 ) noexcept
     {
         size_t idx = static_cast<size_t>(MetaIndexOfAPCNode::LOCAL_CLOCK48);
-        packed64_t wanted_cell = PackPureClock48AsPackedCell(meta_clock_48, priority, PackedCellLocalityTypes::ST_PUBLISHED);
+        packed64_t wanted_cell = PackPureClock48AsPackedCell(meta_clock_48, priority, PackedCellLocalityTypes::PUBLISHED);
         BackingPtr[idx].store(wanted_cell, MoStoreSeq_);
         BackingPtr[idx].notify_all();
     }
@@ -92,7 +92,7 @@ namespace PredictedAdaptedEncoding
         {
             return false;
         }
-        if (PackedCell64_t::ExtractLocalityFromPacked(expected_packed) == PackedCellLocalityTypes::ST_CLAIMED)
+        if (PackedCell64_t::ExtractLocalityFromPacked(expected_packed) == PackedCellLocalityTypes::CLAIMED)
         {
             return false;
         }
@@ -934,10 +934,10 @@ namespace PredictedAdaptedEncoding
             {
                 switch (locality)
                 {
-                case PackedCellLocalityTypes::ST_IDLE :
+                case PackedCellLocalityTypes::IDLE :
                     return true;
 
-                case PackedCellLocalityTypes::ST_PUBLISHED :
+                case PackedCellLocalityTypes::PUBLISHED :
                     if (published_count > UNSIGNED_ZERO)
                     {
                         --published_count;
@@ -945,7 +945,7 @@ namespace PredictedAdaptedEncoding
                     }
                     return false;
 
-                case PackedCellLocalityTypes::ST_CLAIMED :
+                case PackedCellLocalityTypes::CLAIMED :
                     if (claimed_count > UNSIGNED_ZERO)
                     {
                         --claimed_count;
@@ -953,7 +953,7 @@ namespace PredictedAdaptedEncoding
                     }
                     return false;
 
-                case PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY :
+                case PackedCellLocalityTypes::FAULTY :
                     if (faulty_count > UNSIGNED_ZERO)
                     {
                         --faulty_count;
@@ -970,23 +970,23 @@ namespace PredictedAdaptedEncoding
             {
                 switch (locality)
                 {
-                case PackedCellLocalityTypes::ST_IDLE :
+                case PackedCellLocalityTypes::IDLE :
                     return true;
-                case PackedCellLocalityTypes::ST_PUBLISHED :
+                case PackedCellLocalityTypes::PUBLISHED :
                     if (published_count < APC_MAX_LENGTH_OR_COUNTER)
                     {
                         published_count++;
                         return true;
                     }
                     return false;
-                case PackedCellLocalityTypes::ST_CLAIMED :
+                case PackedCellLocalityTypes::CLAIMED :
                     if (claimed_count < APC_MAX_LENGTH_OR_COUNTER)
                     {
                         claimed_count++;
                         return true;
                     }
                     return false;
-                case PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY :
+                case PackedCellLocalityTypes::FAULTY :
                     if (faulty_count < APC_MAX_LENGTH_OR_COUNTER)
                     {
                         faulty_count++;
@@ -1054,14 +1054,14 @@ namespace PredictedAdaptedEncoding
 
 
         
-        const bool region_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(from_locality, to_locality, physical_page_class, PackedCellLocalityTypes::ST_PUBLISHED, false);
+        const bool region_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(from_locality, to_locality, physical_page_class, PackedCellLocalityTypes::PUBLISHED, false);
 
         if (!region_ok)
         {
             return false;
         }
 
-        const bool central_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(from_locality, to_locality, std::nullopt, PackedCellLocalityTypes::ST_PUBLISHED, true);
+        const bool central_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(from_locality, to_locality, std::nullopt, PackedCellLocalityTypes::PUBLISHED, true);
 
         if (!central_ok)
         {
@@ -1069,7 +1069,7 @@ namespace PredictedAdaptedEncoding
                 to_locality,
                 from_locality,
                 physical_page_class,
-                PackedCellLocalityTypes::ST_PUBLISHED,
+                PackedCellLocalityTypes::PUBLISHED,
                 false
             );
             return false;

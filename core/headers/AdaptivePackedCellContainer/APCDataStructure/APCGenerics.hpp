@@ -8,7 +8,7 @@ namespace PredictedAdaptedEncoding
 {
     struct ContainerConf
     {
-        PackedMode InitialMode = PackedMode::VALUE32;
+        PackedMode InitialMode = PackedMode::MODE_32;
         size_t ProducerBlockSize = MIN_PRODUCER_BLOCK_SIZE;
         size_t RegionSize = MIN_REGION_SIZE;
         uint32_t RetireBatchThreshold = MIN_RETIRE_BATCH_THRESHOLD;
@@ -61,9 +61,9 @@ namespace PredictedAdaptedEncoding
 
         static bool CanCellBeConsumedForThisRegion(packed64_t packed_cell, APCPagedNodeSegmentClasses region_kind) noexcept
         {
-            return PackedCell64_t::ExtractLocalityFromPacked(packed_cell) == PackedCellLocalityTypes::ST_PUBLISHED &&
+            return PackedCell64_t::ExtractLocalityFromPacked(packed_cell) == PackedCellLocalityTypes::PUBLISHED &&
                 ExtractPagedRelMaskFromPacked(packed_cell) == region_kind &&
-                PackedCell64_t::ExtractRelOffset32FromPacked(packed_cell) == SubClassesOfMode32::RELOFFSET_GENERIC_VALUE;
+                PackedCell64_t::ExtractRelOffset32FromPacked(packed_cell) == SubClassesOfMode32::SELF_CLASS;
         }
 
         static constexpr MetaIndexOfAPCNode GetOccupancyMetIndexByRegionClass(
@@ -88,9 +88,9 @@ namespace PredictedAdaptedEncoding
 
         static  bool IsEmbededTimerCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
-            return a_cell_view.CellMode == PackedMode::CLOCK_OR_VALUE_48 && 
+            return a_cell_view.CellMode == PackedMode::MODE_48 && 
                 a_cell_view.RelationOffsetForMode48.has_value() &&
-                *a_cell_view.RelationOffsetForMode48 == SubClassesOfMode48::RELOFFSET_PURE_TIMER;
+                *a_cell_view.RelationOffsetForMode48 == SubClassesOfMode48::PURE_TIMER_48;
         }
 
         static  bool IsThisCellAppropriateAndGenericToConsume(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
@@ -102,7 +102,7 @@ namespace PredictedAdaptedEncoding
                 return false;
             }
 
-            if (a_cell_view.LocalityOfCell != PackedCellLocalityTypes::ST_PUBLISHED)
+            if (a_cell_view.LocalityOfCell != PackedCellLocalityTypes::PUBLISHED)
             {
                 return false;
             }
@@ -166,25 +166,25 @@ namespace PredictedAdaptedEncoding
                 return false;
             }
             
-            if (a_cell_view.CellMode == PackedMode::VALUE32)
+            if (a_cell_view.CellMode == PackedMode::MODE_32)
             {
-                return a_cell_view.RelationOffsetForMode32.has_value() && *a_cell_view.RelationOffsetForMode32 == SubClassesOfMode32::RELOFFSET_GENERIC_VALUE;
+                return a_cell_view.RelationOffsetForMode32.has_value() && *a_cell_view.RelationOffsetForMode32 == SubClassesOfMode32::SELF_CLASS;
             }
-            if (a_cell_view.CellMode == PackedMode::CLOCK_OR_VALUE_48)
+            if (a_cell_view.CellMode == PackedMode::MODE_48)
             {
-                return a_cell_view.RelationOffsetForMode48.has_value() && *a_cell_view.RelationOffsetForMode48 == SubClassesOfMode48::RELOFFSET_GENERIC_VALUE;
+                return a_cell_view.RelationOffsetForMode48.has_value() && *a_cell_view.RelationOffsetForMode48 == SubClassesOfMode48::SELF_CLASS;
             }
             return false;
         }
 
         static  bool DoseThisCellUpdateableAsOccupancy16x3(
             const PackedCell64_t::AuthoritiveCellView& occupancy_cell_view,
-            PackedCellLocalityTypes desired_cell_locality = PackedCellLocalityTypes::ST_PUBLISHED
+            PackedCellLocalityTypes desired_cell_locality = PackedCellLocalityTypes::PUBLISHED
         ) noexcept
         {
             if (
                 !occupancy_cell_view.IsCellValid || occupancy_cell_view.PageClass != APCPagedNodeSegmentClasses::CONTROL_SLOT ||
-                occupancy_cell_view.CellMode != PackedMode::CLOCK_OR_VALUE_48 ||
+                occupancy_cell_view.CellMode != PackedMode::MODE_48 ||
                 occupancy_cell_view.LocalityOfCell != desired_cell_locality ||
                 !occupancy_cell_view.RelationOffsetForMode48.has_value() ||
                 *occupancy_cell_view.RelationOffsetForMode48 != SubClassesOfMode48::SUBDIVISION16x3_INTERNAL_CELL_MODEL
@@ -540,7 +540,7 @@ namespace PredictedAdaptedEncoding
         size_t TailIdx = APCDataStructure::APC_SIZE_SENTINAL;
         packed64_t HeadScreenshot = 0;
         packed64_t TailScreenshot = 0;
-        SubClassesOfMode32 Position = SubClassesOfMode32::RELOFFSET_GENERIC_VALUE;
+        SubClassesOfMode32 Position = SubClassesOfMode32::SELF_CLASS;
         bool Ownership = false;
     };
 

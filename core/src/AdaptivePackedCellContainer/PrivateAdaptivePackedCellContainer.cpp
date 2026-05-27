@@ -207,10 +207,10 @@ namespace PredictedAdaptedEncoding
             }
             
             const packed64_t graceful_idle_cell = PackedCell64_t::MakeInitialValidPackedCell(
-                current_cell_view.CellMode, PackedCellLocalityTypes::ST_IDLE, current_cell_view.CellOwnership,
+                current_cell_view.CellMode, PackedCellLocalityTypes::IDLE, current_cell_view.CellOwnership,
                 region_kind, current_cell_view.CellValueDataType, UNSIGNED_ZERO, UNSIGNED_ZERO, PriorityPhysics::IDLE,
-                current_cell_view.RelationOffsetForMode32.has_value() ? *current_cell_view.RelationOffsetForMode32 : SubClassesOfMode32::RELOFFSET_GENERIC_VALUE,
-                current_cell_view.RelationOffsetForMode48.has_value() ? *current_cell_view.RelationOffsetForMode48 : SubClassesOfMode48::RELOFFSET_GENERIC_VALUE
+                current_cell_view.RelationOffsetForMode32.has_value() ? *current_cell_view.RelationOffsetForMode32 : SubClassesOfMode32::SELF_CLASS,
+                current_cell_view.RelationOffsetForMode48.has_value() ? *current_cell_view.RelationOffsetForMode48 : SubClassesOfMode48::SELF_CLASS
             );
 
             const packed64_t idle_cell = (graceful_idle_cell == PackedCell64_t::PACKED_CELL_SENTINAL)  ? 
@@ -334,7 +334,7 @@ namespace PredictedAdaptedEncoding
             packed64_t observed_cell = BackingPtr[current_index].load(MoLoad_);
             const PackedCell64_t::AuthoritiveCellView observed_cell_view = PackedCell64_t::GetAuthoritiveViewsForACell(observed_cell);
 
-            if (observed_cell_view.LocalityOfCell != PackedCellLocalityTypes::ST_IDLE)
+            if (observed_cell_view.LocalityOfCell != PackedCellLocalityTypes::IDLE)
             {
                 continue;
             }
@@ -343,7 +343,7 @@ namespace PredictedAdaptedEncoding
                 continue;
             }
             
-            packed64_t claimd_local_inplace_cell = PackedCell64_t::SetLocalityInPacked(observed_cell, PackedCellLocalityTypes::ST_CLAIMED);
+            packed64_t claimd_local_inplace_cell = PackedCell64_t::SetLocalityInPacked(observed_cell, PackedCellLocalityTypes::CLAIMED);
             claimd_local_inplace_cell = PackedCell64_t::SetSegmentLayoutInPacked(claimd_local_inplace_cell, node_authority);
 
             packed64_t expected_cell = observed_cell;
@@ -462,7 +462,7 @@ namespace PredictedAdaptedEncoding
             {
                 const size_t absolute_idx = PayloadBegin() + i;
                 const packed64_t absolute_packed_cell = BackingPtr[absolute_idx].load(MoLoad_);
-                if (PackedCell64_t::ExtractLocalityFromPacked(absolute_packed_cell) != PackedCellLocalityTypes::ST_PUBLISHED)
+                if (PackedCell64_t::ExtractLocalityFromPacked(absolute_packed_cell) != PackedCellLocalityTypes::PUBLISHED)
                 {
                     continue;
                 }
@@ -507,16 +507,16 @@ namespace PredictedAdaptedEncoding
     {
         out_going_cell = PackedCell64_t::SetPageClassInPacked(out_going_cell, region_kind);
         out_going_cell = PackedCell64_t::SetSegmentLayoutInPacked(out_going_cell, node_authority);
-        out_going_cell = PackedCell64_t::SetLocalityInPacked(out_going_cell, PackedCellLocalityTypes::ST_PUBLISHED);
+        out_going_cell = PackedCell64_t::SetLocalityInPacked(out_going_cell, PackedCellLocalityTypes::PUBLISHED);
 
         const PackedMode mode = PackedCell64_t::ExtractModeOfPackedCellFromPacked(out_going_cell);
-        if (mode == PackedMode::VALUE32)
+        if (mode == PackedMode::MODE_32)
         {
-            out_going_cell = PackedCell64_t::SetRelOffsetForMode32InPacked(out_going_cell, SubClassesOfMode32::RELOFFSET_GENERIC_VALUE);
+            out_going_cell = PackedCell64_t::SetRelOffsetForMode32InPacked(out_going_cell, SubClassesOfMode32::SELF_CLASS);
         }
         else
         {
-            out_going_cell = PackedCell64_t::SetRelOffsetForMode48InPacked(out_going_cell, SubClassesOfMode48::RELOFFSET_GENERIC_VALUE);
+            out_going_cell = PackedCell64_t::SetRelOffsetForMode48InPacked(out_going_cell, SubClassesOfMode48::SELF_CLASS);
         }
         return out_going_cell;
     }

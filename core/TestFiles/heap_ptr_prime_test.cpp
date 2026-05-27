@@ -236,7 +236,7 @@ int main()
     AdaptivePackedCellContainer TASK_APC;
     ContainerConf task_cfg;
     task_cfg.ProducerBlockSize = 64;
-    task_cfg.InitialMode = PackedMode::VALUE32;
+    task_cfg.InitialMode = PackedMode::MODE_32;
 
     TASK_APC.InitOwned(apc_capacity, task_cfg);
     TASK_APC.SetManagerForGlobalAPC(&apc_manager);

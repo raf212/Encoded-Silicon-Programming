@@ -95,7 +95,7 @@ namespace
     static ContainerConf MakeTestConfig()
     {
         ContainerConf cfg;
-        cfg.InitialMode = PackedMode::VALUE32;
+        cfg.InitialMode = PackedMode::MODE_32;
         cfg.ProducerBlockSize = 8;
         cfg.RegionSize = 16;
         cfg.EnableBranching = true;
@@ -117,8 +117,8 @@ namespace
             value,
             region,
             priority,
-            PackedCellLocalityTypes::ST_PUBLISHED,
-            SubClassesOfMode32::RELOFFSET_GENERIC_VALUE,
+            PackedCellLocalityTypes::PUBLISHED,
+            SubClassesOfMode32::SELF_CLASS,
             PackedCellDataType::UnsignedPCellDataType,
             PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
         );
@@ -137,8 +137,8 @@ namespace
             bits,
             region,
             priority,
-            PackedCellLocalityTypes::ST_PUBLISHED,
-            SubClassesOfMode32::RELOFFSET_GENERIC_VALUE,
+            PackedCellLocalityTypes::PUBLISHED,
+            SubClassesOfMode32::SELF_CLASS,
             PackedCellDataType::FloatPCellDataType,
             PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
         );
@@ -166,19 +166,19 @@ namespace
 
             switch (view.LocalityOfCell)
             {
-                case PackedCellLocalityTypes::ST_IDLE:
+                case PackedCellLocalityTypes::IDLE:
                     ++out.Idle;
                     break;
 
-                case PackedCellLocalityTypes::ST_PUBLISHED:
+                case PackedCellLocalityTypes::PUBLISHED:
                     ++out.Published;
                     break;
 
-                case PackedCellLocalityTypes::ST_CLAIMED:
+                case PackedCellLocalityTypes::CLAIMED:
                     ++out.Claimed;
                     break;
 
-                case PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY:
+                case PackedCellLocalityTypes::FAULTY:
                 default:
                     ++out.Faulty;
                     break;
@@ -216,10 +216,10 @@ namespace
     static uint32_t HeaderLocalitySum(APCSegmentsCausalCordinator& apc)
     {
         return
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_IDLE) +
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED) +
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_CLAIMED) +
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY);
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::IDLE) +
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::PUBLISHED) +
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::CLAIMED) +
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::FAULTY);
     }
 
     static uint32_t ReadyBitFor(APCPagedNodeSegmentClasses region)
@@ -246,16 +246,16 @@ namespace
         const ExactLocalityCount exact = CountExactLocality(apc);
 
         const uint32_t header_idle =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_IDLE);
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::IDLE);
 
         const uint32_t header_pub =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED);
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::PUBLISHED);
 
         const uint32_t header_claim =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_CLAIMED);
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::CLAIMED);
 
         const uint32_t header_fault =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY);
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::FAULTY);
 
         const uint32_t header_sum = HeaderLocalitySum(apc);
 
@@ -336,13 +336,13 @@ namespace
                   << "\n";
 
         std::cout << "  header: idle="
-                  << apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_IDLE)
+                  << apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::IDLE)
                   << " pub="
-                  << apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED)
+                  << apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::PUBLISHED)
                   << " claim="
-                  << apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_CLAIMED)
+                  << apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::CLAIMED)
                   << " faulty="
-                  << apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY)
+                  << apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::FAULTY)
                   << " ready=0x" << std::hex
                   << apc.ReadMetaCellValue32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT)
                   << std::dec
@@ -483,13 +483,13 @@ namespace
             PackU32(clock, 0x12345678u, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, PriorityPhysics::IMPORTANT);
 
         suite.Check(
-            PackedCell64_t::ExtractModeOfPackedCellFromPacked(u32_cell) == PackedMode::VALUE32,
-            "PackedCell: VALUE32 is preserved"
+            PackedCell64_t::ExtractModeOfPackedCellFromPacked(u32_cell) == PackedMode::MODE_32,
+            "PackedCell: MODE_32 is preserved"
         );
 
         suite.Check(
-            PackedCell64_t::ExtractLocalityFromPacked(u32_cell) == PackedCellLocalityTypes::ST_PUBLISHED,
-            "PackedCell: locality ST_PUBLISHED is preserved"
+            PackedCell64_t::ExtractLocalityFromPacked(u32_cell) == PackedCellLocalityTypes::PUBLISHED,
+            "PackedCell: locality PUBLISHED is preserved"
         );
 
         suite.Check(
@@ -498,7 +498,7 @@ namespace
         );
 
         suite.Check(
-            PackedCell64_t::ExtractRelOffset32FromPacked(u32_cell) == SubClassesOfMode32::RELOFFSET_GENERIC_VALUE,
+            PackedCell64_t::ExtractRelOffset32FromPacked(u32_cell) == SubClassesOfMode32::SELF_CLASS,
             "PackedCell: Mode32 generic rel-offset is preserved"
         );
 
@@ -617,7 +617,7 @@ namespace
         );
 
         suite.Check(
-            node.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED) == 1u,
+            node.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::PUBLISHED) == 1u,
             "Single: central published == 1"
         );
 

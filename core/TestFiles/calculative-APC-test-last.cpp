@@ -70,8 +70,8 @@ namespace
             value,
             region,
             priority,
-            PackedCellLocalityTypes::ST_PUBLISHED,
-            SubClassesOfMode32::RELOFFSET_GENERIC_VALUE,
+            PackedCellLocalityTypes::PUBLISHED,
+            SubClassesOfMode32::SELF_CLASS,
             PackedCellDataType::UnsignedPCellDataType,
             PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
         );
@@ -90,8 +90,8 @@ namespace
             bits,
             region,
             priority,
-            PackedCellLocalityTypes::ST_PUBLISHED,
-            SubClassesOfMode32::RELOFFSET_GENERIC_VALUE,
+            PackedCellLocalityTypes::PUBLISHED,
+            SubClassesOfMode32::SELF_CLASS,
             PackedCellDataType::FloatPCellDataType,
             PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
         );
@@ -137,7 +137,7 @@ namespace
             const auto view = PackedCell64_t::GetAuthoritiveViewsForACell(cell);
 
             if (!view.IsCellValid ||
-                view.LocalityOfCell == PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY)
+                view.LocalityOfCell == PackedCellLocalityTypes::FAULTY)
             {
                 ++out.Faulty;
                 continue;
@@ -145,19 +145,19 @@ namespace
 
             switch (view.LocalityOfCell)
             {
-                case PackedCellLocalityTypes::ST_IDLE:
+                case PackedCellLocalityTypes::IDLE:
                     ++out.Idle;
                     break;
 
-                case PackedCellLocalityTypes::ST_PUBLISHED:
+                case PackedCellLocalityTypes::PUBLISHED:
                     ++out.Published;
                     break;
 
-                case PackedCellLocalityTypes::ST_CLAIMED:
+                case PackedCellLocalityTypes::CLAIMED:
                     ++out.Claimed;
                     break;
 
-                case PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY:
+                case PackedCellLocalityTypes::FAULTY:
                 default:
                     ++out.Faulty;
                     break;
@@ -175,10 +175,10 @@ namespace
     static uint32_t HeaderLocalitySum(APCSegmentsCausalCordinator& apc)
     {
         return
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_IDLE) +
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED) +
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_CLAIMED) +
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY);
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::IDLE) +
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::PUBLISHED) +
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::CLAIMED) +
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::FAULTY);
     }
     
     static uint32_t RegionMeta(APCSegmentsCausalCordinator& apc, APCPagedNodeSegmentClasses region)
@@ -215,16 +215,16 @@ namespace
         const ExactLocalityCount exact = CountExactLocality(apc);
 
         const uint32_t header_idle =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_IDLE);
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::IDLE);
 
         const uint32_t header_pub =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED);
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::PUBLISHED);
 
         const uint32_t header_claim =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_CLAIMED);
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::CLAIMED);
 
         const uint32_t header_fault =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY);
+            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::FAULTY);
 
         const uint32_t header_sum = HeaderLocalitySum(apc);
         const uint32_t header_used = HeaderUsedSum(apc);
@@ -301,7 +301,7 @@ int main()
     MasterClockConf clock(nullptr, timer);
 
     ContainerConf cfg;
-    cfg.InitialMode = PackedMode::VALUE32;
+    cfg.InitialMode = PackedMode::MODE_32;
     cfg.ProducerBlockSize = 8;
     cfg.RegionSize = 16;
     cfg.EnableBranching = true;

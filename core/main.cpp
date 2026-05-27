@@ -200,8 +200,8 @@ namespace
             bits,
             region,
             priority,
-            PackedCellLocalityTypes::ST_PUBLISHED,
-            SubClassesOfMode32::RELOFFSET_GENERIC_VALUE,
+            PackedCellLocalityTypes::PUBLISHED,
+            SubClassesOfMode32::SELF_CLASS,
             PackedCellDataType::FloatPCellDataType,
             PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
         );
@@ -235,19 +235,19 @@ namespace
 
             switch (view.LocalityOfCell)
             {
-                case PackedCellLocalityTypes::ST_IDLE:
+                case PackedCellLocalityTypes::IDLE:
                     ++out.Idle;
                     break;
 
-                case PackedCellLocalityTypes::ST_PUBLISHED:
+                case PackedCellLocalityTypes::PUBLISHED:
                     ++out.Published;
                     break;
 
-                case PackedCellLocalityTypes::ST_CLAIMED:
+                case PackedCellLocalityTypes::CLAIMED:
                     ++out.Claimed;
                     break;
 
-                case PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY:
+                case PackedCellLocalityTypes::FAULTY:
                 default:
                     ++out.Faulty;
                     break;
@@ -315,15 +315,15 @@ namespace
         OccupancyTriple out{};
 
         out.Published = apc.ReadCentralAPCOccupancyOfALocality(
-            PackedCellLocalityTypes::ST_PUBLISHED
+            PackedCellLocalityTypes::PUBLISHED
         );
 
         out.Claimed = apc.ReadCentralAPCOccupancyOfALocality(
-            PackedCellLocalityTypes::ST_CLAIMED
+            PackedCellLocalityTypes::CLAIMED
         );
 
         out.Faulty = apc.ReadCentralAPCOccupancyOfALocality(
-            PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY
+            PackedCellLocalityTypes::FAULTY
         );
 
         return out;
@@ -337,17 +337,17 @@ namespace
         OccupancyTriple out{};
 
         out.Published = apc.ReadRegionOccupancyOfALocality(
-            PackedCellLocalityTypes::ST_PUBLISHED,
+            PackedCellLocalityTypes::PUBLISHED,
             region
         );
 
         out.Claimed = apc.ReadRegionOccupancyOfALocality(
-            PackedCellLocalityTypes::ST_CLAIMED,
+            PackedCellLocalityTypes::CLAIMED,
             region
         );
 
         out.Faulty = apc.ReadRegionOccupancyOfALocality(
-            PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY,
+            PackedCellLocalityTypes::FAULTY,
             region
         );
 
@@ -701,7 +701,7 @@ int main()
     MasterClockConf clock(nullptr, timer);
 
     ContainerConf cfg;
-    cfg.InitialMode = PackedMode::VALUE32;
+    cfg.InitialMode = PackedMode::MODE_32;
     cfg.ProducerBlockSize = 4;
     cfg.RegionSize = 8;
     cfg.EnableBranching = true;

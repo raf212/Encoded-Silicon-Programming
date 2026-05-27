@@ -81,10 +81,10 @@ namespace PredictedAdaptedEncoding {
 
     enum class PackedCellLocalityTypes : tag8_t
     {
-        ST_IDLE = 0,
-        ST_PUBLISHED = 1,
-        ST_CLAIMED = 2,
-        ST_EXCEPTION_BIT_FAULTY = 3
+        IDLE = 0,
+        PUBLISHED = 1,
+        CLAIMED = 2,
+        FAULTY = 3
     };
 
     enum class PackedCellOwnership : tag8_t
@@ -105,22 +105,22 @@ namespace PredictedAdaptedEncoding {
 
     enum class PackedMode : tag8_t
     {
-        VALUE32 = 0,
-        CLOCK_OR_VALUE_48 = 1
+        MODE_32 = 0,
+        MODE_48 = 1
     };
 
     enum class SubClassesOfMode32 : tag8_t
     {
-        RELOFFSET_GENERIC_VALUE = 0,
-        RELOFFSET_TAIL_PTR = 1,
-        REL_OFFSET_HEAD_PTR = 2,
+        SELF_CLASS = 0,
+        TAIL_PTR = 1,
+        HEAD_PTR = 2,
         SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 = 3
     };
 
     enum class SubClassesOfMode48 : tag8_t
     {
-        RELOFFSET_GENERIC_VALUE = 0,
-        RELOFFSET_PURE_TIMER = 1,
+        SELF_CLASS = 0,
+        PURE_TIMER_48 = 1,
         SUBDIVISION16x3_INTERNAL_CELL_MODEL  = 2,
         FOUR_SUBDIVISION_2x16_AND_2x8 = 3
     };

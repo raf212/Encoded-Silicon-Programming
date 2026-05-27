@@ -47,10 +47,15 @@ namespace PredictedAdaptedEncoding
 
         void StorePackedCellUnchecked_(size_t idx, packed64_t packed_cell) noexcept;
 
-        void StoreAValidPackedCell_(size_t idx, packed64_t packed_cell) noexcept;
+        bool StoreAValidPackedCell_(size_t idx, packed64_t packed_cell) noexcept;
 
-        void StoreAFabricMetaCellOnly();
-
+        bool StoreAValidFabricMetaCellOnly_(
+            FabricMetaIndicies fabric_meta_idx, uint64_t value32_or_64, 
+            PackedMode cell_mode = PackedMode::MODE_32, tag8_t mode_sub_class = static_cast<tag8_t>(SubClassesOfMode32::SELF_CLASS),
+            PackedCellDataType cell_data_type = PackedCellDataType::UnsignedPCellDataType,
+            PackedCellLocalityTypes locality_of_cell = PackedCellLocalityTypes::IDLE, 
+            PriorityPhysics priority = PriorityPhysics::IMPORTANT, clk16_t extended_meta_value = UNSIGNED_ZERO
+        ) noexcept;
 
     public:
         NeuromorphicSpaceTimeFabricCoordinator(/* args */) noexcept = default;
@@ -64,8 +69,6 @@ namespace PredictedAdaptedEncoding
         NeuromorphicSpaceTimeFabricCoordinator& operator = (const NeuromorphicSpaceTimeFabricCoordinator&) = delete;
 
         void ShutDownFabric() noexcept;
-
-
 
         bool InitializeFabric(
             uint16_t slot_count,
