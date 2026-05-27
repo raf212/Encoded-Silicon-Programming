@@ -235,14 +235,14 @@ namespace PredictedAdaptedEncoding
                 case APCPagedNodeSegmentClasses::AUX_SLOT:
                     return MetaIndexOfAPCNode::AUX_BOUNDS_VERSION;
 
-                case APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT:
-                    return MetaIndexOfAPCNode::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT_BOUNDS_VERSION;
+                case APCPagedNodeSegmentClasses::HETEROGENOUS_RAW_MEMORY:
+                    return MetaIndexOfAPCNode::HETEROGENOUS_RAW_MEMORY_BOUNDS_VERSION;
                     
                 case APCPagedNodeSegmentClasses::SLOT_TABLE_DESCRIPTOR:
-                    return MetaIndexOfAPCNode::PAIRED_POINTER_LOCAL_MEMORY_BOUNDS_VERSION;
+                    return MetaIndexOfAPCNode::SLOT_TABLE_DESCRIPTOR_BOUNDS_VERSION;
 
-                case APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY:
-                    return MetaIndexOfAPCNode::PAIRED_POINTER_DISTANCE_MEMORY_BOUNDS_VERSION;
+                case APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY:
+                    return MetaIndexOfAPCNode::PAIRED_POINTER_IN_MEMORY_BOUNDS_VERSION;
 
                 case APCPagedNodeSegmentClasses::UNDEFINED:
                     return MetaIndexOfAPCNode::UNDEFINED_BOUNDS_VERSION;
@@ -386,9 +386,9 @@ namespace PredictedAdaptedEncoding
         LayoutBoundsOfSingleRelNodeClass EdgeDescriptorLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::EDGE_DESCRIPTOR, EDGEDESCRIPTOR_PERCENTAGE)};
         LayoutBoundsOfSingleRelNodeClass WeightLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::WEIGHT_SLOT, WEIGHTSLOT_PERCENTAGE)};
         LayoutBoundsOfSingleRelNodeClass AUXLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::AUX_SLOT, AUXSLOT_PERCENTAGE)};
-        LayoutBoundsOfSingleRelNodeClass HeterogenousMemoryLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT, UNSIGNED_ZERO)};
+        LayoutBoundsOfSingleRelNodeClass HeterogenousMemoryLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::HETEROGENOUS_RAW_MEMORY, UNSIGNED_ZERO)};
         LayoutBoundsOfSingleRelNodeClass LocalPairedPointerLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::SLOT_TABLE_DESCRIPTOR, UNSIGNED_ZERO)};
-        LayoutBoundsOfSingleRelNodeClass DistancePairedLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY, UNSIGNED_ZERO)};
+        LayoutBoundsOfSingleRelNodeClass DistancePairedLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY, UNSIGNED_ZERO)};
         LayoutBoundsOfSingleRelNodeClass UndefinedLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::UNDEFINED, UNSIGNED_ZERO)};
         LayoutBoundsOfSingleRelNodeClass FreeLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::FREE_SLOT, FREE_PERCENTAGE)};
         //we can add 8 more threrritically rel_mask = 4 bit ->16 classes 
@@ -482,11 +482,11 @@ namespace PredictedAdaptedEncoding
                 case APCPagedNodeSegmentClasses::EDGE_DESCRIPTOR:      return &EdgeDescriptorLayout;
                 case APCPagedNodeSegmentClasses::WEIGHT_SLOT:          return &WeightLayout;
                 case APCPagedNodeSegmentClasses::AUX_SLOT:             return &AUXLayout;
-                case APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT:
+                case APCPagedNodeSegmentClasses::HETEROGENOUS_RAW_MEMORY:
                     return &HeterogenousMemoryLayout;
                 case APCPagedNodeSegmentClasses::SLOT_TABLE_DESCRIPTOR: 
                     return &LocalPairedPointerLayout;
-                case APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY:
+                case APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY:
                     return &DistancePairedLayout;
                 case APCPagedNodeSegmentClasses::UNDEFINED:            return &UndefinedLayout;
                 case APCPagedNodeSegmentClasses::FREE_SLOT:            return &FreeLayout;
@@ -505,11 +505,11 @@ namespace PredictedAdaptedEncoding
                 case APCPagedNodeSegmentClasses::EDGE_DESCRIPTOR:      return &EdgeDescriptorLayout;
                 case APCPagedNodeSegmentClasses::WEIGHT_SLOT:          return &WeightLayout;
                 case APCPagedNodeSegmentClasses::AUX_SLOT:             return &AUXLayout;
-                case APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT:
+                case APCPagedNodeSegmentClasses::HETEROGENOUS_RAW_MEMORY:
                     return &HeterogenousMemoryLayout;
                 case APCPagedNodeSegmentClasses::SLOT_TABLE_DESCRIPTOR: 
                     return &LocalPairedPointerLayout;
-                case APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY:
+                case APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY:
                     return &DistancePairedLayout;
                 case APCPagedNodeSegmentClasses::UNDEFINED:            return &UndefinedLayout;
                 case APCPagedNodeSegmentClasses::FREE_SLOT:            return &FreeLayout;

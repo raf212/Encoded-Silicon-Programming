@@ -33,12 +33,12 @@ namespace PredictedAdaptedEncoding
             SubClassesOfMode32 curent_ptr_position = PackedCell64_t::ExtractRelOffset32FromPacked(packed_cell_value64);
             size_t head_idx = APCDataStructure::APC_SIZE_SENTINAL;
             size_t tail_idx = APCDataStructure::APC_SIZE_SENTINAL;
-            if (curent_ptr_position == SubClassesOfMode32::HEAD_PTR)
+            if (curent_ptr_position == SubClassesOfMode32::HEAD_OF_PAIRED_CELL)
             {
                 head_idx = probable_idx;
                 tail_idx = (probable_idx + 1) % PayloadCapacityFromHeader();
             }
-            else if (curent_ptr_position == SubClassesOfMode32::TAIL_PTR)
+            else if (curent_ptr_position == SubClassesOfMode32::TAIL_OF_PAIRED_CELL)
             {
                 head_idx = (probable_idx + PayloadCapacityFromHeader() - 1) % PayloadCapacityFromHeader();
                 tail_idx = probable_idx;
@@ -247,12 +247,12 @@ namespace PredictedAdaptedEncoding
                     else
                     {
                         val32_t tail_ptr_val32 = high32_half;
-                        meta16_t strl_tail = PackedCell64_t::MakeInCellMetaForMode_32t(PriorityPhysics::IDLE, PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER, PackedCellLocalityTypes::PUBLISHED, rel_mask_with_ptrflag, SubClassesOfMode32::TAIL_PTR);
+                        meta16_t strl_tail = PackedCell64_t::MakeInCellMetaForMode_32t(PriorityPhysics::IDLE, PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER, PackedCellLocalityTypes::PUBLISHED, rel_mask_with_ptrflag, SubClassesOfMode32::TAIL_OF_PAIRED_CELL);
                         packed64_t tail_packed = PackedCell64_t::ComposeValue32u_64(tail_ptr_val32, 0u, strl_tail);
                         BackingPtr[tail].store(tail_packed, MoStoreSeq_);
 
                         val32_t head_ptr_value32 = low32_half;
-                        meta16_t strl_head = PackedCell64_t::MakeInCellMetaForMode_32t(PriorityPhysics::IDLE, PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER, PackedCellLocalityTypes::PUBLISHED, rel_mask_with_ptrflag, SubClassesOfMode32::HEAD_PTR);
+                        meta16_t strl_head = PackedCell64_t::MakeInCellMetaForMode_32t(PriorityPhysics::IDLE, PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER, PackedCellLocalityTypes::PUBLISHED, rel_mask_with_ptrflag, SubClassesOfMode32::HEAD_OF_PAIRED_CELL);
                         packed64_t head_packed = PackedCell64_t::ComposeValue32u_64(head_ptr_value32, 0u, strl_head);
                         BackingPtr[head].store(head_packed, MoStoreSeq_);
                         BackingPtr[tail].notify_all();

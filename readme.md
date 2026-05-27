@@ -117,9 +117,9 @@ The payload is divided into semantic regions. The current source defines classes
 | `WEIGHT_SLOT` | Local or referenced parameters |
 | `CONTROL_SLOT` | Header/control metadata |
 | `AUX_SLOT` | Auxiliary/neuromodulatory/control values |
-| `HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT` | Future external-memory bridge |
+| `HETEROGENOUS_RAW_MEMORY` | Future external-memory bridge |
 | `SLOT_TABLE_DESCRIPTOR` | Local pointer-pair storage |
-| `PAIRED_POINTER_DISTANCE_MEMORY` | Remote pointer-pair storage |
+| `PAIRED_POINTER_IN_MEMORY` | Remote pointer-pair storage |
 | `FREE_SLOT` | Free payload capacity |
 | `UNDEFINED` | Region for unclassified/emergent cells |
 | `NANNULL` | Invalid/null/sentinel region |

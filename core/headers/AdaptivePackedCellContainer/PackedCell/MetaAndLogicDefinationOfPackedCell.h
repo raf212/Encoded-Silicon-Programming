@@ -112,8 +112,8 @@ namespace PredictedAdaptedEncoding {
     enum class SubClassesOfMode32 : tag8_t
     {
         SELF_CLASS = 0,
-        TAIL_PTR = 1,
-        HEAD_PTR = 2,
+        TAIL_OF_PAIRED_CELL = 1,
+        HEAD_OF_PAIRED_CELL = 2,
         SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 = 3
     };
 
@@ -149,9 +149,10 @@ namespace PredictedAdaptedEncoding {
         WEIGHT_SLOT = 0x7,
         CONTROL_SLOT = 0x8,
         AUX_SLOT = 0x9,
-        HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT = 0xA,
+        HETEROGENOUS_RAW_MEMORY = 0xA,
         SLOT_TABLE_DESCRIPTOR = 0xB,
-        PAIRED_POINTER_DISTANCE_MEMORY = 0xC,
+        //paired pinter should be valid only in case of SubClassesOfMode32->Paired Subclass
+        PAIRED_POINTER_IN_MEMORY = 0xC,
         FREE_SLOT     = 0xD,
         UNDEFINED = 0xE,
         NANNULL     = 0xF

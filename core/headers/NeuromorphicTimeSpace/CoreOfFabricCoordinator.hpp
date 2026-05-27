@@ -237,7 +237,7 @@ namespace PredictedAdaptedEncoding
                 return APCPagedNodeSegmentClasses::AUX_SLOT;
             
             case FabricToIoLinkerClasses::DEVICE_VIEW:
-                return APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT;
+                return APCPagedNodeSegmentClasses::HETEROGENOUS_RAW_MEMORY;
             
             case FabricToIoLinkerClasses::SEGMENT_POOL:
                 return APCPagedNodeSegmentClasses::FREE_SLOT;
