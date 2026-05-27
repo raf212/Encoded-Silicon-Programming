@@ -55,7 +55,7 @@ namespace PredictedAdaptedEncoding
         static bool IsThisCellASubdevision_3x16_48t(packed64_t packed_cell) noexcept
         {
             return PackedCell64_t::ExtractModeOfPackedCellFromPacked(packed_cell) == PackedMode::CLOCK_OR_VALUE_48 &&
-                PackedCell64_t::ExtractRelOffset48FromPacked(packed_cell) == RelOffsetMode48::SUBDIVISION16x3_INTERNAL_CELL_MODEL &&
+                PackedCell64_t::ExtractRelOffset48FromPacked(packed_cell) == SubClassesOfMode48::SUBDIVISION16x3_INTERNAL_CELL_MODEL &&
                 PackedCell64_t::ExtractLocalityFromPacked(packed_cell) != PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY;
         }
 
@@ -144,7 +144,7 @@ namespace PredictedAdaptedEncoding
             const PackedCell64_t::AuthoritiveCellView this_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
             return this_cell_auth_view.CellMode == PackedMode::CLOCK_OR_VALUE_48 &&
                 this_cell_auth_view.RelationOffsetForMode48.has_value() &&
-                this_cell_auth_view.RelationOffsetForMode48.value() == RelOffsetMode48::FOUR_SUBDIVISION_2x16_AND_2x8 &&
+                this_cell_auth_view.RelationOffsetForMode48.value() == SubClassesOfMode48::FOUR_SUBDIVISION_2x16_AND_2x8 &&
                 this_cell_auth_view.CellValueDataType == PackedCellDataType::UnsignedPCellDataType &&
                 this_cell_auth_view.LocalityOfCell != PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY;
         }

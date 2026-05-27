@@ -118,7 +118,7 @@ protected:
         PriorityPhysics priority,
         PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_PUBLISHED,
         APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::NONE,
-        RelOffsetMode32 reloffset_mode32 = RelOffsetMode32::RELOFFSET_GENERIC_VALUE,
+        SubClassesOfMode32 reloffset_mode32 = SubClassesOfMode32::RELOFFSET_GENERIC_VALUE,
         PackedCellDataType dtype = PackedCellDataType::UnsignedPCellDataType,
         PackedCellOwnership node_authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
     ) noexcept
@@ -152,7 +152,7 @@ protected:
         uint64_t raw48_value,
         APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
         PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY,
-        RelOffsetMode48 rel_offset = RelOffsetMode48::SUBDIVISION16x3_INTERNAL_CELL_MODEL
+        SubClassesOfMode48 rel_offset = SubClassesOfMode48::SUBDIVISION16x3_INTERNAL_CELL_MODEL
     ) noexcept
     {
         size_t index = static_cast<size_t>(idx);
@@ -184,7 +184,7 @@ public:
         PriorityPhysics priority = PriorityPhysics::IDLE,
         PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_PUBLISHED,
         APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
-        RelOffsetMode48 reloffset = RelOffsetMode48::RELOFFSET_PURE_TIMER,
+        SubClassesOfMode48 reloffset = SubClassesOfMode48::RELOFFSET_PURE_TIMER,
         PackedCellDataType dtype = PackedCellDataType::UnsignedPCellDataType,
         PackedCellOwnership node_authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
     ) noexcept;

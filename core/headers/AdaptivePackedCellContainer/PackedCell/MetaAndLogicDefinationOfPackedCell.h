@@ -109,7 +109,7 @@ namespace PredictedAdaptedEncoding {
         CLOCK_OR_VALUE_48 = 1
     };
 
-    enum class RelOffsetMode32 : tag8_t
+    enum class SubClassesOfMode32 : tag8_t
     {
         RELOFFSET_GENERIC_VALUE = 0,
         RELOFFSET_TAIL_PTR = 1,
@@ -117,7 +117,7 @@ namespace PredictedAdaptedEncoding {
         SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 = 3
     };
 
-    enum class RelOffsetMode48 : tag8_t
+    enum class SubClassesOfMode48 : tag8_t
     {
         RELOFFSET_GENERIC_VALUE = 0,
         RELOFFSET_PURE_TIMER = 1,

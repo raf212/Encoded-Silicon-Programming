@@ -63,7 +63,7 @@ namespace PredictedAdaptedEncoding
         {
             return PackedCell64_t::ExtractLocalityFromPacked(packed_cell) == PackedCellLocalityTypes::ST_PUBLISHED &&
                 ExtractPagedRelMaskFromPacked(packed_cell) == region_kind &&
-                PackedCell64_t::ExtractRelOffset32FromPacked(packed_cell) == RelOffsetMode32::RELOFFSET_GENERIC_VALUE;
+                PackedCell64_t::ExtractRelOffset32FromPacked(packed_cell) == SubClassesOfMode32::RELOFFSET_GENERIC_VALUE;
         }
 
         static constexpr MetaIndexOfAPCNode GetOccupancyMetIndexByRegionClass(
@@ -90,7 +90,7 @@ namespace PredictedAdaptedEncoding
         {
             return a_cell_view.CellMode == PackedMode::CLOCK_OR_VALUE_48 && 
                 a_cell_view.RelationOffsetForMode48.has_value() &&
-                *a_cell_view.RelationOffsetForMode48 == RelOffsetMode48::RELOFFSET_PURE_TIMER;
+                *a_cell_view.RelationOffsetForMode48 == SubClassesOfMode48::RELOFFSET_PURE_TIMER;
         }
 
         static  bool IsThisCellAppropriateAndGenericToConsume(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
@@ -168,11 +168,11 @@ namespace PredictedAdaptedEncoding
             
             if (a_cell_view.CellMode == PackedMode::VALUE32)
             {
-                return a_cell_view.RelationOffsetForMode32.has_value() && *a_cell_view.RelationOffsetForMode32 == RelOffsetMode32::RELOFFSET_GENERIC_VALUE;
+                return a_cell_view.RelationOffsetForMode32.has_value() && *a_cell_view.RelationOffsetForMode32 == SubClassesOfMode32::RELOFFSET_GENERIC_VALUE;
             }
             if (a_cell_view.CellMode == PackedMode::CLOCK_OR_VALUE_48)
             {
-                return a_cell_view.RelationOffsetForMode48.has_value() && *a_cell_view.RelationOffsetForMode48 == RelOffsetMode48::RELOFFSET_GENERIC_VALUE;
+                return a_cell_view.RelationOffsetForMode48.has_value() && *a_cell_view.RelationOffsetForMode48 == SubClassesOfMode48::RELOFFSET_GENERIC_VALUE;
             }
             return false;
         }
@@ -187,7 +187,7 @@ namespace PredictedAdaptedEncoding
                 occupancy_cell_view.CellMode != PackedMode::CLOCK_OR_VALUE_48 ||
                 occupancy_cell_view.LocalityOfCell != desired_cell_locality ||
                 !occupancy_cell_view.RelationOffsetForMode48.has_value() ||
-                *occupancy_cell_view.RelationOffsetForMode48 != RelOffsetMode48::SUBDIVISION16x3_INTERNAL_CELL_MODEL
+                *occupancy_cell_view.RelationOffsetForMode48 != SubClassesOfMode48::SUBDIVISION16x3_INTERNAL_CELL_MODEL
             )
             {
                 return false;
@@ -540,7 +540,7 @@ namespace PredictedAdaptedEncoding
         size_t TailIdx = APCDataStructure::APC_SIZE_SENTINAL;
         packed64_t HeadScreenshot = 0;
         packed64_t TailScreenshot = 0;
-        RelOffsetMode32 Position = RelOffsetMode32::RELOFFSET_GENERIC_VALUE;
+        SubClassesOfMode32 Position = SubClassesOfMode32::RELOFFSET_GENERIC_VALUE;
         bool Ownership = false;
     };
 

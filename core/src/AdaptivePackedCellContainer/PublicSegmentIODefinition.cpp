@@ -43,12 +43,12 @@ namespace PredictedAdaptedEncoding
         PriorityPhysics priority,
         PackedCellLocalityTypes locality,
         APCPagedNodeSegmentClasses page_class,
-        RelOffsetMode48 reloffset,
+        SubClassesOfMode48 reloffset,
         PackedCellDataType dtype,
         PackedCellOwnership node_authority
     ) noexcept
     {
-        if ((reloffset != RelOffsetMode48::RELOFFSET_PURE_TIMER))
+        if ((reloffset != SubClassesOfMode48::RELOFFSET_PURE_TIMER))
         {
             return PackedCell64_t::MakeFaultyCell();
         }

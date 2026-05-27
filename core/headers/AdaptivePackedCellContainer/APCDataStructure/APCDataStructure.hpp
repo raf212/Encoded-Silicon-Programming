@@ -145,7 +145,7 @@ namespace PredictedAdaptedEncoding
                 authority,
                 locality,
                 page_class,
-                RelOffsetMode48::SUBDIVISION16x3_INTERNAL_CELL_MODEL,
+                SubClassesOfMode48::SUBDIVISION16x3_INTERNAL_CELL_MODEL,
                 PackedCellDataType::UnsignedPCellDataType
             );
             return Subdevision16x3InternalMode48CellModel::Compose3Unsigned16bitIndependentInMode48(
@@ -214,7 +214,7 @@ namespace PredictedAdaptedEncoding
             PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
         ) noexcept
         {
-            const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(priority, authority, locality, page_class, RelOffsetMode48::SUBDIVISION16x3_INTERNAL_CELL_MODEL, PackedCellDataType::UnsignedPCellDataType);
+            const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(priority, authority, locality, page_class, SubClassesOfMode48::SUBDIVISION16x3_INTERNAL_CELL_MODEL, PackedCellDataType::UnsignedPCellDataType);
             return Subdevision16x3InternalMode48CellModel::Compose3Unsigned16bitIndependentInMode48(begin_low, end_mid, version_high, meta16);
         }
 

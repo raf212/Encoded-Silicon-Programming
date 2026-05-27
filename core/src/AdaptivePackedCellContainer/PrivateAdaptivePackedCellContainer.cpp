@@ -205,8 +205,16 @@ namespace PredictedAdaptedEncoding
             {
                 continue;
             }
+            
+            const packed64_t graceful_idle_cell = PackedCell64_t::MakeInitialValidPackedCell(
+                current_cell_view.CellMode, PackedCellLocalityTypes::ST_IDLE, current_cell_view.CellOwnership,
+                region_kind, current_cell_view.CellValueDataType, UNSIGNED_ZERO, UNSIGNED_ZERO, PriorityPhysics::IDLE,
+                current_cell_view.RelationOffsetForMode32.has_value() ? *current_cell_view.RelationOffsetForMode32 : SubClassesOfMode32::RELOFFSET_GENERIC_VALUE,
+                current_cell_view.RelationOffsetForMode48.has_value() ? *current_cell_view.RelationOffsetForMode48 : SubClassesOfMode48::RELOFFSET_GENERIC_VALUE
+            );
 
-            const packed64_t idle_cell = PackedCell64_t::MakeInitialPacked(current_cell_view.CellMode, PriorityPhysics::IDLE, PackedCellLocalityTypes::ST_IDLE, region_kind, current_cell_view.CellValueDataType);
+            const packed64_t idle_cell = (graceful_idle_cell == PackedCell64_t::PACKED_CELL_SENTINAL)  ? 
+                    PackedCell64_t::MakeInitialValidPackedCell(current_cell_view.CellMode) : graceful_idle_cell;
 
             packed64_t expected_cell = current_cell;
             if (!BackingPtr[idx].compare_exchange_strong(expected_cell, idle_cell, OnExchangeSuccess, OnExchangeFailure))
@@ -504,11 +512,11 @@ namespace PredictedAdaptedEncoding
         const PackedMode mode = PackedCell64_t::ExtractModeOfPackedCellFromPacked(out_going_cell);
         if (mode == PackedMode::VALUE32)
         {
-            out_going_cell = PackedCell64_t::SetRelOffsetForMode32InPacked(out_going_cell, RelOffsetMode32::RELOFFSET_GENERIC_VALUE);
+            out_going_cell = PackedCell64_t::SetRelOffsetForMode32InPacked(out_going_cell, SubClassesOfMode32::RELOFFSET_GENERIC_VALUE);
         }
         else
         {
-            out_going_cell = PackedCell64_t::SetRelOffsetForMode48InPacked(out_going_cell, RelOffsetMode48::RELOFFSET_GENERIC_VALUE);
+            out_going_cell = PackedCell64_t::SetRelOffsetForMode48InPacked(out_going_cell, SubClassesOfMode48::RELOFFSET_GENERIC_VALUE);
         }
         return out_going_cell;
     }

@@ -60,7 +60,7 @@ namespace PredictedAdaptedEncoding
             const PackedCell64_t::AuthoritiveCellView this_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
             return this_cell_auth_view.CellMode == PackedMode::VALUE32 &&
                 this_cell_auth_view.RelationOffsetForMode32.has_value() &&
-                this_cell_auth_view.RelationOffsetForMode32.value() == RelOffsetMode32::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 &&
+                this_cell_auth_view.RelationOffsetForMode32.value() == SubClassesOfMode32::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 &&
                 this_cell_auth_view.CellValueDataType == PackedCellDataType::UnsignedPCellDataType &&
                 this_cell_auth_view.LocalityOfCell != PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY;
         }

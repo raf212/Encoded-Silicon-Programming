@@ -26,12 +26,12 @@ namespace PredictedAdaptedEncoding
             packed64_t RawCell{0};
             meta16_t  InCellMeta16{0};
             PriorityPhysics Priority{PriorityPhysics::IDLE};
-            PackedCellOwnership NodeAuthority{PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER};
+            PackedCellOwnership CellOwnership{PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER};
             PackedCellLocalityTypes LocalityOfCell{PackedCellLocalityTypes::ST_IDLE};
             PackedMode CellMode{PackedMode::VALUE32};
             APCPagedNodeSegmentClasses PageClass{APCPagedNodeSegmentClasses::NONE};
-            std::optional<RelOffsetMode32> RelationOffsetForMode32{std::nullopt};
-            std::optional<RelOffsetMode48> RelationOffsetForMode48{std::nullopt};
+            std::optional<SubClassesOfMode32> RelationOffsetForMode32{std::nullopt};
+            std::optional<SubClassesOfMode48> RelationOffsetForMode48{std::nullopt};
             PackedCellDataType CellValueDataType{PackedCellDataType::UnsignedPCellDataType};
             std::optional<clk16_t> InCellClock16{std::nullopt};
             std::optional<uint64_t> CellClock48{std::nullopt};
@@ -82,25 +82,56 @@ namespace PredictedAdaptedEncoding
             return packed_cell;
         }
 
-        static  packed64_t MakeInitialPacked(
+
+        static constexpr packed64_t MakeInitialValidPackedCell(
             PackedMode cell_mode,
-            PriorityPhysics cell_priority = PriorityPhysics::IDLE,
             PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::ST_IDLE,
-            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
-            PackedCellDataType cell_data_type = PackedCellDataType::UnsignedPCellDataType
+            PackedCellOwnership cell_ownership = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
+            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::UNDEFINED,
+            PackedCellDataType in_cell_value_data_type = PackedCellDataType::UnsignedPCellDataType,
+            uint64_t in_cell_value = UNSIGNED_ZERO,
+            clk16_t in_cell_clk16 = UNSIGNED_ZERO,
+            PriorityPhysics cell_priority = PriorityPhysics::IDLE,
+            SubClassesOfMode32 probable_mode_subclass_type_32 = SubClassesOfMode32::RELOFFSET_GENERIC_VALUE,
+            SubClassesOfMode48 probable_mode_subclass_type_48 = SubClassesOfMode48::RELOFFSET_GENERIC_VALUE
         ) noexcept
         {
-            return MakeACell_(
-                cell_mode,
-                UNSIGNED_ZERO,
-                UNSIGNED_ZERO,
-                cell_priority,
-                PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
-                cell_locality,
-                page_class,
-                UNSIGNED_ZERO,
-                cell_data_type
-            );
+            if (cell_locality == PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY)
+            {
+                return PACKED_CELL_SENTINAL;
+            }
+            if (page_class == APCPagedNodeSegmentClasses::NONE || page_class == APCPagedNodeSegmentClasses::NANNULL)
+            {
+                return PACKED_CELL_SENTINAL;
+            }
+            if (cell_mode == PackedMode::VALUE32)
+            {
+                if (probable_mode_subclass_type_32 != SubClassesOfMode32::RELOFFSET_GENERIC_VALUE && in_cell_value_data_type != PackedCellDataType::UnsignedPCellDataType)
+                {
+                    return PACKED_CELL_SENTINAL;
+                }
+
+                return MakeACell_(
+                    cell_mode, in_cell_value, in_cell_clk16,
+                    cell_priority, cell_ownership, cell_locality,
+                    page_class, static_cast<tag8_t>(probable_mode_subclass_type_32),
+                    in_cell_value_data_type
+                );
+            }
+            else
+            {
+                if (probable_mode_subclass_type_48 == SubClassesOfMode48::RELOFFSET_PURE_TIMER && in_cell_value_data_type != PackedCellDataType::UnsignedPCellDataType)
+                {
+                    return PACKED_CELL_SENTINAL;
+                }
+
+                return MakeACell_(
+                    cell_mode, in_cell_value, UNSIGNED_ZERO,
+                    cell_priority, cell_ownership, cell_locality,
+                    page_class, static_cast<tag8_t>(probable_mode_subclass_type_48),
+                    in_cell_value_data_type
+                );
+            }
         }
 
         template <typename PCDT>
@@ -214,14 +245,14 @@ namespace PredictedAdaptedEncoding
             return static_cast<APCPagedNodeSegmentClasses>(ExtractRelMaskFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
         }
 
-        static  RelOffsetMode32 ExtractRelOffset32FromPacked(packed64_t packed_cell) noexcept
+        static  SubClassesOfMode32 ExtractRelOffset32FromPacked(packed64_t packed_cell) noexcept
         {
-            return static_cast<RelOffsetMode32>(ExtractRelOffsetFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
+            return static_cast<SubClassesOfMode32>(ExtractRelOffsetFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
         }
 
-        static  RelOffsetMode48 ExtractRelOffset48FromPacked(packed64_t packed_cell) noexcept
+        static  SubClassesOfMode48 ExtractRelOffset48FromPacked(packed64_t packed_cell) noexcept
         {
-            return static_cast<RelOffsetMode48>(ExtractRelOffsetFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
+            return static_cast<SubClassesOfMode48>(ExtractRelOffsetFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
         }
 
         static  PackedCellDataType ExtractPCellDataTypeFromPacked(packed64_t packed_cell) noexcept
@@ -243,19 +274,19 @@ namespace PredictedAdaptedEncoding
             out_packed_cell_view.RawCell = packed_cell;
             out_packed_cell_view.InCellMeta16 = meta16;
             out_packed_cell_view.Priority = static_cast<PriorityPhysics>(ExtractPriorityFromMETA16_U_(meta16));
-            out_packed_cell_view.NodeAuthority =  static_cast<PackedCellOwnership>(ExtractCellLocalNodeAuthotityFromMETA16_U_(meta16));
+            out_packed_cell_view.CellOwnership =  static_cast<PackedCellOwnership>(ExtractCellLocalNodeAuthotityFromMETA16_U_(meta16));
             out_packed_cell_view.LocalityOfCell = static_cast<PackedCellLocalityTypes>(ExtractLocalityFromMETA16_U_(meta16));
             out_packed_cell_view.CellMode = static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16));
             out_packed_cell_view.PageClass = static_cast<APCPagedNodeSegmentClasses>(ExtractRelMaskFromMETA16_U_(meta16));
             if (IsPackedCellVal32(packed_cell))
             {
-                out_packed_cell_view.RelationOffsetForMode32 = static_cast<RelOffsetMode32>(ExtractRelOffsetFromMETA16_U_(meta16));
+                out_packed_cell_view.RelationOffsetForMode32 = static_cast<SubClassesOfMode32>(ExtractRelOffsetFromMETA16_U_(meta16));
                 out_packed_cell_view.InCellClock16 = ExtractClk16(packed_cell);
                 out_packed_cell_view.CellValue32 = ExtractValue32(packed_cell);
             }
             else
             {
-                out_packed_cell_view.RelationOffsetForMode48 = static_cast<RelOffsetMode48>(ExtractRelOffsetFromMETA16_U_(meta16));
+                out_packed_cell_view.RelationOffsetForMode48 = static_cast<SubClassesOfMode48>(ExtractRelOffsetFromMETA16_U_(meta16));
                 out_packed_cell_view.CellClock48 = ExtractClk48(packed_cell);
             }
             out_packed_cell_view.CellValueDataType = static_cast<PackedCellDataType>(ExtractValueDataTypeFromMETA16_U_(meta16));
@@ -352,7 +383,7 @@ namespace PredictedAdaptedEncoding
 
         static  constexpr meta16_t SetRelOffset32InMETA16(
             meta16_t meta16,
-            RelOffsetMode32 rel_offset_32
+            SubClassesOfMode32 rel_offset_32
         ) noexcept
         {
             if (static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16)) != PackedMode::VALUE32)
@@ -368,7 +399,7 @@ namespace PredictedAdaptedEncoding
 
         static  constexpr meta16_t SetRelOffset48InMETA16(
             meta16_t meta16,
-            RelOffsetMode48 rel_offset_48
+            SubClassesOfMode48 rel_offset_48
         ) noexcept
         {
             if (static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16)) != PackedMode::CLOCK_OR_VALUE_48)
@@ -420,13 +451,13 @@ namespace PredictedAdaptedEncoding
             return SetMETA16InPacked(packed_cell, new_desired_meta);
         }
 
-        static  packed64_t SetRelOffsetForMode32InPacked(packed64_t packed_cell, RelOffsetMode32 reloffset) noexcept
+        static  packed64_t SetRelOffsetForMode32InPacked(packed64_t packed_cell, SubClassesOfMode32 reloffset) noexcept
         {
             const meta16_t new_desired_meta = SetRelOffset32InMETA16(ExtractMeta16fromPackedCell(packed_cell), reloffset);
             return SetMETA16InPacked(packed_cell, new_desired_meta);
         }
 
-        static  packed64_t SetRelOffsetForMode48InPacked(packed64_t packed_cell, RelOffsetMode48 reloffset) noexcept
+        static  packed64_t SetRelOffsetForMode48InPacked(packed64_t packed_cell, SubClassesOfMode48 reloffset) noexcept
         {
             const meta16_t new_desired_meta = SetRelOffset48InMETA16(ExtractMeta16fromPackedCell(packed_cell), reloffset);
             return SetMETA16InPacked(packed_cell, new_desired_meta);
@@ -443,7 +474,7 @@ namespace PredictedAdaptedEncoding
             PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_IDLE,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
-            RelOffsetMode32 rel_offset_32 = RelOffsetMode32::RELOFFSET_GENERIC_VALUE,
+            SubClassesOfMode32 rel_offset_32 = SubClassesOfMode32::RELOFFSET_GENERIC_VALUE,
             PackedCellDataType cell_data_type = PackedCellDataType::UnsignedPCellDataType
         ) noexcept
         {
@@ -463,7 +494,7 @@ namespace PredictedAdaptedEncoding
             PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_IDLE,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
-            RelOffsetMode48 rel_offset_48 = RelOffsetMode48::RELOFFSET_GENERIC_VALUE,
+            SubClassesOfMode48 rel_offset_48 = SubClassesOfMode48::RELOFFSET_GENERIC_VALUE,
             PackedCellDataType cell_data_type = PackedCellDataType::UnsignedPCellDataType
         ) noexcept
         {
@@ -535,7 +566,7 @@ namespace PredictedAdaptedEncoding
             return static_cast<meta16_t>(cleared_indicated | only_inserted_meta16);
         }
 
-        static  packed64_t MakeACell_(
+        static constexpr  packed64_t MakeACell_(
             PackedMode cell_mode,
             uint64_t cell_value = UNSIGNED_ZERO,
             clk16_t clock16 = UNSIGNED_ZERO,
@@ -554,7 +585,7 @@ namespace PredictedAdaptedEncoding
                     node_authority,
                     cell_locality,
                     page_class,
-                    static_cast<RelOffsetMode32>(rel_offset),
+                    static_cast<SubClassesOfMode32>(rel_offset),
                     cell_data_type
                 );
 
@@ -571,7 +602,7 @@ namespace PredictedAdaptedEncoding
                     node_authority,
                     cell_locality,
                     page_class,
-                    static_cast<RelOffsetMode48>(rel_offset),
+                    static_cast<SubClassesOfMode48>(rel_offset),
                     cell_data_type
                 );
 
@@ -585,7 +616,7 @@ namespace PredictedAdaptedEncoding
             PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::ST_IDLE,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
-            tag8_t rel_offset_any = static_cast<tag8_t>(RelOffsetMode32::RELOFFSET_GENERIC_VALUE),
+            tag8_t rel_offset_any = static_cast<tag8_t>(SubClassesOfMode32::RELOFFSET_GENERIC_VALUE),
             PackedCellDataType cell_data_type = PackedCellDataType::UnsignedPCellDataType
         ) noexcept
         {

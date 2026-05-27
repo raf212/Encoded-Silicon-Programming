@@ -71,7 +71,7 @@ namespace
             region,
             priority,
             PackedCellLocalityTypes::ST_PUBLISHED,
-            RelOffsetMode32::RELOFFSET_GENERIC_VALUE,
+            SubClassesOfMode32::RELOFFSET_GENERIC_VALUE,
             PackedCellDataType::UnsignedPCellDataType,
             PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
         );
@@ -91,7 +91,7 @@ namespace
             region,
             priority,
             PackedCellLocalityTypes::ST_PUBLISHED,
-            RelOffsetMode32::RELOFFSET_GENERIC_VALUE,
+            SubClassesOfMode32::RELOFFSET_GENERIC_VALUE,
             PackedCellDataType::FloatPCellDataType,
             PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
         );

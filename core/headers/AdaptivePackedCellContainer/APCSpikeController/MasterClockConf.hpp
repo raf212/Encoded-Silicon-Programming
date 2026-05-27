@@ -83,7 +83,7 @@ class AdaptivePackedCellContainer;
             APCPagedNodeSegmentClasses desired_page_class = APCPagedNodeSegmentClasses::NONE,
             PriorityPhysics desired_priority = PriorityPhysics::IDLE,
             PackedCellLocalityTypes desired_locality = PackedCellLocalityTypes::ST_PUBLISHED,
-            RelOffsetMode32 desired_reloffset = RelOffsetMode32::RELOFFSET_GENERIC_VALUE,
+            SubClassesOfMode32 desired_reloffset = SubClassesOfMode32::RELOFFSET_GENERIC_VALUE,
             PackedCellDataType desired_dtype = PackedCellDataType::UnsignedPCellDataType,
             PackedCellOwnership desired_node_authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
         )
@@ -103,7 +103,7 @@ class AdaptivePackedCellContainer;
                                 PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
                                 desired_locality, 
                                 APCPagedNodeSegmentClasses::CONTROL_SLOT,
-                                RelOffsetMode48::RELOFFSET_PURE_TIMER,
+                                SubClassesOfMode48::RELOFFSET_PURE_TIMER,
                                 PackedCellDataType::UnsignedPCellDataType
                             );
             return PackedCell64_t::ComposeCLK48u_64(full_clock48, strl_for_pure48_clock);
