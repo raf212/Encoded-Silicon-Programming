@@ -12,13 +12,14 @@ namespace PredictedAdaptedEncoding
         static constexpr uint64_t PACKED_CELL_SENTINAL = UINT64_MAX;
         static constexpr uint64_t MODE_48_MAX_UNSIGNED_LIMIT = 0xFFFFFFFFFFFF;
 
-        static  bool IsCellFaulty(packed64_t packed_cell) noexcept
+        static const bool IsThisCellValid(packed64_t packed_cell) noexcept
         {
-            if (packed_cell == PACKED_CELL_SENTINAL)
+            const PackedCell64_t::AuthoritiveCellView requested_cell_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
+            if (!requested_cell_view.IsCellValid)
             {
-                return true;
+                return false;
             }
-            return ExtractLocalityFromPacked(packed_cell) == PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY;
+            return true;
         }
 
         struct AuthoritiveCellView

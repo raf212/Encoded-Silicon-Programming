@@ -45,7 +45,11 @@ namespace PredictedAdaptedEncoding
             return (value + alignment_value_15) & ~static_cast<size_t>(alignment_value_15);
         }
 
-        
+        void StorePackedCellUnchecked_(size_t idx, packed64_t packed_cell) noexcept;
+
+        void StoreAValidPackedCell_(size_t idx, packed64_t packed_cell) noexcept;
+
+        void StoreAFabricMetaCellOnly();
 
 
     public:

@@ -49,5 +49,26 @@ namespace PredictedAdaptedEncoding
         return given_value + 1u;
     }
 
+    void NeuromorphicSpaceTimeFabricCoordinator::StorePackedCellUnchecked_(size_t idx, packed64_t packed_cell) noexcept
+    {
+        if (!SlabBasePtr_ || idx  >= SlabCellCount_)
+        {
+            return;
+        }
+        SlabBasePtr_[idx].store(packed_cell, MoStoreSeq_);
+        SlabBasePtr_[idx].notify_all();
+    }
+
+    void NeuromorphicSpaceTimeFabricCoordinator::StoreAValidPackedCell_(size_t idx, packed64_t packed_cell) noexcept
+    {
+        if (!PackedCell64_t::IsThisCellValid(packed_cell))
+        {
+            return;
+        }
+        StorePackedCellUnchecked_(idx, packed_cell);
+    }
+
+    
+
 
 }
