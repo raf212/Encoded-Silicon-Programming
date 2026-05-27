@@ -37,6 +37,43 @@ namespace PredictedAdaptedEncoding
             std::optional<uint64_t> CellClock48{std::nullopt};
             std::optional<val32_t> CellValue32{std::nullopt};
             bool IsCellValid{false};
+
+            bool constexpr IsThisPackedCellValidInRuntime() noexcept
+            {
+                if (LocalityOfCell == PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY)
+                {
+                    IsCellValid = false;
+                    return false;
+                }
+
+                if (PageClass == APCPagedNodeSegmentClasses::NONE || PageClass == APCPagedNodeSegmentClasses::NANNULL)
+                {
+                    IsCellValid = false;
+                    return false;
+                }
+
+                if (CellMode == PackedMode::VALUE32)
+                {
+                    if (RelationOffsetForMode32 != SubClassesOfMode32::RELOFFSET_GENERIC_VALUE && CellValueDataType != PackedCellDataType::UnsignedPCellDataType)
+                    {
+                        IsCellValid = false;
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (RelationOffsetForMode48 == SubClassesOfMode48::RELOFFSET_PURE_TIMER && CellValueDataType != PackedCellDataType::UnsignedPCellDataType)
+                    {
+                        IsCellValid = false;
+                        return false;
+                    }
+                }
+
+                IsCellValid = true;
+                return true;
+
+            }
+
         };
 
         static  packed64_t MakeFaultyCell() noexcept
@@ -96,41 +133,31 @@ namespace PredictedAdaptedEncoding
             SubClassesOfMode48 probable_mode_subclass_type_48 = SubClassesOfMode48::RELOFFSET_GENERIC_VALUE
         ) noexcept
         {
-            if (cell_locality == PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY)
-            {
-                return PACKED_CELL_SENTINAL;
-            }
-            if (page_class == APCPagedNodeSegmentClasses::NONE || page_class == APCPagedNodeSegmentClasses::NANNULL)
-            {
-                return PACKED_CELL_SENTINAL;
-            }
+
             if (cell_mode == PackedMode::VALUE32)
             {
-                if (probable_mode_subclass_type_32 != SubClassesOfMode32::RELOFFSET_GENERIC_VALUE && in_cell_value_data_type != PackedCellDataType::UnsignedPCellDataType)
-                {
-                    return PACKED_CELL_SENTINAL;
-                }
-
-                return MakeACell_(
+                const packed64_t requested_cell32 = MakeACell_(
                     cell_mode, in_cell_value, in_cell_clk16,
                     cell_priority, cell_ownership, cell_locality,
                     page_class, static_cast<tag8_t>(probable_mode_subclass_type_32),
                     in_cell_value_data_type
                 );
+
+                const AuthoritiveCellView requested_cells_view = GetAuthoritiveViewsForACell(requested_cell32);
+
+                return requested_cells_view.IsCellValid ? requested_cell32 : PACKED_CELL_SENTINAL;
             }
             else
             {
-                if (probable_mode_subclass_type_48 == SubClassesOfMode48::RELOFFSET_PURE_TIMER && in_cell_value_data_type != PackedCellDataType::UnsignedPCellDataType)
-                {
-                    return PACKED_CELL_SENTINAL;
-                }
-
-                return MakeACell_(
-                    cell_mode, in_cell_value, UNSIGNED_ZERO,
+                const packed64_t requested_cell32 = MakeACell_(
+                    cell_mode, in_cell_value, in_cell_clk16,
                     cell_priority, cell_ownership, cell_locality,
                     page_class, static_cast<tag8_t>(probable_mode_subclass_type_48),
                     in_cell_value_data_type
                 );
+
+                const AuthoritiveCellView requested_cells_view = GetAuthoritiveViewsForACell(requested_cell32);
+                return requested_cells_view.IsCellValid ? requested_cell32 : PACKED_CELL_SENTINAL;
             }
         }
 
@@ -290,15 +317,7 @@ namespace PredictedAdaptedEncoding
                 out_packed_cell_view.CellClock48 = ExtractClk48(packed_cell);
             }
             out_packed_cell_view.CellValueDataType = static_cast<PackedCellDataType>(ExtractValueDataTypeFromMETA16_U_(meta16));
-            if (IsCellFaulty(packed_cell))
-            {
-                out_packed_cell_view.IsCellValid = false;
-            }
-            else
-            {
-                out_packed_cell_view.IsCellValid = true;
-            } 
-            
+            out_packed_cell_view.IsThisPackedCellValidInRuntime();
             return out_packed_cell_view;      
         }
 

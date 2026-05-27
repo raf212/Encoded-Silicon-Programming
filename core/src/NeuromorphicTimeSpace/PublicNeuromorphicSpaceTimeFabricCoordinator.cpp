@@ -121,8 +121,8 @@ namespace PredictedAdaptedEncoding
 
     //     SlabCellCount_ = SegmentPoolEnd_;
 
-    //     const packed64_t idle_free = PackedCell64_t::MakeInitialValidPackedCell(
-    //     )
+    //     const packed64_t idle_free32 = PackedCell64_t::MakeInitialValidPackedCell(PackedMode::VALUE32);
+
         
 
         
