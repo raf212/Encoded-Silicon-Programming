@@ -3,6 +3,7 @@
 #include <array>
 #include <utility>
 #include "../PackedCell/InternalCellModes/Mode48CellModels.hpp"
+#include "../PackedCell/InternalCellModes/Mode32CellModels.hpp"
 
 namespace PredictedAdaptedEncoding
 {

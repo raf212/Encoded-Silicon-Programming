@@ -70,7 +70,7 @@ namespace PredictedAdaptedEncoding
 
     struct PairedCellModelOfMode32
     {
-        static const std::pair<packed64_t, packed64_t> GetPairOfLow32AndHigh32FromUnsigned64(
+        static  std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64(
             uint64_t value, PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
             PackedCellOwnership ownership = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
@@ -95,9 +95,8 @@ namespace PredictedAdaptedEncoding
             return std::pair<packed64_t, packed64_t>(low_half_packed_cell, high_half_packed_cell);
         }
 
-        static const std::optional<uint64_t> GetFullUnsigned64FromPairedCell(packed64_t low_half, packed64_t high_half) noexcept
+        static std::optional<uint64_t> GetFullUnsigned64FromPairedCell(packed64_t low_half, packed64_t high_half) noexcept
         {
-
             const PackedCell64_t::AuthoritiveCellView low_half_view = PackedCell64_t::GetAuthoritiveViewsForACell(low_half);
             if (
                 !low_half_view.IsCellValid ||
@@ -118,8 +117,8 @@ namespace PredictedAdaptedEncoding
                 return std::nullopt;
             }
 
-            return *low_half_view.CellValue32 | (*high_half_view.CellValue32 << VALBITS);
-            
+            return static_cast<packed64_t>(*low_half_view.CellValue32) | 
+                    (static_cast<packed64_t>(*high_half_view.CellValue32 ) << VALBITS);
         }
     };
 

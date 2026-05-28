@@ -101,5 +101,33 @@ namespace PredictedAdaptedEncoding
         
     }
 
+    void NeuromorphicSpaceTimeFabricCoordinator::WriteValidPairedEpoch_(FabricMetaIndicies meta_idx, uint64_t epoch_value) noexcept
+    {
+        const std::pair<packed64_t, packed64_t> low_high_split = PairedCellModelOfMode32::GetPairOfLow32FAndHigh32SFromUnsigned64(
+            epoch_value, PackedCellLocalityTypes::IDLE, PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC      
+        );
+
+        FabricMetaIndicies desired_low_idx = FabricMetaIndicies::EOF_FABRIC_HEADER;
+
+        switch (meta_idx)
+        {
+        case FabricMetaIndicies::GLOBAL_EPOCH_LOW32 :
+        case FabricMetaIndicies::GLOBAL_EPOCH_HIGH32 :
+            desired_low_idx = FabricMetaIndicies::GLOBAL_EPOCH_LOW32;
+            break;
+
+        case FabricMetaIndicies::MIN_SAFE_EPOCH_LOW32 :
+        case FabricMetaIndicies::MIN_SAFE_EPOCH_HIGH32 :
+            desired_low_idx = FabricMetaIndicies::MIN_SAFE_EPOCH_LOW32;
+            break;
+
+        default:
+            return;
+        }
+
+        StorePackedCellUnchecked_(static_cast<size_t>(desired_low_idx), low_high_split.first);
+        StorePackedCellUnchecked_(static_cast<size_t>(desired_low_idx) + 1, low_high_split.second);
+    }
+
 
 }

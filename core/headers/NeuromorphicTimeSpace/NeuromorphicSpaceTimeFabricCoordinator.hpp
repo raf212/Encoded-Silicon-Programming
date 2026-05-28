@@ -57,7 +57,7 @@ namespace PredictedAdaptedEncoding
             PriorityPhysics priority = PriorityPhysics::IMPORTANT, clk16_t extended_meta_value = UNSIGNED_ZERO
         ) noexcept;
 
-        bool WriteValidPairedEpoch() noexcept;
+        void WriteValidPairedEpoch_(FabricMetaIndicies meta_idx, uint64_t epoch_value) noexcept;
 
     public:
         NeuromorphicSpaceTimeFabricCoordinator(/* args */) noexcept = default;
