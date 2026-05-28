@@ -60,10 +60,23 @@ namespace PredictedAdaptedEncoding
                         IsCellValid = false;
                         return false;
                     }
+
+                    if (!CellValue32)
+                    {
+                        IsCellValid = false;
+                        return false;
+                    }
+                    
                 }
                 else
                 {
                     if (RelationOffsetForMode48 == SubClassesOfMode48::PURE_TIMER_48 && CellValueDataType != PackedCellDataType::UnsignedPCellDataType)
+                    {
+                        IsCellValid = false;
+                        return false;
+                    }
+
+                    if (!CellClock48)
                     {
                         IsCellValid = false;
                         return false;

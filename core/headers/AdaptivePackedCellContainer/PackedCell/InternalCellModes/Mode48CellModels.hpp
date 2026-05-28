@@ -81,7 +81,6 @@ namespace PredictedAdaptedEncoding
         static constexpr unsigned SECOND_8BIT_SHIFT_3 = 32u;
 
         static constexpr uint64_t MASK_LOW_8 = MaskLowNBits(8);
-        static constexpr uint16_t MASK_LOW_4 = 0x0Fu;
 
 
         static packed64_t Compose4Unsigned16x2Plus8x2IndependendentInMode48(

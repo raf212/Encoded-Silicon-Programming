@@ -112,8 +112,8 @@ namespace PredictedAdaptedEncoding {
     enum class SubClassesOfMode32 : tag8_t
     {
         SELF_CLASS = 0,
-        TAIL_OF_PAIRED_CELL = 1,
-        HEAD_OF_PAIRED_CELL = 2,
+        LOW_OF_PAIRED_CELL = 1,
+        HIGH_OF_PAIRED_CELL = 2,
         SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 = 3
     };
 
