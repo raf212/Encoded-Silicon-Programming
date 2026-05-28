@@ -70,8 +70,10 @@ namespace PredictedAdaptedEncoding
 
     struct PairedCellModelOfMode32
     {
+        //In paired cell Ideology clk16 is a version count-> CLOCK is unnecessery because it will be mostly used for contron / paired pointers
         static  std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64(
-            uint64_t value, PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
+            uint64_t value, clk16_t version,
+            PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
             PackedCellOwnership ownership = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
             PriorityPhysics priority = PriorityPhysics::IMPORTANT
@@ -82,13 +84,13 @@ namespace PredictedAdaptedEncoding
 
             const packed64_t low_half_packed_cell = PackedCell64_t::MakeInitialValidPackedCell(
                 PackedMode::MODE_32, locality, ownership, page_class,
-                PackedCellDataType::UnsignedPCellDataType, low_half32, UNSIGNED_ZERO,
+                PackedCellDataType::UnsignedPCellDataType, low_half32, version,
                 priority, SubClassesOfMode32::LOW_OF_PAIRED_CELL
             );
 
             const packed64_t high_half_packed_cell = PackedCell64_t::MakeInitialValidPackedCell(
                 PackedMode::MODE_32, locality, ownership, page_class,
-                PackedCellDataType::UnsignedPCellDataType, high_half32, UNSIGNED_ZERO,
+                PackedCellDataType::UnsignedPCellDataType, high_half32, version,
                 priority, SubClassesOfMode32::HIGH_OF_PAIRED_CELL
             );
 
@@ -116,6 +118,13 @@ namespace PredictedAdaptedEncoding
             {
                 return std::nullopt;
             }
+
+            //version check
+            if (low_half_view.InCellClock16 != high_half_view.InCellClock16)
+            {
+                return std::nullopt;
+            }
+            
 
             return static_cast<packed64_t>(*low_half_view.CellValue32) | 
                     (static_cast<packed64_t>(*high_half_view.CellValue32 ) << VALBITS);

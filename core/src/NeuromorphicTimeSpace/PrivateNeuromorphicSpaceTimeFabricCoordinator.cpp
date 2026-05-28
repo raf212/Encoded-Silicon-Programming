@@ -55,7 +55,7 @@ namespace PredictedAdaptedEncoding
         SlabBasePtr_[idx].notify_all();
     }
 
-    bool NeuromorphicSpaceTimeFabricCoordinator::StoreAValidPackedCell_(size_t idx, packed64_t packed_cell) noexcept
+    bool NeuromorphicSpaceTimeFabricCoordinator::CheckAndStoreAPrebuildCellInSlab_(size_t idx, packed64_t packed_cell) noexcept
     {
         if (!PackedCell64_t::IsThisCellValid(packed_cell))
         {
@@ -72,9 +72,9 @@ namespace PredictedAdaptedEncoding
         return true;
     }
 
-    bool NeuromorphicSpaceTimeFabricCoordinator::StoreAValidFabricMetaCellOnly_(
+    bool NeuromorphicSpaceTimeFabricCoordinator::MakeCheckAndStoreAFabricControlValidCell_(
         FabricMetaIndicies fabric_meta_idx, uint64_t value32_or_64, 
-        PackedMode cell_mode, tag8_t mode_sub_class,PackedCellDataType cell_data_type, 
+        PackedMode cell_mode, tag8_t mode_sub_class, PackedCellDataType cell_data_type, 
         PackedCellLocalityTypes locality_of_cell, PriorityPhysics priority, clk16_t extended_meta_value
     ) noexcept
     {
@@ -90,7 +90,7 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-        if (static_cast<size_t>(fabric_meta_idx) < APCDataStructure::METACELL_COUNT)
+        if (static_cast<size_t>(fabric_meta_idx) < SlabCellCount_)
         {
             //MakeInitialValidPackedCell::already checks validity
             StorePackedCellUnchecked_(static_cast<size_t>(fabric_meta_idx), a_valid_fabric_meta_cell32);
@@ -101,33 +101,60 @@ namespace PredictedAdaptedEncoding
         
     }
 
-    void NeuromorphicSpaceTimeFabricCoordinator::WriteValidPairedEpoch_(FabricMetaIndicies meta_idx, uint64_t epoch_value) noexcept
+
+    void NeuromorphicSpaceTimeFabricCoordinator::StoreNewDefaultMeta48_(FabricMetaIndicies fabric_meta_idx, uint64_t value) noexcept
+    {
+        if (static_cast<size_t>(fabric_meta_idx) >= APCDataStructure::METACELL_COUNT)
+        {
+            return;
+        }
+        MakeCheckAndStoreAFabricControlValidCell_(fabric_meta_idx, value & MaskLowNBits(CLK_B48), PackedMode::MODE_48);
+    }
+
+
+    void NeuromorphicSpaceTimeFabricCoordinator::WriteValidPairedEpoch_(
+        FabricMetaIndicies meta_idx, uint64_t epoch_value,
+        clk16_t pair_version
+    ) noexcept
     {
         const std::pair<packed64_t, packed64_t> low_high_split = PairedCellModelOfMode32::GetPairOfLow32FAndHigh32SFromUnsigned64(
-            epoch_value, PackedCellLocalityTypes::IDLE, PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC      
+            epoch_value, pair_version, 
+            PackedCellLocalityTypes::IDLE, PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC      
         );
 
-        FabricMetaIndicies desired_low_idx = FabricMetaIndicies::EOF_FABRIC_HEADER;
-
-        switch (meta_idx)
+        const FabricMetaIndicies desired_low_idx = CoreOfFabricCoordinator::GetValidLowEpochOrEOFIdx_(meta_idx);
+        if (desired_low_idx == FabricMetaIndicies::EOF_FABRIC_HEADER)
         {
-        case FabricMetaIndicies::GLOBAL_EPOCH_LOW32 :
-        case FabricMetaIndicies::GLOBAL_EPOCH_HIGH32 :
-            desired_low_idx = FabricMetaIndicies::GLOBAL_EPOCH_LOW32;
-            break;
-
-        case FabricMetaIndicies::MIN_SAFE_EPOCH_LOW32 :
-        case FabricMetaIndicies::MIN_SAFE_EPOCH_HIGH32 :
-            desired_low_idx = FabricMetaIndicies::MIN_SAFE_EPOCH_LOW32;
-            break;
-
-        default:
             return;
         }
 
         StorePackedCellUnchecked_(static_cast<size_t>(desired_low_idx), low_high_split.first);
         StorePackedCellUnchecked_(static_cast<size_t>(desired_low_idx) + 1, low_high_split.second);
     }
+
+
+    // void NeuromorphicSpaceTimeFabricCoordinator::WriceFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept
+    // {
+    //     StoreDefaultMeta32_(FabricMetaIndicies::MAGIC, APCDataStructure::FABRIC_MAGIC);
+    //     StoreDefaultMeta32_(FabricMetaIndicies::VERSION, APCDataStructure::BRANCH_VERSION);
+    //     StoreDefaultMeta32_(FabricMetaIndicies::FLAGS, UNSIGNED_ZERO);
+    //     StoreDefaultMeta32_(FabricMetaIndicies::SLAB_ID, static_cast<uint32_t>(SlabId_));
+
+    //     StoreNewDefaultMeta48_(FabricMetaIndicies::TOTAL_CELLS, static_cast<uint64_t>(SlabCellCount_));
+    //     StoreNewDefaultMeta48_(FabricMetaIndicies::CONTROL_CELLS_OF_FABRIC, static_cast<uint64_t>(SegmentPoolBegin_));
+    //     StoreNewDefaultMeta48_(FabricMetaIndicies::SLOT_COUNT, static_cast<uint64_t>(SlotCount_));
+    //     StoreNewDefaultMeta48_(FabricMetaIndicies::SLOT_CELL_COUNT, static_cast<uint64_t>(SlotCellCount_));
+    //     StoreNewDefaultMeta48_(FabricMetaIndicies::SEGMENT_POOL_BEGIN_IDX, static_cast<uint64_t>(SegmentPoolBegin_));
+    //     StoreNewDefaultMeta48_(FabricMetaIndicies::SEGMENT_POOL_END_IDX, static_cast<uint64_t>(SegmentPoolEnd_));
+    //     StoreNewDefaultMeta48_(FabricMetaIndicies::FREE_SLOT_HEAD, PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT);
+    //     StoreNewDefaultMeta48_(FabricMetaIndicies::RETIRE_SLOT_HEAD, PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT);
+        
+
+
+
+
+    // }
+
 
 
 }

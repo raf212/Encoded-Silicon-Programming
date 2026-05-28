@@ -130,6 +130,10 @@ namespace PredictedAdaptedEncoding
         static constexpr size_t APC_CACHELINE_SIZE = 64u;
         static constexpr size_t APC_SIZE_SENTINAL = SIZE_MAX;
 
+        static constexpr uint32_t FABRIC_MAGIC = 0x41504643u;
+        static constexpr uint32_t FABRIC_META_EOF = 0x41474946u;
+
+
 
         static packed64_t ComposeAPCOccupancyModel_16x3_48t(
             uint16_t published_count,

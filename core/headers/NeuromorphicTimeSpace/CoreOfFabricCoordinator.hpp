@@ -168,89 +168,6 @@ namespace PredictedAdaptedEncoding
         PUBLISHED = 2
     };
 
-    struct ThreadHandleOfAPCFabric
-    {
-        uint32_t ThreadIndex{IN_CELL_VALUE_MODE32_SENTINAL};
-        uint32_t TokenOfThreadHandle{UNSIGNED_ZERO};
-
-        bool IsThisValidThreadhandle() const noexcept
-        {
-            return ThreadIndex != IN_CELL_VALUE_MODE32_SENTINAL && TokenOfThreadHandle != UNSIGNED_ZERO;
-        }
-    };
-
-    struct AllocatorOfAPCFabricCells
-    {
-        using AllocateFunction = std::atomic<packed64_t>* (*)(
-            size_t count_of_packed_cell, size_t alignment, void* user
-        ) noexcept;
-
-        using FreeFunction = void (*)(
-            std::atomic<packed64_t>* packed_cell_storage_ptr, 
-            size_t count_of_cell, size_t alignment, void*user
-        ) noexcept;
-
-        AllocateFunction AllocatePackedCellStorage{nullptr};
-        FreeFunction FreePackedCellStorage{nullptr};
-        void* User{nullptr};
-        size_t Alignment{BIT_LENGTH_OF_A_PACKED_CELL};
-
-        static void DefaultFreeAtomicCells(
-            std::atomic<packed64_t>* packed_cell_storage_ptr, 
-            size_t count_of_cell, size_t alignment, void*
-        ) noexcept
-        {
-            if (!packed_cell_storage_ptr)
-            {
-                return;
-            }
-            for (size_t i = 0; i < count_of_cell; i++)
-            {
-                packed_cell_storage_ptr[i].~atomic<packed64_t>();
-
-            }
-
-            if (alignment < alignof(std::atomic<packed64_t>))
-            {
-                alignment = alignof(std::atomic<packed64_t>);
-            }
-            ::operator delete[](packed_cell_storage_ptr, std::align_val_t(alignment));
-        }
-    };
-
-    static constexpr APCPagedNodeSegmentClasses ConvertFabricToIOLinkerAsSegmentClasses(FabricToIoLinkerClasses fabric_class) noexcept
-    {
-        switch (fabric_class)
-        {
-            case FabricToIoLinkerClasses::META_DATA : 
-            case FabricToIoLinkerClasses::DIRECTORY :
-                return APCPagedNodeSegmentClasses::CONTROL_SLOT;
-            
-            case FabricToIoLinkerClasses::SLOT_TABLE :
-                return APCPagedNodeSegmentClasses::SLOT_TABLE_DESCRIPTOR;
-
-            case FabricToIoLinkerClasses::HASH_TABLE :
-            case FabricToIoLinkerClasses::RELATION_TABLE :
-                return APCPagedNodeSegmentClasses::EDGE_DESCRIPTOR;
-
-            case FabricToIoLinkerClasses::QUEUE_TABLE :
-                return APCPagedNodeSegmentClasses::AUX_SLOT;
-            
-            case FabricToIoLinkerClasses::DEVICE_VIEW:
-                return APCPagedNodeSegmentClasses::HETEROGENOUS_RAW_MEMORY;
-            
-            case FabricToIoLinkerClasses::SEGMENT_POOL:
-                return APCPagedNodeSegmentClasses::FREE_SLOT;
-            
-            case FabricToIoLinkerClasses::RETIRED_SEGMENT_OF_FABRIC:
-            case FabricToIoLinkerClasses::UNDEFINED_SEGMENT_OF_FABRIC:
-                return APCPagedNodeSegmentClasses::UNDEFINED;
-
-            default:
-                return APCPagedNodeSegmentClasses::NONE;
-        }
-    }
-
     enum class FabricMetaIndicies : size_t
     {
         MAGIC = 0,
@@ -317,4 +234,108 @@ namespace PredictedAdaptedEncoding
         EOF_FABRIC_HEADER = 95
 
     };
+
+    struct ThreadHandleOfAPCFabric
+    {
+        uint32_t ThreadIndex{IN_CELL_VALUE_MODE32_SENTINAL};
+        uint32_t TokenOfThreadHandle{UNSIGNED_ZERO};
+
+        bool IsThisValidThreadhandle() const noexcept
+        {
+            return ThreadIndex != IN_CELL_VALUE_MODE32_SENTINAL && TokenOfThreadHandle != UNSIGNED_ZERO;
+        }
+    };
+
+    struct AllocatorOfAPCFabricCells
+    {
+        using AllocateFunction = std::atomic<packed64_t>* (*)(
+            size_t count_of_packed_cell, size_t alignment, void* user
+        ) noexcept;
+
+        using FreeFunction = void (*)(
+            std::atomic<packed64_t>* packed_cell_storage_ptr, 
+            size_t count_of_cell, size_t alignment, void*user
+        ) noexcept;
+
+        AllocateFunction AllocatePackedCellStorage{nullptr};
+        FreeFunction FreePackedCellStorage{nullptr};
+        void* User{nullptr};
+        size_t Alignment{BIT_LENGTH_OF_A_PACKED_CELL};
+
+        static void DefaultFreeAtomicCells(
+            std::atomic<packed64_t>* packed_cell_storage_ptr, 
+            size_t count_of_cell, size_t alignment, void*
+        ) noexcept
+        {
+            if (!packed_cell_storage_ptr)
+            {
+                return;
+            }
+            for (size_t i = 0; i < count_of_cell; i++)
+            {
+                packed_cell_storage_ptr[i].~atomic<packed64_t>();
+
+            }
+
+            if (alignment < alignof(std::atomic<packed64_t>))
+            {
+                alignment = alignof(std::atomic<packed64_t>);
+            }
+            ::operator delete[](packed_cell_storage_ptr, std::align_val_t(alignment));
+        }
+    };
+
+    struct CoreOfFabricCoordinator
+    {
+        static constexpr FabricMetaIndicies GetValidLowEpochOrEOFIdx_(FabricMetaIndicies meta_idx) noexcept
+        {
+            switch (meta_idx)
+            {
+            case FabricMetaIndicies::GLOBAL_EPOCH_LOW32 :
+            case FabricMetaIndicies::GLOBAL_EPOCH_HIGH32 :
+                return FabricMetaIndicies::GLOBAL_EPOCH_LOW32;
+
+            case FabricMetaIndicies::MIN_SAFE_EPOCH_LOW32 :
+            case FabricMetaIndicies::MIN_SAFE_EPOCH_HIGH32 :
+                return FabricMetaIndicies::MIN_SAFE_EPOCH_LOW32;
+
+            default:
+                return FabricMetaIndicies::EOF_FABRIC_HEADER;
+            }
+        }
+
+        static constexpr APCPagedNodeSegmentClasses ConvertFabricToIOLinkerAsSegmentClasses(FabricToIoLinkerClasses fabric_class) noexcept
+        {
+            switch (fabric_class)
+            {
+                case FabricToIoLinkerClasses::META_DATA : 
+                case FabricToIoLinkerClasses::DIRECTORY :
+                    return APCPagedNodeSegmentClasses::CONTROL_SLOT;
+                
+                case FabricToIoLinkerClasses::SLOT_TABLE :
+                    return APCPagedNodeSegmentClasses::SLOT_TABLE_DESCRIPTOR;
+
+                case FabricToIoLinkerClasses::HASH_TABLE :
+                case FabricToIoLinkerClasses::RELATION_TABLE :
+                    return APCPagedNodeSegmentClasses::EDGE_DESCRIPTOR;
+
+                case FabricToIoLinkerClasses::QUEUE_TABLE :
+                    return APCPagedNodeSegmentClasses::AUX_SLOT;
+                
+                case FabricToIoLinkerClasses::DEVICE_VIEW:
+                    return APCPagedNodeSegmentClasses::HETEROGENOUS_RAW_MEMORY;
+                
+                case FabricToIoLinkerClasses::SEGMENT_POOL:
+                    return APCPagedNodeSegmentClasses::FREE_SLOT;
+                
+                case FabricToIoLinkerClasses::RETIRED_SEGMENT_OF_FABRIC:
+                case FabricToIoLinkerClasses::UNDEFINED_SEGMENT_OF_FABRIC:
+                    return APCPagedNodeSegmentClasses::UNDEFINED;
+
+                default:
+                    return APCPagedNodeSegmentClasses::NONE;
+            }
+        }
+    };
+    
 }

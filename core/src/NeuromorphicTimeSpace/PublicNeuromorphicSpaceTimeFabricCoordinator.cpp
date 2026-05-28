@@ -15,6 +15,46 @@ namespace PredictedAdaptedEncoding
         ResetScalarsofTheFabric_();
     }
 
+    packed64_t NeuromorphicSpaceTimeFabricCoordinator::GetATotalRawUnchackedCell(size_t idx) noexcept
+    {
+        if (!SlabBasePtr_ || idx >= SlabCellCount_)
+        {
+            return APCDataStructure::PACKED_CELL_SENTENAL;
+        }
+        return SlabBasePtr_[idx].load(MoLoad_);
+    }
+
+    bool NeuromorphicSpaceTimeFabricCoordinator::GetMetaCellView(MetaIndexOfAPCNode fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept
+    {
+        if (static_cast<size_t>(fabric_meta_idx) >= APCDataStructure::METACELL_COUNT || !SlabBasePtr_)
+        {
+            return false;
+        }
+
+        const packed64_t packed_meta_cell = SlabBasePtr_[static_cast<size_t>(fabric_meta_idx)].load(MoLoad_);
+        meta_cell_view_address = PackedCell64_t::GetAuthoritiveViewsForACell(packed_meta_cell);
+
+        return true;        
+    }
+
+
+    std::optional<uint64_t> NeuromorphicSpaceTimeFabricCoordinator::ReadCompleatEpochValidValueInSameVersion(FabricMetaIndicies meta_idx_of_fabric) noexcept
+    {
+        const FabricMetaIndicies desired_low_epoch_idx = CoreOfFabricCoordinator::GetValidLowEpochOrEOFIdx_(meta_idx_of_fabric);
+        if (desired_low_epoch_idx == FabricMetaIndicies::EOF_FABRIC_HEADER)
+        {
+            return std::nullopt;
+        }
+
+        const packed64_t raw_epoch_low = GetATotalRawUnchackedCell(static_cast<size_t>(desired_low_epoch_idx));
+        const packed64_t raw_epoch_high = GetATotalRawUnchackedCell(static_cast<size_t>(desired_low_epoch_idx) + 1);
+
+        return PairedCellModelOfMode32::GetFullUnsigned64FromPairedCell(raw_epoch_low, raw_epoch_high);
+    }
+
+
+
+
     // bool NeuromorphicSpaceTimeFabricCoordinator::InitializeFabric(
     //     uint16_t slot_count,
     //     size_t slot_cell_count,

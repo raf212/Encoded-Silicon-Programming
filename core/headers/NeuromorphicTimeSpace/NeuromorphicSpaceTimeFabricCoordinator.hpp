@@ -10,7 +10,7 @@ namespace PredictedAdaptedEncoding
         std::atomic<packed64_t>* SlabBasePtr_{nullptr};
         size_t SlabCellCount_{UNSIGNED_ZERO};
         size_t SlotCellCount_{UNSIGNED_ZERO};
-        uint16_t SlotCount_{UNSIGNED_ZERO};
+        size_t SlotCount_{UNSIGNED_ZERO};
         uint16_t SlabId_{UNSIGNED_ZERO};
         size_t SegmentPoolBegin_{APCDataStructure::METACELL_COUNT};
         size_t SegmentPoolEnd_{APCDataStructure::METACELL_COUNT};
@@ -47,17 +47,26 @@ namespace PredictedAdaptedEncoding
 
         void StorePackedCellUnchecked_(size_t idx, packed64_t packed_cell) noexcept;
 
-        bool StoreAValidPackedCell_(size_t idx, packed64_t packed_cell) noexcept;
+        bool CheckAndStoreAPrebuildCellInSlab_(size_t idx, packed64_t packed_cell) noexcept;
 
-        bool StoreAValidFabricMetaCellOnly_(
+        bool MakeCheckAndStoreAFabricControlValidCell_(
             FabricMetaIndicies fabric_meta_idx, uint64_t value32_or_64, 
-            PackedMode cell_mode = PackedMode::MODE_32, tag8_t mode_sub_class = static_cast<tag8_t>(SubClassesOfMode32::SELF_CLASS),
+            PackedMode cell_mode = PackedMode::MODE_48, tag8_t mode_sub_class = static_cast<tag8_t>(SubClassesOfMode32::SELF_CLASS),
             PackedCellDataType cell_data_type = PackedCellDataType::UnsignedPCellDataType,
             PackedCellLocalityTypes locality_of_cell = PackedCellLocalityTypes::IDLE, 
             PriorityPhysics priority = PriorityPhysics::IMPORTANT, clk16_t extended_meta_value = UNSIGNED_ZERO
         ) noexcept;
 
-        void WriteValidPairedEpoch_(FabricMetaIndicies meta_idx, uint64_t epoch_value) noexcept;
+        void StoreNewDefaultMeta48_(FabricMetaIndicies fabric_meta_idx, uint64_t value) noexcept;
+
+
+        void WriteValidPairedEpoch_(
+            FabricMetaIndicies meta_idx, uint64_t epoch_value,
+            clk16_t pair_version = APCDataStructure::BRANCH_VERSION
+        ) noexcept;
+
+        void WriceFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept;
+
 
     public:
         NeuromorphicSpaceTimeFabricCoordinator(/* args */) noexcept = default;
@@ -71,6 +80,12 @@ namespace PredictedAdaptedEncoding
         NeuromorphicSpaceTimeFabricCoordinator& operator = (const NeuromorphicSpaceTimeFabricCoordinator&) = delete;
 
         void ShutDownFabric() noexcept;
+
+        packed64_t GetATotalRawUnchackedCell(size_t idx) noexcept;
+
+        bool GetMetaCellView(MetaIndexOfAPCNode fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept;
+
+        std::optional<uint64_t> ReadCompleatEpochValidValueInSameVersion(FabricMetaIndicies meta_idx_of_fabric) noexcept;
 
         bool InitializeFabric(
             uint16_t slot_count,
