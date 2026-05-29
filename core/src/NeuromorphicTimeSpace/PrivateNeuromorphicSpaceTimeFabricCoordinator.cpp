@@ -111,26 +111,110 @@ namespace PredictedAdaptedEncoding
         MakeCheckAndStoreAFabricControlValidCell_(fabric_meta_idx, value & MaskLowNBits(CLK_B48), PackedMode::MODE_48);
     }
 
-    // bool UpdateValidPairedOccupancyApproximation_(
-    //     PackedCellLocalityTypes desired_occupancy_idx, uint64_t occupancy_value,
-    //     bool is_initiating = false,
-    //     clk16_t pair_version = APCDataStructure::BRANCH_VERSION
-    // ) noexcept
-    // {
-    //     const FabricMetaIndicies desired_low_idx = CoreOfFabricCoordinator::GetDesiredLowIdxOfOccupancyPairFromLocality(desired_occupancy_idx);
-    //     if (desired_low_idx == FabricMetaIndicies::EOF_FABRIC_HEADER)
-    //     {
-    //         return false;
-    //     }
+    bool NeuromorphicSpaceTimeFabricCoordinator::UpdateValidPairedOccupancyApproximation_(
+        PackedCellLocalityTypes desired_occupancy_of_locality, uint64_t desired_occupancy_value,
+        bool force_update, clk16_t pair_version
+    ) noexcept
+    {
+        static constexpr uint8_t MAX_TRIES = 128;
 
-    //     const std::pair<packed64_t, packed64_t> low_high_occupancy_split = PairedVersionedCellModelOfMode32::GetPairOfLow32FAndHigh32SFromUnsigned64(
-    //         occupancy_value, pair_version, 
-    //         PackedCellLocalityTypes::IDLE, PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC      
-    //     );
+        const FabricMetaIndicies desired_occupancy_low_idx = CoreOfFabricCoordinator::GetDesiredLowIdxOfOccupancyPairFromLocality(desired_occupancy_of_locality);
 
-    //     StorePackedCellUnchecked_(static_cast<size_t>(desired_low_idx), low_high_split.first);
-    //     StorePackedCellUnchecked_(static_cast<size_t>(desired_low_idx) + 1, low_high_split.second);
-    // }
+        if (force_update && desired_occupancy_low_idx == FabricMetaIndicies::EOF_FABRIC_HEADER)
+        {
+            return false;
+        }
+
+        const std::pair<packed64_t, packed64_t> low32_and_probable_high32 = PairedVersionedCellModelOfMode32::GetPairOfLow32FAndHigh32SFromUnsigned64(
+            desired_occupancy_value, pair_version,
+            PackedCellLocalityTypes::PUBLISHED, PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC,
+            APCPagedNodeSegmentClasses::CONTROL_SLOT
+        );
+
+        auto ForceUpdate = [&](){
+            StorePackedCellUnchecked_(static_cast<size_t>(desired_occupancy_low_idx), low32_and_probable_high32.first);
+            StorePackedCellUnchecked_(static_cast<size_t>(desired_occupancy_low_idx) + 1, low32_and_probable_high32.second);
+            return true;
+        };
+        
+        if (force_update)
+        {
+            return ForceUpdate();
+        }
+
+        const PackedCell64_t::AuthoritiveCellView low32_half_view{};
+        const PackedCell64_t::AuthoritiveCellView high32_half_view{};
+        const std::optional<uint64_t> maybe_occupancy = ReadOccupancyApproxFromPairedIfValid(desired_occupancy_of_locality, &low32_half_view, &high32_half_view);
+
+        if (!maybe_occupancy|| *maybe_occupancy == PackedCell64_t::PACKED_CELL_SENTINAL)
+        {
+            return ForceUpdate();
+        }
+    
+        if (low32_half_view.LocalityOfCell == PackedCellLocalityTypes::CLAIMED || high32_half_view.LocalityOfCell == PackedCellLocalityTypes::CLAIMED)
+        {
+            return false;
+        }
+
+        if (*maybe_occupancy!= PackedCell64_t::PACKED_CELL_SENTINAL)
+        {
+            //just cmpx  low
+            if (*maybe_occupancy < IN_CELL_VALUE_MODE32_SENTINAL && low32_and_probable_high32.second == PackedCell64_t::PACKED_CELL_SENTINAL)
+            {
+                packed64_t expected = low32_half_view.RawCell;
+                packed64_t desired = low32_and_probable_high32.first;
+                for (size_t i = 0; i < MAX_TRIES; i++)
+                {
+                    if (SlabBasePtr_[static_cast<size_t>(desired_occupancy_low_idx)].compare_exchange_strong(
+                        expected, desired, OnExchangeSuccess, OnExchangeFailure
+                    ))
+                    {
+                        StorePackedCellUnchecked_(static_cast<size_t>(desired_occupancy_low_idx) + 1, low32_and_probable_high32.second);
+                        return true;
+                    }
+                }
+                //intehrate failure count and AtomicAdaptiveBackoff
+                return false;
+            }
+
+            if ((low32_half_view.IsCellValid && high32_half_view.IsCellValid) || desired_occupancy_value >= IN_CELL_VALUE_MODE32_SENTINAL)
+            {
+                packed64_t expected_low = low32_half_view.RawCell;
+                packed64_t desired_buffer_low = PackedCell64_t::SetLocalityInPacked(low32_and_probable_high32.first, PackedCellLocalityTypes::CLAIMED);
+                packed64_t expected_high = high32_half_view.RawCell;
+                packed64_t desired_buffer_high = low32_and_probable_high32.second;
+
+                auto RestoreLow = [&]()
+                {
+                    StorePackedCellUnchecked_(static_cast<size_t>(desired_occupancy_low_idx), low32_half_view.RawCell);
+                    return false;
+                };
+
+                for (size_t i = 0; i < MAX_TRIES; i++)
+                {
+                    if (SlabBasePtr_[static_cast<size_t>(desired_occupancy_low_idx)].compare_exchange_strong(
+                        expected_low, desired_buffer_low, OnExchangeSuccess, OnExchangeFailure
+                    ))
+                    {
+                        for (size_t j = 0; j < MAX_TRIES; j++)
+                        {
+                            if (SlabBasePtr_[static_cast<size_t>(desired_occupancy_low_idx) + 1].compare_exchange_strong(
+                                expected_high, desired_buffer_high, OnExchangeSuccess, OnExchangeFailure
+                            ))
+                            {
+                                return RestoreLow();
+                            }
+                        }
+
+                        return RestoreLow();
+                    }
+                }
+                return false;
+            }
+            return false;
+        }
+        return ForceUpdate(); 
+    }
 
 
 

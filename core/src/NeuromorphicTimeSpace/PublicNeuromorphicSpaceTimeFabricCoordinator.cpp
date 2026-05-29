@@ -39,7 +39,11 @@ namespace PredictedAdaptedEncoding
 
 
 
-    std::optional<uint64_t> NeuromorphicSpaceTimeFabricCoordinator::ReadOccupancyApproxFromPairedIfValid(PackedCellLocalityTypes desired_occupancy_class) noexcept
+    std::optional<uint64_t> NeuromorphicSpaceTimeFabricCoordinator::ReadOccupancyApproxFromPairedIfValid(
+        PackedCellLocalityTypes desired_occupancy_class,
+        const PackedCell64_t::AuthoritiveCellView* low_half_view_ptr,
+        const PackedCell64_t::AuthoritiveCellView* high_half_view_ptr
+    ) noexcept
     {
         const FabricMetaIndicies desired_occupancy_low_idx = CoreOfFabricCoordinator::GetDesiredLowIdxOfOccupancyPairFromLocality(desired_occupancy_class);
         if (desired_occupancy_low_idx == FabricMetaIndicies::EOF_FABRIC_HEADER)
@@ -50,7 +54,7 @@ namespace PredictedAdaptedEncoding
         const packed64_t raw_occ_low = GetTotalRawCellUnchackedCell(static_cast<size_t>(desired_occupancy_low_idx));
         const packed64_t raw_occ_high = GetTotalRawCellUnchackedCell(static_cast<size_t>(desired_occupancy_low_idx) + 1);
 
-        return PairedVersionedCellModelOfMode32::GetFullUnsigned64FromPairedVersionedCell(raw_occ_low, raw_occ_high);
+        return PairedVersionedCellModelOfMode32::GetFullUnsigned64FromPairedVersionedCell(raw_occ_low, raw_occ_high, low_half_view_ptr, high_half_view_ptr);
     }
 
 

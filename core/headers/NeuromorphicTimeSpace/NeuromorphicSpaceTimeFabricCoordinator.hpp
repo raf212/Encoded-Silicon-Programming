@@ -61,8 +61,8 @@ namespace PredictedAdaptedEncoding
 
 
         bool UpdateValidPairedOccupancyApproximation_(
-            PackedCellLocalityTypes desired_occupancy_idx, uint64_t occupancy_value,
-            bool is_initiating = false,
+            PackedCellLocalityTypes desired_occupancy_of_locality, uint64_t desired_occupancy_value,
+            bool force_update = false,
             clk16_t pair_version = APCDataStructure::BRANCH_VERSION
         ) noexcept;
 
@@ -86,7 +86,11 @@ namespace PredictedAdaptedEncoding
 
         bool GetMetaCellView(MetaIndexOfAPCNode fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept;
 
-        std::optional<uint64_t> ReadOccupancyApproxFromPairedIfValid(PackedCellLocalityTypes desired_occupancy_class) noexcept;
+        std::optional<uint64_t> ReadOccupancyApproxFromPairedIfValid(
+            PackedCellLocalityTypes desired_occupancy_class,
+            const PackedCell64_t::AuthoritiveCellView* low_half_view_ptr = nullptr,
+            const PackedCell64_t::AuthoritiveCellView* high_half_view_ptr = nullptr
+        ) noexcept;
 
         bool InitializeFabric(
             uint16_t slot_count,

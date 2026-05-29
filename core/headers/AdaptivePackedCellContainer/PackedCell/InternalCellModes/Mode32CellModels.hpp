@@ -88,6 +88,14 @@ namespace PredictedAdaptedEncoding
                 priority, SubClassesOfMode32::LOW_OF_PAIRED_VERSIONED_CELL
             );
 
+            if (
+                high_half32 == UNSIGNED_ZERO && low_half32 < IN_CELL_VALUE_MODE32_SENTINAL &&
+                page_class == APCPagedNodeSegmentClasses::CONTROL_SLOT
+            )
+            {
+                return std::pair<packed64_t, packed64_t>(low_half_packed_cell, PackedCell64_t::PACKED_CELL_SENTINAL);
+            }
+            
             const packed64_t high_half_packed_cell = PackedCell64_t::MakeInitialValidPackedCell(
                 PackedMode::MODE_32, locality, ownership, page_class,
                 PackedCellDataType::UnsignedPCellDataType, high_half32, version,
