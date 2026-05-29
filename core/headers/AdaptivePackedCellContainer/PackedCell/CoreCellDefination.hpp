@@ -64,9 +64,13 @@ namespace PredictedAdaptedEncoding
                         return false;
                     }
 
-                    if (SubClassOfMode32 == SubClassesOfMode32::LOW_OF_PAIRED_CELL || SubClassOfMode32 == SubClassesOfMode32::HIGH_OF_PAIRED_CELL)
+                    if (SubClassOfMode32 == SubClassesOfMode32::LOW_OF_PAIRED_VERSIONED_CELL || SubClassOfMode32 == SubClassesOfMode32::HIGH_OF_PAIRED_VERSIONED_CELL)
                     {
-                        if (PageClass != APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY || PageClass != APCPagedNodeSegmentClasses::CONTROL_SLOT)
+                        if (
+                            PageClass != APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY || 
+                            PageClass != APCPagedNodeSegmentClasses::CONTROL_SLOT ||
+                            Priority != PriorityPhysics::VERSION_DEPENDENCY
+                        )
                         {
                             IsCellValid = false;
                             return false;

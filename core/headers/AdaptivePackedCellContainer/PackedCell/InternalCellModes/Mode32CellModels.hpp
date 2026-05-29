@@ -68,7 +68,7 @@ namespace PredictedAdaptedEncoding
 
     };
 
-    struct PairedCellModelOfMode32
+    struct PairedVersionedCellModelOfMode32
     {
         //In paired cell Ideology clk16 is a version count-> CLOCK is unnecessery because it will be mostly used for contron / paired pointers
         static std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64(
@@ -85,52 +85,63 @@ namespace PredictedAdaptedEncoding
             const packed64_t low_half_packed_cell = PackedCell64_t::MakeInitialValidPackedCell(
                 PackedMode::MODE_32, locality, ownership, page_class,
                 PackedCellDataType::UnsignedPCellDataType, low_half32, version,
-                priority, SubClassesOfMode32::LOW_OF_PAIRED_CELL
+                priority, SubClassesOfMode32::LOW_OF_PAIRED_VERSIONED_CELL
             );
 
             const packed64_t high_half_packed_cell = PackedCell64_t::MakeInitialValidPackedCell(
                 PackedMode::MODE_32, locality, ownership, page_class,
                 PackedCellDataType::UnsignedPCellDataType, high_half32, version,
-                priority, SubClassesOfMode32::HIGH_OF_PAIRED_CELL
+                priority, SubClassesOfMode32::HIGH_OF_PAIRED_VERSIONED_CELL
             );
 
             return std::pair<packed64_t, packed64_t>(low_half_packed_cell, high_half_packed_cell);
         }
 
-        static std::optional<uint64_t> GetFullUnsigned64FromPairedCell(packed64_t low_half, packed64_t high_half) noexcept
+        static std::optional<uint64_t> GetFullUnsigned64FromPairedVersionedCell(
+            packed64_t low_half, packed64_t high_half,
+            const PackedCell64_t::AuthoritiveCellView* low_half_view_ptr = nullptr,
+            const PackedCell64_t::AuthoritiveCellView* high_half_view_ptr = nullptr
+        ) noexcept
         {
             const PackedCell64_t::AuthoritiveCellView low_half_view = PackedCell64_t::GetAuthoritiveViewsForACell(low_half);
+            PackedCell64_t::AuthoritiveCellView high_half_view = PackedCell64_t::GetAuthoritiveViewsForACell(high_half);
+
+            if (low_half_view.RawCell == PackedCell64_t::PACKED_CELL_SENTINAL && high_half_view.RawCell == PackedCell64_t::PACKED_CELL_SENTINAL)
+            {
+                return PackedCell64_t::PACKED_CELL_SENTINAL;
+            }
+
             if (
-                !low_half_view.IsCellValid ||
-                low_half_view.CellMode != PackedMode::MODE_32 || 
-                low_half_view.SubClassOfMode32 != SubClassesOfMode32::LOW_OF_PAIRED_CELL
+                high_half_view.RawCell == PackedCell64_t::PACKED_CELL_SENTINAL && 
+                low_half_view.IsCellValid && 
+                low_half_view.SubClassOfMode32 == SubClassesOfMode32::LOW_OF_PAIRED_VERSIONED_CELL 
             )
             {
-                return std::nullopt;
+                return static_cast<uint64_t>(*low_half_view.CellValue32);
             }
 
-            const PackedCell64_t::AuthoritiveCellView high_half_view = PackedCell64_t::GetAuthoritiveViewsForACell(high_half);
             if (
-                !high_half_view.IsCellValid ||
-                high_half_view.CellMode != PackedMode::MODE_32 || 
-                high_half_view.SubClassOfMode32 != SubClassesOfMode32::HIGH_OF_PAIRED_CELL
+                low_half_view.IsCellValid && high_half_view.IsCellValid &&
+                low_half_view.SubClassOfMode32 == SubClassesOfMode32::LOW_OF_PAIRED_VERSIONED_CELL && 
+                high_half_view.SubClassOfMode32 == SubClassesOfMode32::HIGH_OF_PAIRED_VERSIONED_CELL
             )
             {
-                return std::nullopt;
+                return static_cast<packed64_t>(*low_half_view.CellValue32) | 
+                        (static_cast<packed64_t>(*high_half_view.CellValue32 ) << VALBITS);
             }
 
-            //version check
-            if (low_half_view.Priority == PriorityPhysics::VERSION_DEPENDENCY && high_half_view.Priority == PriorityPhysics::VERSION_DEPENDENCY)
+            if (low_half_view_ptr)
             {
-                if (low_half_view.InCellClock16 != high_half_view.InCellClock16)
-                {
-                    return std::nullopt;
-                }
+                low_half_view_ptr = &low_half_view;
             }
-            
 
-            return static_cast<packed64_t>(*low_half_view.CellValue32) | 
-                    (static_cast<packed64_t>(*high_half_view.CellValue32 ) << VALBITS);
+            if (high_half_view_ptr)
+            {
+                high_half_view_ptr = &high_half_view;
+            }
+
+            return std::nullopt;            
+
         }
     };
 

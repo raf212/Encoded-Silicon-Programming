@@ -39,49 +39,19 @@ namespace PredictedAdaptedEncoding
 
 
 
-    // std::optional<uint64_t> NeuromorphicSpaceTimeFabricCoordinator::ReadOccupancyApproxFromPairedIfValid(PackedCellLocalityTypes desired_occupancy_class) noexcept
-    // {
-    //     const FabricMetaIndicies desired_occupancy_low_idx = CoreOfFabricCoordinator::GetDesiredLowIdxOfOccupancyPairFromLocality(desired_occupancy_class);
-    //     if (desired_occupancy_low_idx == FabricMetaIndicies::EOF_FABRIC_HEADER)
-    //     {
-    //         return std::nullopt;
-    //     }
+    std::optional<uint64_t> NeuromorphicSpaceTimeFabricCoordinator::ReadOccupancyApproxFromPairedIfValid(PackedCellLocalityTypes desired_occupancy_class) noexcept
+    {
+        const FabricMetaIndicies desired_occupancy_low_idx = CoreOfFabricCoordinator::GetDesiredLowIdxOfOccupancyPairFromLocality(desired_occupancy_class);
+        if (desired_occupancy_low_idx == FabricMetaIndicies::EOF_FABRIC_HEADER)
+        {
+            return std::nullopt;
+        }
 
-    //     const packed64_t raw_occ_low = GetTotalRawCellUnchackedCell(static_cast<size_t>(desired_occupancy_low_idx));
-    //     const packed64_t raw_occ_high = GetTotalRawCellUnchackedCell(static_cast<size_t>(desired_occupancy_low_idx) + 1);
+        const packed64_t raw_occ_low = GetTotalRawCellUnchackedCell(static_cast<size_t>(desired_occupancy_low_idx));
+        const packed64_t raw_occ_high = GetTotalRawCellUnchackedCell(static_cast<size_t>(desired_occupancy_low_idx) + 1);
 
-    //     const PackedCell64_t::AuthoritiveCellView low_cell_view = PackedCell64_t::GetAuthoritiveViewsForACell(raw_occ_low);
-    //     const PackedCell64_t::AuthoritiveCellView high_cell_view = PackedCell64_t::GetAuthoritiveViewsForACell(raw_occ_high);
-
-    //     if (low_cell_view.RawCell == PackedCell64_t::PACKED_CELL_SENTINAL && high_cell_view.RawCell == PackedCell64_t::PACKED_CELL_SENTINAL)
-    //     {
-    //         return PackedCell64_t::PACKED_CELL_SENTINAL;
-    //     }
-
-    //     if (
-    //         high_cell_view.RawCell == PackedCell64_t::PACKED_CELL_SENTINAL && 
-    //         low_cell_view.IsCellValid && 
-    //         low_cell_view.SubClassOfMode32 == SubClassesOfMode32::LOW_OF_PAIRED_CELL && 
-    //         low_cell_view.Priority == PriorityPhysics::VERSION_DEPENDENCY
-    //     )
-    //     {
-    //         return static_cast<uint64_t>(*low_cell_view.CellValue32);
-    //     }
-
-    //     if (
-    //         low_cell_view.IsCellValid && high_cell_view.IsCellValid &&
-    //         low_cell_view.SubClassOfMode32 == SubClassesOfMode32::LOW_OF_PAIRED_CELL && high_cell_view.SubClassOfMode32 == SubClassesOfMode32::HIGH_OF_PAIRED_CELL &&
-    //         low_cell_view.Priority == PriorityPhysics::VERSION_DEPENDENCY && high_cell_view.Priority == PriorityPhysics::VERSION_DEPENDENCY &&
-
-    //     )
-    //     {
-    //         /* code */
-    //     }
-        
-
-
-    //     return std::nullopt;
-    // }
+        return PairedVersionedCellModelOfMode32::GetFullUnsigned64FromPairedVersionedCell(raw_occ_low, raw_occ_high);
+    }
 
 
 

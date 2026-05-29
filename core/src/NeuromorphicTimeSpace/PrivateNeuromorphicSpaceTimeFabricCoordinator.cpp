@@ -123,7 +123,7 @@ namespace PredictedAdaptedEncoding
     //         return false;
     //     }
 
-    //     const std::pair<packed64_t, packed64_t> low_high_occupancy_split = PairedCellModelOfMode32::GetPairOfLow32FAndHigh32SFromUnsigned64(
+    //     const std::pair<packed64_t, packed64_t> low_high_occupancy_split = PairedVersionedCellModelOfMode32::GetPairOfLow32FAndHigh32SFromUnsigned64(
     //         occupancy_value, pair_version, 
     //         PackedCellLocalityTypes::IDLE, PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC      
     //     );
