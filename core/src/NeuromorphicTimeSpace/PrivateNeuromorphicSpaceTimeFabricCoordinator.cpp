@@ -111,6 +111,8 @@ namespace PredictedAdaptedEncoding
         MakeCheckAndStoreAFabricControlValidCell_(fabric_meta_idx, value & MaskLowNBits(CLK_B48), PackedMode::MODE_48);
     }
 
+    //Integrate AtomicAdaptiveBackoff
+    // add CAS_FAILURE_COUNT
     bool NeuromorphicSpaceTimeFabricCoordinator::UpdateValidPairedOccupancyApproximation_(
         PackedCellLocalityTypes desired_occupancy_of_locality, uint64_t desired_occupancy_value,
         bool force_update, clk16_t pair_version
@@ -125,6 +127,9 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
+        const size_t low_idx = static_cast<size_t>(desired_occupancy_low_idx);
+        const size_t high_idx = low_idx + 1;
+
         const std::pair<packed64_t, packed64_t> low32_and_probable_high32 = PairedVersionedCellModelOfMode32::GetPairOfLow32FAndHigh32SFromUnsigned64(
             desired_occupancy_value, pair_version,
             PackedCellLocalityTypes::PUBLISHED, PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC,
@@ -132,8 +137,8 @@ namespace PredictedAdaptedEncoding
         );
 
         auto ForceUpdate = [&](){
-            StorePackedCellUnchecked_(static_cast<size_t>(desired_occupancy_low_idx), low32_and_probable_high32.first);
-            StorePackedCellUnchecked_(static_cast<size_t>(desired_occupancy_low_idx) + 1, low32_and_probable_high32.second);
+            StorePackedCellUnchecked_(low_idx, low32_and_probable_high32.first);
+            StorePackedCellUnchecked_(high_idx, low32_and_probable_high32.second);
             return true;
         };
         
@@ -162,45 +167,58 @@ namespace PredictedAdaptedEncoding
             if (*maybe_occupancy < IN_CELL_VALUE_MODE32_SENTINAL && low32_and_probable_high32.second == PackedCell64_t::PACKED_CELL_SENTINAL)
             {
                 packed64_t expected = low32_half_view.RawCell;
-                packed64_t desired = low32_and_probable_high32.first;
+                const packed64_t desired = low32_and_probable_high32.first;
                 for (size_t i = 0; i < MAX_TRIES; i++)
                 {
-                    if (SlabBasePtr_[static_cast<size_t>(desired_occupancy_low_idx)].compare_exchange_strong(
+                    if (SlabBasePtr_[low_idx].compare_exchange_strong(
                         expected, desired, OnExchangeSuccess, OnExchangeFailure
                     ))
                     {
-                        StorePackedCellUnchecked_(static_cast<size_t>(desired_occupancy_low_idx) + 1, low32_and_probable_high32.second);
+                        StorePackedCellUnchecked_(high_idx, low32_and_probable_high32.second);
                         return true;
                     }
+
+                    if (PackedCell64_t::ExtractLocalityFromPacked(expected) == PackedCellLocalityTypes::CLAIMED)
+                    {
+                        return false;
+                    }
+                    
                 }
                 //intehrate failure count and AtomicAdaptiveBackoff
                 return false;
             }
 
+            //double cas 
             if ((low32_half_view.IsCellValid && high32_half_view.IsCellValid) || desired_occupancy_value >= IN_CELL_VALUE_MODE32_SENTINAL)
             {
                 packed64_t expected_low = low32_half_view.RawCell;
-                packed64_t desired_buffer_low = PackedCell64_t::SetLocalityInPacked(low32_and_probable_high32.first, PackedCellLocalityTypes::CLAIMED);
-                packed64_t expected_high = high32_half_view.RawCell;
-                packed64_t desired_buffer_high = low32_and_probable_high32.second;
+                const packed64_t desired_claimed_low = PackedCell64_t::SetLocalityInPacked(low32_and_probable_high32.first, PackedCellLocalityTypes::CLAIMED);
 
                 auto RestoreLow = [&]()
                 {
-                    StorePackedCellUnchecked_(static_cast<size_t>(desired_occupancy_low_idx), low32_half_view.RawCell);
+                    StorePackedCellUnchecked_(low_idx, low32_half_view.RawCell);
                     return false;
                 };
 
                 for (size_t i = 0; i < MAX_TRIES; i++)
                 {
-                    if (SlabBasePtr_[static_cast<size_t>(desired_occupancy_low_idx)].compare_exchange_strong(
-                        expected_low, desired_buffer_low, OnExchangeSuccess, OnExchangeFailure
+                    if (SlabBasePtr_[low_idx].compare_exchange_strong(
+                        expected_low, desired_claimed_low, OnExchangeSuccess, OnExchangeFailure
                     ))
                     {
+                        packed64_t expected_high = high32_half_view.RawCell;
+
                         for (size_t j = 0; j < MAX_TRIES; j++)
                         {
-                            if (SlabBasePtr_[static_cast<size_t>(desired_occupancy_low_idx) + 1].compare_exchange_strong(
-                                expected_high, desired_buffer_high, OnExchangeSuccess, OnExchangeFailure
+                            if (SlabBasePtr_[high_idx].compare_exchange_strong(
+                                expected_high, low32_and_probable_high32.second, OnExchangeSuccess, OnExchangeFailure
                             ))
+                            {
+                                StorePackedCellUnchecked_(low_idx, low32_and_probable_high32.first);
+                                return true;
+                            }
+
+                            if (PackedCell64_t::ExtractLocalityFromPacked(expected_high) == PackedCellLocalityTypes::CLAIMED)
                             {
                                 return RestoreLow();
                             }
@@ -208,11 +226,17 @@ namespace PredictedAdaptedEncoding
 
                         return RestoreLow();
                     }
+
+                    if (PackedCell64_t::ExtractLocalityFromPacked(expected_low) == PackedCellLocalityTypes::CLAIMED)
+                    {
+                        return false;
+                    }
                 }
-                return false;
             }
+
             return false;
         }
+
         return ForceUpdate(); 
     }
 
@@ -251,6 +275,7 @@ namespace PredictedAdaptedEncoding
         StoreNewDefaultMeta48_(FabricMetaIndicies::TABLE_DIRECTORY_END, static_cast<uint32_t>(table_directory_end));
         StoreNewDefaultMeta48_(FabricMetaIndicies::TABLE_COUNT, static_cast<uint64_t>(TableIdOfAPCFabric::COUNT));
         StoreNewDefaultMeta48_(FabricMetaIndicies::TABLE_DIRECTORY_VERSION, APCDataStructure::BRANCH_VERSION);
+
 
 
 
