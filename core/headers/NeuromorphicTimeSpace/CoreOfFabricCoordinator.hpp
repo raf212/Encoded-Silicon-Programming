@@ -185,17 +185,15 @@ namespace PredictedAdaptedEncoding
         RETIRE_SLOT_HEAD = 11,
         RELATION_FREE_HEAD = 12,
 
-        GLOBAL_EPOCH_LOW32 = 13,
-        GLOBAL_EPOCH_HIGH32 = 14,
-        MIN_SAFE_EPOCH_LOW32 = 15,
-        MIN_SAFE_EPOCH_HIGH32 = 16,
+        GLOBAL_EPOCH48 = 13,
+        MIN_SAFE_EPOCH48 = 14,
 
         NEXT_BRANCH_ID = 17,
         NEXT_RELATION_ID = 18,
         NEXT_DEVICE_VIEW_ID = 19,
         FABRIC_CLOCK16 = 20,
 
-        WORK_RETIRE_CURSOR = 21,
+        WORK_WRITE_CURSOR = 21,
         WORK_READ_CURSOR = 22,
         READY_WRITE_CURSOR = 23,
         READY_READ_CURSOR = 24,
@@ -205,7 +203,16 @@ namespace PredictedAdaptedEncoding
         TABLE_COUNT = 27,
         TABLE_DIRECTORY_VERSION = 28,
 
-        FABRIC_OCCUPANCY_3x16_MODEl48 = 29,
+        //4 pairs of PackedCellLocalityTypes + PriorityPhysics::VERSION_DEPENDENCY based occupancy
+        FABRIC_OCCUPANCY_APPROXIMATION_IDLE_LOW32 = 16,
+        FABRIC_OCCUPANCY_APPROXIMATION_IDLE_HIGH32 = 16,
+        FABRIC_OCCUPANCY_APPROXIMATION_PUBLISHED_LOW32 = 29,
+        FABRIC_OCCUPANCY_APPROXIMATION_PUBLISHED_HIGH32 = 29,
+        FABRIC_OCCUPANCY_APPROXIMATION_CLAIMED_LOW32 = 15,
+        FABRIC_OCCUPANCY_APPROXIMATION_CLAIMED_HIGH32 = 15,
+        FABRIC_OCCUPANCY_APPROXIMATION_FAULTY_LOW32 = 16,
+        FABRIC_OCCUPANCY_APPROXIMATION_FAULTY_HIGH32 = 16,
+
         CAS_FAILURE_COUNT = 30,
         ERROR_COUNT = 31,
         RETIRED_COUYNT = 32,
@@ -287,22 +294,28 @@ namespace PredictedAdaptedEncoding
 
     struct CoreOfFabricCoordinator
     {
-        static constexpr FabricMetaIndicies GetValidLowEpochOrEOFIdx_(FabricMetaIndicies meta_idx) noexcept
-        {
-            switch (meta_idx)
-            {
-            case FabricMetaIndicies::GLOBAL_EPOCH_LOW32 :
-            case FabricMetaIndicies::GLOBAL_EPOCH_HIGH32 :
-                return FabricMetaIndicies::GLOBAL_EPOCH_LOW32;
 
-            case FabricMetaIndicies::MIN_SAFE_EPOCH_LOW32 :
-            case FabricMetaIndicies::MIN_SAFE_EPOCH_HIGH32 :
-                return FabricMetaIndicies::MIN_SAFE_EPOCH_LOW32;
+        static constexpr FabricMetaIndicies GetDesiredLowIdxOfOccupancyPairFromLocality(PackedCellLocalityTypes locality) noexcept
+        {
+            switch (locality)
+            {
+            case PackedCellLocalityTypes::IDLE :
+                return FabricMetaIndicies::FABRIC_OCCUPANCY_APPROXIMATION_IDLE_LOW32;
+
+            case PackedCellLocalityTypes::PUBLISHED :
+                return FabricMetaIndicies::FABRIC_OCCUPANCY_APPROXIMATION_PUBLISHED_LOW32;
+
+            case PackedCellLocalityTypes::CLAIMED :
+                return FabricMetaIndicies::FABRIC_OCCUPANCY_APPROXIMATION_CLAIMED_LOW32;
+
+            case PackedCellLocalityTypes::FAULTY :
+                return FabricMetaIndicies::FABRIC_OCCUPANCY_APPROXIMATION_FAULTY_LOW32;
 
             default:
                 return FabricMetaIndicies::EOF_FABRIC_HEADER;
             }
         }
+
 
         static constexpr APCPagedNodeSegmentClasses ConvertFabricToIOLinkerAsSegmentClasses(FabricToIoLinkerClasses fabric_class) noexcept
         {

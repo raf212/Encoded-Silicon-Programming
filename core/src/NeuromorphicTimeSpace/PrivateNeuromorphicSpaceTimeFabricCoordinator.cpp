@@ -111,49 +111,67 @@ namespace PredictedAdaptedEncoding
         MakeCheckAndStoreAFabricControlValidCell_(fabric_meta_idx, value & MaskLowNBits(CLK_B48), PackedMode::MODE_48);
     }
 
-
-    void NeuromorphicSpaceTimeFabricCoordinator::WriteValidPairedEpoch_(
-        FabricMetaIndicies meta_idx, uint64_t epoch_value,
-        clk16_t pair_version
-    ) noexcept
-    {
-        const std::pair<packed64_t, packed64_t> low_high_split = PairedCellModelOfMode32::GetPairOfLow32FAndHigh32SFromUnsigned64(
-            epoch_value, pair_version, 
-            PackedCellLocalityTypes::IDLE, PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC      
-        );
-
-        const FabricMetaIndicies desired_low_idx = CoreOfFabricCoordinator::GetValidLowEpochOrEOFIdx_(meta_idx);
-        if (desired_low_idx == FabricMetaIndicies::EOF_FABRIC_HEADER)
-        {
-            return;
-        }
-
-        StorePackedCellUnchecked_(static_cast<size_t>(desired_low_idx), low_high_split.first);
-        StorePackedCellUnchecked_(static_cast<size_t>(desired_low_idx) + 1, low_high_split.second);
-    }
-
-
-    // void NeuromorphicSpaceTimeFabricCoordinator::WriceFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept
+    // bool UpdateValidPairedOccupancyApproximation_(
+    //     PackedCellLocalityTypes desired_occupancy_idx, uint64_t occupancy_value,
+    //     bool is_initiating = false,
+    //     clk16_t pair_version = APCDataStructure::BRANCH_VERSION
+    // ) noexcept
     // {
-    //     StoreDefaultMeta32_(FabricMetaIndicies::MAGIC, APCDataStructure::FABRIC_MAGIC);
-    //     StoreDefaultMeta32_(FabricMetaIndicies::VERSION, APCDataStructure::BRANCH_VERSION);
-    //     StoreDefaultMeta32_(FabricMetaIndicies::FLAGS, UNSIGNED_ZERO);
-    //     StoreDefaultMeta32_(FabricMetaIndicies::SLAB_ID, static_cast<uint32_t>(SlabId_));
+    //     const FabricMetaIndicies desired_low_idx = CoreOfFabricCoordinator::GetDesiredLowIdxOfOccupancyPairFromLocality(desired_occupancy_idx);
+    //     if (desired_low_idx == FabricMetaIndicies::EOF_FABRIC_HEADER)
+    //     {
+    //         return false;
+    //     }
 
-    //     StoreNewDefaultMeta48_(FabricMetaIndicies::TOTAL_CELLS, static_cast<uint64_t>(SlabCellCount_));
-    //     StoreNewDefaultMeta48_(FabricMetaIndicies::CONTROL_CELLS_OF_FABRIC, static_cast<uint64_t>(SegmentPoolBegin_));
-    //     StoreNewDefaultMeta48_(FabricMetaIndicies::SLOT_COUNT, static_cast<uint64_t>(SlotCount_));
-    //     StoreNewDefaultMeta48_(FabricMetaIndicies::SLOT_CELL_COUNT, static_cast<uint64_t>(SlotCellCount_));
-    //     StoreNewDefaultMeta48_(FabricMetaIndicies::SEGMENT_POOL_BEGIN_IDX, static_cast<uint64_t>(SegmentPoolBegin_));
-    //     StoreNewDefaultMeta48_(FabricMetaIndicies::SEGMENT_POOL_END_IDX, static_cast<uint64_t>(SegmentPoolEnd_));
-    //     StoreNewDefaultMeta48_(FabricMetaIndicies::FREE_SLOT_HEAD, PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT);
-    //     StoreNewDefaultMeta48_(FabricMetaIndicies::RETIRE_SLOT_HEAD, PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT);
-        
+    //     const std::pair<packed64_t, packed64_t> low_high_occupancy_split = PairedCellModelOfMode32::GetPairOfLow32FAndHigh32SFromUnsigned64(
+    //         occupancy_value, pair_version, 
+    //         PackedCellLocalityTypes::IDLE, PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC      
+    //     );
 
-
-
-
+    //     StorePackedCellUnchecked_(static_cast<size_t>(desired_low_idx), low_high_split.first);
+    //     StorePackedCellUnchecked_(static_cast<size_t>(desired_low_idx) + 1, low_high_split.second);
     // }
+
+
+
+    void NeuromorphicSpaceTimeFabricCoordinator::WriceFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept
+    {
+        StoreNewDefaultMeta48_(FabricMetaIndicies::MAGIC, APCDataStructure::FABRIC_MAGIC);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::VERSION, APCDataStructure::BRANCH_VERSION);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::FLAGS, UNSIGNED_ZERO);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::SLAB_ID, static_cast<uint64_t>(SlabId_));
+
+        StoreNewDefaultMeta48_(FabricMetaIndicies::TOTAL_CELLS, static_cast<uint64_t>(SlabCellCount_));
+        StoreNewDefaultMeta48_(FabricMetaIndicies::CONTROL_CELLS_OF_FABRIC, static_cast<uint64_t>(SegmentPoolBegin_));
+        StoreNewDefaultMeta48_(FabricMetaIndicies::SLOT_COUNT, static_cast<uint64_t>(SlotCount_));
+        StoreNewDefaultMeta48_(FabricMetaIndicies::SLOT_CELL_COUNT, static_cast<uint64_t>(SlotCellCount_));
+        StoreNewDefaultMeta48_(FabricMetaIndicies::SEGMENT_POOL_BEGIN_IDX, static_cast<uint64_t>(SegmentPoolBegin_));
+        StoreNewDefaultMeta48_(FabricMetaIndicies::SEGMENT_POOL_END_IDX, static_cast<uint64_t>(SegmentPoolEnd_));
+        StoreNewDefaultMeta48_(FabricMetaIndicies::FREE_SLOT_HEAD, PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::RETIRE_SLOT_HEAD, PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::RELATION_FREE_HEAD, PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT);
+        
+        StoreNewDefaultMeta48_(FabricMetaIndicies::GLOBAL_EPOCH48, 1u);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::MIN_SAFE_EPOCH48, UNSIGNED_ZERO);
+
+        StoreNewDefaultMeta48_(FabricMetaIndicies::NEXT_BRANCH_ID, APCDataStructure::BRANCH_VERSION);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::NEXT_RELATION_ID, APCDataStructure::BRANCH_VERSION);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::NEXT_DEVICE_VIEW_ID, APCDataStructure::BRANCH_VERSION);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::FABRIC_CLOCK16, 1u);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::WORK_WRITE_CURSOR, UNSIGNED_ZERO);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::WORK_READ_CURSOR, UNSIGNED_ZERO);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::READY_WRITE_CURSOR, UNSIGNED_ZERO);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::READY_READ_CURSOR, UNSIGNED_ZERO);
+
+        StoreNewDefaultMeta48_(FabricMetaIndicies::TABLE_DIRECTORY_BEGIN, static_cast<uint64_t>(table_directory_begin));
+        StoreNewDefaultMeta48_(FabricMetaIndicies::TABLE_DIRECTORY_END, static_cast<uint32_t>(table_directory_end));
+        StoreNewDefaultMeta48_(FabricMetaIndicies::TABLE_COUNT, static_cast<uint64_t>(TableIdOfAPCFabric::COUNT));
+        StoreNewDefaultMeta48_(FabricMetaIndicies::TABLE_DIRECTORY_VERSION, APCDataStructure::BRANCH_VERSION);
+
+
+
+
+    }
 
 
 

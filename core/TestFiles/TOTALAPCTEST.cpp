@@ -110,7 +110,7 @@ namespace
         MasterClockConf& clock,
         uint32_t value,
         APCPagedNodeSegmentClasses region,
-        PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY
+        PriorityPhysics priority = PriorityPhysics::IDLE
     )
     {
         return clock.ComposeValue32WithCurrentThreadStamp16(
@@ -128,7 +128,7 @@ namespace
         MasterClockConf& clock,
         float value,
         APCPagedNodeSegmentClasses region,
-        PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY
+        PriorityPhysics priority = PriorityPhysics::IDLE
     )
     {
         const uint32_t bits = BitCastMaybe<uint32_t>(value);

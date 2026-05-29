@@ -31,16 +31,19 @@ namespace PredictedAdaptedEncoding
             PackedCellLocalityTypes LocalityOfCell{PackedCellLocalityTypes::IDLE};
             PackedMode CellMode{PackedMode::MODE_32};
             APCPagedNodeSegmentClasses PageClass{APCPagedNodeSegmentClasses::NONE};
-            std::optional<SubClassesOfMode32> RelationOffsetForMode32{std::nullopt};
+            std::optional<SubClassesOfMode32> SubClassOfMode32{std::nullopt};
             std::optional<SubClassesOfMode48> RelationOffsetForMode48{std::nullopt};
             PackedCellDataType CellValueDataType{PackedCellDataType::UnsignedPCellDataType};
             std::optional<clk16_t> InCellClock16{std::nullopt};
             std::optional<uint64_t> CellClock48{std::nullopt};
             std::optional<val32_t> CellValue32{std::nullopt};
             bool IsCellValid{false};
+            bool ValidatedView{false};
 
             bool constexpr IsThisPackedCellValidInRuntime() noexcept
             {
+                ValidatedView = true;
+
                 if (LocalityOfCell == PackedCellLocalityTypes::FAULTY)
                 {
                     IsCellValid = false;
@@ -55,11 +58,21 @@ namespace PredictedAdaptedEncoding
 
                 if (CellMode == PackedMode::MODE_32)
                 {
-                    if (RelationOffsetForMode32 != SubClassesOfMode32::SELF_CLASS && CellValueDataType != PackedCellDataType::UnsignedPCellDataType)
+                    if (SubClassOfMode32 != SubClassesOfMode32::SELF_CLASS && CellValueDataType != PackedCellDataType::UnsignedPCellDataType)
                     {
                         IsCellValid = false;
                         return false;
                     }
+
+                    if (SubClassOfMode32 == SubClassesOfMode32::LOW_OF_PAIRED_CELL || SubClassOfMode32 == SubClassesOfMode32::HIGH_OF_PAIRED_CELL)
+                    {
+                        if (PageClass != APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY || PageClass != APCPagedNodeSegmentClasses::CONTROL_SLOT)
+                        {
+                            IsCellValid = false;
+                            return false;
+                        }
+                    }
+                    
 
                     if (!CellValue32)
                     {
@@ -309,9 +322,17 @@ namespace PredictedAdaptedEncoding
 
         static  AuthoritiveCellView GetAuthoritiveViewsForACell(packed64_t packed_cell) noexcept
         {
-            const meta16_t meta16 = ExtractMeta16fromPackedCell(packed_cell);
             AuthoritiveCellView out_packed_cell_view{};
+            out_packed_cell_view.ValidatedView = true;
+
+            if (packed_cell == PACKED_CELL_SENTINAL)
+            {
+                out_packed_cell_view.RawCell = packed_cell;
+                out_packed_cell_view.IsCellValid = false;
+                return out_packed_cell_view;
+            }
             
+            const meta16_t meta16 = ExtractMeta16fromPackedCell(packed_cell);
             out_packed_cell_view.RawCell = packed_cell;
             out_packed_cell_view.InCellMeta16 = meta16;
             out_packed_cell_view.Priority = static_cast<PriorityPhysics>(ExtractPriorityFromMETA16_U_(meta16));
@@ -321,7 +342,7 @@ namespace PredictedAdaptedEncoding
             out_packed_cell_view.PageClass = static_cast<APCPagedNodeSegmentClasses>(ExtractRelMaskFromMETA16_U_(meta16));
             if (IsPackedCellVal32(packed_cell))
             {
-                out_packed_cell_view.RelationOffsetForMode32 = static_cast<SubClassesOfMode32>(ExtractRelOffsetFromMETA16_U_(meta16));
+                out_packed_cell_view.SubClassOfMode32 = static_cast<SubClassesOfMode32>(ExtractRelOffsetFromMETA16_U_(meta16));
                 out_packed_cell_view.InCellClock16 = ExtractClk16(packed_cell);
                 out_packed_cell_view.CellValue32 = ExtractValue32(packed_cell);
             }
@@ -503,7 +524,7 @@ namespace PredictedAdaptedEncoding
         }
 
         static  constexpr meta16_t MakeInCellMetaForMode_32t(
-            PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY, 
+            PriorityPhysics priority = PriorityPhysics::IDLE, 
             PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
@@ -523,7 +544,7 @@ namespace PredictedAdaptedEncoding
         }
 
         static  constexpr meta16_t MakeInCellMetaForMode_48t(
-            PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY, 
+            PriorityPhysics priority = PriorityPhysics::IDLE, 
             PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
@@ -603,7 +624,7 @@ namespace PredictedAdaptedEncoding
             PackedMode cell_mode,
             uint64_t cell_value = UNSIGNED_ZERO,
             clk16_t clock16 = UNSIGNED_ZERO,
-            PriorityPhysics cell_priority = PriorityPhysics::DEFAULT_PRIORITY,
+            PriorityPhysics cell_priority = PriorityPhysics::IDLE,
             PackedCellOwnership node_authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
             PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::IDLE, 
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
@@ -645,7 +666,7 @@ namespace PredictedAdaptedEncoding
 
         static  constexpr meta16_t MakeInCellMetaForAny_(
             PackedMode mode_of_cell ,
-            PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY, 
+            PriorityPhysics priority = PriorityPhysics::IDLE, 
             PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,

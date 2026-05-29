@@ -168,7 +168,7 @@ namespace PredictedAdaptedEncoding
             
             if (a_cell_view.CellMode == PackedMode::MODE_32)
             {
-                return a_cell_view.RelationOffsetForMode32.has_value() && *a_cell_view.RelationOffsetForMode32 == SubClassesOfMode32::SELF_CLASS;
+                return a_cell_view.SubClassOfMode32.has_value() && *a_cell_view.SubClassOfMode32 == SubClassesOfMode32::SELF_CLASS;
             }
             if (a_cell_view.CellMode == PackedMode::MODE_48)
             {

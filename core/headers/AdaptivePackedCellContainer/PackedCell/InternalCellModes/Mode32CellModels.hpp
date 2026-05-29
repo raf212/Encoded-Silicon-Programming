@@ -60,8 +60,8 @@ namespace PredictedAdaptedEncoding
         {
             const PackedCell64_t::AuthoritiveCellView this_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
             return this_cell_auth_view.CellMode == PackedMode::MODE_32 &&
-                this_cell_auth_view.RelationOffsetForMode32.has_value() &&
-                this_cell_auth_view.RelationOffsetForMode32.value() == SubClassesOfMode32::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 &&
+                this_cell_auth_view.SubClassOfMode32.has_value() &&
+                this_cell_auth_view.SubClassOfMode32.value() == SubClassesOfMode32::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 &&
                 this_cell_auth_view.CellValueDataType == PackedCellDataType::UnsignedPCellDataType &&
                 this_cell_auth_view.LocalityOfCell != PackedCellLocalityTypes::FAULTY;
         }
@@ -71,12 +71,12 @@ namespace PredictedAdaptedEncoding
     struct PairedCellModelOfMode32
     {
         //In paired cell Ideology clk16 is a version count-> CLOCK is unnecessery because it will be mostly used for contron / paired pointers
-        static  std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64(
+        static std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64(
             uint64_t value, clk16_t version,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
             PackedCellOwnership ownership = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
-            PriorityPhysics priority = PriorityPhysics::IMPORTANT
+            PriorityPhysics priority = PriorityPhysics::VERSION_DEPENDENCY
         ) noexcept
         {
             const uint32_t low_half32 = static_cast<uint32_t>(value & MaskLowNBits(VALBITS));
@@ -103,7 +103,7 @@ namespace PredictedAdaptedEncoding
             if (
                 !low_half_view.IsCellValid ||
                 low_half_view.CellMode != PackedMode::MODE_32 || 
-                low_half_view.RelationOffsetForMode32 != SubClassesOfMode32::LOW_OF_PAIRED_CELL
+                low_half_view.SubClassOfMode32 != SubClassesOfMode32::LOW_OF_PAIRED_CELL
             )
             {
                 return std::nullopt;
@@ -113,16 +113,19 @@ namespace PredictedAdaptedEncoding
             if (
                 !high_half_view.IsCellValid ||
                 high_half_view.CellMode != PackedMode::MODE_32 || 
-                high_half_view.RelationOffsetForMode32 != SubClassesOfMode32::HIGH_OF_PAIRED_CELL
+                high_half_view.SubClassOfMode32 != SubClassesOfMode32::HIGH_OF_PAIRED_CELL
             )
             {
                 return std::nullopt;
             }
 
             //version check
-            if (low_half_view.InCellClock16 != high_half_view.InCellClock16)
+            if (low_half_view.Priority == PriorityPhysics::VERSION_DEPENDENCY && high_half_view.Priority == PriorityPhysics::VERSION_DEPENDENCY)
             {
-                return std::nullopt;
+                if (low_half_view.InCellClock16 != high_half_view.InCellClock16)
+                {
+                    return std::nullopt;
+                }
             }
             
 

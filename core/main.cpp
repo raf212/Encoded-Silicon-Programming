@@ -191,7 +191,7 @@ namespace
         MasterClockConf& clock,
         float value,
         APCPagedNodeSegmentClasses region,
-        PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY
+        PriorityPhysics priority = PriorityPhysics::IDLE
     )
     {
         const uint32_t bits = BitCastPortable<uint32_t>(value);

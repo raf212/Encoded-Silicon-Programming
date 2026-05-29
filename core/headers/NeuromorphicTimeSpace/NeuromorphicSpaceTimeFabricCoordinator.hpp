@@ -60,8 +60,9 @@ namespace PredictedAdaptedEncoding
         void StoreNewDefaultMeta48_(FabricMetaIndicies fabric_meta_idx, uint64_t value) noexcept;
 
 
-        void WriteValidPairedEpoch_(
-            FabricMetaIndicies meta_idx, uint64_t epoch_value,
+        bool UpdateValidPairedOccupancyApproximation_(
+            PackedCellLocalityTypes desired_occupancy_idx, uint64_t occupancy_value,
+            bool is_initiating = false,
             clk16_t pair_version = APCDataStructure::BRANCH_VERSION
         ) noexcept;
 
@@ -81,11 +82,11 @@ namespace PredictedAdaptedEncoding
 
         void ShutDownFabric() noexcept;
 
-        packed64_t GetATotalRawUnchackedCell(size_t idx) noexcept;
+        packed64_t GetTotalRawCellUnchackedCell(size_t idx) noexcept;
 
         bool GetMetaCellView(MetaIndexOfAPCNode fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept;
 
-        std::optional<uint64_t> ReadCompleatEpochValidValueInSameVersion(FabricMetaIndicies meta_idx_of_fabric) noexcept;
+        std::optional<uint64_t> ReadOccupancyApproxFromPairedIfValid(PackedCellLocalityTypes desired_occupancy_class) noexcept;
 
         bool InitializeFabric(
             uint16_t slot_count,

@@ -151,7 +151,7 @@ protected:
         MetaIndexOfAPCNode idx,
         uint64_t raw48_value,
         APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
-        PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY,
+        PriorityPhysics priority = PriorityPhysics::IDLE,
         SubClassesOfMode48 rel_offset = SubClassesOfMode48::SUBDIVISION16x3_INTERNAL_CELL_MODEL
     ) noexcept
     {

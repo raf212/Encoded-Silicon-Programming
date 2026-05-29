@@ -128,13 +128,13 @@ namespace PredictedAdaptedEncoding {
     enum class PriorityPhysics : tag8_t
     {
         IDLE = 0,
-        DEFAULT_PRIORITY = 1,
-        IMPORTANT = 2,
+        IMPORTANT = 1,
+        VERSION_DEPENDENCY = 2,
         INHERIT_SOURCE_PRIORITY = 3,
-        MAX_OF_SOURCE_AND_TARGET = 4,
-        ERROR_FIRST = 5,
-        OLDEST_CLOCK_FIRST = 6,
-        PRESSURE_FIRST = 7
+        ERROR_FIRST = 4,
+        OLDEST_CLOCK_FIRST = 5,
+        PRESSURE_FIRST = 6,
+        MAX_OF_SOURCE_AND_TARGET = 7
     };
 
     enum class APCPagedNodeSegmentClasses : tag8_t
