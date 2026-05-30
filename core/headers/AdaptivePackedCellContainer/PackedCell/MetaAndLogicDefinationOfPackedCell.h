@@ -155,7 +155,7 @@ namespace PredictedAdaptedEncoding {
         PAIRED_POINTER_IN_MEMORY = 0xC,
         FREE_SLOT     = 0xD,
         UNDEFINED = 0xE,
-        NANNULL     = 0xF
+        FABRIC_SEGMENT_POOL     = 0xF
     };
 
     static  constexpr packed64_t MaskLowNBits(unsigned n) noexcept

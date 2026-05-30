@@ -278,7 +278,7 @@ namespace PredictedAdaptedEncoding
 
         StoreNewDefaultMeta48_(FabricMetaIndicies::TABLE_DIRECTORY_BEGIN, static_cast<uint64_t>(table_directory_begin));
         StoreNewDefaultMeta48_(FabricMetaIndicies::TABLE_DIRECTORY_END, static_cast<uint32_t>(table_directory_end));
-        StoreNewDefaultMeta48_(FabricMetaIndicies::TABLE_COUNT, static_cast<uint64_t>(TableIdOfAPCFabric::COUNT));
+        StoreNewDefaultMeta48_(FabricMetaIndicies::TABLE_DIRECTORY_COUNT, static_cast<uint64_t>(TableIdOfAPCFabric::COUNT));
         StoreNewDefaultMeta48_(FabricMetaIndicies::TABLE_DIRECTORY_VERSION, APCDataStructure::BRANCH_VERSION);
 
         ResetAll4TypesOfOccupancyMetaData();
@@ -306,6 +306,28 @@ namespace PredictedAdaptedEncoding
         StoreNewDefaultMeta48_(FabricMetaIndicies::WORK_QUEUE_CLAIM_FAILURES, UNSIGNED_ZERO);
         StoreNewDefaultMeta48_(FabricMetaIndicies::EOF_FABRIC_HEADER, APCDataStructure::FABRIC_META_EOF);
     }
+
+
+    size_t NeuromorphicSpaceTimeFabricCoordinator::GetTableDirectoryBeginIdx_(TableIdOfAPCFabric desired_table, uint8_t part) noexcept
+    {
+        const size_t  base_of_fabric_table = static_cast<size_t>(PackedCell64_t::ExtractValue32(
+            SlabBasePtr_[static_cast<size_t>(FabricMetaIndicies::TABLE_DIRECTORY_BEGIN)].load(MoLoad_)
+        ));
+        return base_of_fabric_table + static_cast<size_t>(desired_table) * TABLE_ENTRY_WIDTH_OF_FABRIC + static_cast<size_t>(part);
+    }
+
+    // void NeuromorphicSpaceTimeFabricCoordinator::WriteDirectoryEntry(TableIdOfAPCFabric table_id, size_t begin, size_t end, uint32_t version) noexcept
+    // {
+    //     const size_t table_index = static_cast<size_t>(table_id);
+    //     const uint32_t directory_width = CoreOfFabricCoordinator::GetWidthOfValidFebricTable(table_id);
+    //     if (table_index < TableCache_.size())
+    //     {
+    //         TableCache_[table_index] = CacheEntryOfFabricTable{begin, end, directory_width, version};
+    //     }
+    //     const size_t base = GetTableDirectoryBeginIdx_(table_id);
+
+        
+    // }
 
 
 

@@ -143,7 +143,7 @@ namespace
             case APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY: return "DIST_PTR";
             case APCPagedNodeSegmentClasses::FREE_SLOT: return "FREE";
             case APCPagedNodeSegmentClasses::UNDEFINED: return "UNDEFINED";
-            case APCPagedNodeSegmentClasses::NANNULL: return "NANNULL";
+            case APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL: return "FABRIC_SEGMENT_POOL";
             default: return "UNKNOWN";
         }
     }

@@ -212,10 +212,10 @@ namespace PredictedAdaptedEncoding
         LIVE_SLOT_COUNT = 34,
         FABRIC_CLOCK16 = 35,
         ///end count
-
+        
         TABLE_DIRECTORY_BEGIN = 36,
         TABLE_DIRECTORY_END = 37,
-        TABLE_COUNT = 38,
+        TABLE_DIRECTORY_COUNT = 38,
         TABLE_DIRECTORY_VERSION = 39,
 
         //4 pairs of PackedCellLocalityTypes + PriorityPhysics::VERSION_DEPENDENCY based occupancy
@@ -353,6 +353,44 @@ namespace PredictedAdaptedEncoding
 
                 default:
                     return APCPagedNodeSegmentClasses::NONE;
+            }
+        }
+
+
+        static constexpr uint32_t GetWidthOfValidFebricTable(TableIdOfAPCFabric table_idintity) noexcept
+        {
+            switch (table_idintity)
+            {
+            case TableIdOfAPCFabric::TABLE_DIRECTORY:
+                return static_cast<uint32_t>(TABLE_ENTRY_WIDTH_OF_FABRIC);
+            
+            case TableIdOfAPCFabric::SLOT_DIRECTORY:
+                return static_cast<uint32_t>(SLOT_RECORD_WIDTH_OF_FABRIC);
+            
+            case TableIdOfAPCFabric::BRANCH_HASH:
+            case TableIdOfAPCFabric::SHARED_HASH:
+            case TableIdOfAPCFabric::LOGICAL_HASH:
+                return static_cast<uint32_t>(HASH_BUCKED_WIDTH_OF_FABRIC);
+            
+            case TableIdOfAPCFabric::RELATION_TABLE:
+                return static_cast<uint32_t>(RELATION_WIDTH_OF_FABRIC);
+
+            case TableIdOfAPCFabric::FREE_RETIRE_TABLE:
+            case TableIdOfAPCFabric::READY_QUEUE:
+                return static_cast<uint32_t>(QUEUE_RECORD_WIDTH_OF_FABRIC);
+
+            case TableIdOfAPCFabric::WORK_QUEUE:
+                return static_cast<uint32_t>(WORK_RECORD_WIDTH_OF_FABRIC);
+
+            case TableIdOfAPCFabric::DEVICE_VIEW_TABLE:
+                return static_cast<uint32_t>(DEVICE_VIEW_WIDTH_OF_APC_FABRIC);
+
+            case TableIdOfAPCFabric::THREAD_TABLE:
+                return static_cast<uint32_t>(THREAD_TABLE_RECORD_WIDTH);
+
+            
+            default:
+                return 0u;
             }
         }
 

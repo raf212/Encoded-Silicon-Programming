@@ -271,12 +271,12 @@ public:
     bool ApplyCentralAndRegionOccupancyTransitionCell(
         packed64_t old_cell,
         packed64_t new_cell,
-        APCPagedNodeSegmentClasses physical_page_class = APCPagedNodeSegmentClasses::NANNULL
+        APCPagedNodeSegmentClasses physical_page_class = APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL
     ) noexcept;
 
     bool RefreshReadyBitForRegionFromOccupancy(APCPagedNodeSegmentClasses page_class) noexcept;
 
-    uint16_t ReadTotalOccuPancyOfAnyPageClass(APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::NANNULL) noexcept;
+    uint16_t ReadTotalOccuPancyOfAnyPageClass(APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL) noexcept;
     
     bool WriteExactMetaCellJustNewValue(MetaIndexOfAPCNode idx, uint32_t value) noexcept;
 

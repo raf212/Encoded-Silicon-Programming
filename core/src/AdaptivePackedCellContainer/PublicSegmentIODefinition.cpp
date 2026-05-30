@@ -1107,7 +1107,7 @@ namespace PredictedAdaptedEncoding
     uint16_t SegmentIODefinition::ReadTotalOccuPancyOfAnyPageClass(APCPagedNodeSegmentClasses page_class) noexcept
     {
 
-        const packed64_t packed_cell = page_class != APCPagedNodeSegmentClasses::NANNULL ?
+        const packed64_t packed_cell = page_class != APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL ?
             ReadRegionOccupancyCombinedCell(page_class) : ReadCentralAPCOccupancyCellForThisPagedNode();
 
         const uint16_t full_combined_occupancy = GetTootalOccupancyFromPackedCell(packed_cell);

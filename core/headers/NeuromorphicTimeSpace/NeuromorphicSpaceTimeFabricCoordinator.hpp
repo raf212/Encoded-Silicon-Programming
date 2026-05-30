@@ -77,9 +77,12 @@ namespace PredictedAdaptedEncoding
             bool is_claimed_invalid = true
         ) noexcept;
 
+
+        size_t GetTableDirectoryBeginIdx_(TableIdOfAPCFabric desired_table, uint8_t part = UNSIGNED_ZERO) noexcept;
+
+        void WriteDirectoryEntry(TableIdOfAPCFabric table_id, size_t begin, size_t end, uint32_t version) noexcept;
+
         uint64_t IncrementOrDecrementDeltaFromFabricTrackerMetaIdx_(FabricMetaIndicies meta_idx) noexcept;
-
-
 
     public:
         NeuromorphicSpaceTimeFabricCoordinator(/* args */) noexcept = default;

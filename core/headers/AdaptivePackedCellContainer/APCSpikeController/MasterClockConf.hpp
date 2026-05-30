@@ -40,13 +40,13 @@ class AdaptivePackedCellContainer;
 
         packed64_t RefreshPackedCellClockOnly(
             packed64_t provided_packed_cell,
-            APCPagedNodeSegmentClasses force_rel_mask = APCPagedNodeSegmentClasses::NANNULL,
+            APCPagedNodeSegmentClasses force_rel_mask = APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL,
             std::optional<PackedCellLocalityTypes> override_locality = std::nullopt
         ) noexcept;
 
         std::optional<packed64_t> TouchPackedCellClockAndGetCellWithNewClock(
             size_t index_of_packed_cell,
-            APCPagedNodeSegmentClasses force_rel_mask = APCPagedNodeSegmentClasses::NANNULL,
+            APCPagedNodeSegmentClasses force_rel_mask = APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL,
             std::optional<PackedCellLocalityTypes> override_locality = std::nullopt
         ) noexcept;
 

@@ -50,11 +50,18 @@ namespace PredictedAdaptedEncoding
                     return false;
                 }
 
-                if (PageClass == APCPagedNodeSegmentClasses::NONE || PageClass == APCPagedNodeSegmentClasses::NANNULL)
+                if (CellOwnership == PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER && (PageClass == APCPagedNodeSegmentClasses::NONE || PageClass == APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL))
                 {
                     IsCellValid = false;
                     return false;
                 }
+
+                if (CellOwnership == PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC && (PageClass == APCPagedNodeSegmentClasses::NONE))
+                {
+                    IsCellValid = false;
+                    return false;
+                }
+
 
                 if (CellMode == PackedMode::MODE_32)
                 {
