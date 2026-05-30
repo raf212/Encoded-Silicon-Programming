@@ -118,8 +118,6 @@ namespace PredictedAdaptedEncoding
         bool force_update, clk16_t pair_version
     ) noexcept
     {
-        static constexpr uint8_t MAX_TRIES = 128;
-
         const FabricMetaIndicies desired_occupancy_low_idx = CoreOfFabricCoordinator::GetDesiredLowIdxOfOccupancyPairFromLocality(desired_occupancy_of_locality);
 
         if (force_update && desired_occupancy_low_idx == FabricMetaIndicies::EOF_FABRIC_HEADER)
@@ -168,7 +166,7 @@ namespace PredictedAdaptedEncoding
             {
                 packed64_t expected = low32_half_view.RawCell;
                 const packed64_t desired = low32_and_probable_high32.first;
-                for (size_t i = 0; i < MAX_TRIES; i++)
+                for (size_t i = 0; i < DEFAULT_MAX_TRIES; i++)
                 {
                     if (SlabBasePtr_[low_idx].compare_exchange_strong(
                         expected, desired, OnExchangeSuccess, OnExchangeFailure
@@ -200,7 +198,7 @@ namespace PredictedAdaptedEncoding
                     return false;
                 };
 
-                for (size_t i = 0; i < MAX_TRIES; i++)
+                for (size_t i = 0; i < DEFAULT_MAX_TRIES; i++)
                 {
                     if (SlabBasePtr_[low_idx].compare_exchange_strong(
                         expected_low, desired_claimed_low, OnExchangeSuccess, OnExchangeFailure
@@ -208,7 +206,7 @@ namespace PredictedAdaptedEncoding
                     {
                         packed64_t expected_high = high32_half_view.RawCell;
 
-                        for (size_t j = 0; j < MAX_TRIES; j++)
+                        for (size_t j = 0; j < DEFAULT_MAX_TRIES; j++)
                         {
                             if (SlabBasePtr_[high_idx].compare_exchange_strong(
                                 expected_high, low32_and_probable_high32.second, OnExchangeSuccess, OnExchangeFailure

@@ -33,6 +33,7 @@ namespace PredictedAdaptedEncoding
         std::atomic<bool> InitializationInProgress_{false};
         AllocatorOfAPCFabricCells AllocatorOfFabric_{};
         AtomicAdaptiveBackoff AdaptiveBackoffCentral_;
+        static constexpr uint32_t DEFAULT_MAX_TRIES = 128;
 
         void FreeAtomicCells_(std::atomic<packed64_t>* packed_cell_memory_ptr) noexcept;
 
@@ -67,6 +68,39 @@ namespace PredictedAdaptedEncoding
         ) noexcept;
 
         void WriceFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept;
+
+        bool DefaultCompareExchangeStrongUncheckedCell_(
+            size_t idx,
+            const std::pair<packed64_t, packed64_t> expectedF_desiresS,
+            bool is_claimed_invalid = true
+        ) noexcept
+        {
+            if (SlabBasePtr_ && idx >= SlabCellCount_)
+            {
+                return false;
+            }
+
+            packed64_t expected_cell = expectedF_desiresS.first;
+            for (size_t i = 0; i < DEFAULT_MAX_TRIES; i++)
+            {
+                if (SlabBasePtr_[idx].compare_exchange_strong(expected_cell, expectedF_desiresS.second, OnExchangeSuccess, OnExchangeFailure))
+                {
+                    return true;
+                }
+                
+                if (is_claimed_invalid && PackedCell64_t::ExtractLocalityFromPacked(expected_cell) == PackedCellLocalityTypes::CLAIMED)
+                {
+                    return false;
+                }
+
+                //JUST AS A SLOT HOLDER AtomicAdaptiveBackoff has to be build for packed cell
+                AdaptiveBackoffCentral_.AdaptiveBackOffPacked(expected_cell);
+            }
+            
+        }
+
+        uint64_t IncrementOrDecrementDeltaFromFabricTrackerMetaIdx() noexcept;
+
 
 
     public:

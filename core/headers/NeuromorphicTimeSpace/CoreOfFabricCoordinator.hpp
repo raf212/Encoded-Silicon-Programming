@@ -184,59 +184,65 @@ namespace PredictedAdaptedEncoding
         FREE_SLOT_HEAD = 10,
         RETIRE_SLOT_HEAD = 11,
         RELATION_FREE_HEAD = 12,
+        RESERVED_13 = 13,
+        RESERVED_14 = 14,
+        NEXT_BRANCH_ID = 15,
+        NEXT_RELATION_ID = 16,
+        NEXT_DEVICE_VIEW_ID = 17,
 
-        GLOBAL_EPOCH48 = 13,
-        MIN_SAFE_EPOCH48 = 14,
 
-        NEXT_BRANCH_ID = 17,
-        NEXT_RELATION_ID = 18,
-        NEXT_DEVICE_VIEW_ID = 19,
-        FABRIC_CLOCK16 = 20,
+        WORK_WRITE_CURSOR = 18,
+        WORK_READ_CURSOR = 19,
+        READY_WRITE_CURSOR = 20,
+        READY_READ_CURSOR = 21,
 
-        WORK_WRITE_CURSOR = 21,
-        WORK_READ_CURSOR = 22,
-        READY_WRITE_CURSOR = 23,
-        READY_READ_CURSOR = 24,
+        //COUNTS
+        GLOBAL_EPOCH48 = 22,
+        MIN_SAFE_EPOCH48 = 23,
+        RELATION_RECLAIM_COUNT = 24,
+        WORK_QUEUE_DROPPED_COUNT = 25,
+        THREAD_ACTIVE_COUNT = 26,
+        THREAD_REGISTRATION_FAILURE = 27,
+        RELATION_TOMBSTONE_COUNT = 28,
+        RELATION_UNLINK_FAILURES = 29,
+        WORK_QUEUE_CLAIM_FAILURES = 30,
+        CAS_FAILURE_COUNT = 31,
+        ERROR_COUNT = 32,
+        RETIRED_COUNT = 33,
+        LIVE_SLOT_COUNT = 34,
+        FABRIC_CLOCK16 = 35,
+        ///end count
 
-        TABLE_DIRECTORY_BEGIN = 25,
-        TABLE_DIRECTORY_END = 26,
-        TABLE_COUNT = 27,
-        TABLE_DIRECTORY_VERSION = 28,
+        TABLE_DIRECTORY_BEGIN = 36,
+        TABLE_DIRECTORY_END = 37,
+        TABLE_COUNT = 38,
+        TABLE_DIRECTORY_VERSION = 39,
 
         //4 pairs of PackedCellLocalityTypes + PriorityPhysics::VERSION_DEPENDENCY based occupancy
-        FABRIC_OCCUPANCY_APPROXIMATION_IDLE_LOW32 = 16,
-        FABRIC_OCCUPANCY_APPROXIMATION_IDLE_HIGH32 = 16,
-        FABRIC_OCCUPANCY_APPROXIMATION_PUBLISHED_LOW32 = 29,
-        FABRIC_OCCUPANCY_APPROXIMATION_PUBLISHED_HIGH32 = 29,
-        FABRIC_OCCUPANCY_APPROXIMATION_CLAIMED_LOW32 = 15,
-        FABRIC_OCCUPANCY_APPROXIMATION_CLAIMED_HIGH32 = 15,
-        FABRIC_OCCUPANCY_APPROXIMATION_FAULTY_LOW32 = 16,
-        FABRIC_OCCUPANCY_APPROXIMATION_FAULTY_HIGH32 = 16,
+        FABRIC_OCCUPANCY_APPROXIMATION_IDLE_LOW32 = 40,
+        FABRIC_OCCUPANCY_APPROXIMATION_IDLE_HIGH32 = 41,
+        FABRIC_OCCUPANCY_APPROXIMATION_PUBLISHED_LOW32 = 42,
+        FABRIC_OCCUPANCY_APPROXIMATION_PUBLISHED_HIGH32 = 43,
+        FABRIC_OCCUPANCY_APPROXIMATION_CLAIMED_LOW32 = 44,
+        FABRIC_OCCUPANCY_APPROXIMATION_CLAIMED_HIGH32 = 45,
+        FABRIC_OCCUPANCY_APPROXIMATION_FAULTY_LOW32 = 46,
+        FABRIC_OCCUPANCY_APPROXIMATION_FAULTY_HIGH32 = 47,
+        //end pair
 
-        CAS_FAILURE_COUNT = 30,
-        ERROR_COUNT = 31,
-        RETIRED_COUYNT = 32,
-        LIVE_SLOT_COUNT = 33,
+        HASH_TOMBSTONE_COUNT = 48,
+        HASH_COMPACTION_COUNT = 49,
+        WORK_QUEUE_OCCUPANCY = 50,
+        READY_QUEUE_OCCUPANCY = 51,
 
-        HASH_TOMBSTONE_COUNT = 34,
-        HASH_COMPACTION_COUNT = 35,
-        WORK_QUEUE_OCCUPANCY = 36,
-        READY_QUEUE_OCCUPANCY = 37,
+        BACKOFF_SPIN_LIMIT = 52,
+        BACKOFF_YIELD_LIMIT = 53,
+        INITIALIZATION_STATE = 54,
+        HAS_COMPACTION_INFLIGHT = 55,
 
-        BACKOFF_SPIN_LIMIT = 38,
-        BACKOFF_YIELD_LIMIT = 39,
-        INITIALIZATION_STATE = 40,
-        HAS_COMPACTION_INFLIGHT = 41,
-        RELATION_RECLAIM_COUNT = 42,
-        WORK_QUEUE_DROPPED_COUNT = 43,
-        THREAD_TABLE_CAPACITY = 44,
-        THREAD_ACTIVE_COUNT = 45,
-        THREAD_REGISTRATION_FAILURE = 46,
-        RELATION_TOMBSTONE_COUNT = 47,
-        RELATION_UNLINK_FAILURES = 48,
-        WORK_QUEUE_CLAIM = 49,
+        THREAD_TABLE_CAPACITY = 56,
 
-        RESERVED_50 = 50,
+
+        RESERVED_57_UPTO_94 = 57,
 
         EOF_FABRIC_HEADER = 95
 
@@ -347,6 +353,33 @@ namespace PredictedAdaptedEncoding
 
                 default:
                     return APCPagedNodeSegmentClasses::NONE;
+            }
+        }
+
+        static constexpr bool IsThisFebricMetaIdxAValidIncrementalCountType(FabricMetaIndicies meta_idx) noexcept
+        {
+            switch (meta_idx)
+            {
+            //21 for now skeletorn
+            case FabricMetaIndicies::GLOBAL_EPOCH48:
+            case FabricMetaIndicies::MIN_SAFE_EPOCH48:
+            case FabricMetaIndicies::NEXT_DEVICE_VIEW_ID:
+            case FabricMetaIndicies::RELATION_RECLAIM_COUNT:
+            case FabricMetaIndicies::WORK_QUEUE_DROPPED_COUNT:
+            case FabricMetaIndicies::THREAD_ACTIVE_COUNT:
+            case FabricMetaIndicies::THREAD_REGISTRATION_FAILURE:
+            case FabricMetaIndicies::RELATION_TOMBSTONE_COUNT:
+            case FabricMetaIndicies::RELATION_UNLINK_FAILURES:
+            case FabricMetaIndicies::WORK_QUEUE_CLAIM_FAILURES:
+            case FabricMetaIndicies::CAS_FAILURE_COUNT:
+            case FabricMetaIndicies::ERROR_COUNT:
+            case FabricMetaIndicies::RETIRED_COUNT:
+            case FabricMetaIndicies::LIVE_SLOT_COUNT:
+            case FabricMetaIndicies::FABRIC_CLOCK16:
+                return true;
+            
+            default:
+                return false;
             }
         }
     };
