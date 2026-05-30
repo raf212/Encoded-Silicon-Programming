@@ -238,6 +238,13 @@ namespace PredictedAdaptedEncoding
         return ForceUpdate(); 
     }
 
+    void NeuromorphicSpaceTimeFabricCoordinator::ResetAll4TypesOfOccupancyMetaData() noexcept
+    {
+        UpdateValidPairedOccupancyApproximation_(PackedCellLocalityTypes::IDLE, UNSIGNED_ZERO, true);
+        UpdateValidPairedOccupancyApproximation_(PackedCellLocalityTypes::PUBLISHED, UNSIGNED_ZERO, true);
+        UpdateValidPairedOccupancyApproximation_(PackedCellLocalityTypes::CLAIMED, UNSIGNED_ZERO, true);
+        UpdateValidPairedOccupancyApproximation_(PackedCellLocalityTypes::FAULTY, UNSIGNED_ZERO, true);
+    }
 
 
     void NeuromorphicSpaceTimeFabricCoordinator::WriceFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept
@@ -274,10 +281,63 @@ namespace PredictedAdaptedEncoding
         StoreNewDefaultMeta48_(FabricMetaIndicies::TABLE_COUNT, static_cast<uint64_t>(TableIdOfAPCFabric::COUNT));
         StoreNewDefaultMeta48_(FabricMetaIndicies::TABLE_DIRECTORY_VERSION, APCDataStructure::BRANCH_VERSION);
 
+        ResetAll4TypesOfOccupancyMetaData();
+
+        StoreNewDefaultMeta48_(FabricMetaIndicies::CAS_FAILURE_COUNT, UNSIGNED_ZERO);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::ERROR_COUNT, UNSIGNED_ZERO);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::RETIRE_SLOT_HEAD, UNSIGNED_ZERO);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::LIVE_SLOT_COUNT, UNSIGNED_ZERO);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::HASH_TOMBSTONE_COUNT, UNSIGNED_ZERO);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::HASH_COMPACTION_COUNT, UNSIGNED_ZERO);
+
+        StoreNewDefaultMeta48_(FabricMetaIndicies::WORK_QUEUE_OCCUPANCY, UNSIGNED_ZERO);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::READY_QUEUE_OCCUPANCY, UNSIGNED_ZERO);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::BACKOFF_SPIN_LIMIT, 16u);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::BACKOFF_YIELD_LIMIT, 64u);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::INITIALIZATION_STATE, static_cast<uint64_t>(PackedCellLocalityTypes::PUBLISHED));
+        StoreNewDefaultMeta48_(FabricMetaIndicies::HAS_COMPACTION_INFLIGHT, UNSIGNED_ZERO);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::RELATION_RECLAIM_COUNT, UNSIGNED_ZERO);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::WORK_QUEUE_DROPPED_COUNT, UNSIGNED_ZERO);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::THREAD_TABLE_CAPACITY, ThreadTableCapacity_);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::THREAD_ACTIVE_COUNT, UNSIGNED_ZERO);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::THREAD_REGISTRATION_FAILURE, UNSIGNED_ZERO);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::RELATION_TOMBSTONE_COUNT, UNSIGNED_ZERO);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::RELATION_UNLINK_FAILURES, UNSIGNED_ZERO);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::WORK_QUEUE_CLAIM_FAILURES, UNSIGNED_ZERO);
+        StoreNewDefaultMeta48_(FabricMetaIndicies::EOF_FABRIC_HEADER, APCDataStructure::FABRIC_META_EOF);
+    }
 
 
 
+    bool NeuromorphicSpaceTimeFabricCoordinator::DefaultCompareExchangeStrongUncheckedCell_(
+        size_t idx,
+        const std::pair<packed64_t, packed64_t> expectedF_desiresS,
+        bool is_claimed_invalid
+    ) noexcept
+    {
+        if (SlabBasePtr_ && idx >= SlabCellCount_)
+        {
+            return false;
+        }
 
+        packed64_t expected_cell = expectedF_desiresS.first;
+        for (size_t i = 0; i < DEFAULT_MAX_TRIES; i++)
+        {
+            if (SlabBasePtr_[idx].compare_exchange_strong(expected_cell, expectedF_desiresS.second, OnExchangeSuccess, OnExchangeFailure))
+            {
+                return true;
+            }
+            
+            if (is_claimed_invalid && PackedCell64_t::ExtractLocalityFromPacked(expected_cell) == PackedCellLocalityTypes::CLAIMED)
+            {
+                return false;
+            }
+
+            //JUST AS A SLOT HOLDER AtomicAdaptiveBackoff has to be build for packed cell
+            AdaptiveBackoffCentral_.AdaptiveBackOffPacked(expected_cell);
+        }
+        
+        return false;
     }
 
 
