@@ -74,46 +74,38 @@ namespace PredictedAdaptedEncoding
         static std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64ForAPC(
             uint64_t value, clk16_t version,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
-            PackedCellOwnership ownership = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
-            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
-            PriorityPhysics priority = PriorityPhysics::VERSION_DEPENDENCY
+            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT
         ) noexcept
         {
-            const uint32_t low_half32 = static_cast<uint32_t>(value & MaskLowNBits(VALBITS));
-            const uint32_t high_half32 = static_cast<uint32_t>((value >> VALBITS) & MaskLowNBits(VALBITS));
-
-            const packed64_t low_half_packed_cell = PackedCell64_t::MakeInitialAPCValidPackedCell(
-                PackedMode::MODE_32, locality, ownership, page_class,
-                PackedCellDataType::UnsignedPCellDataType, low_half32, version,
-                priority, SubClassesOfMode32::LOW_OF_PAIRED_VERSIONED_CELL
+            const std::pair<packed64_t, packed64_t> lowf_highs = GetPairOfLow32FAndHigh32SFromUnsigned64_(
+                value, version, locality, PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER, static_cast<tag8_t>(page_class)
             );
 
-            if (
-                high_half32 == UNSIGNED_ZERO && low_half32 < IN_CELL_VALUE_MODE32_SENTINAL &&
-                page_class == APCPagedNodeSegmentClasses::CONTROL_SLOT
-            )
+            if (page_class == APCPagedNodeSegmentClasses::CONTROL_SLOT && value <= IN_CELL_VALUE_MODE32_SENTINAL)
             {
-                return std::pair<packed64_t, packed64_t>(low_half_packed_cell, PackedCell64_t::PACKED_CELL_SENTINAL);
+                return std::pair<packed64_t, packed64_t>(lowf_highs.first, PackedCell64_t::PACKED_CELL_SENTINAL);
             }
-            
-            const packed64_t high_half_packed_cell = PackedCell64_t::MakeInitialAPCValidPackedCell(
-                PackedMode::MODE_32, locality, ownership, page_class,
-                PackedCellDataType::UnsignedPCellDataType, high_half32, version,
-                priority, SubClassesOfMode32::HIGH_OF_PAIRED_VERSIONED_CELL
-            );
-
-            return std::pair<packed64_t, packed64_t>(low_half_packed_cell, high_half_packed_cell);
+            return lowf_highs;
         }
 
-        // static std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64ForAPC(
-        //     uint64_t value, clk16_t version,
-        //     PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
-        //     PackedCellOwnership ownership = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
-        //     APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
-        //     PriorityPhysics priority = PriorityPhysics::VERSION_DEPENDENCY
-        // ) noexcept
+        static std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64ForFabric(
+            uint64_t value, clk16_t version,
+            PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
+            FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GENERIC_CONTROL
+        ) noexcept
+        {
+            const std::pair<packed64_t, packed64_t> lowf_highs = GetPairOfLow32FAndHigh32SFromUnsigned64_(
+                value, version, locality, PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC, static_cast<tag8_t>(fabric_segment_class)
+            );
 
+            if (fabric_segment_class != FabricTableSegmentClasses::GLOBAL_AND_CONFIG && value <= IN_CELL_VALUE_MODE32_SENTINAL)
+            {
+                return std::pair<packed64_t, packed64_t>(lowf_highs.first, PackedCell64_t::PACKED_CELL_SENTINAL);
+            }
+            return lowf_highs;
+        }
 
+    
         static std::optional<uint64_t> GetFullUnsigned64FromPairedVersionedCell(
             packed64_t low_half, packed64_t high_half,
             const PackedCell64_t::AuthoritiveCellView* low_half_view_ptr = nullptr,
@@ -160,6 +152,35 @@ namespace PredictedAdaptedEncoding
             return std::nullopt;            
 
         }
+    
+private:
+        static std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64_(
+            uint64_t value, clk16_t version,
+            PackedCellLocalityTypes locality,
+            PackedCellOwnership ownership,
+            tag8_t page_class
+        ) noexcept
+        {
+            const uint32_t low_half32 = static_cast<uint32_t>(value & MaskLowNBits(VALBITS));
+            const uint32_t high_half32 = static_cast<uint32_t>((value >> VALBITS) & MaskLowNBits(VALBITS));
+
+            const packed64_t low_half_packed_cell = PackedCell64_t::MakeInitialValidBlindPackedCell(
+                PackedMode::MODE_32, locality, ownership, page_class,
+                PackedCellDataType::UnsignedPCellDataType, low_half32, version,
+                PriorityPhysics::VERSION_DEPENDENCY, 
+                static_cast<tag8_t>(SubClassesOfMode32::LOW_OF_PAIRED_VERSIONED_CELL)
+            );
+    
+            const packed64_t high_half_packed_cell = PackedCell64_t::MakeInitialValidBlindPackedCell(
+                PackedMode::MODE_32, locality, ownership, page_class,
+                PackedCellDataType::UnsignedPCellDataType, high_half32, version,
+                PriorityPhysics::VERSION_DEPENDENCY, 
+                static_cast<tag8_t>(SubClassesOfMode32::HIGH_OF_PAIRED_VERSIONED_CELL)
+            );
+
+            return std::pair(low_half_packed_cell, high_half_packed_cell);
+        }
+
     };
 
 }

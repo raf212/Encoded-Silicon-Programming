@@ -161,6 +161,7 @@ namespace PredictedAdaptedEncoding {
     enum class FabricTableSegmentClasses : uint16_t //14
     {
         NONE = 0,
+        //GLOBAL_AND_CONFIG used for everything else where FabricTableSegmentClasses fails 
         GLOBAL_AND_CONFIG = 1,
         TABLE_DIRECTORY = 2,
         SLOT_DIRECTORY = 3,

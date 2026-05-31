@@ -155,10 +155,10 @@ namespace PredictedAdaptedEncoding
         const size_t low_idx = static_cast<size_t>(desired_occupancy_low_idx);
         const size_t high_idx = low_idx + 1;
 
-        const std::pair<packed64_t, packed64_t> low32_and_probable_high32 = PairedVersionedCellModelOfMode32::GetPairOfLow32FAndHigh32SFromUnsigned64ForAPC(
+        const std::pair<packed64_t, packed64_t> low32_and_probable_high32 = PairedVersionedCellModelOfMode32::GetPairOfLow32FAndHigh32SFromUnsigned64ForFabric(
             desired_occupancy_value, pair_version,
-            PackedCellLocalityTypes::PUBLISHED, PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC,
-            APCPagedNodeSegmentClasses::CONTROL_SLOT
+            PackedCellLocalityTypes::PUBLISHED,
+            FabricTableSegmentClasses::GENERIC_CONTROL
         );
 
         auto ForceUpdate = [&](){
@@ -353,10 +353,20 @@ namespace PredictedAdaptedEncoding
         }
         const size_t base = GetTableDirectoryBeginIdx_(table_id);
         
-        //user should ensure reading clock as version 
-        MakeAndStoreAFabricOwnedCell_(base + 0u, static_cast<uint64_t>(begin), table_id, PackedMode::MODE_32, version);
-        MakeAndStoreAFabricOwnedCell_(base + 1u, static_cast<uint64_t>(end), table_id, PackedMode::MODE_32, version);
-        MakeAndStoreAFabricOwnedCell_(base + 2u, static_cast<uint64_t>(directory_width), table_id, PackedMode::MODE_32, version);
+        MakeAndStoreAFabricOwnedCell_(base + 0u, static_cast<uint64_t>(begin), table_id, PackedMode::MODE_32, version, 
+            UNSIGNED_ZERO, PackedCellDataType::UnsignedPCellDataType, PackedCellLocalityTypes::PUBLISHED,
+            PriorityPhysics::VERSION_DEPENDENCY
+        );
+
+        MakeAndStoreAFabricOwnedCell_(base + 1u, static_cast<uint64_t>(end), table_id, PackedMode::MODE_32, version,
+            UNSIGNED_ZERO, PackedCellDataType::UnsignedPCellDataType, PackedCellLocalityTypes::PUBLISHED,
+            PriorityPhysics::VERSION_DEPENDENCY
+        );
+
+        MakeAndStoreAFabricOwnedCell_(base + 2u, static_cast<uint64_t>(directory_width), table_id, PackedMode::MODE_32, version,
+            UNSIGNED_ZERO, PackedCellDataType::UnsignedPCellDataType, PackedCellLocalityTypes::PUBLISHED,
+            PriorityPhysics::VERSION_DEPENDENCY
+        );
     }
 
 
