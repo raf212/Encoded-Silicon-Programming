@@ -165,9 +165,14 @@ namespace PredictedAdaptedEncoding
 
     //     SlabCellCount_ = SegmentPoolEnd_;
 
-    //     const packed64_t idle_free32 = PackedCell64_t::MakeInitialValidPackedCell(PackedMode::MODE_32);
+    //     const packed64_t idle_free32 = PackedCell64_t::MakeInitialValidPackedCell(
+    //         PackedMode::MODE_32, PackedCellLocalityTypes::IDLE, 
+    //         PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC, 
+    //         stat
+    //         FabricTableSegmentClasses::GLOBAL_AND_CONFIG
+    //     );
 
-        
+    //     for
 
         
     // }
