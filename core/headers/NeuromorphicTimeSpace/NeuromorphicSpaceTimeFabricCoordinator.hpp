@@ -28,7 +28,7 @@ namespace PredictedAdaptedEncoding
             bool IsThisEntryValid{false};
         };
 
-        std::array<CacheEntryOfFabricTable, static_cast<size_t>(TableIdOfAPCFabric::COUNT)> TableCache_{};
+        std::array<CacheEntryOfFabricTable, static_cast<size_t>(FabricTableSegmentClasses::COUNT)> TableCache_{};
         std::atomic<bool> FabricInitialized_{false};
         std::atomic<bool> InitializationInProgress_{false};
         AllocatorOfAPCFabricCells AllocatorOfFabric_{};
@@ -50,15 +50,35 @@ namespace PredictedAdaptedEncoding
 
         bool CheckAndStoreAPrebuildCellInSlab_(size_t idx, packed64_t packed_cell) noexcept;
 
-        bool MakeCheckAndStoreAFabricControlValidCell_(
-            FabricMetaIndicies fabric_meta_idx, uint64_t value32_or_64, 
-            PackedMode cell_mode = PackedMode::MODE_48, tag8_t mode_sub_class = static_cast<tag8_t>(SubClassesOfMode32::SELF_CLASS),
+        bool MakeAndStoreAFabricOwnedCell_(
+            size_t index, 
+            uint64_t value32_or_64, 
+            FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GENERIC_CONTROL,
+            PackedMode cell_mode = PackedMode::MODE_48, 
+            clk16_t extended_meta_value = UNSIGNED_ZERO,
+            tag8_t mode_sub_class = static_cast<tag8_t>(SubClassesOfMode32::SELF_CLASS),
             PackedCellDataType cell_data_type = PackedCellDataType::UnsignedPCellDataType,
             PackedCellLocalityTypes locality_of_cell = PackedCellLocalityTypes::IDLE, 
-            PriorityPhysics priority = PriorityPhysics::IMPORTANT, clk16_t extended_meta_value = UNSIGNED_ZERO
+            PriorityPhysics priority = PriorityPhysics::IMPORTANT
         ) noexcept;
 
-        void StoreNewDefaultMeta48_(FabricMetaIndicies fabric_meta_idx, uint64_t value) noexcept;
+        bool MakeCheckAndStoreAFabricControlValidCell_(
+            FabricMetaIndicies fabric_meta_idx, 
+            uint64_t value32_or_64, 
+            FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GENERIC_CONTROL,
+            PackedMode cell_mode = PackedMode::MODE_48, 
+            clk16_t extended_meta_value = UNSIGNED_ZERO,
+            tag8_t mode_sub_class = static_cast<tag8_t>(SubClassesOfMode32::SELF_CLASS),
+            PackedCellDataType cell_data_type = PackedCellDataType::UnsignedPCellDataType,
+            PackedCellLocalityTypes locality_of_cell = PackedCellLocalityTypes::IDLE, 
+            PriorityPhysics priority = PriorityPhysics::IMPORTANT
+        ) noexcept;
+
+        void StoreNewDefaultFebricControlMeta48_(
+            FabricMetaIndicies fabric_meta_idx, uint64_t value, 
+            FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GENERIC_CONTROL
+        )noexcept;
+
 
 
         bool UpdateValidPairedOccupancyApproximation_(
@@ -78,9 +98,9 @@ namespace PredictedAdaptedEncoding
         ) noexcept;
 
 
-        size_t GetTableDirectoryBeginIdx_(TableIdOfAPCFabric desired_table, uint8_t part = UNSIGNED_ZERO) noexcept;
+        size_t GetTableDirectoryBeginIdx_(FabricTableSegmentClasses desired_table, uint8_t part = UNSIGNED_ZERO) noexcept;
 
-        void WriteDirectoryEntry(TableIdOfAPCFabric table_id, size_t begin, size_t end, uint32_t version) noexcept;
+        void WriteDirectoryEntry(FabricTableSegmentClasses table_id, size_t begin, size_t end, uint16_t version) noexcept;
 
         uint64_t IncrementOrDecrementDeltaFromFabricTrackerMetaIdx_(FabricMetaIndicies meta_idx) noexcept;
 

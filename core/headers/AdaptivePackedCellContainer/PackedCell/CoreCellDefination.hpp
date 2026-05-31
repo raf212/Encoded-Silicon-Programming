@@ -31,6 +31,7 @@ namespace PredictedAdaptedEncoding
             PackedCellLocalityTypes LocalityOfCell{PackedCellLocalityTypes::IDLE};
             PackedMode CellMode{PackedMode::MODE_32};
             APCPagedNodeSegmentClasses PageClass{APCPagedNodeSegmentClasses::NONE};
+            FabricTableSegmentClasses FabricTableSegmentClass{FabricTableSegmentClasses::NONE};
             std::optional<SubClassesOfMode32> SubClassOfMode32{std::nullopt};
             std::optional<SubClassesOfMode48> RelationOffsetForMode48{std::nullopt};
             PackedCellDataType CellValueDataType{PackedCellDataType::UnsignedPCellDataType};
@@ -109,7 +110,6 @@ namespace PredictedAdaptedEncoding
 
                 IsCellValid = true;
                 return true;
-
             }
 
         };
@@ -350,17 +350,18 @@ namespace PredictedAdaptedEncoding
             out_packed_cell_view.CellOwnership =  static_cast<PackedCellOwnership>(ExtractCellLocalNodeAuthotityFromMETA16_U_(meta16));
             out_packed_cell_view.LocalityOfCell = static_cast<PackedCellLocalityTypes>(ExtractLocalityFromMETA16_U_(meta16));
             out_packed_cell_view.CellMode = static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16));
-            out_packed_cell_view.PageClass = static_cast<APCPagedNodeSegmentClasses>(ExtractRelMaskFromMETA16_U_(meta16));
             if (IsPackedCellVal32(packed_cell))
             {
                 out_packed_cell_view.SubClassOfMode32 = static_cast<SubClassesOfMode32>(ExtractRelOffsetFromMETA16_U_(meta16));
                 out_packed_cell_view.InCellClock16 = ExtractClk16(packed_cell);
                 out_packed_cell_view.CellValue32 = ExtractValue32(packed_cell);
+                out_packed_cell_view.PageClass = static_cast<APCPagedNodeSegmentClasses>(ExtractRelMaskFromMETA16_U_(meta16));
             }
             else
             {
                 out_packed_cell_view.RelationOffsetForMode48 = static_cast<SubClassesOfMode48>(ExtractRelOffsetFromMETA16_U_(meta16));
                 out_packed_cell_view.CellClock48 = ExtractClk48(packed_cell);
+                out_packed_cell_view.FabricTableSegmentClass = static_cast<FabricTableSegmentClasses>(ExtractRelMaskFromMETA16_U_(meta16));
             }
             out_packed_cell_view.CellValueDataType = static_cast<PackedCellDataType>(ExtractValueDataTypeFromMETA16_U_(meta16));
             out_packed_cell_view.IsThisPackedCellValidInRuntime();

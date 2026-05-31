@@ -19,22 +19,6 @@ namespace PredictedAdaptedEncoding
     static constexpr size_t DEVICE_VIEW_WIDTH_OF_APC_FABRIC = 8u;
     static constexpr size_t THREAD_TABLE_RECORD_WIDTH = 4u;
     static constexpr size_t DEFAULT_THREAD_SLOT_OF_FABRIC = 256u;
-
-
-    enum class FabricToIoLinkerClasses : uint16_t
-    {
-        NONE = 0,
-        META_DATA = 1,
-        DIRECTORY = 2,
-        SLOT_TABLE = 3,
-        HASH_TABLE = 4,
-        RELATION_TABLE = 5,
-        QUEUE_TABLE = 6,
-        DEVICE_VIEW = 7,
-        SEGMENT_POOL = 8,
-        RETIRED_SEGMENT_OF_FABRIC = 9,
-        UNDEFINED_SEGMENT_OF_FABRIC = 10
-    };
     
     enum class HandleStateOfAPCFabric : uint8_t
     {
@@ -44,24 +28,6 @@ namespace PredictedAdaptedEncoding
         RELATION_RECORD = 0x3u,
         DEVICE_VIEW = 0x4u,
         RETIRED_SLOT = 0x5u
-    };
-
-    enum class TableIdOfAPCFabric : uint16_t //14
-    {
-        GLOBAL_CONFIG = 0,
-        TABLE_DIRECTORY,
-        SLOT_DIRECTORY,
-        BRANCH_HASH,
-        LOGICAL_HASH,
-        SHARED_HASH,
-        RELATION_TABLE,
-        FREE_RETIRE_TABLE,
-        READY_QUEUE,
-        WORK_QUEUE,
-        DEVICE_VIEW_TABLE,
-        THREAD_TABLE,
-        SEGMENT_POOL,
-        COUNT
     };
 
     enum class SLotStateOfAPCFabric : uint32_t
@@ -323,69 +289,35 @@ namespace PredictedAdaptedEncoding
         }
 
 
-        static constexpr APCPagedNodeSegmentClasses ConvertFabricToIOLinkerAsSegmentClasses(FabricToIoLinkerClasses fabric_class) noexcept
-        {
-            switch (fabric_class)
-            {
-                case FabricToIoLinkerClasses::META_DATA : 
-                case FabricToIoLinkerClasses::DIRECTORY :
-                    return APCPagedNodeSegmentClasses::CONTROL_SLOT;
-                
-                case FabricToIoLinkerClasses::SLOT_TABLE :
-                    return APCPagedNodeSegmentClasses::SLOT_TABLE_DESCRIPTOR;
-
-                case FabricToIoLinkerClasses::HASH_TABLE :
-                case FabricToIoLinkerClasses::RELATION_TABLE :
-                    return APCPagedNodeSegmentClasses::EDGE_DESCRIPTOR;
-
-                case FabricToIoLinkerClasses::QUEUE_TABLE :
-                    return APCPagedNodeSegmentClasses::AUX_SLOT;
-                
-                case FabricToIoLinkerClasses::DEVICE_VIEW:
-                    return APCPagedNodeSegmentClasses::HETEROGENOUS_RAW_MEMORY;
-                
-                case FabricToIoLinkerClasses::SEGMENT_POOL:
-                    return APCPagedNodeSegmentClasses::FREE_SLOT;
-                
-                case FabricToIoLinkerClasses::RETIRED_SEGMENT_OF_FABRIC:
-                case FabricToIoLinkerClasses::UNDEFINED_SEGMENT_OF_FABRIC:
-                    return APCPagedNodeSegmentClasses::UNDEFINED;
-
-                default:
-                    return APCPagedNodeSegmentClasses::NONE;
-            }
-        }
-
-
-        static constexpr uint32_t GetWidthOfValidFebricTable(TableIdOfAPCFabric table_idintity) noexcept
+        static constexpr uint32_t GetWidthOfValidFebricTable(FabricTableSegmentClasses table_idintity) noexcept
         {
             switch (table_idintity)
             {
-            case TableIdOfAPCFabric::TABLE_DIRECTORY:
+            case FabricTableSegmentClasses::TABLE_DIRECTORY:
                 return static_cast<uint32_t>(TABLE_ENTRY_WIDTH_OF_FABRIC);
             
-            case TableIdOfAPCFabric::SLOT_DIRECTORY:
+            case FabricTableSegmentClasses::SLOT_DIRECTORY:
                 return static_cast<uint32_t>(SLOT_RECORD_WIDTH_OF_FABRIC);
             
-            case TableIdOfAPCFabric::BRANCH_HASH:
-            case TableIdOfAPCFabric::SHARED_HASH:
-            case TableIdOfAPCFabric::LOGICAL_HASH:
+            case FabricTableSegmentClasses::BRANCH_HASH:
+            case FabricTableSegmentClasses::SHARED_HASH:
+            case FabricTableSegmentClasses::LOGICAL_HASH:
                 return static_cast<uint32_t>(HASH_BUCKED_WIDTH_OF_FABRIC);
             
-            case TableIdOfAPCFabric::RELATION_TABLE:
+            case FabricTableSegmentClasses::RELATION_TABLE:
                 return static_cast<uint32_t>(RELATION_WIDTH_OF_FABRIC);
 
-            case TableIdOfAPCFabric::FREE_RETIRE_TABLE:
-            case TableIdOfAPCFabric::READY_QUEUE:
+            case FabricTableSegmentClasses::FREE_RETIRE_TABLE:
+            case FabricTableSegmentClasses::READY_QUEUE:
                 return static_cast<uint32_t>(QUEUE_RECORD_WIDTH_OF_FABRIC);
 
-            case TableIdOfAPCFabric::WORK_QUEUE:
+            case FabricTableSegmentClasses::WORK_QUEUE:
                 return static_cast<uint32_t>(WORK_RECORD_WIDTH_OF_FABRIC);
 
-            case TableIdOfAPCFabric::DEVICE_VIEW_TABLE:
+            case FabricTableSegmentClasses::DEVICE_VIEW_TABLE:
                 return static_cast<uint32_t>(DEVICE_VIEW_WIDTH_OF_APC_FABRIC);
 
-            case TableIdOfAPCFabric::THREAD_TABLE:
+            case FabricTableSegmentClasses::THREAD_TABLE:
                 return static_cast<uint32_t>(THREAD_TABLE_RECORD_WIDTH);
 
             

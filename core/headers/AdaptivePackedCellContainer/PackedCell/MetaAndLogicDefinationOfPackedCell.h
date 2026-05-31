@@ -158,6 +158,26 @@ namespace PredictedAdaptedEncoding {
         FABRIC_SEGMENT_POOL     = 0xF
     };
 
+    enum class FabricTableSegmentClasses : uint16_t //14
+    {
+        NONE = 0,
+        GLOBAL_CONFIG = 1,
+        TABLE_DIRECTORY = 2,
+        SLOT_DIRECTORY = 3,
+        BRANCH_HASH = 4,
+        LOGICAL_HASH = 5,
+        SHARED_HASH = 6,
+        RELATION_TABLE = 7,
+        FREE_RETIRE_TABLE = 8,
+        READY_QUEUE = 9,
+        WORK_QUEUE = 10,
+        DEVICE_VIEW_TABLE = 11,
+        THREAD_TABLE  = 12,
+        SEGMENT_POOL = 13,
+        COUNT = 14,
+        GENERIC_CONTROL = 15
+    };
+
     static  constexpr packed64_t MaskLowNBits(unsigned n) noexcept
     {
         if (n == UNSIGNED_ZERO) return packed64_t(0);
