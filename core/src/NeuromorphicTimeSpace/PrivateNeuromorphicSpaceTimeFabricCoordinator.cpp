@@ -374,12 +374,44 @@ namespace PredictedAdaptedEncoding
         if (fabric_class > FabricTableSegmentClasses::NONE && fabric_class < FabricTableSegmentClasses::GENERIC_CONTROL)
         {
             cache_entry = TableCache_[static_cast<size_t>(fabric_class)];
-            return cache_entry.IsThisEntryValid;
+            return IsThisAValidFabricTableCacheEntry(cache_entry);
         }
         return false;
     }
 
 
+    void NeuromorphicSpaceTimeFabricCoordinator::InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept
+    {
+        CacheEntryOfFabricTable desired_cache_entry;
+        const bool ok = GetFabricTableCache(table_class, desired_cache_entry);
+        if (!ok)
+        {
+            return;
+        }
+        for (size_t i = desired_cache_entry.BeginIdx; i < desired_cache_entry.EndIdx; i++)
+        {
+            MakeAndStoreAFabricOwnedCell_(
+                i + 0u, UNSIGNED_ZERO, table_class, PackedMode::MODE_32, 
+                desired_cache_entry.VersionCount, UNSIGNED_ZERO, PackedCellDataType::UnsignedPCellDataType,
+                PackedCellLocalityTypes::IDLE, PriorityPhysics::VERSION_DEPENDENCY
+            );
+            MakeAndStoreAFabricOwnedCell_(
+                i + 1u, IN_CELL_VALUE_MODE32_SENTINAL, table_class, PackedMode::MODE_32, 
+                desired_cache_entry.VersionCount, UNSIGNED_ZERO, PackedCellDataType::UnsignedPCellDataType,
+                PackedCellLocalityTypes::IDLE, PriorityPhysics::VERSION_DEPENDENCY
+            );
+        }
+        
+    }
+
+    // void NeuromorphicSpaceTimeFabricCoordinator::InitializeSlotDirectory_() noexcept
+    // {
+    //     for (size_t slot = 0; slot < SlotCount_; slot++)
+    //     {
+    //         const uint8_t generation = APCDataStructure::BRANCH_VERSION;
+    //     }
+        
+    // }
 
 
     bool NeuromorphicSpaceTimeFabricCoordinator::DefaultCompareExchangeStrongUncheckedCell_(

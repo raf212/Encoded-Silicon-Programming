@@ -23,8 +23,8 @@ namespace PredictedAdaptedEncoding
         {
             size_t BeginIdx{UNSIGNED_ZERO};
             size_t EndIdx{UNSIGNED_ZERO};
-            uint32_t VersionCount{UNSIGNED_ZERO};
             uint32_t RecordWidth{UNSIGNED_ZERO};
+            uint16_t VersionCount{UNSIGNED_ZERO};
             bool IsThisEntryValid{false};
         };
 
@@ -102,6 +102,9 @@ namespace PredictedAdaptedEncoding
 
         void WriteDirectoryEntry_(FabricTableSegmentClasses table_id, size_t begin, size_t end, uint16_t version) noexcept;
 
+        void InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept;
+
+        void InitializeSlotDirectory_() noexcept;
 
         uint64_t IncrementOrDecrementDeltaFromFabricTrackerMetaIdx_(FabricMetaIndicies meta_idx) noexcept;
 
@@ -137,6 +140,7 @@ namespace PredictedAdaptedEncoding
             cache_entry.IsThisEntryValid = ok;
             return ok;
         }
+
 
         bool InitializeFabric(
             uint16_t slot_count,

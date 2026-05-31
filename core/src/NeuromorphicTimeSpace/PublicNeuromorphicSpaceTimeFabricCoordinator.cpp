@@ -58,7 +58,6 @@ namespace PredictedAdaptedEncoding
     }
 
 
-
     bool NeuromorphicSpaceTimeFabricCoordinator::InitializeFabric(
         uint16_t slot_count,
         size_t slot_cell_count,
@@ -187,6 +186,13 @@ namespace PredictedAdaptedEncoding
         WriteDirectoryEntry_(FabricTableSegmentClasses::DEVICE_VIEW_TABLE, device_view_begin, device_view_end, APCDataStructure::BRANCH_VERSION);
         WriteDirectoryEntry_(FabricTableSegmentClasses::THREAD_TABLE, thread_table_begin, thread_table_end, APCDataStructure::BRANCH_VERSION);
         WriteDirectoryEntry_(FabricTableSegmentClasses::SEGMENT_POOL, SegmentPoolBegin_, SegmentPoolEnd_, APCDataStructure::BRANCH_VERSION);
+
+        //hash table init
+        InitializeHashTable_(FabricTableSegmentClasses::BRANCH_HASH);
+        InitializeHashTable_(FabricTableSegmentClasses::LOGICAL_HASH);
+        InitializeHashTable_(FabricTableSegmentClasses::SHARED_HASH);
+
+        
 
         //continue
 
