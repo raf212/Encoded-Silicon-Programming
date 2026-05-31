@@ -114,7 +114,7 @@ namespace PredictedAdaptedEncoding
         
         BackingPtr = AllocateAlignedAtomicCells_(container_capacity);
         BranchCapacity_ = container_capacity;
-        packed64_t idle_cell = PackedCell64_t::MakeInitialValidPackedCell(container_cfg.InitialMode);
+        packed64_t idle_cell = PackedCell64_t::MakeInitialAPCValidPackedCell(container_cfg.InitialMode);
         for (size_t i = 0; i < container_capacity; i++)
         {
             BackingPtr[i].store(idle_cell, MoStoreUnSeq_);

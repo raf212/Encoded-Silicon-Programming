@@ -71,7 +71,7 @@ namespace PredictedAdaptedEncoding
     struct PairedVersionedCellModelOfMode32
     {
         //In paired cell Ideology clk16 is a version count-> CLOCK is unnecessery because it will be mostly used for contron / paired pointers
-        static std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64(
+        static std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64ForAPC(
             uint64_t value, clk16_t version,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
             PackedCellOwnership ownership = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
@@ -82,7 +82,7 @@ namespace PredictedAdaptedEncoding
             const uint32_t low_half32 = static_cast<uint32_t>(value & MaskLowNBits(VALBITS));
             const uint32_t high_half32 = static_cast<uint32_t>((value >> VALBITS) & MaskLowNBits(VALBITS));
 
-            const packed64_t low_half_packed_cell = PackedCell64_t::MakeInitialValidPackedCell(
+            const packed64_t low_half_packed_cell = PackedCell64_t::MakeInitialAPCValidPackedCell(
                 PackedMode::MODE_32, locality, ownership, page_class,
                 PackedCellDataType::UnsignedPCellDataType, low_half32, version,
                 priority, SubClassesOfMode32::LOW_OF_PAIRED_VERSIONED_CELL
@@ -96,7 +96,7 @@ namespace PredictedAdaptedEncoding
                 return std::pair<packed64_t, packed64_t>(low_half_packed_cell, PackedCell64_t::PACKED_CELL_SENTINAL);
             }
             
-            const packed64_t high_half_packed_cell = PackedCell64_t::MakeInitialValidPackedCell(
+            const packed64_t high_half_packed_cell = PackedCell64_t::MakeInitialAPCValidPackedCell(
                 PackedMode::MODE_32, locality, ownership, page_class,
                 PackedCellDataType::UnsignedPCellDataType, high_half32, version,
                 priority, SubClassesOfMode32::HIGH_OF_PAIRED_VERSIONED_CELL
@@ -104,6 +104,15 @@ namespace PredictedAdaptedEncoding
 
             return std::pair<packed64_t, packed64_t>(low_half_packed_cell, high_half_packed_cell);
         }
+
+        // static std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64ForAPC(
+        //     uint64_t value, clk16_t version,
+        //     PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
+        //     PackedCellOwnership ownership = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
+        //     APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
+        //     PriorityPhysics priority = PriorityPhysics::VERSION_DEPENDENCY
+        // ) noexcept
+
 
         static std::optional<uint64_t> GetFullUnsigned64FromPairedVersionedCell(
             packed64_t low_half, packed64_t high_half,

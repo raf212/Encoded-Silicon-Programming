@@ -103,9 +103,9 @@ namespace PredictedAdaptedEncoding
         PriorityPhysics priority
     ) noexcept
     {
-        const packed64_t a_valid_fabric_meta_cell32 = PackedCell64_t::MakeInitialValidPackedCell(
-            cell_mode, locality_of_cell, PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC,
-            static_cast<APCPagedNodeSegmentClasses>(fabric_segment_class), 
+        const packed64_t a_valid_fabric_meta_cell32 = PackedCell64_t::MakeInitialFabricValidPackedCell(
+            cell_mode, locality_of_cell, 
+            PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC, fabric_segment_class, 
             cell_data_type, value32_or_64, extended_meta_value,
             priority,(cell_mode == PackedMode::MODE_32) ? static_cast<SubClassesOfMode32>(mode_sub_class) : SubClassesOfMode32::SELF_CLASS,
             (cell_mode == PackedMode::MODE_48) ? static_cast<SubClassesOfMode48>(mode_sub_class) : SubClassesOfMode48::SELF_CLASS
@@ -118,7 +118,7 @@ namespace PredictedAdaptedEncoding
 
         if (idx < SlabCellCount_)
         {
-            //MakeInitialValidPackedCell::already checks validity
+            //MakeInitialFabricValidPackedCell::already checks validity
             StorePackedCellUnchecked_(idx, a_valid_fabric_meta_cell32);
             return true;
         }
@@ -155,7 +155,7 @@ namespace PredictedAdaptedEncoding
         const size_t low_idx = static_cast<size_t>(desired_occupancy_low_idx);
         const size_t high_idx = low_idx + 1;
 
-        const std::pair<packed64_t, packed64_t> low32_and_probable_high32 = PairedVersionedCellModelOfMode32::GetPairOfLow32FAndHigh32SFromUnsigned64(
+        const std::pair<packed64_t, packed64_t> low32_and_probable_high32 = PairedVersionedCellModelOfMode32::GetPairOfLow32FAndHigh32SFromUnsigned64ForAPC(
             desired_occupancy_value, pair_version,
             PackedCellLocalityTypes::PUBLISHED, PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC,
             APCPagedNodeSegmentClasses::CONTROL_SLOT

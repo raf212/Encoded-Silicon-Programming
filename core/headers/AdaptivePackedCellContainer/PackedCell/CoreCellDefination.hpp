@@ -116,7 +116,7 @@ namespace PredictedAdaptedEncoding
 
         static constexpr packed64_t MakeFaultyCell() noexcept
         {
-            return MakeACell_(
+            return MakeAnUncheckedCellBasedOnMode_(
                 PackedMode::MODE_32,
                 IN_CELL_VALUE_MODE32_SENTINAL,
                 UINT16_MAX,
@@ -158,7 +158,7 @@ namespace PredictedAdaptedEncoding
         }
 
 
-        static constexpr packed64_t MakeInitialValidPackedCell(
+        static constexpr packed64_t MakeInitialAPCValidPackedCell(
             PackedMode cell_mode,
             PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::IDLE,
             PackedCellOwnership cell_ownership = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
@@ -171,32 +171,37 @@ namespace PredictedAdaptedEncoding
             SubClassesOfMode48 probable_mode_subclass_type_48 = SubClassesOfMode48::SELF_CLASS
         ) noexcept
         {
+            const tag8_t sub_class = (cell_mode == PackedMode::MODE_32) ? 
+                static_cast<tag8_t>(probable_mode_subclass_type_32) : static_cast<tag8_t>(probable_mode_subclass_type_48);
+            
+            return MakeInitialValidBlindPackedCell(
+                cell_mode, cell_locality, cell_ownership, static_cast<tag8_t>(page_class),
+                in_cell_value_data_type, in_cell_value, in_cell_clk16,
+                cell_priority, sub_class
+            );
+        }
 
-            if (cell_mode == PackedMode::MODE_32)
-            {
-                const packed64_t requested_cell32 = MakeACell_(
-                    cell_mode, in_cell_value, in_cell_clk16,
-                    cell_priority, cell_ownership, cell_locality,
-                    static_cast<tag8_t>(page_class), static_cast<tag8_t>(probable_mode_subclass_type_32),
-                    in_cell_value_data_type
-                );
-
-                const AuthoritiveCellView requested_cells_view = GetAuthoritiveViewsForACell(requested_cell32);
-
-                return requested_cells_view.IsCellValid ? requested_cell32 : PACKED_CELL_SENTINAL;
-            }
-            else
-            {
-                const packed64_t requested_cell32 = MakeACell_(
-                    cell_mode, in_cell_value, in_cell_clk16,
-                    cell_priority, cell_ownership, cell_locality,
-                    static_cast<tag8_t>(page_class), static_cast<tag8_t>(probable_mode_subclass_type_48),
-                    in_cell_value_data_type
-                );
-
-                const AuthoritiveCellView requested_cells_view = GetAuthoritiveViewsForACell(requested_cell32);
-                return requested_cells_view.IsCellValid ? requested_cell32 : PACKED_CELL_SENTINAL;
-            }
+        static constexpr packed64_t MakeInitialFabricValidPackedCell(
+            PackedMode cell_mode,
+            PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::IDLE,
+            PackedCellOwnership cell_ownership = PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC,
+            FabricTableSegmentClasses fabric_table_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
+            PackedCellDataType in_cell_value_data_type = PackedCellDataType::UnsignedPCellDataType,
+            uint64_t in_cell_value = UNSIGNED_ZERO,
+            clk16_t in_cell_clk16 = UNSIGNED_ZERO,
+            PriorityPhysics cell_priority = PriorityPhysics::IDLE,
+            SubClassesOfMode32 probable_mode_subclass_type_32 = SubClassesOfMode32::SELF_CLASS,
+            SubClassesOfMode48 probable_mode_subclass_type_48 = SubClassesOfMode48::SELF_CLASS
+        ) noexcept
+        {
+            const tag8_t sub_class = (cell_mode == PackedMode::MODE_32) ? 
+                static_cast<tag8_t>(probable_mode_subclass_type_32) : static_cast<tag8_t>(probable_mode_subclass_type_48);
+            
+            return MakeInitialValidBlindPackedCell(
+                cell_mode, cell_locality, cell_ownership, static_cast<tag8_t>(fabric_table_class),
+                in_cell_value_data_type, in_cell_value, in_cell_clk16,
+                cell_priority, sub_class
+            );
         }
 
         static constexpr packed64_t MakeInitialValidBlindPackedCell(
@@ -211,16 +216,16 @@ namespace PredictedAdaptedEncoding
             tag8_t probable_mode_subclass
         ) noexcept
         {
-            const packed64_t requested_cell32 = MakeACell_(
+            const packed64_t requested_cell = MakeAnUncheckedCellBasedOnMode_(
                 cell_mode, in_cell_value, in_cell_clk16,
                 cell_priority, cell_ownership, cell_locality,
                 page_class, probable_mode_subclass,
                 in_cell_value_data_type
             );
 
-            const AuthoritiveCellView requested_cells_view = GetAuthoritiveViewsForACell(requested_cell32);
+            const AuthoritiveCellView requested_cells_view = GetAuthoritiveViewsForACell(requested_cell);
 
-            return requested_cells_view.IsCellValid ? requested_cell32 : PACKED_CELL_SENTINAL;
+            return requested_cells_view.IsCellValid ? requested_cell : PACKED_CELL_SENTINAL;
         }
 
         template <typename PCDT>
@@ -656,7 +661,7 @@ namespace PredictedAdaptedEncoding
             return static_cast<meta16_t>(cleared_indicated | only_inserted_meta16);
         }
 
-        static constexpr  packed64_t MakeACell_(
+        static constexpr  packed64_t MakeAnUncheckedCellBasedOnMode_(
             PackedMode cell_mode,
             uint64_t cell_value = UNSIGNED_ZERO,
             clk16_t clock16 = UNSIGNED_ZERO,
