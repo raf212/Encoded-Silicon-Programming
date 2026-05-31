@@ -369,6 +369,17 @@ namespace PredictedAdaptedEncoding
         );
     }
 
+    bool NeuromorphicSpaceTimeFabricCoordinator::GetFabricTableCache(FabricTableSegmentClasses fabric_class, CacheEntryOfFabricTable& cache_entry) noexcept
+    {
+        if (fabric_class > FabricTableSegmentClasses::NONE && fabric_class < FabricTableSegmentClasses::GENERIC_CONTROL)
+        {
+            cache_entry = TableCache_[static_cast<size_t>(fabric_class)];
+            return cache_entry.IsThisEntryValid;
+        }
+        return false;
+    }
+
+
 
 
     bool NeuromorphicSpaceTimeFabricCoordinator::DefaultCompareExchangeStrongUncheckedCell_(

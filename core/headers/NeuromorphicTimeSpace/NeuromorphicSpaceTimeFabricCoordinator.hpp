@@ -102,6 +102,7 @@ namespace PredictedAdaptedEncoding
 
         void WriteDirectoryEntry_(FabricTableSegmentClasses table_id, size_t begin, size_t end, uint16_t version) noexcept;
 
+
         uint64_t IncrementOrDecrementDeltaFromFabricTrackerMetaIdx_(FabricMetaIndicies meta_idx) noexcept;
 
     public:
@@ -126,6 +127,16 @@ namespace PredictedAdaptedEncoding
             const PackedCell64_t::AuthoritiveCellView* low_half_view_ptr = nullptr,
             const PackedCell64_t::AuthoritiveCellView* high_half_view_ptr = nullptr
         ) noexcept;
+
+        bool GetFabricTableCache(FabricTableSegmentClasses febric_class, CacheEntryOfFabricTable& cache_entry) noexcept;
+
+        bool IsThisAValidFabricTableCacheEntry(CacheEntryOfFabricTable& cache_entry) noexcept
+        {
+            const bool ok = cache_entry.VersionCount != UNSIGNED_ZERO && cache_entry.BeginIdx <= cache_entry.EndIdx &&
+                cache_entry.EndIdx <= SlabCellCount_;
+            cache_entry.IsThisEntryValid = ok;
+            return ok;
+        }
 
         bool InitializeFabric(
             uint16_t slot_count,
