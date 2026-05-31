@@ -122,7 +122,7 @@ namespace PredictedAdaptedEncoding
         static constexpr size_t METACELL_COUNT = 96;
         static constexpr uint32_t BRANCH_MAGIC = 0x41504342u;//big-endian
         static constexpr uint32_t EOF_HEADER = 0x72616600;//big-endian
-        static constexpr uint32_t BRANCH_VERSION = 1u;
+        static constexpr uint16_t BRANCH_VERSION = 1u;
         static constexpr packed64_t PACKED_CELL_SENTENAL = UINT64_MAX;
         static constexpr uint32_t APC_MAX_LENGTH_OR_COUNTER = UINT16_MAX - 1;
         static constexpr uint32_t APC_INDEX_SENTINAL = UINT16_MAX;

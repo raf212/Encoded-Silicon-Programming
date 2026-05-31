@@ -304,7 +304,7 @@ namespace PredictedAdaptedEncoding
             case FabricTableSegmentClasses::LOGICAL_HASH:
                 return static_cast<uint32_t>(HASH_BUCKED_WIDTH_OF_FABRIC);
             
-            case FabricTableSegmentClasses::RELATION_TABLE:
+            case FabricTableSegmentClasses::EDGE_TABLE:
                 return static_cast<uint32_t>(RELATION_WIDTH_OF_FABRIC);
 
             case FabricTableSegmentClasses::FREE_RETIRE_TABLE:

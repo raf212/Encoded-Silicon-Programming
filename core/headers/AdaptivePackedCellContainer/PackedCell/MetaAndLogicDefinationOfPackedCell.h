@@ -168,7 +168,7 @@ namespace PredictedAdaptedEncoding {
         BRANCH_HASH = 4,
         LOGICAL_HASH = 5,
         SHARED_HASH = 6,
-        RELATION_TABLE = 7,
+        EDGE_TABLE = 7,
         FREE_RETIRE_TABLE = 8,
         READY_QUEUE = 9,
         WORK_QUEUE = 10,

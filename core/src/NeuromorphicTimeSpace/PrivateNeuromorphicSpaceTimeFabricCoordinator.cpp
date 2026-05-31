@@ -274,7 +274,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    void NeuromorphicSpaceTimeFabricCoordinator::WriceFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept
+    void NeuromorphicSpaceTimeFabricCoordinator::WriteFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept
     {
         StoreNewDefaultFebricControlMeta48_(FabricMetaIndicies::MAGIC, APCDataStructure::FABRIC_MAGIC);
         StoreNewDefaultFebricControlMeta48_(FabricMetaIndicies::VERSION, APCDataStructure::BRANCH_VERSION);
@@ -343,7 +343,7 @@ namespace PredictedAdaptedEncoding
         return base_of_fabric_table + static_cast<size_t>(desired_table) * TABLE_ENTRY_WIDTH_OF_FABRIC + static_cast<size_t>(part);
     }
 
-    void NeuromorphicSpaceTimeFabricCoordinator::WriteDirectoryEntry(FabricTableSegmentClasses table_id, size_t begin, size_t end, uint16_t version) noexcept
+    void NeuromorphicSpaceTimeFabricCoordinator::WriteDirectoryEntry_(FabricTableSegmentClasses table_id, size_t begin, size_t end, uint16_t version) noexcept
     {
         const size_t table_index = static_cast<size_t>(table_id);
         const uint32_t directory_width = CoreOfFabricCoordinator::GetWidthOfValidFebricTable(table_id);

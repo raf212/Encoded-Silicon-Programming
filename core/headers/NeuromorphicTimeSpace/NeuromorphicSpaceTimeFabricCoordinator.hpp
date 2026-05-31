@@ -53,7 +53,7 @@ namespace PredictedAdaptedEncoding
         bool MakeAndStoreAFabricOwnedCell_(
             size_t index, 
             uint64_t value32_or_64, 
-            FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GENERIC_CONTROL,
+            FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
             PackedMode cell_mode = PackedMode::MODE_48, 
             clk16_t extended_meta_value = UNSIGNED_ZERO,
             tag8_t mode_sub_class = static_cast<tag8_t>(SubClassesOfMode32::SELF_CLASS),
@@ -89,7 +89,7 @@ namespace PredictedAdaptedEncoding
 
         void ResetAll4TypesOfOccupancyMetaData() noexcept;
 
-        void WriceFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept;
+        void WriteFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept;
 
         bool DefaultCompareExchangeStrongUncheckedCell_(
             size_t idx,
@@ -100,7 +100,7 @@ namespace PredictedAdaptedEncoding
 
         size_t GetTableDirectoryBeginIdx_(FabricTableSegmentClasses desired_table, uint8_t part = UNSIGNED_ZERO) noexcept;
 
-        void WriteDirectoryEntry(FabricTableSegmentClasses table_id, size_t begin, size_t end, uint16_t version) noexcept;
+        void WriteDirectoryEntry_(FabricTableSegmentClasses table_id, size_t begin, size_t end, uint16_t version) noexcept;
 
         uint64_t IncrementOrDecrementDeltaFromFabricTrackerMetaIdx_(FabricMetaIndicies meta_idx) noexcept;
 

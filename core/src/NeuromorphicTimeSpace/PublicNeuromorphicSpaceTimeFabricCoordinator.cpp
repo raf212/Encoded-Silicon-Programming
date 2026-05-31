@@ -128,10 +128,10 @@ namespace PredictedAdaptedEncoding
     //     const size_t shared_hash_end = shared_hash_begin + hash_span;
 
     //     RelationRecordCount_ = NextPowerOf2Unsigned32_(std::max<uint32_t>(BIT_LENGTH_OF_A_PACKED_CELL, static_cast<uint32_t>(slot_count) * 4u));
-    //     const size_t relation_begin = cursor;
-    //     const size_t relation_end = relation_begin + static_cast<size_t>(RelationRecordCount_) * RELATION_WIDTH_OF_FABRIC;
+    //     const size_t edge_of_fabric_table_begin = cursor;
+    //     const size_t edge_of_fabric_table_end = edge_of_fabric_table_begin + static_cast<size_t>(RelationRecordCount_) * RELATION_WIDTH_OF_FABRIC;
 
-    //     cursor = DefaultFabricAlignment16Cell_(relation_end);
+    //     cursor = DefaultFabricAlignment16Cell_(edge_of_fabric_table_end);
     //     const size_t free_retire_begin = cursor;
     //     const size_t free_retire_end = free_retire_begin + static_cast<size_t>(slot_count) * QUEUE_RECORD_WIDTH_OF_FABRIC;
 
@@ -165,15 +165,28 @@ namespace PredictedAdaptedEncoding
 
     //     SlabCellCount_ = SegmentPoolEnd_;
 
-    //     const packed64_t idle_free32 = PackedCell64_t::MakeInitialFabricValidPackedCell(
-    //         PackedMode::MODE_32, PackedCellLocalityTypes::IDLE, 
-    //         PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC, 
-    //         stat
-    //         FabricTableSegmentClasses::GLOBAL_AND_CONFIG
-    //     );
+    //     const packed64_t idle_free32 = PackedCell64_t::MakeInitialFabricValidPackedCell(PackedMode::MODE_32);
 
-    //     for
+    //     for (size_t i = 0; i < SlabCellCount_; i++)
+    //     {
+    //         SlabBasePtr_[i].store(idle_free32, MoStoreSeq_);
+    //     }
 
+    //     WriteFabricMetaHeader_(table_directory_begin, table_directory_end);
+
+    //     WriteDirectoryEntry_(FabricTableSegmentClasses::GLOBAL_AND_CONFIG, global_config_begin, global_config_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteDirectoryEntry_(FabricTableSegmentClasses::TABLE_DIRECTORY, table_directory_begin, table_directory_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteDirectoryEntry_(FabricTableSegmentClasses::SLOT_DIRECTORY, slot_directory_begin, slot_directory_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteDirectoryEntry_(FabricTableSegmentClasses::BRANCH_HASH, branch_hash_begin, branch_hash_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteDirectoryEntry_(FabricTableSegmentClasses::LOGICAL_HASH, logical_hash_begin, logical_hash_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteDirectoryEntry_(FabricTableSegmentClasses::SHARED_HASH, shared_hash_begin, shared_hash_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteDirectoryEntry_(FabricTableSegmentClasses::EDGE_TABLE, edge_of_fabric_table_begin, edge_of_fabric_table_end, APCDataStructure::BRANCH_VERSION);      
+    //     WriteDirectoryEntry_(FabricTableSegmentClasses::FREE_RETIRE_TABLE, free_retire_begin, free_retire_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteDirectoryEntry_(FabricTableSegmentClasses::READY_QUEUE, ready_begin, ready_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteDirectoryEntry_(FabricTableSegmentClasses::WORK_QUEUE, work_begin, work_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteDirectoryEntry_(FabricTableSegmentClasses::DEVICE_VIEW_TABLE, device_view_begin, device_view_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteDirectoryEntry_(FabricTableSegmentClasses::THREAD_TABLE, thread_table_begin, thread_table_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteDirectoryEntry_(FabricTableSegmentClasses::SEGMENT_POOL, SegmentPoolBegin_, SegmentPoolEnd_, APCDataStructure::BRANCH_VERSION)
         
     // }
 
