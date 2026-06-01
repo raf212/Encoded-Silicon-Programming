@@ -30,13 +30,13 @@ namespace PredictedAdaptedEncoding
         RETIRED_SLOT = 0x5u
     };
 
-    enum class SLotStateOfAPCFabric : uint32_t
-    {
-        FREE = 0,
-        CLAIMED = 1,
-        LIVE = 2,
-        FAULTY = 3
-    };
+    // enum class SLotStateOfAPCFabric : uint32_t
+    // {
+    //     FREE = 0,
+    //     CLAIMED = 1,
+    //     LIVE = 2,
+    //     FAULTY = 3
+    // };
 
     enum class SlotCellTypeOfAPCFabric : size_t
     {
@@ -352,6 +352,29 @@ namespace PredictedAdaptedEncoding
                 return false;
             }
         }
+
+
+        static constexpr packed64_t MakeANEncodedHandlerCellForFabric(
+            uint32_t slot_index, 
+            uint8_t slab_id, uint8_t generation, 
+            HandleStateOfAPCFabric handle_state = HandleStateOfAPCFabric::APC_SEGMENT,
+            FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
+            PackedCellLocalityTypes locality_of_cell = PackedCellLocalityTypes::IDLE
+        ) noexcept
+        {
+            const uint16_t external_handle = Clock16Subdivision1x8Plus2x4InMode32CellModel::Pack1x8Plus2x4InUnsigned16_(slab_id, generation, static_cast<uint8_t>(handle_state));
+
+            const packed64_t packed_cell = PackedCell64_t::MakeInitialFabricValidPackedCell(
+                PackedMode::MODE_32, locality_of_cell, fabric_segment_class,
+                PackedCellDataType::UnsignedPCellDataType, 
+                static_cast<uint64_t>(slot_index), external_handle,
+                PriorityPhysics::VERSION_DEPENDENCY,
+                SubClassesOfMode32::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4
+            );
+
+            return packed_cell;
+        }
+
     };
     
 }

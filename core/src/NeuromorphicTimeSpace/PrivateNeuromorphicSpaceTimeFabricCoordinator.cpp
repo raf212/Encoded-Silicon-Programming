@@ -105,8 +105,8 @@ namespace PredictedAdaptedEncoding
     {
         const packed64_t a_valid_fabric_meta_cell32 = PackedCell64_t::MakeInitialFabricValidPackedCell(
             cell_mode, locality_of_cell, 
-            PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC, fabric_segment_class, 
-            cell_data_type, value32_or_64, extended_meta_value,
+            fabric_segment_class, cell_data_type, 
+            value32_or_64, extended_meta_value,
             priority,(cell_mode == PackedMode::MODE_32) ? static_cast<SubClassesOfMode32>(mode_sub_class) : SubClassesOfMode32::SELF_CLASS,
             (cell_mode == PackedMode::MODE_48) ? static_cast<SubClassesOfMode48>(mode_sub_class) : SubClassesOfMode48::SELF_CLASS
         );
@@ -404,11 +404,60 @@ namespace PredictedAdaptedEncoding
         
     }
 
+    size_t NeuromorphicSpaceTimeFabricCoordinator::GetSlotCellTypeIdxInFabric_(uint32_t slot, SlotCellTypeOfAPCFabric slot_type) noexcept
+    {
+        CacheEntryOfFabricTable slot_directory_cache_entry;
+        bool ok = GetFabricTableCache(FabricTableSegmentClasses::SLOT_DIRECTORY, slot_directory_cache_entry);
+        if (!ok)
+        {
+            return APCDataStructure::APC_SIZE_SENTINAL;
+        }
+        return slot_directory_cache_entry.BeginIdx + 
+            static_cast<size_t>(slot) * SLOT_RECORD_WIDTH_OF_FABRIC +
+            static_cast<size_t>(slot_type);
+    }
+
+    void NeuromorphicSpaceTimeFabricCoordinator::MakeAndStoreASlotDirectoryCell_(
+        uint32_t slot, 
+        SlotCellTypeOfAPCFabric slote_state,
+        uint32_t value32, 
+        clk16_t extended_meta_value,
+        PackedCellLocalityTypes locality_of_cell
+    ) noexcept
+    {
+        const size_t slot_idx = GetSlotCellTypeIdxInFabric_(slot, slote_state);
+        if (slot_idx == APCDataStructure::PACKED_CELL_SENTENAL)
+        {
+            return;
+        }
+
+        MakeAndStoreAFabricOwnedCell_(
+            slot_idx, value32,
+            FabricTableSegmentClasses::SLOT_DIRECTORY,
+            PackedMode::MODE_32, extended_meta_value, static_cast<tag8_t>(SubClassesOfMode32::SELF_CLASS),
+            PackedCellDataType::UnsignedPCellDataType, locality_of_cell,
+            PriorityPhysics::VERSION_DEPENDENCY
+        );
+    }
+
     // void NeuromorphicSpaceTimeFabricCoordinator::InitializeSlotDirectory_() noexcept
     // {
-    //     for (size_t slot = 0; slot < SlotCount_; slot++)
+    //     for (uint32_t slot = 0; slot < SlotCount_; slot++)
     //     {
     //         const uint8_t generation = APCDataStructure::BRANCH_VERSION;
+    //         const packed64_t next_handle = (slot + 1u < SlotCount_) ? CoreOfFabricCoordinator::MakeANEncodedHandlerCellForFabric(
+    //             slot + 1u, generation, SlabId_, HandleStateOfAPCFabric::APC_SEGMENT, 
+    //             FabricTableSegmentClasses::SLOT_DIRECTORY
+    //         ) : PackedCell64_t::PACKED_CELL_SENTINAL;
+
+
+    //         MakeAndStoreASlotDirectoryCell_(slot, SlotCellTypeOfAPCFabric::STATE, static_cast<uint64_t>(PackedCellLocalityTypes::IDLE), generation);
+    //         MakeAndStoreASlotDirectoryCell_(slot, SlotCellTypeOfAPCFabric::OWNER_BRANCH, UNSIGNED_ZERO, generation);
+    //         MakeAndStoreASlotDirectoryCell_(slot, SlotCellTypeOfAPCFabric::GENERATION, generation, generation);
+    //         MakeAndStoreASlotDirectoryCell_(slot, SlotCellTypeOfAPCFabric::STATE, static_cast<uint64_t>(PackedCellLocalityTypes::IDLE), generation);
+    //         MakeAndStoreASlotDirectoryCell_(slot, SlotCellTypeOfAPCFabric::STATE, static_cast<uint64_t>(PackedCellLocalityTypes::IDLE), generation);
+    //         MakeAndStoreASlotDirectoryCell_(slot, SlotCellTypeOfAPCFabric::STATE, static_cast<uint64_t>(PackedCellLocalityTypes::IDLE), generation);
+
     //     }
         
     // }

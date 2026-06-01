@@ -79,8 +79,6 @@ namespace PredictedAdaptedEncoding
             FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GENERIC_CONTROL
         )noexcept;
 
-
-
         bool UpdateValidPairedOccupancyApproximation_(
             PackedCellLocalityTypes desired_occupancy_of_locality, uint64_t desired_occupancy_value,
             bool force_update = false,
@@ -103,8 +101,18 @@ namespace PredictedAdaptedEncoding
         void WriteDirectoryEntry_(FabricTableSegmentClasses table_id, size_t begin, size_t end, uint16_t version) noexcept;
 
         void InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept;
+    
+        size_t GetSlotCellTypeIdxInFabric_(uint32_t slot, SlotCellTypeOfAPCFabric slot_type) noexcept;
 
         void InitializeSlotDirectory_() noexcept;
+
+        void MakeAndStoreASlotDirectoryCell_(
+            uint32_t slot, 
+            SlotCellTypeOfAPCFabric slote_state,
+            uint32_t value32, 
+            clk16_t extended_meta_value,
+            PackedCellLocalityTypes locality_of_cell = PackedCellLocalityTypes::IDLE
+        ) noexcept;
 
         uint64_t IncrementOrDecrementDeltaFromFabricTrackerMetaIdx_(FabricMetaIndicies meta_idx) noexcept;
 
@@ -133,6 +141,7 @@ namespace PredictedAdaptedEncoding
 
         bool GetFabricTableCache(FabricTableSegmentClasses febric_class, CacheEntryOfFabricTable& cache_entry) noexcept;
 
+
         bool IsThisAValidFabricTableCacheEntry(CacheEntryOfFabricTable& cache_entry) noexcept
         {
             const bool ok = cache_entry.VersionCount != UNSIGNED_ZERO && cache_entry.BeginIdx <= cache_entry.EndIdx &&
@@ -140,7 +149,6 @@ namespace PredictedAdaptedEncoding
             cache_entry.IsThisEntryValid = ok;
             return ok;
         }
-
 
         bool InitializeFabric(
             uint16_t slot_count,

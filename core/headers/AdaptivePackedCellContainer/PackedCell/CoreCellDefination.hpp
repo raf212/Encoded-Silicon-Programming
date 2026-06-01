@@ -66,6 +66,12 @@ namespace PredictedAdaptedEncoding
 
                 if (CellMode == PackedMode::MODE_32)
                 {
+                    if (!CellValue32)
+                    {
+                        IsCellValid = false;
+                        return false;
+                    }
+
                     if (SubClassOfMode32 != SubClassesOfMode32::SELF_CLASS && CellValueDataType != PackedCellDataType::UnsignedPCellDataType)
                     {
                         IsCellValid = false;
@@ -84,9 +90,12 @@ namespace PredictedAdaptedEncoding
                             return false;
                         }
                     }
-                    
 
-                    if (!CellValue32)
+                    if(
+                        SubClassOfMode32 == SubClassesOfMode32::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 &&
+                        CellOwnership == PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER &&
+                        PageClass != APCPagedNodeSegmentClasses::CONTROL_SLOT
+                    )
                     {
                         IsCellValid = false;
                         return false;
@@ -126,7 +135,7 @@ namespace PredictedAdaptedEncoding
             );
         }
 
-        static  packed64_t ComposeValue32u_64(val32_t in_cell_value, clk16_t clock16, meta16_t meta16) noexcept
+        static constexpr packed64_t ComposeValue32u_64(val32_t in_cell_value, clk16_t clock16, meta16_t meta16) noexcept
         {
             if(static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16)) != PackedMode::MODE_32)
             {
@@ -138,7 +147,7 @@ namespace PredictedAdaptedEncoding
             return packed_cell;
         }
 
-        static  packed64_t ComposeCLK48u_64(uint64_t clockor_value48, meta16_t meta16) noexcept
+        static constexpr packed64_t ComposeCLK48u_64(uint64_t clockor_value48, meta16_t meta16) noexcept
         {
             if(static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16)) != PackedMode::MODE_48)
             {
@@ -184,7 +193,6 @@ namespace PredictedAdaptedEncoding
         static constexpr packed64_t MakeInitialFabricValidPackedCell(
             PackedMode cell_mode,
             PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::IDLE,
-            PackedCellOwnership cell_ownership = PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC,
             FabricTableSegmentClasses fabric_table_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
             PackedCellDataType in_cell_value_data_type = PackedCellDataType::UnsignedPCellDataType,
             uint64_t in_cell_value = UNSIGNED_ZERO,
@@ -198,7 +206,9 @@ namespace PredictedAdaptedEncoding
                 static_cast<tag8_t>(probable_mode_subclass_type_32) : static_cast<tag8_t>(probable_mode_subclass_type_48);
             
             return MakeInitialValidBlindPackedCell(
-                cell_mode, cell_locality, cell_ownership, static_cast<tag8_t>(fabric_table_class),
+                cell_mode, cell_locality, 
+                PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC, 
+                static_cast<tag8_t>(fabric_table_class),
                 in_cell_value_data_type, in_cell_value, in_cell_clk16,
                 cell_priority, sub_class
             );
