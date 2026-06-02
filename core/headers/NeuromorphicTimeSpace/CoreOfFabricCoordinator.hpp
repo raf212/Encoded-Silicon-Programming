@@ -5,6 +5,8 @@ namespace PredictedAdaptedEncoding
 {
 
     class AdaptivePackedCellContainer;
+    static constexpr uint64_t APC_FABRIC_UINT48_MAX = PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT;
+    static constexpr uint32_t APC_FABRIC_HASH_EMPTY_KEY = 0u;
     static constexpr uint32_t APC_FABRIC_HASH_TOMBSTONE_KEY = IN_CELL_VALUE_MODE32_SENTINAL;
     static constexpr uint32_t DEFAULT_HAS_CONST_1 = 0x7feb352du;
     static constexpr uint32_t DEFAULT_HAS_CONST_2 = 0x846ca68bu;
@@ -19,6 +21,8 @@ namespace PredictedAdaptedEncoding
     static constexpr size_t DEVICE_VIEW_WIDTH_OF_APC_FABRIC = 8u;
     static constexpr size_t THREAD_TABLE_RECORD_WIDTH = 4u;
     static constexpr size_t DEFAULT_THREAD_SLOT_OF_FABRIC = 256u;
+
+
     
     enum class HandleStateOfAPCFabric : uint8_t
     {
@@ -27,16 +31,10 @@ namespace PredictedAdaptedEncoding
         FABRIC_ROOT = 0x2u,
         RELATION_RECORD = 0x3u,
         DEVICE_VIEW = 0x4u,
-        RETIRED_SLOT = 0x5u
+        RETIRED_SLOT = 0x5u,
+        HASH_VALUE = 0x6u,
+        FABRIC_TABLE = 0x7u
     };
-
-    // enum class SLotStateOfAPCFabric : uint32_t
-    // {
-    //     FREE = 0,
-    //     CLAIMED = 1,
-    //     LIVE = 2,
-    //     FAULTY = 3
-    // };
 
     enum class SlotCellTypeOfAPCFabric : size_t
     {
@@ -48,8 +46,7 @@ namespace PredictedAdaptedEncoding
         LOGICAL_ID = 5,
         SHARED_ID = 6,
         RELATION_HEADs = 7,
-        RETIRE_EPOCH_LOW32 = 8,
-        RETIRE_EPOCH_HIGH32 = 9,
+        RETIRE_EPOCH48 = 9,
         NEXT_HANDLE = 10,
         SLOT_FLAGS = 11
     };
@@ -109,29 +106,24 @@ namespace PredictedAdaptedEncoding
         COMPACT_HASH_TABLE = 8,
         COMPACT_ALL_HASH_TABLES = 9,
         RELATION_GC = 10,
-        COMPUTE_SAFE_EPOCH = 11
+        COMPUTE_SAFE_EPOCH = 11,
+        MIGRATE_OR_GROW_FABRIC = 12
     };
 
     enum class StateOfFabricThread : uint32_t
     {
         FREE = 0,
-        REGISTERED = 1u,
-        IN_CRITICAL = 2u
+        CLAIMED = 1u,
+        LIVE = 2u,
+        RETIRED = 3u,
+        FAULTY = 4u
     };
 
     enum class ThreadCellTypeOfAPCFabric : size_t
     {
-        EPOCH_LOW32 = 0,
-        EPOCH_HIGH32 = 1,
+        EPOCH48 = 0,
         WAIT_TOKEN = 2,
         THREAD_STATE = 3
-    };
-
-    enum class WorkCellClassesOfAPCFabric : uint16_t
-    {
-        EMPTY = 0,
-        CLAIMED = 1,
-        PUBLISHED = 2
     };
 
     enum class FabricMetaIndicies : size_t
@@ -241,6 +233,42 @@ namespace PredictedAdaptedEncoding
         void* User{nullptr};
         size_t Alignment{BIT_LENGTH_OF_A_PACKED_CELL};
 
+        static std::atomic<packed64_t>* DefaultAllocateAtomicCells(
+            size_t count_of_packed_cell, size_t alignment, void*
+        ) noexcept
+        {
+            if (count_of_packed_cell == UNSIGNED_ZERO)
+            {
+                return nullptr;
+            }
+            if (alignment < alignof(std::atomic<packed64_t>))
+            {
+                alignment = alignof(std::atomic<packed64_t>);
+            }
+
+            void* raw_memory = nullptr;
+            try
+            {
+                raw_memory = ::operator new[](
+                    sizeof(std::atomic<packed64_t>) * count_of_packed_cell,
+                    std::align_val_t(alignment)
+                );
+            }
+            catch(...)
+            {
+                return nullptr;
+            }
+            auto* cells = static_cast<std::atomic<packed64_t>*>(raw_memory);
+
+            for (size_t i = 0; i < count_of_packed_cell; i++)
+            {
+                new(&cells[i]) std::atomic<packed64_t>{};
+            }
+
+            return cells;
+            
+        }
+
         static void DefaultFreeAtomicCells(
             std::atomic<packed64_t>* packed_cell_storage_ptr, 
             size_t count_of_cell, size_t alignment, void*
@@ -266,6 +294,25 @@ namespace PredictedAdaptedEncoding
 
     struct CoreOfFabricCoordinator
     {
+        static constexpr bool IsValidFabricTable(FabricTableSegmentClasses table_class) noexcept
+        {
+            return table_class > FabricTableSegmentClasses::NONE &&
+                table_class < FabricTableSegmentClasses::COUNT;
+        }
+
+        static constexpr bool IsValidHashTable(FabricTableSegmentClasses table_class) noexcept
+        {
+            return table_class == FabricTableSegmentClasses::BRANCH_HASH ||
+                table_class == FabricTableSegmentClasses::LOGICAL_HASH ||
+                table_class == FabricTableSegmentClasses::SHARED_HASH;
+        }
+
+        static constexpr bool IsQueueTable(FabricTableSegmentClasses table_class) noexcept
+        {
+            return table_class == FabricTableSegmentClasses::FREE_RETIRE_TABLE ||
+                table_class == FabricTableSegmentClasses::READY_QUEUE ||
+                table_class == FabricTableSegmentClasses::WORK_QUEUE;
+        }
 
         static constexpr FabricMetaIndicies GetDesiredLowIdxOfOccupancyPairFromLocality(PackedCellLocalityTypes locality) noexcept
         {
@@ -320,12 +367,37 @@ namespace PredictedAdaptedEncoding
             case FabricTableSegmentClasses::THREAD_TABLE:
                 return static_cast<uint32_t>(THREAD_TABLE_RECORD_WIDTH);
 
+            case FabricTableSegmentClasses::SEGMENT_POOL:
+                return MINIMUM_BRANCH_CAPACITY;
             
             default:
                 return 0u;
             }
         }
 
+
+        static constexpr packed64_t MakeANEncodedHandlerCellForFabric(
+            uint32_t slot_index, 
+            uint8_t slab_id, uint8_t generation, 
+            HandleStateOfAPCFabric handle_state = HandleStateOfAPCFabric::APC_SEGMENT,
+            FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
+            PackedCellLocalityTypes locality_of_cell = PackedCellLocalityTypes::IDLE
+        ) noexcept
+        {
+            const uint16_t external_handle = Clock16Subdivision1x8Plus2x4InMode32CellModel::Pack1x8Plus2x4InUnsigned16_(slab_id, generation, static_cast<uint8_t>(handle_state));
+
+            const packed64_t packed_cell = PackedCell64_t::MakeInitialFabricValidPackedCell(
+                PackedMode::MODE_32, locality_of_cell, fabric_segment_class,
+                PackedCellDataType::UnsignedPCellDataType, 
+                static_cast<uint64_t>(slot_index), external_handle,
+                PriorityPhysics::VERSION_DEPENDENCY,
+                SubClassesOfMode32::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4
+            );
+
+            return packed_cell;
+        }
+
+        //kept for safty
         static constexpr bool IsThisFebricMetaIdxAValidIncrementalCountType(FabricMetaIndicies meta_idx) noexcept
         {
             switch (meta_idx)
@@ -351,28 +423,6 @@ namespace PredictedAdaptedEncoding
             default:
                 return false;
             }
-        }
-
-
-        static constexpr packed64_t MakeANEncodedHandlerCellForFabric(
-            uint32_t slot_index, 
-            uint8_t slab_id, uint8_t generation, 
-            HandleStateOfAPCFabric handle_state = HandleStateOfAPCFabric::APC_SEGMENT,
-            FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
-            PackedCellLocalityTypes locality_of_cell = PackedCellLocalityTypes::IDLE
-        ) noexcept
-        {
-            const uint16_t external_handle = Clock16Subdivision1x8Plus2x4InMode32CellModel::Pack1x8Plus2x4InUnsigned16_(slab_id, generation, static_cast<uint8_t>(handle_state));
-
-            const packed64_t packed_cell = PackedCell64_t::MakeInitialFabricValidPackedCell(
-                PackedMode::MODE_32, locality_of_cell, fabric_segment_class,
-                PackedCellDataType::UnsignedPCellDataType, 
-                static_cast<uint64_t>(slot_index), external_handle,
-                PriorityPhysics::VERSION_DEPENDENCY,
-                SubClassesOfMode32::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4
-            );
-
-            return packed_cell;
         }
 
     };
