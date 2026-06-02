@@ -5,6 +5,19 @@
 namespace PredictedAdaptedEncoding
 {
 
+    std::atomic<packed64_t>* NeuromorphicSpaceTimeFabricCoordinator::AllocateAtomicCells_(size_t count_of_cells) noexcept
+    {
+        auto allocation_function = AllocatorOfFabric_.AllocatePackedCellStorage ? 
+            AllocatorOfFabric_.AllocatePackedCellStorage : &AllocatorOfAPCFabricCells::DefaultAllocateAtomicCells;
+        
+        size_t alignment = AllocatorOfFabric_.Alignment ? AllocatorOfFabric_.Alignment : BIT_LENGTH_OF_A_PACKED_CELL;
+        alignment = std::max<size_t>(alignment, alignof(std::atomic<packed64_t>));
+
+        return allocation_function(count_of_cells, alignment, AllocatorOfFabric_.User);
+
+    }
+
+
     void NeuromorphicSpaceTimeFabricCoordinator::FreeAtomicCells_(std::atomic<packed64_t>* packed_cell_memory_ptr) noexcept
     {
         AllocatorOfAPCFabricCells::FreeFunction free_function = AllocatorOfFabric_.FreePackedCellStorage ?
@@ -20,33 +33,17 @@ namespace PredictedAdaptedEncoding
         SlotCellCount_ = UNSIGNED_ZERO;
         SlotCount_ = UNSIGNED_ZERO;
         SlabId_ = APCDataStructure::BRANCH_VERSION;
+
         SegmentPoolBegin_ = MINIMUM_BRANCH_CAPACITY;
         SegmentPoolEnd_ = MINIMUM_BRANCH_CAPACITY;
+
         HashBucketCount_ = UNSIGNED_ZERO;
         RelationRecordCount_ = UNSIGNED_ZERO;
         DeviceViewRecordCount_ = UNSIGNED_ZERO;
         ThreadTableCapacity_  = UNSIGNED_ZERO;
-        for (auto& table_cache : TableCache_)
-        {
-            table_cache = CacheEntryOfFabricTable{};
-        }
+
         FabricInitialized_.store(false, MoStoreSeq_);
-    }
-
-    uint32_t NeuromorphicSpaceTimeFabricCoordinator::NextPowerOf2Unsigned32_(uint32_t given_value) noexcept
-    {
-        if (given_value <= 2u)
-        {
-            return 2u;
-        }
-        --given_value;
-        given_value |= given_value >> 1u;
-        given_value |= given_value >> 2u;
-        given_value |= given_value >> 4u;
-        given_value |= given_value >> 8u;
-        given_value |= given_value >> 16u;
-
-        return given_value + 1u;
+        InitializationInProgress_.store(false, MoStoreSeq_);
     }
 
     void NeuromorphicSpaceTimeFabricCoordinator::StorePackedCellUnchecked_(size_t idx, packed64_t packed_cell) noexcept

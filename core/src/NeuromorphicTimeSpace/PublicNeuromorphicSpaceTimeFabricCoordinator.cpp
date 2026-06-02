@@ -110,7 +110,7 @@ namespace PredictedAdaptedEncoding
         const size_t slot_directory_begin = cursor;
         const size_t slot_directory_end =  slot_directory_begin + (static_cast<size_t>(slot_count) * SLOT_RECORD_WIDTH_OF_FABRIC);
 
-        HashBucketCount_ = NextPowerOf2Unsigned32_(
+        HashBucketCount_ = CoreOfFabricCoordinator::NextPowerOf2Unsigned32_(
             std::max<uint32_t>(BIT_LENGTH_OF_A_PACKED_CELL, static_cast<uint32_t>(slot_count) * HASH_BUCKED_WIDTH_OF_FABRIC)
         );
         cursor = DefaultFabricAlignment16Cell_(slot_directory_end);
@@ -126,7 +126,7 @@ namespace PredictedAdaptedEncoding
         const size_t shared_hash_begin = cursor;
         const size_t shared_hash_end = shared_hash_begin + hash_span;
 
-        RelationRecordCount_ = NextPowerOf2Unsigned32_(std::max<uint32_t>(BIT_LENGTH_OF_A_PACKED_CELL, static_cast<uint32_t>(slot_count) * 4u));
+        RelationRecordCount_ = CoreOfFabricCoordinator::NextPowerOf2Unsigned32_(std::max<uint32_t>(BIT_LENGTH_OF_A_PACKED_CELL, static_cast<uint32_t>(slot_count) * 4u));
         const size_t edge_of_fabric_table_begin = cursor;
         const size_t edge_of_fabric_table_end = edge_of_fabric_table_begin + static_cast<size_t>(RelationRecordCount_) * RELATION_WIDTH_OF_FABRIC;
 
@@ -142,7 +142,7 @@ namespace PredictedAdaptedEncoding
         const size_t work_begin = cursor;
         const size_t work_end = work_begin + static_cast<size_t>(slot_count) * WORK_RECORD_WIDTH_OF_FABRIC;
 
-        DeviceViewRecordCount_ = NextPowerOf2Unsigned32_(std::max<uint32_t>(BIT_LENGTH_OF_A_PACKED_CELL, slot_count));
+        DeviceViewRecordCount_ = CoreOfFabricCoordinator::NextPowerOf2Unsigned32_(std::max<uint32_t>(BIT_LENGTH_OF_A_PACKED_CELL, slot_count));
         cursor = DefaultFabricAlignment16Cell_(work_end);
         const size_t device_view_begin = cursor;
         const size_t device_view_end = device_view_begin + static_cast<size_t>(DeviceViewRecordCount_) * DEVICE_VIEW_WIDTH_OF_APC_FABRIC;

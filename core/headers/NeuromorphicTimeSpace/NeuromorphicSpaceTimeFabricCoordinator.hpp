@@ -8,17 +8,21 @@ namespace PredictedAdaptedEncoding
     {
     private:
         std::atomic<packed64_t>* SlabBasePtr_{nullptr};
+
         size_t SlabCellCount_{UNSIGNED_ZERO};
-        size_t SlotCellCount_{UNSIGNED_ZERO};
-        size_t SlotCount_{UNSIGNED_ZERO};
-        uint16_t SlabId_{UNSIGNED_ZERO};
+        uint64_t SlotCellCount_{UNSIGNED_ZERO};
+        uint64_t SlotCount_{UNSIGNED_ZERO};
+        uint8_t SlabId_{UNSIGNED_ZERO};
+
         size_t SegmentPoolBegin_{APCDataStructure::METACELL_COUNT};
         size_t SegmentPoolEnd_{APCDataStructure::METACELL_COUNT};
+        
         uint32_t HashBucketCount_{UNSIGNED_ZERO};
         uint32_t RelationRecordCount_{UNSIGNED_ZERO};
         uint32_t DeviceViewRecordCount_{UNSIGNED_ZERO};
         uint32_t ThreadTableCapacity_{UNSIGNED_ZERO};
 
+        //--remove
         struct CacheEntryOfFabricTable
         {
             size_t BeginIdx{UNSIGNED_ZERO};
@@ -27,18 +31,22 @@ namespace PredictedAdaptedEncoding
             uint16_t VersionCount{UNSIGNED_ZERO};
             bool IsThisEntryValid{false};
         };
-
         std::array<CacheEntryOfFabricTable, static_cast<size_t>(FabricTableSegmentClasses::COUNT)> TableCache_{};
+        //--remove
+
+
         std::atomic<bool> FabricInitialized_{false};
         std::atomic<bool> InitializationInProgress_{false};
         AllocatorOfAPCFabricCells AllocatorOfFabric_{};
         AtomicAdaptiveBackoff AdaptiveBackoffCentral_;
         static constexpr uint32_t DEFAULT_MAX_TRIES = 128;
 
+        //METHODS
+        std::atomic<packed64_t>* AllocateAtomicCells_(size_t count_of_cells) noexcept;
+        
         void FreeAtomicCells_(std::atomic<packed64_t>* packed_cell_memory_ptr) noexcept;
 
         void ResetScalarsofTheFabric_() noexcept;
-        uint32_t NextPowerOf2Unsigned32_(uint32_t given_value) noexcept;
 
         static constexpr size_t DefaultFabricAlignment16Cell_(size_t value) noexcept
         {
@@ -49,7 +57,8 @@ namespace PredictedAdaptedEncoding
         void StorePackedCellUnchecked_(size_t idx, packed64_t packed_cell) noexcept;
 
         bool CheckAndStoreAPrebuildCellInSlab_(size_t idx, packed64_t packed_cell) noexcept;
-
+        //checked
+        
         bool MakeAndStoreAFabricOwnedCell_(
             size_t index, 
             uint64_t value32_or_64, 
@@ -61,6 +70,8 @@ namespace PredictedAdaptedEncoding
             PackedCellLocalityTypes locality_of_cell = PackedCellLocalityTypes::IDLE, 
             PriorityPhysics priority = PriorityPhysics::IMPORTANT
         ) noexcept;
+
+
 
         bool MakeCheckAndStoreAFabricControlValidCell_(
             FabricMetaIndicies fabric_meta_idx, 

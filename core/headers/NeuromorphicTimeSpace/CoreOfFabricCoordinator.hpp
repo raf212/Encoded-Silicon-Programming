@@ -294,6 +294,32 @@ namespace PredictedAdaptedEncoding
 
     struct CoreOfFabricCoordinator
     {
+        static constexpr uint32_t NextPowerOf2Unsigned32_(uint32_t given_value) noexcept
+        {
+            if (given_value <= 2u)
+            {
+                return 2u;
+            }
+            --given_value;
+            given_value |= given_value >> 1u;
+            given_value |= given_value >> 2u;
+            given_value |= given_value >> 4u;
+            given_value |= given_value >> 8u;
+            given_value |= given_value >> 16u;
+
+            return given_value + 1u;
+        }
+
+        static constexpr uint32_t HashUnsigned32_(uint32_t given_value) noexcept
+        {
+            given_value ^= given_value >> CLK_B16;
+            given_value *= DEFAULT_HAS_CONST_1;
+            given_value ^= given_value >> (CLK_B16 - 1);
+            given_value *= DEFAULT_HAS_CONST_2;
+            given_value ^=  given_value >> CLK_B16;
+            return given_value;
+        }
+
         static constexpr bool IsValidFabricTable(FabricTableSegmentClasses table_class) noexcept
         {
             return table_class > FabricTableSegmentClasses::NONE &&
@@ -375,6 +401,57 @@ namespace PredictedAdaptedEncoding
             }
         }
 
+        /// @brief Creates an unsigned fabric-owned cell.
+        ///
+        /// Call flow:
+        ///   This->MakeInitialFabricValidPackedCell()
+        ///     -> MakeInitialValidBlindPackedCell()
+        ///     -> MakeAnUncheckedCellBasedOnMode_::MakeInCellMetaForMode + ComposeValue
+        ///
+        /// @return packed64_t or PACKED_CELL_SENTINAL
+        static constexpr packed64_t MakeAValidFabricMode32UnsignedCell(
+            uint32_t value,
+            clk16_t external_meta_or_prob_distance,
+            FabricTableSegmentClasses table_class,
+            PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::IDLE,
+            PriorityPhysics priority = PriorityPhysics::VERSION_DEPENDENCY,
+            SubClassesOfMode32 subclass_of_mode32 = SubClassesOfMode32::SELF_CLASS
+        )
+        {
+            return PackedCell64_t::MakeInitialFabricValidPackedCell(
+                PackedMode::MODE_32,
+                cell_locality, 
+                table_class, 
+                PackedCellDataType::UnsignedPCellDataType,
+                value, 
+                external_meta_or_prob_distance, 
+                priority, 
+                subclass_of_mode32,
+                SubClassesOfMode48::SELF_CLASS
+            );
+        }
+
+        static constexpr packed64_t MakeAValidFabricMode48UnsignedCell(
+            uint64_t value,
+            FabricTableSegmentClasses table_class,
+            PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::IDLE,
+            PriorityPhysics priority = PriorityPhysics::VERSION_DEPENDENCY,
+            SubClassesOfMode48 subclass_of_mode48 = SubClassesOfMode48::SELF_CLASS
+        )
+        {
+            return PackedCell64_t::MakeInitialFabricValidPackedCell(
+                PackedMode::MODE_48,
+                cell_locality, 
+                table_class, 
+                PackedCellDataType::UnsignedPCellDataType,
+                value, 
+                UNSIGNED_ZERO, 
+                priority, 
+                SubClassesOfMode32::SELF_CLASS, 
+                subclass_of_mode48
+            );
+        }
+
 
         static constexpr packed64_t MakeANEncodedHandlerCellForFabric(
             uint32_t slot_index, 
@@ -385,17 +462,18 @@ namespace PredictedAdaptedEncoding
         ) noexcept
         {
             const uint16_t external_handle = Clock16Subdivision1x8Plus2x4InMode32CellModel::Pack1x8Plus2x4InUnsigned16_(slab_id, generation, static_cast<uint8_t>(handle_state));
-
-            const packed64_t packed_cell = PackedCell64_t::MakeInitialFabricValidPackedCell(
-                PackedMode::MODE_32, locality_of_cell, fabric_segment_class,
-                PackedCellDataType::UnsignedPCellDataType, 
-                static_cast<uint64_t>(slot_index), external_handle,
+            const packed64_t packed_cell = MakeAValidFabricMode32UnsignedCell(
+                static_cast<uint64_t>(slot_index), 
+                external_handle,
+                fabric_segment_class, 
+                locality_of_cell, 
                 PriorityPhysics::VERSION_DEPENDENCY,
                 SubClassesOfMode32::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4
             );
 
             return packed_cell;
         }
+
 
         //kept for safty
         static constexpr bool IsThisFebricMetaIdxAValidIncrementalCountType(FabricMetaIndicies meta_idx) noexcept
