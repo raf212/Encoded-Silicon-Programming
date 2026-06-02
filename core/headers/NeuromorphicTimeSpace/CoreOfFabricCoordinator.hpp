@@ -36,6 +36,20 @@ namespace PredictedAdaptedEncoding
         FABRIC_TABLE = 0x7u
     };
 
+    enum class TableEntryCellTypeOfFabric : size_t
+    {
+        BEGIN48 = 0,
+        END48 = 1,
+        RECORD_WIDTH32 = 3,
+        VERSION_FLAGS32 = 4
+    };
+
+    enum class HashCellOfFabridc : size_t
+    {
+        KEY = 0,
+        VALUE_HANDLE = 1,
+    };
+
     enum class SlotCellTypeOfAPCFabric : size_t
     {
         STATE = 0,
@@ -45,10 +59,11 @@ namespace PredictedAdaptedEncoding
         END = 4,
         LOGICAL_ID = 5,
         SHARED_ID = 6,
-        RELATION_HEADs = 7,
-        RETIRE_EPOCH48 = 9,
-        NEXT_HANDLE = 10,
-        SLOT_FLAGS = 11
+        RELATION_HEADS = 7,
+        RETIRE_EPOCH48 = 8,
+        NEXT_HANDLE = 9,
+        SLOT_FLAGS = 10,
+        NANNULL = 11
     };
 
     enum class RelationCellOfAPCFabric : size_t
@@ -110,20 +125,12 @@ namespace PredictedAdaptedEncoding
         MIGRATE_OR_GROW_FABRIC = 12
     };
 
-    enum class StateOfFabricThread : uint32_t
-    {
-        FREE = 0,
-        CLAIMED = 1u,
-        LIVE = 2u,
-        RETIRED = 3u,
-        FAULTY = 4u
-    };
-
     enum class ThreadCellTypeOfAPCFabric : size_t
     {
         EPOCH48 = 0,
         WAIT_TOKEN = 2,
-        THREAD_STATE = 3
+        THREAD_STATE = 3,
+        THREAD_FLAGS = 4
     };
 
     enum class FabricMetaIndicies : size_t
@@ -217,14 +224,14 @@ namespace PredictedAdaptedEncoding
         }
     };
 
-    struct AllocatorOfAPCFabricCells
+    struct RawPackedCellAllocator
     {
-        using AllocateFunction = std::atomic<packed64_t>* (*)(
+        using AllocateFunction = packed64_t* (*)(
             size_t count_of_packed_cell, size_t alignment, void* user
         ) noexcept;
 
         using FreeFunction = void (*)(
-            std::atomic<packed64_t>* packed_cell_storage_ptr, 
+            packed64_t* packed_cell_storage_ptr, 
             size_t count_of_cell, size_t alignment, void*user
         ) noexcept;
 
@@ -233,7 +240,18 @@ namespace PredictedAdaptedEncoding
         void* User{nullptr};
         size_t Alignment{BIT_LENGTH_OF_A_PACKED_CELL};
 
-        static std::atomic<packed64_t>* DefaultAllocateAtomicCells(
+        static size_t AlignBiteCount_(size_t bytes, size_t alignment) noexcept
+        {
+            if (alignment == UNSIGNED_ZERO)
+            {
+                return bytes;
+            }
+
+            const size_t remaining_bytes = bytes % alignment;
+            return remaining_bytes == UNSIGNED_ZERO ? bytes : bytes + (alignment - remaining_bytes);
+        }
+
+        static packed64_t* DefaultAllocateAtomicCells(
             size_t count_of_packed_cell, size_t alignment, void*
         ) noexcept
         {
@@ -241,60 +259,46 @@ namespace PredictedAdaptedEncoding
             {
                 return nullptr;
             }
-            if (alignment < alignof(std::atomic<packed64_t>))
-            {
-                alignment = alignof(std::atomic<packed64_t>);
-            }
 
-            void* raw_memory = nullptr;
-            try
-            {
-                raw_memory = ::operator new[](
-                    sizeof(std::atomic<packed64_t>) * count_of_packed_cell,
-                    std::align_val_t(alignment)
-                );
-            }
-            catch(...)
+            alignment = std::max<size_t>(alignment, alignof(packed64_t));
+            const size_t byte_count = sizeof(packed64_t) * count_of_packed_cell;
+            const size_t aligned_bytes = AlignBiteCount_(byte_count, alignment);
+
+#if defined(_MSC_VER)
+
+            void* raw_packed_cell_memory = _aligned_malloc(aligned_bytes, alignment);
+#else
+            void* raw_packed_cell_memory = std::aligned_alloc(alignment, aligned_bytes);
+#endif
+            if (!raw_packed_cell_memory)
             {
                 return nullptr;
             }
-            auto* cells = static_cast<std::atomic<packed64_t>*>(raw_memory);
-
-            for (size_t i = 0; i < count_of_packed_cell; i++)
-            {
-                new(&cells[i]) std::atomic<packed64_t>{};
-            }
-
-            return cells;
+            std::memset(raw_packed_cell_memory, UNSIGNED_ZERO, aligned_bytes);
+            return static_cast<packed64_t*>(raw_packed_cell_memory);
             
         }
 
         static void DefaultFreeAtomicCells(
-            std::atomic<packed64_t>* packed_cell_storage_ptr, 
-            size_t count_of_cell, size_t alignment, void*
+            packed64_t* packed_cell_storage_ptr, 
+            size_t, size_t, void*
         ) noexcept
         {
             if (!packed_cell_storage_ptr)
             {
                 return;
             }
-            for (size_t i = 0; i < count_of_cell; i++)
-            {
-                packed_cell_storage_ptr[i].~atomic<packed64_t>();
-
-            }
-
-            if (alignment < alignof(std::atomic<packed64_t>))
-            {
-                alignment = alignof(std::atomic<packed64_t>);
-            }
-            ::operator delete[](packed_cell_storage_ptr, std::align_val_t(alignment));
+#if defined(_MSC_VER)
+            _aligned_free(packed_cell_storage_ptr);
+#else
+            std::free(packed_cell_storage_ptr);
+#endif
         }
     };
 
     struct CoreOfFabricCoordinator
     {
-        static constexpr uint32_t NextPowerOf2Unsigned32_(uint32_t given_value) noexcept
+        static constexpr uint64_t NextPowerOf2Unsigned32_(uint64_t given_value) noexcept
         {
             if (given_value <= 2u)
             {
@@ -306,6 +310,7 @@ namespace PredictedAdaptedEncoding
             given_value |= given_value >> 4u;
             given_value |= given_value >> 8u;
             given_value |= given_value >> 16u;
+            given_value |= given_value >> 32u;
 
             return given_value + 1u;
         }

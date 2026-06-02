@@ -17,9 +17,9 @@ namespace PredictedAdaptedEncoding
         size_t SegmentPoolBegin_{APCDataStructure::METACELL_COUNT};
         size_t SegmentPoolEnd_{APCDataStructure::METACELL_COUNT};
         
-        uint32_t HashBucketCount_{UNSIGNED_ZERO};
-        uint32_t RelationRecordCount_{UNSIGNED_ZERO};
-        uint32_t DeviceViewRecordCount_{UNSIGNED_ZERO};
+        uint64_t HashBucketCount_{UNSIGNED_ZERO};
+        uint64_t RelationRecordCount_{UNSIGNED_ZERO};
+        uint64_t DeviceViewRecordCount_{UNSIGNED_ZERO};
         uint32_t ThreadTableCapacity_{UNSIGNED_ZERO};
 
         //--remove
@@ -37,7 +37,7 @@ namespace PredictedAdaptedEncoding
 
         std::atomic<bool> FabricInitialized_{false};
         std::atomic<bool> InitializationInProgress_{false};
-        AllocatorOfAPCFabricCells AllocatorOfFabric_{};
+        RawPackedCellAllocator AllocatorOfFabric_{};
         AtomicAdaptiveBackoff AdaptiveBackoffCentral_;
         static constexpr uint32_t DEFAULT_MAX_TRIES = 128;
 

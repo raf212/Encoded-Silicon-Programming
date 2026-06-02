@@ -5,26 +5,26 @@
 namespace PredictedAdaptedEncoding
 {
 
-    std::atomic<packed64_t>* NeuromorphicSpaceTimeFabricCoordinator::AllocateAtomicCells_(size_t count_of_cells) noexcept
-    {
-        auto allocation_function = AllocatorOfFabric_.AllocatePackedCellStorage ? 
-            AllocatorOfFabric_.AllocatePackedCellStorage : &AllocatorOfAPCFabricCells::DefaultAllocateAtomicCells;
+    // std::atomic<packed64_t>* NeuromorphicSpaceTimeFabricCoordinator::AllocateAtomicCells_(size_t count_of_cells) noexcept
+    // {
+    //     auto allocation_function = AllocatorOfFabric_.AllocatePackedCellStorage ? 
+    //         AllocatorOfFabric_.AllocatePackedCellStorage : &RawPackedCellAllocator::DefaultAllocateAtomicCells;
         
-        size_t alignment = AllocatorOfFabric_.Alignment ? AllocatorOfFabric_.Alignment : BIT_LENGTH_OF_A_PACKED_CELL;
-        alignment = std::max<size_t>(alignment, alignof(std::atomic<packed64_t>));
+    //     size_t alignment = AllocatorOfFabric_.Alignment ? AllocatorOfFabric_.Alignment : BIT_LENGTH_OF_A_PACKED_CELL;
+    //     alignment = std::max<size_t>(alignment, alignof(std::atomic<packed64_t>));
 
-        return allocation_function(count_of_cells, alignment, AllocatorOfFabric_.User);
+    //     return allocation_function(count_of_cells, alignment, AllocatorOfFabric_.User);
 
-    }
+    // }
 
 
-    void NeuromorphicSpaceTimeFabricCoordinator::FreeAtomicCells_(std::atomic<packed64_t>* packed_cell_memory_ptr) noexcept
-    {
-        AllocatorOfAPCFabricCells::FreeFunction free_function = AllocatorOfFabric_.FreePackedCellStorage ?
-                            AllocatorOfFabric_.FreePackedCellStorage : &AllocatorOfAPCFabricCells::DefaultFreeAtomicCells;
-        const size_t alignment = AllocatorOfFabric_.Alignment ? AllocatorOfFabric_.Alignment : BIT_LENGTH_OF_A_PACKED_CELL;
-        free_function(packed_cell_memory_ptr, SlabCellCount_, alignment, AllocatorOfFabric_.User);
-    }
+    // void NeuromorphicSpaceTimeFabricCoordinator::FreeAtomicCells_(std::atomic<packed64_t>* packed_cell_memory_ptr) noexcept
+    // {
+    //     RawPackedCellAllocator::FreeFunction free_function = AllocatorOfFabric_.FreePackedCellStorage ?
+    //                         AllocatorOfFabric_.FreePackedCellStorage : &RawPackedCellAllocator::DefaultFreeAtomicCells;
+    //     const size_t alignment = AllocatorOfFabric_.Alignment ? AllocatorOfFabric_.Alignment : BIT_LENGTH_OF_A_PACKED_CELL;
+    //     free_function(packed_cell_memory_ptr, SlabCellCount_, alignment, AllocatorOfFabric_.User);
+    // }
 
     void NeuromorphicSpaceTimeFabricCoordinator::ResetScalarsofTheFabric_() noexcept
     {
