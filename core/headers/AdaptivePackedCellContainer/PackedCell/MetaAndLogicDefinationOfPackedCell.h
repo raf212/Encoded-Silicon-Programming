@@ -41,8 +41,12 @@ namespace PredictedAdaptedEncoding {
     static constexpr ::std::memory_order MoLoad_      = ::std::memory_order_acquire;
     static constexpr ::std::memory_order MoStoreSeq_  = ::std::memory_order_release;
     static constexpr ::std::memory_order MoStoreUnSeq_= ::std::memory_order_relaxed;
+    static constexpr std::memory_order MoClaimSuccess = std::memory_order_acq_rel;
+    static constexpr std::memory_order MoClaimFailure = MoLoad_;
+    //will be removed
     static constexpr ::std::memory_order OnExchangeSuccess   = ::std::memory_order_acq_rel;
     static constexpr ::std::memory_order OnExchangeFailure   = ::std::memory_order_relaxed;
+    //--
 
     static constexpr unsigned CLK_B48 = 48u;
     static constexpr unsigned VALBITS  = 32u;
@@ -81,22 +85,18 @@ namespace PredictedAdaptedEncoding {
 
     enum class PackedCellLocalityTypes : tag8_t
     {
-        ST_IDLE = 0,
-        ST_PUBLISHED = 1,
-        ST_CLAIMED = 2,
-        ST_EXCEPTION_BIT_FAULTY = 3
+        IDLE = 0,
+        PUBLISHED = 1,
+        CLAIMED = 2,
+        FAULTY = 3
     };
 
-
-    static constexpr tag8_t REL_ALL_LOW_4   = static_cast<tag8_t>(RELMASK_MASK);
-    static constexpr tag8_t REL_MASK4_NONE = 0;
-
-    enum class PackedCellNodeAuthority : tag8_t
+    enum class PackedCellOwnership : tag8_t
     {
-        IDLE_OR_FREE = 0,
-        CAUSAL_LINIAR_SAGMENT = 1,
-        NEUROMORPHIC_PAGED_GRAPH = 2,
-        BIDIRECTIONAL_NEUROMORPHIC_SYSTEM = 3
+        ADAPTIVE_PACKED_CELL_CONTAINER = 0,
+        NEUROMORPHIC_SPACE_TIME_FABRIC = 1,
+        RESERVED_2 = 2,
+        RESERVED_3 = 3
     };
 
     enum class PackedCellDataType : tag8_t
@@ -109,39 +109,39 @@ namespace PredictedAdaptedEncoding {
 
     enum class PackedMode : tag8_t
     {
-        MODE_VALUE32 = 0,
-        MODE_CLKVAL48 = 1
+        MODE_32 = 0,
+        MODE_48 = 1
     };
 
-    enum class RelOffsetMode32 : tag8_t
+    enum class SubClassesOfMode32 : tag8_t
     {
-        RELOFFSET_GENERIC_VALUE = 0,
-        RELOFFSET_TAIL_PTR = 1,
-        REL_OFFSET_HEAD_PTR = 2,
-        CONTROL_SLOT = 3
+        SELF_CLASS = 0,
+        LOW_OF_PAIRED_VERSIONED_CELL = 1,
+        HIGH_OF_PAIRED_VERSIONED_CELL = 2,
+        SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 = 3
     };
 
-    enum class RelOffsetMode48 : tag8_t
+    enum class SubClassesOfMode48 : tag8_t
     {
-        RELOFFSET_GENERIC_VALUE = 0,
-        RELOFFSET_PURE_TIMER = 1,
-        THREE_16_BIT_SUB_DIVISION  = 2,
-        CONTROL_SLOT = 3
+        SELF_CLASS = 0,
+        PURE_TIMER_48 = 1,
+        SUBDIVISION16x3_INTERNAL_CELL_MODEL  = 2,
+        FOUR_SUBDIVISION_2x16_AND_2x8 = 3
     };
 
     enum class PriorityPhysics : tag8_t
     {
         IDLE = 0,
-        DEFAULT_PRIORITY = 1,
-        IMPORTANT = 2,
-        URGENT = 3,
-        HANDLE_NOW = 4,
-        STRUCTURAL_DEPENDENCY = 5,
-        TIME_DEPENDENCY = 6,
-        ERROR_DEPENDENCY = 7
+        IMPORTANT = 1,
+        VERSION_DEPENDENCY = 2,
+        INHERIT_SOURCE_PRIORITY = 3,
+        ERROR_FIRST = 4,
+        OLDEST_CLOCK_FIRST = 5,
+        PRESSURE_FIRST = 6,
+        MAX_OF_SOURCE_AND_TARGET = 7
     };
 
-    enum class APCPagedNodeRelMaskClasses : tag8_t
+    enum class APCPagedNodeSegmentClasses : tag8_t
     {
         NONE = 0x0,
         FEEDFORWARD_MESSAGE  = 0x1,
@@ -153,18 +153,40 @@ namespace PredictedAdaptedEncoding {
         WEIGHT_SLOT = 0x7,
         CONTROL_SLOT = 0x8,
         AUX_SLOT = 0x9,
-        HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT = 0xA,
-        PAIRED_POINTER_LOCAL_MEMORY = 0xB,
-        PAIRED_POINTER_DISTANCE_MEMORY = 0xC,
+        HETEROGENOUS_RAW_MEMORY = 0xA,
+        SLOT_TABLE_DESCRIPTOR = 0xB,
+        //paired pinter should be valid only in case of SubClassesOfMode32->Paired Subclass
+        PAIRED_POINTER_IN_MEMORY = 0xC,
         FREE_SLOT     = 0xD,
         UNDEFINED = 0xE,
-        NANNULL     = 0xF
+        FABRIC_SEGMENT_POOL     = 0xF
     };
 
-    static inline constexpr packed64_t MaskLowNBits(unsigned n) noexcept
+    enum class FabricTableSegmentClasses : uint16_t //14
+    {   //none should be invalid identifier
+        NONE = 0,
+        //GLOBAL_AND_CONFIG used for everything else where FabricTableSegmentClasses fails 
+        GLOBAL_AND_CONFIG = 1,
+        TABLE_DIRECTORY = 2,
+        SLOT_DIRECTORY = 3,
+        BRANCH_HASH = 4,
+        LOGICAL_HASH = 5,
+        SHARED_HASH = 6,
+        EDGE_TABLE = 7,
+        FREE_RETIRE_TABLE = 8,
+        READY_QUEUE = 9,
+        WORK_QUEUE = 10,
+        DEVICE_VIEW_TABLE = 11,
+        THREAD_TABLE  = 12,
+        SEGMENT_POOL = 13,
+        COUNT = 14,
+        GENERIC_CONTROL = 15
+    };
+
+    static  constexpr packed64_t MaskLowNBits(unsigned n) noexcept
     {
         if (n == UNSIGNED_ZERO) return packed64_t(0);
-        if (n >= MAX_VAL) return ~packed64_t(0);
+        if (n >= BIT_LENGTH_OF_A_PACKED_CELL) return ~packed64_t(0);
         // produce low-n ones without shifting by >= width
         return ((packed64_t(1) << n) - 1u);                  
     }
@@ -194,11 +216,11 @@ namespace PredictedAdaptedEncoding {
 
 
     template<typename PCDT>
-    inline constexpr PackedCellDataType BridgeOfPackedCellDataType_v = PackedCellTypeBridge<PCDT>::DType;
+     constexpr PackedCellDataType BridgeOfPackedCellDataType_v = PackedCellTypeBridge<PCDT>::DType;
 
 
     template <typename To, typename From>
-    inline To BitCastMaybe(const From& from_address)
+     To BitCastMaybe(const From& from_address)
     {
         To out;
         if constexpr (sizeof(To) == sizeof(From))

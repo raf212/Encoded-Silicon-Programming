@@ -1,8 +1,8 @@
 #pragma once
 #include <array>
 #include <utility>
-#include "AdaptivePackedCellContainer/AdaptivePackedCellContainer.hpp"
-#include "PackedCellContainerManager.hpp"
+#include "../AdaptivePackedCellContainer/AdaptivePackedCellContainer.hpp"
+#include "../PackedCellContainerManager.hpp"
 
 namespace PredictedAdaptedEncoding
 {
@@ -10,29 +10,29 @@ class APCSegmentsCausalCordinator : public AdaptivePackedCellContainer
 {
 private:
 
-     static MetaIndexOfAPCNode AcceptedClockIndex_(APCPagedNodeRelMaskClasses region) noexcept
+     static MetaIndexOfAPCNode AcceptedClockIndex_(APCPagedNodeSegmentClasses region) noexcept
      {
          switch (region)
          {
-         case APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE:
+         case APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE:
              return MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_BACKWARD_CLOCK16;
     
 
-         case APCPagedNodeRelMaskClasses::STATE_SLOT:
-         case APCPagedNodeRelMaskClasses::ERROR_SLOT:
-         case APCPagedNodeRelMaskClasses::AUX_SLOT:
-         case APCPagedNodeRelMaskClasses::LATERAL_MESAGE:
-         case APCPagedNodeRelMaskClasses::EDGE_DESCRIPTOR:
-         case APCPagedNodeRelMaskClasses::WEIGHT_SLOT:
-         case APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE:
+         case APCPagedNodeSegmentClasses::STATE_SLOT:
+         case APCPagedNodeSegmentClasses::ERROR_SLOT:
+         case APCPagedNodeSegmentClasses::AUX_SLOT:
+         case APCPagedNodeSegmentClasses::LATERAL_MESAGE:
+         case APCPagedNodeSegmentClasses::EDGE_DESCRIPTOR:
+         case APCPagedNodeSegmentClasses::WEIGHT_SLOT:
+         case APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE:
          default:
              return MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_FORWARD_CLOCK16;
          }
      }
 
-    static MetaIndexOfAPCNode EmittedClockIndex_(APCPagedNodeRelMaskClasses region) noexcept
+    static MetaIndexOfAPCNode EmittedClockIndex_(APCPagedNodeSegmentClasses region) noexcept
     {
-        return region == APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE
+        return region == APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE
             ? MetaIndexOfAPCNode::LAST_EMITTED_FEED_BACKWARD_CLOCK16
             : MetaIndexOfAPCNode::LAST_EMITTED_FEED_FORWARD_CLOCK16;
     }
@@ -62,20 +62,20 @@ public:
     APCSegmentsCausalCordinator() noexcept = default;
     ~APCSegmentsCausalCordinator() = default;
 
-    bool AcceptCausalCell(APCPagedNodeRelMaskClasses region, packed64_t cell) noexcept
+    bool AcceptCausalCell(APCPagedNodeSegmentClasses region, packed64_t cell) noexcept
     {
         const clk16_t incoming = PackedCell64_t::ExtractClk16(cell);
         return TryAdvanceClock_(AcceptedClockIndex_(region), incoming);
     }
 
-    bool MarkEmittedCausalCell(APCPagedNodeRelMaskClasses region, packed64_t cell) noexcept
+    bool MarkEmittedCausalCell(APCPagedNodeSegmentClasses region, packed64_t cell) noexcept
     {
         const clk16_t emitted = PackedCell64_t::ExtractClk16(cell);
         return TryAdvanceClock_(EmittedClockIndex_(region), emitted);
     }
 
     bool PublishCausal(
-        APCPagedNodeRelMaskClasses region,
+        APCPagedNodeSegmentClasses region,
         packed64_t cell,
         std::atomic<uint64_t>* growth_counter = nullptr
     ) noexcept
@@ -91,7 +91,7 @@ public:
     }
 
     std::optional<packed64_t> ConsumeCausal(
-        APCPagedNodeRelMaskClasses region,
+        APCPagedNodeSegmentClasses region,
         size_t& scan_cursor,
         std::atomic<uint64_t>* older_counter = nullptr,
         bool drop_older = false
@@ -121,7 +121,7 @@ public:
         return std::nullopt;  // drop budget exhausted — caller should back off
     }
 
-    uint32_t CountPublishedInRegion(APCPagedNodeRelMaskClasses region) noexcept
+    uint32_t CountPublishedInRegion(APCPagedNodeSegmentClasses region) noexcept
     {
         uint32_t count = 0;
         for (size_t i = PayloadBegin(); i < GetTotalCapacityForThisAPC(); ++i)
@@ -135,7 +135,7 @@ public:
         return count;
     }
 
-    bool HasAnyPublishedInChain(APCPagedNodeRelMaskClasses region) noexcept
+    bool HasAnyPublishedInChain(APCPagedNodeSegmentClasses region) noexcept
     {
         AdaptivePackedCellContainer* current = FindSharedRootOrThis();
         while (current)

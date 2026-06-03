@@ -1,6 +1,1 @@
-// APC-native policy:
-// dead -> can stay logically removed from registry, physical free happens by owner
-// reclaim requested -> only clear reclaim bit after a grace-period boundary
-
-IDEA:
-Peimarily there will be 2->16x3=48->MODE48 model one for occupancy onr for region bounds with version 
+// whats the difference between BindExternalRootAPCToFabric && AllocateAPCObjectFromFabricCordinator ?? 

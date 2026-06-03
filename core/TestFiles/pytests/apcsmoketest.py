@@ -54,7 +54,7 @@ def smoke_init_with_fallbacks():
     CAP = 64
     cfg = acb.ContainerConf()
     cfg.ProducerBlockSize = 8
-    cfg.InitialMode = acb.PackedMode.MODE_VALUE32
+    cfg.InitialMode = acb.PackedMode.MODE_32
     cfg.BackgroundEpochAdvanceMS = 25
     cfg.RetireBatchThreshold = 4
 

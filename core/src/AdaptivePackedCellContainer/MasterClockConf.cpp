@@ -1,11 +1,11 @@
-#include "APCSegmentsCausalCordinator.hpp"
+#include "NeuromorphicTimeSpace/APCSegmentsCausalCordinator.hpp"
 
 namespace PredictedAdaptedEncoding
 {
 
     packed64_t MasterClockConf::RefreshPackedCellClockOnly(
         packed64_t provided_packed_cell,
-        APCPagedNodeRelMaskClasses force_rel_mask,
+        APCPagedNodeSegmentClasses force_rel_mask,
         std::optional<PackedCellLocalityTypes> override_locality
     ) noexcept
     {
@@ -13,20 +13,20 @@ namespace PredictedAdaptedEncoding
         const clk16_t now_clk16 = GetImmidiateDownShiftedClock16(now_ticks48);
 
         const PriorityPhysics priority_of_provided_cell = PackedCell64_t::ExtractPriorityFromPacked(provided_packed_cell);
-        const PackedCellNodeAuthority node_authority = PackedCell64_t::ExtractNodeAuthorityFromPacked(provided_packed_cell);
+        const PackedCellOwnership node_authority = PackedCell64_t::ExtractNodeAuthorityFromPacked(provided_packed_cell);
         PackedCellLocalityTypes locality_of_provided_cell = PackedCell64_t::ExtractLocalityFromPacked(provided_packed_cell);
         if (override_locality.has_value())
         {
             locality_of_provided_cell = *override_locality;
         }
-        const APCPagedNodeRelMaskClasses rel_mask = (force_rel_mask == APCPagedNodeRelMaskClasses::NANNULL) ? 
+        const APCPagedNodeSegmentClasses rel_mask = (force_rel_mask == APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL) ? 
                         PackedCell64_t::ExtractRelMaskFromPacked(provided_packed_cell) : force_rel_mask;
         const PackedCellDataType dtype_of_provided_cell = PackedCell64_t::ExtractPCellDataTypeFromPacked(provided_packed_cell);
         const PackedMode mode_of_provided_cell = PackedCell64_t::ExtractModeOfPackedCellFromPacked(provided_packed_cell);
-        if (mode_of_provided_cell == PackedMode::MODE_VALUE32)
+        if (mode_of_provided_cell == PackedMode::MODE_32)
         {
             const val32_t value32_of_provided_cell = PackedCell64_t::ExtractValue32(provided_packed_cell);
-            const RelOffsetMode32 reloffset32_of_provided_cell = PackedCell64_t::ExtractRelOffset32FromPacked(provided_packed_cell);
+            const SubClassesOfMode32 reloffset32_of_provided_cell = PackedCell64_t::ExtractRelOffset32FromPacked(provided_packed_cell);
             return PackedCell64_t::ComposeValue32u_64(
                 value32_of_provided_cell,
                 now_clk16,
@@ -34,9 +34,9 @@ namespace PredictedAdaptedEncoding
             );
         }
 
-        const RelOffsetMode48 reloffset48_of_provided_cell = PackedCell64_t::ExtractRelOffset48FromPacked(provided_packed_cell);
+        const SubClassesOfMode48 reloffset48_of_provided_cell = PackedCell64_t::ExtractRelOffset48FromPacked(provided_packed_cell);
         
-        if (reloffset48_of_provided_cell == RelOffsetMode48::RELOFFSET_PURE_TIMER)
+        if (reloffset48_of_provided_cell == SubClassesOfMode48::PURE_TIMER_48)
         {
             return PackedCell64_t::ComposeCLK48u_64(
                 now_ticks48,
@@ -49,7 +49,7 @@ namespace PredictedAdaptedEncoding
 
     std::optional<packed64_t> MasterClockConf::TouchPackedCellClockAndGetCellWithNewClock(
         size_t index_of_packed_cell,
-        APCPagedNodeRelMaskClasses force_rel_mask,
+        APCPagedNodeSegmentClasses force_rel_mask,
         std::optional<PackedCellLocalityTypes> override_locality
     ) noexcept
     {
@@ -121,24 +121,24 @@ std::optional<uint64_t> MasterClockConf::ReconstructCellClock16toFull48BySegment
         {
             return false;
         }
-        packed64_t wanted_pure_clock48 = ComposePureClockCell48(PriorityPhysics::TIME_DEPENDENCY);
+        packed64_t wanted_pure_clock48 = ComposePureClockCell48(PriorityPhysics::OLDEST_CLOCK_FIRST);
         APCPtr_->BackingPtr[static_cast<size_t>(MetaIndexOfAPCNode::LOCAL_CLOCK48)].store(wanted_pure_clock48, MoStoreSeq_);
         APCPtr_->BackingPtr[static_cast<size_t>(MetaIndexOfAPCNode::LOCAL_CLOCK48)].notify_all();
         return true;
     }
 
-    bool MasterClockConf::TryAdvanceSegmentsLastAcceptedClock(APCPagedNodeRelMaskClasses desired_rel_class) noexcept
+    bool MasterClockConf::TryAdvanceSegmentsLastAcceptedClock(APCPagedNodeSegmentClasses desired_rel_class) noexcept
     {
         if (!APCPtr_)
         {
             return false;
         }
         MetaIndexOfAPCNode idx = MetaIndexOfAPCNode::MAGIC_ID;
-        if (desired_rel_class == APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE)
+        if (desired_rel_class == APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE)
         {
             idx = MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_FORWARD_CLOCK16;
         }
-        else if(desired_rel_class == APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE)
+        else if(desired_rel_class == APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE)
         {
             idx = MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_BACKWARD_CLOCK16;
         }
