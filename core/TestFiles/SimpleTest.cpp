@@ -293,7 +293,7 @@ int main()
     MasterClockConf clock(nullptr, timer);
 
     ContainerConf cfg;
-    cfg.InitialMode = PackedMode::MODE_32;
+    cfg.InitialMode = PackedMode::MODE_32_ATOMIC_GUARANTEED;
     cfg.ProducerBlockSize = 8;
     cfg.RegionSize = 16;
     cfg.EnableBranching = true;

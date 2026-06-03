@@ -46,7 +46,7 @@ namespace PredictedAdaptedEncoding
             size_t index, 
             uint64_t value32_or_64, 
             FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
-            PackedMode cell_mode = PackedMode::MODE_48, 
+            PackedMode cell_mode = PackedMode::MODE_48_ATOMIC_GUARANTEED, 
             clk16_t extended_meta_value = UNSIGNED_ZERO,
             tag8_t mode_sub_class = static_cast<tag8_t>(SubClassesOfMode32::SELF_CLASS),
             PackedCellDataType cell_data_type = PackedCellDataType::UnsignedPCellDataType,

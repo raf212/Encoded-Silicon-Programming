@@ -24,9 +24,9 @@
     #include <intrin.h>
 #endif
 // META16 / PNLTCOD:
-// [ priority:3 | node_authority:2 | locality:2 | cell_mode:1 | relmask:4 | reloffset:2 | dtype:2 ]
+// [ priority:2 | node_authority:2 | locality:2 | cell_mode:2 | cell_class:4 | mode_subclass:2 | dtype:2 ]
 // shifts:
-// priority=13, node_authority=11, locality=9, cell_mode=8, relmask=4, reloffset=2, dtype=0
+// priority=14, node_authority=12, locality=10, cell_mode= 8, cell_class=4, mode_subclass=2, dtype=0
 
 
 namespace PredictedAdaptedEncoding {
@@ -55,10 +55,10 @@ namespace PredictedAdaptedEncoding {
     static constexpr unsigned STBITS   = 8u;
     static constexpr unsigned TOTAL_LOW = 48u;
 
-    static constexpr unsigned PRIO_LEN = 3u;
+    static constexpr unsigned PRIO_LEN = 2u;
     static constexpr unsigned NODE_AUTH_LEN = 2u;
     static constexpr unsigned LOCALITY_LEN = 2u;// will be 2u
-    static constexpr unsigned PCTYPE_LEN = 1u;
+    static constexpr unsigned PCTYPE_LEN = 2u;
     static constexpr unsigned RELMASK_LEN = 4u;
     static constexpr unsigned RELOFFSET_LEN = 2u;
     static constexpr unsigned PCELL_DATATYPE_LEN = 2u;
@@ -109,8 +109,10 @@ namespace PredictedAdaptedEncoding {
 
     enum class PackedMode : tag8_t
     {
-        MODE_32 = 0,
-        MODE_48 = 1
+        MODE_32_ATOMIC_GUARANTEED = 0,
+        MODE_48_ATOMIC_GUARANTEED = 1,
+        MODE_32_CLAIMED_GUARANTEED = 2,
+        MODE_48_CLAIMED_GURANTEED = 3
     };
 
     enum class SubClassesOfMode32 : tag8_t

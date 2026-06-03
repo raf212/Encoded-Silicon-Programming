@@ -59,7 +59,7 @@ namespace PredictedAdaptedEncoding
         static constexpr bool IsThisCellA32BitMetaNoClock16Mode32(packed64_t packed_cell) noexcept
         {
             const PackedCell64_t::AuthoritiveCellView this_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
-            return this_cell_auth_view.CellMode == PackedMode::MODE_32 &&
+            return this_cell_auth_view.CellMode == PackedMode::MODE_32_ATOMIC_GUARANTEED &&
                 this_cell_auth_view.SubClassOfMode32.has_value() &&
                 this_cell_auth_view.SubClassOfMode32.value() == SubClassesOfMode32::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 &&
                 this_cell_auth_view.CellValueDataType == PackedCellDataType::UnsignedPCellDataType &&
@@ -165,14 +165,14 @@ private:
             const uint32_t high_half32 = static_cast<uint32_t>((value >> VALBITS) & MaskLowNBits(VALBITS));
 
             const packed64_t low_half_packed_cell = PackedCell64_t::MakeInitialValidBlindPackedCell(
-                PackedMode::MODE_32, locality, ownership, page_class,
+                PackedMode::MODE_32_ATOMIC_GUARANTEED, locality, ownership, page_class,
                 PackedCellDataType::UnsignedPCellDataType, low_half32, version,
                 CellMapAndPriority::VERSION_AND_CLAIMED_CAS_DEPENDENT, 
                 static_cast<tag8_t>(SubClassesOfMode32::LOW_OF_PAIRED_VERSIONED_CELL)
             );
     
             const packed64_t high_half_packed_cell = PackedCell64_t::MakeInitialValidBlindPackedCell(
-                PackedMode::MODE_32, locality, ownership, page_class,
+                PackedMode::MODE_32_ATOMIC_GUARANTEED, locality, ownership, page_class,
                 PackedCellDataType::UnsignedPCellDataType, high_half32, version,
                 CellMapAndPriority::VERSION_AND_CLAIMED_CAS_DEPENDENT, 
                 static_cast<tag8_t>(SubClassesOfMode32::HIGH_OF_PAIRED_VERSIONED_CELL)

@@ -424,7 +424,7 @@ namespace PredictedAdaptedEncoding
         )
         {
             return PackedCell64_t::MakeInitialFabricValidPackedCell(
-                PackedMode::MODE_32,
+                PackedMode::MODE_32_ATOMIC_GUARANTEED,
                 cell_locality, 
                 table_class, 
                 PackedCellDataType::UnsignedPCellDataType,
@@ -445,7 +445,7 @@ namespace PredictedAdaptedEncoding
         )
         {
             return PackedCell64_t::MakeInitialFabricValidPackedCell(
-                PackedMode::MODE_48,
+                PackedMode::MODE_48_ATOMIC_GUARANTEED,
                 cell_locality, 
                 table_class, 
                 PackedCellDataType::UnsignedPCellDataType,

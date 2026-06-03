@@ -8,7 +8,7 @@ namespace PredictedAdaptedEncoding
 {
     struct ContainerConf
     {
-        PackedMode InitialMode = PackedMode::MODE_32;
+        PackedMode InitialMode = PackedMode::MODE_32_ATOMIC_GUARANTEED;
         size_t ProducerBlockSize = MIN_PRODUCER_BLOCK_SIZE;
         size_t RegionSize = MIN_REGION_SIZE;
         uint32_t RetireBatchThreshold = MIN_RETIRE_BATCH_THRESHOLD;
@@ -88,7 +88,7 @@ namespace PredictedAdaptedEncoding
 
         static  bool IsEmbededTimerCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
-            return a_cell_view.CellMode == PackedMode::MODE_48 && 
+            return a_cell_view.CellMode == PackedMode::MODE_48_ATOMIC_GUARANTEED && 
                 a_cell_view.RelationOffsetForMode48.has_value() &&
                 *a_cell_view.RelationOffsetForMode48 == SubClassesOfMode48::PURE_TIMER_48;
         }
@@ -166,11 +166,11 @@ namespace PredictedAdaptedEncoding
                 return false;
             }
             
-            if (a_cell_view.CellMode == PackedMode::MODE_32)
+            if (a_cell_view.CellMode == PackedMode::MODE_32_ATOMIC_GUARANTEED)
             {
                 return a_cell_view.SubClassOfMode32.has_value() && *a_cell_view.SubClassOfMode32 == SubClassesOfMode32::SELF_CLASS;
             }
-            if (a_cell_view.CellMode == PackedMode::MODE_48)
+            if (a_cell_view.CellMode == PackedMode::MODE_48_ATOMIC_GUARANTEED)
             {
                 return a_cell_view.RelationOffsetForMode48.has_value() && *a_cell_view.RelationOffsetForMode48 == SubClassesOfMode48::SELF_CLASS;
             }
@@ -184,7 +184,7 @@ namespace PredictedAdaptedEncoding
         {
             if (
                 !occupancy_cell_view.IsCellValid || occupancy_cell_view.PageClass != APCPagedNodeSegmentClasses::CONTROL_SLOT ||
-                occupancy_cell_view.CellMode != PackedMode::MODE_48 ||
+                occupancy_cell_view.CellMode != PackedMode::MODE_48_ATOMIC_GUARANTEED ||
                 occupancy_cell_view.LocalityOfCell != desired_cell_locality ||
                 !occupancy_cell_view.RelationOffsetForMode48.has_value() ||
                 *occupancy_cell_view.RelationOffsetForMode48 != SubClassesOfMode48::SUBDIVISION16x3_INTERNAL_CELL_MODEL

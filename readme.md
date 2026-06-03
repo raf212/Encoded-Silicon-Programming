@@ -61,8 +61,8 @@ The smallest unit is `PackedCell64_t`, a 64-bit atomic-compatible cell. The cell
 
 | Mode | Payload role | Control role |
 |---|---:|---|
-| `MODE_32` | 32-bit value | 16-bit clock + 16-bit metadata |
-| `MODE_48` | 48-bit value/clock/counter payload | 16-bit metadata |
+| `MODE_32_ATOMIC_GUARANTEED` | 32-bit value | 16-bit clock + 16-bit metadata |
+| `MODE_48_ATOMIC_GUARANTEED` | 48-bit value/clock/counter payload | 16-bit metadata |
 
 The metadata field acts as a compact control word. It encodes ideas such as:
 

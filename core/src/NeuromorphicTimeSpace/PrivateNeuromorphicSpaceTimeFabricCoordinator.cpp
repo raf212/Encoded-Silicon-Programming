@@ -65,8 +65,8 @@ namespace PredictedAdaptedEncoding
             cell_mode, locality_of_cell, 
             fabric_segment_class, cell_data_type, 
             value32_or_64, extended_meta_value,
-            priority,(cell_mode == PackedMode::MODE_32) ? static_cast<SubClassesOfMode32>(mode_sub_class) : SubClassesOfMode32::SELF_CLASS,
-            (cell_mode == PackedMode::MODE_48) ? static_cast<SubClassesOfMode48>(mode_sub_class) : SubClassesOfMode48::SELF_CLASS
+            priority,(cell_mode == PackedMode::MODE_32_ATOMIC_GUARANTEED) ? static_cast<SubClassesOfMode32>(mode_sub_class) : SubClassesOfMode32::SELF_CLASS,
+            (cell_mode == PackedMode::MODE_48_ATOMIC_GUARANTEED) ? static_cast<SubClassesOfMode48>(mode_sub_class) : SubClassesOfMode48::SELF_CLASS
         );
 
         if (a_valid_fabric_meta_cell32 == PackedCell64_t::PACKED_CELL_SENTINAL)
@@ -97,7 +97,7 @@ namespace PredictedAdaptedEncoding
             slab_index,
             value,
             FabricTableSegmentClasses::GENERIC_CONTROL,
-            PackedMode::MODE_48,
+            PackedMode::MODE_48_ATOMIC_GUARANTEED,
             UNSIGNED_ZERO,
             static_cast<tag8_t>(subclass48),
             PackedCellDataType::UnsignedPCellDataType,
@@ -344,17 +344,17 @@ namespace PredictedAdaptedEncoding
     //     }
         
         
-    //     MakeAndStoreDirectlyAFabricOwnedCell_(base + 0u, static_cast<uint64_t>(begin), table_id, PackedMode::MODE_32, version, 
+    //     MakeAndStoreDirectlyAFabricOwnedCell_(base + 0u, static_cast<uint64_t>(begin), table_id, PackedMode::MODE_32_ATOMIC_GUARANTEED, version, 
     //         UNSIGNED_ZERO, PackedCellDataType::UnsignedPCellDataType, PackedCellLocalityTypes::PUBLISHED,
     //         CellMapAndPriority::VERSION_AND_CLAIMED_CAS_DEPENDENT
     //     );
 
-    //     MakeAndStoreDirectlyAFabricOwnedCell_(base + 1u, static_cast<uint64_t>(end), table_id, PackedMode::MODE_32, version,
+    //     MakeAndStoreDirectlyAFabricOwnedCell_(base + 1u, static_cast<uint64_t>(end), table_id, PackedMode::MODE_32_ATOMIC_GUARANTEED, version,
     //         UNSIGNED_ZERO, PackedCellDataType::UnsignedPCellDataType, PackedCellLocalityTypes::PUBLISHED,
     //         CellMapAndPriority::VERSION_AND_CLAIMED_CAS_DEPENDENT
     //     );
 
-    //     MakeAndStoreDirectlyAFabricOwnedCell_(base + 2u, static_cast<uint64_t>(directory_width), table_id, PackedMode::MODE_32, version,
+    //     MakeAndStoreDirectlyAFabricOwnedCell_(base + 2u, static_cast<uint64_t>(directory_width), table_id, PackedMode::MODE_32_ATOMIC_GUARANTEED, version,
     //         UNSIGNED_ZERO, PackedCellDataType::UnsignedPCellDataType, PackedCellLocalityTypes::PUBLISHED,
     //         CellMapAndPriority::VERSION_AND_CLAIMED_CAS_DEPENDENT
     //     );
@@ -373,12 +373,12 @@ namespace PredictedAdaptedEncoding
     //     for (size_t i = desired_cache_entry.BeginIdx; i < desired_cache_entry.EndIdx; i++)
     //     {
     //         MakeAndStoreDirectlyAFabricOwnedCell_(
-    //             i + 0u, UNSIGNED_ZERO, table_class, PackedMode::MODE_32, 
+    //             i + 0u, UNSIGNED_ZERO, table_class, PackedMode::MODE_32_ATOMIC_GUARANTEED, 
     //             desired_cache_entry.VersionCount, UNSIGNED_ZERO, PackedCellDataType::UnsignedPCellDataType,
     //             PackedCellLocalityTypes::IDLE, CellMapAndPriority::VERSION_AND_CLAIMED_CAS_DEPENDENT
     //         );
     //         MakeAndStoreDirectlyAFabricOwnedCell_(
-    //             i + 1u, IN_CELL_VALUE_MODE32_SENTINAL, table_class, PackedMode::MODE_32, 
+    //             i + 1u, IN_CELL_VALUE_MODE32_SENTINAL, table_class, PackedMode::MODE_32_ATOMIC_GUARANTEED, 
     //             desired_cache_entry.VersionCount, UNSIGNED_ZERO, PackedCellDataType::UnsignedPCellDataType,
     //             PackedCellLocalityTypes::IDLE, CellMapAndPriority::VERSION_AND_CLAIMED_CAS_DEPENDENT
     //         );
@@ -416,7 +416,7 @@ namespace PredictedAdaptedEncoding
         MakeAndStoreDirectlyAFabricOwnedCell_(
             slot_idx, value32,
             FabricTableSegmentClasses::SLOT_DIRECTORY,
-            PackedMode::MODE_32, extended_meta_value, static_cast<tag8_t>(SubClassesOfMode32::SELF_CLASS),
+            PackedMode::MODE_32_ATOMIC_GUARANTEED, extended_meta_value, static_cast<tag8_t>(SubClassesOfMode32::SELF_CLASS),
             PackedCellDataType::UnsignedPCellDataType, locality_of_cell,
             CellMapAndPriority::VERSION_AND_CLAIMED_CAS_DEPENDENT
         );

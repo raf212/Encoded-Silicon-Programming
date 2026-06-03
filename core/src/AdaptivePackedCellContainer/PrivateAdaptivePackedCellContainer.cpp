@@ -510,7 +510,7 @@ namespace PredictedAdaptedEncoding
         out_going_cell = PackedCell64_t::SetLocalityInPacked(out_going_cell, PackedCellLocalityTypes::PUBLISHED);
 
         const PackedMode mode = PackedCell64_t::ExtractModeOfPackedCellFromPacked(out_going_cell);
-        if (mode == PackedMode::MODE_32)
+        if (mode == PackedMode::MODE_32_ATOMIC_GUARANTEED)
         {
             out_going_cell = PackedCell64_t::SetRelOffsetForMode32InPacked(out_going_cell, SubClassesOfMode32::SELF_CLASS);
         }

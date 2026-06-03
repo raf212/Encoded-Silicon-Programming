@@ -240,7 +240,7 @@ namespace PredictedAdaptedEncoding
 
     //     SlabCellCount_ = SegmentPoolEnd_;
 
-    //     const packed64_t idle_free32 = PackedCell64_t::MakeInitialFabricValidPackedCell(PackedMode::MODE_32);
+    //     const packed64_t idle_free32 = PackedCell64_t::MakeInitialFabricValidPackedCell(PackedMode::MODE_32_ATOMIC_GUARANTEED);
 
     //     for (size_t i = 0; i < SlabCellCount_; i++)
     //     {
