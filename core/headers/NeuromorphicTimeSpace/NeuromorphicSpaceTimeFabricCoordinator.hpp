@@ -53,11 +53,8 @@ namespace PredictedAdaptedEncoding
             const uint8_t alignment_value_15 = 16 - 1;
             return (value + alignment_value_15) & ~static_cast<size_t>(alignment_value_15);
         }
-//checked-----------------------------------------------
-
-        bool CheckAndStoreAPrebuildCellInSlab_(size_t idx, packed64_t packed_cell) noexcept;
         
-        bool MakeAndStoreAFabricOwnedCell_(
+        bool MakeAndStoreDirectlyAFabricOwnedCell_(
             size_t index, 
             uint64_t value32_or_64, 
             FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
@@ -69,24 +66,14 @@ namespace PredictedAdaptedEncoding
             PriorityPhysics priority = PriorityPhysics::IMPORTANT
         ) noexcept;
 
-
-
-        bool MakeCheckAndStoreAFabricControlValidCell_(
-            FabricMetaIndicies fabric_meta_idx, 
-            uint64_t value32_or_64, 
-            FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GENERIC_CONTROL,
-            PackedMode cell_mode = PackedMode::MODE_48, 
-            clk16_t extended_meta_value = UNSIGNED_ZERO,
-            tag8_t mode_sub_class = static_cast<tag8_t>(SubClassesOfMode32::SELF_CLASS),
-            PackedCellDataType cell_data_type = PackedCellDataType::UnsignedPCellDataType,
-            PackedCellLocalityTypes locality_of_cell = PackedCellLocalityTypes::IDLE, 
-            PriorityPhysics priority = PriorityPhysics::IMPORTANT
-        ) noexcept;
-
-        void StoreNewDefaultFebricControlMeta48_(
+        bool StoreFebricControlMeta48Directly_(
             FabricMetaIndicies fabric_meta_idx, uint64_t value, 
-            FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GENERIC_CONTROL
+            PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::PUBLISHED,
+            SubClassesOfMode48 sub_class48 = SubClassesOfMode48::SELF_CLASS,
+            PriorityPhysics priority = PriorityPhysics::VERSION_DEPENDENCY
         )noexcept;
+
+//checked-----------------------------------------------
 
         bool UpdateValidPairedOccupancyApproximation_(
             PackedCellLocalityTypes desired_occupancy_of_locality, uint64_t desired_occupancy_value,
