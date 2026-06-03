@@ -40,7 +40,7 @@ namespace PredictedAdaptedEncoding
 
     packed64_t SegmentIODefinition::PackPureClock48AsPackedCell(
         std::optional<uint64_t> clock48,
-        CellMapAndPriority priority,
+        CellMap priority,
         PackedCellLocalityTypes locality,
         APCPagedNodeSegmentClasses page_class,
         SubClassesOfMode48 reloffset,
@@ -67,7 +67,7 @@ namespace PredictedAdaptedEncoding
         return PackedCell64_t::ComposeCLK48u_64((now_timer.NowTicks() & MaskLowNBits(CLK_B48)), strl_clock48);
     }
 
-    void SegmentIODefinition::WriteOrUpdateMetaClock48(CellMapAndPriority priority, std::optional<uint64_t>meta_clock_48 ) noexcept
+    void SegmentIODefinition::WriteOrUpdateMetaClock48(CellMap priority, std::optional<uint64_t>meta_clock_48 ) noexcept
     {
         size_t idx = static_cast<size_t>(MetaIndexOfAPCNode::LOCAL_CLOCK48);
         packed64_t wanted_cell = PackPureClock48AsPackedCell(meta_clock_48, priority, PackedCellLocalityTypes::PUBLISHED);
@@ -118,10 +118,10 @@ namespace PredictedAdaptedEncoding
         bool is_root_shared
     ) noexcept
     {
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::LOGICAL_NODE_ID, logical_node_id, CellMapAndPriority::IDLE);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::SHARED_ID, shared_id, CellMapAndPriority::IDLE);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::SHARED_PREVIOUS_ID, BRANCH_SENTINAL, CellMapAndPriority::IDLE);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::SHARED_NEXT_ID, BRANCH_SENTINAL, CellMapAndPriority::IDLE);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::LOGICAL_NODE_ID, logical_node_id, CellMap::IN_CLOCKED_GENERIC_SPIKE);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::SHARED_ID, shared_id, CellMap::IN_CLOCKED_GENERIC_SPIKE);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::SHARED_PREVIOUS_ID, BRANCH_SENTINAL, CellMap::IN_CLOCKED_GENERIC_SPIKE);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::SHARED_NEXT_ID, BRANCH_SENTINAL, CellMap::IN_CLOCKED_GENERIC_SPIKE);
         if (is_root_shared)
         {
             TurnOnMultipleSegmentFlagsAtOnce_(static_cast<uint32_t>(ControlEnumOfAPCSegment::IS_GRAPH_NODE) | static_cast<uint32_t>(ControlEnumOfAPCSegment::IS_SHARED_ROOT));
@@ -139,12 +139,12 @@ namespace PredictedAdaptedEncoding
         uint32_t aux_param_uint32
     ) noexcept
     {
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::NODE_COMPUTE_KIND, UNSIGNED_ZERO, CellMapAndPriority::IDLE);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::NODE_AUX_PARAM_U32, aux_param_uint32, CellMapAndPriority::IDLE);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_FORWARD_CLOCK16, UNSIGNED_ZERO, CellMapAndPriority::IDLE);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_BACKWARD_CLOCK16, UNSIGNED_ZERO, CellMapAndPriority::IDLE);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_EMITTED_FEED_FORWARD_CLOCK16, UNSIGNED_ZERO, CellMapAndPriority::IDLE);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_EMITTED_FEED_BACKWARD_CLOCK16, UNSIGNED_ZERO, CellMapAndPriority::IDLE);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::NODE_COMPUTE_KIND, UNSIGNED_ZERO, CellMap::IN_CLOCKED_GENERIC_SPIKE);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::NODE_AUX_PARAM_U32, aux_param_uint32, CellMap::IN_CLOCKED_GENERIC_SPIKE);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_FORWARD_CLOCK16, UNSIGNED_ZERO, CellMap::IN_CLOCKED_GENERIC_SPIKE);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_BACKWARD_CLOCK16, UNSIGNED_ZERO, CellMap::IN_CLOCKED_GENERIC_SPIKE);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_EMITTED_FEED_FORWARD_CLOCK16, UNSIGNED_ZERO, CellMap::IN_CLOCKED_GENERIC_SPIKE);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_EMITTED_FEED_BACKWARD_CLOCK16, UNSIGNED_ZERO, CellMap::IN_CLOCKED_GENERIC_SPIKE);
 
         WriteMetaCellMode32_(MetaIndexOfAPCNode::FEEDFORWARD_IN_TARGET_ID, BRANCH_SENTINAL);
         WriteMetaCellMode32_(MetaIndexOfAPCNode::FEEDFORWARD_OUT_TARGET_ID, BRANCH_SENTINAL);
@@ -166,7 +166,7 @@ namespace PredictedAdaptedEncoding
         uint32_t aux_param_uint32,
         uint32_t branch_depth,
         uint8_t branch_priority,
-        CellMapAndPriority write_cell_priority
+        CellMap write_cell_priority
 
     ) noexcept
     {

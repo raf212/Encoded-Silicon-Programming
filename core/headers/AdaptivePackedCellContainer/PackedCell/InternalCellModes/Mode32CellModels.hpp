@@ -167,14 +167,14 @@ private:
             const packed64_t low_half_packed_cell = PackedCell64_t::MakeInitialValidBlindPackedCell(
                 PackedMode::MODE_32_ATOMIC_GUARANTEED, locality, ownership, page_class,
                 PackedCellDataType::UnsignedPCellDataType, low_half32, version,
-                CellMapAndPriority::VERSION_AND_CLAIMED_CAS_DEPENDENT, 
+                CellMap::VERSIONED, 
                 static_cast<tag8_t>(SubClassesOfMode32::LOW_OF_PAIRED_VERSIONED_CELL)
             );
     
             const packed64_t high_half_packed_cell = PackedCell64_t::MakeInitialValidBlindPackedCell(
                 PackedMode::MODE_32_ATOMIC_GUARANTEED, locality, ownership, page_class,
                 PackedCellDataType::UnsignedPCellDataType, high_half32, version,
-                CellMapAndPriority::VERSION_AND_CLAIMED_CAS_DEPENDENT, 
+                CellMap::VERSIONED, 
                 static_cast<tag8_t>(SubClassesOfMode32::HIGH_OF_PAIRED_VERSIONED_CELL)
             );
 

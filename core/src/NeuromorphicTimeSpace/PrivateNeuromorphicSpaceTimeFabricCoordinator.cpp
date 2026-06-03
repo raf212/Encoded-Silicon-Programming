@@ -58,7 +58,7 @@ namespace PredictedAdaptedEncoding
         PackedMode cell_mode, clk16_t extended_meta_value,
         tag8_t mode_sub_class, PackedCellDataType cell_data_type, 
         PackedCellLocalityTypes locality_of_cell, 
-        CellMapAndPriority priority
+        CellMap priority
     ) noexcept
     {
         const packed64_t a_valid_fabric_meta_cell32 = PackedCell64_t::MakeInitialFabricValidPackedCell(
@@ -84,7 +84,7 @@ namespace PredictedAdaptedEncoding
         uint64_t value, 
         PackedCellLocalityTypes cell_locality,
         SubClassesOfMode48 subclass48,
-        CellMapAndPriority priority
+        CellMap priority
     )noexcept
     {
         const size_t slab_index = static_cast<size_t>(fabric_meta_idx);
@@ -346,17 +346,17 @@ namespace PredictedAdaptedEncoding
         
     //     MakeAndStoreDirectlyAFabricOwnedCell_(base + 0u, static_cast<uint64_t>(begin), table_id, PackedMode::MODE_32_ATOMIC_GUARANTEED, version, 
     //         UNSIGNED_ZERO, PackedCellDataType::UnsignedPCellDataType, PackedCellLocalityTypes::PUBLISHED,
-    //         CellMapAndPriority::VERSION_AND_CLAIMED_CAS_DEPENDENT
+    //         CellMap::VERSIONED
     //     );
 
     //     MakeAndStoreDirectlyAFabricOwnedCell_(base + 1u, static_cast<uint64_t>(end), table_id, PackedMode::MODE_32_ATOMIC_GUARANTEED, version,
     //         UNSIGNED_ZERO, PackedCellDataType::UnsignedPCellDataType, PackedCellLocalityTypes::PUBLISHED,
-    //         CellMapAndPriority::VERSION_AND_CLAIMED_CAS_DEPENDENT
+    //         CellMap::VERSIONED
     //     );
 
     //     MakeAndStoreDirectlyAFabricOwnedCell_(base + 2u, static_cast<uint64_t>(directory_width), table_id, PackedMode::MODE_32_ATOMIC_GUARANTEED, version,
     //         UNSIGNED_ZERO, PackedCellDataType::UnsignedPCellDataType, PackedCellLocalityTypes::PUBLISHED,
-    //         CellMapAndPriority::VERSION_AND_CLAIMED_CAS_DEPENDENT
+    //         CellMap::VERSIONED
     //     );
     // }
 
@@ -375,12 +375,12 @@ namespace PredictedAdaptedEncoding
     //         MakeAndStoreDirectlyAFabricOwnedCell_(
     //             i + 0u, UNSIGNED_ZERO, table_class, PackedMode::MODE_32_ATOMIC_GUARANTEED, 
     //             desired_cache_entry.VersionCount, UNSIGNED_ZERO, PackedCellDataType::UnsignedPCellDataType,
-    //             PackedCellLocalityTypes::IDLE, CellMapAndPriority::VERSION_AND_CLAIMED_CAS_DEPENDENT
+    //             PackedCellLocalityTypes::IDLE, CellMap::VERSIONED
     //         );
     //         MakeAndStoreDirectlyAFabricOwnedCell_(
     //             i + 1u, IN_CELL_VALUE_MODE32_SENTINAL, table_class, PackedMode::MODE_32_ATOMIC_GUARANTEED, 
     //             desired_cache_entry.VersionCount, UNSIGNED_ZERO, PackedCellDataType::UnsignedPCellDataType,
-    //             PackedCellLocalityTypes::IDLE, CellMapAndPriority::VERSION_AND_CLAIMED_CAS_DEPENDENT
+    //             PackedCellLocalityTypes::IDLE, CellMap::VERSIONED
     //         );
     //     }
         
@@ -418,7 +418,7 @@ namespace PredictedAdaptedEncoding
             FabricTableSegmentClasses::SLOT_DIRECTORY,
             PackedMode::MODE_32_ATOMIC_GUARANTEED, extended_meta_value, static_cast<tag8_t>(SubClassesOfMode32::SELF_CLASS),
             PackedCellDataType::UnsignedPCellDataType, locality_of_cell,
-            CellMapAndPriority::VERSION_AND_CLAIMED_CAS_DEPENDENT
+            CellMap::VERSIONED
         );
     }
 

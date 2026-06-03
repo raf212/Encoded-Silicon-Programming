@@ -110,7 +110,7 @@ namespace
         MasterClockConf& clock,
         uint32_t value,
         APCPagedNodeSegmentClasses region,
-        CellMapAndPriority priority = CellMapAndPriority::IDLE
+        CellMap priority = CellMap::IN_CLOCKED_GENERIC_SPIKE
     )
     {
         return clock.ComposeValue32WithCurrentThreadStamp16(
@@ -128,7 +128,7 @@ namespace
         MasterClockConf& clock,
         float value,
         APCPagedNodeSegmentClasses region,
-        CellMapAndPriority priority = CellMapAndPriority::IDLE
+        CellMap priority = CellMap::IN_CLOCKED_GENERIC_SPIKE
     )
     {
         const uint32_t bits = BitCastMaybe<uint32_t>(value);
@@ -480,7 +480,7 @@ namespace
         suite.Section("1. PackedCell encoding / extraction");
 
         const packed64_t u32_cell =
-            PackU32(clock, 0x12345678u, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, CellMapAndPriority::CLAIMED_CAS_DEPENDENT);
+            PackU32(clock, 0x12345678u, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, CellMap::IN_CLOCKED_GENERIC_SPIKE);
 
         suite.Check(
             PackedCell64_t::ExtractModeOfPackedCellFromPacked(u32_cell) == PackedMode::MODE_32_ATOMIC_GUARANTEED,
@@ -503,7 +503,7 @@ namespace
         );
 
         suite.Check(
-            PackedCell64_t::ExtractPriorityFromPacked(u32_cell) == CellMapAndPriority::CLAIMED_CAS_DEPENDENT,
+            PackedCell64_t::ExtractPriorityFromPacked(u32_cell) == CellMap::IN_CLOCKED_GENERIC_SPIKE,
             "PackedCell: priority is preserved"
         );
 
@@ -516,7 +516,7 @@ namespace
         );
 
         const packed64_t f32_cell =
-            PackFloat32(clock, 3.25f, APCPagedNodeSegmentClasses::STATE_SLOT, CellMapAndPriority::COMPLEATE_ATOMICITY);
+            PackFloat32(clock, 3.25f, APCPagedNodeSegmentClasses::STATE_SLOT, CellMap::IN_CLOCKED_GENERIC_SPIKE);
 
         const auto f32_value =
             PackedCell64_t::ExtractAnyPackedValueX<float>(f32_cell);
@@ -604,7 +604,7 @@ namespace
         InitNode(node, manager, cfg, SegmentIODefinition::APCNodeComputeKind::GENERATOR_UINT32);
 
         const packed64_t cell =
-            PackU32(clock, 777u, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, CellMapAndPriority::CLAIMED_CAS_DEPENDENT);
+            PackU32(clock, 777u, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, CellMap::IN_CLOCKED_GENERIC_SPIKE);
 
         const bool published =
             PublishBudgeted(node, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, cell, manager, nullptr);
@@ -811,7 +811,7 @@ namespace
         for (uint32_t i = 0; i < N; ++i)
         {
             const packed64_t cell =
-                PackU32(clock, i + 1u, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, CellMapAndPriority::CLAIMED_CAS_DEPENDENT);
+                PackU32(clock, i + 1u, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, CellMap::IN_CLOCKED_GENERIC_SPIKE);
 
             if (PublishBudgeted(node, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, cell, manager, &grow_counter))
             {
@@ -909,7 +909,7 @@ namespace
                     }
 
                     const packed64_t cell =
-                        PackU32(clock, value, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, CellMapAndPriority::CLAIMED_CAS_DEPENDENT);
+                        PackU32(clock, value, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, CellMap::IN_CLOCKED_GENERIC_SPIKE);
 
                     if (PublishBudgeted(node, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, cell, manager, &grow_counter))
                     {
@@ -1102,10 +1102,10 @@ namespace
                 for (uint32_t i = p + 1; i <= VALUE_COUNT; i += PRODUCER_COUNT)
                 {
                     const packed64_t ff =
-                        PackU32(clock, i, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, CellMapAndPriority::CLAIMED_CAS_DEPENDENT);
+                        PackU32(clock, i, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, CellMap::IN_CLOCKED_GENERIC_SPIKE);
 
                     const packed64_t fb =
-                        PackU32(clock, i + 1u, APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE, CellMapAndPriority::OLDEST_CLOCK_FIRST);
+                        PackU32(clock, i + 1u, APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE, CellMap::IN_CLOCKED_GENERIC_SPIKE);
 
                     if (PublishBudgeted(Sensor, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, ff, manager, &grow_ff))
                     {
@@ -1149,7 +1149,7 @@ namespace
                     }
 
                     const packed64_t state_cell =
-                        PackU32(clock, *value + 1u, APCPagedNodeSegmentClasses::STATE_SLOT, CellMapAndPriority::COMPLEATE_ATOMICITY);
+                        PackU32(clock, *value + 1u, APCPagedNodeSegmentClasses::STATE_SLOT, CellMap::IN_CLOCKED_GENERIC_SPIKE);
 
                     if (PublishBudgeted(Integrator, APCPagedNodeSegmentClasses::STATE_SLOT, state_cell, manager, &grow_state))
                     {
@@ -1189,7 +1189,7 @@ namespace
                     }
 
                     const packed64_t error_cell =
-                        PackU32(clock, 1u, APCPagedNodeSegmentClasses::ERROR_SLOT, CellMapAndPriority::ERROR_FIRST);
+                        PackU32(clock, 1u, APCPagedNodeSegmentClasses::ERROR_SLOT, CellMap::ERROR_FIRST);
 
                     if (PublishBudgeted(Comparator, APCPagedNodeSegmentClasses::ERROR_SLOT, error_cell, manager, &grow_error))
                     {
@@ -1266,7 +1266,7 @@ namespace
                     pending_error.reset();
 
                     const packed64_t motor_cell =
-                        PackFloat32(clock, motor_value, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, CellMapAndPriority::CAS_FOR_ALL_LOCALITIES);
+                        PackFloat32(clock, motor_value, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, CellMap::IN_CLOCKED_GENERIC_SPIKE);
 
                     if (!PublishBudgeted(Motor, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, motor_cell, manager, nullptr))
                     {

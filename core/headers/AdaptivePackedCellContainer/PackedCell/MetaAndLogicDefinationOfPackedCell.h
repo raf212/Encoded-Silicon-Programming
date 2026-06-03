@@ -131,16 +131,12 @@ namespace PredictedAdaptedEncoding {
         FOUR_SUBDIVISION_2x16_AND_2x8 = 3
     };
 
-    enum class CellMapAndPriority : tag8_t
+    enum class CellMap : tag8_t
     {
-        IDLE = 0,
-        CLAIMED_CAS_DEPENDENT = 1,
-        VERSION_AND_CLAIMED_CAS_DEPENDENT = 2,
-        CAS_FOR_ALL_LOCALITIES = 3,
-        COMPLEATE_ATOMICITY = 4,
-        OLDEST_CLOCK_FIRST = 5,
-        PRESSURE_FIRST = 6,
-        ERROR_FIRST = 7
+        IN_CLOCKED_GENERIC_SPIKE = 1,
+        VERSIONED = 0,
+        PRESSURE_FIRST = 2,
+        ERROR_FIRST = 3
     };
 
     enum class APCPagedNodeSegmentClasses : tag8_t
