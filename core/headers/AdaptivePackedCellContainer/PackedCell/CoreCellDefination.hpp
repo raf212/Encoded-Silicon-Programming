@@ -575,6 +575,7 @@ namespace PredictedAdaptedEncoding
         }
 
         static  constexpr meta16_t MakeInCellMetaForMode_32t(
+            BehaveOfMode32 cell_behavior = BehaveOfMode32::MODE_32_CLAIMED_GUARANTEED,
             CellMap priority = CellMap::IN_CLOCKED_GENERIC_SPIKE, 
             PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
@@ -589,12 +590,13 @@ namespace PredictedAdaptedEncoding
                 static_cast<tag8_t>(locality),
                 static_cast<tag8_t>(page_class),
                 static_cast<tag8_t>(rel_offset_32),
-                static_cast<tag8_t>(PackedMode::MODE_32_ATOMIC_GUARANTEED),
+                static_cast<tag8_t>(cell_behavior),
                 static_cast<tag8_t>(cell_data_type)
             );
         }
 
         static  constexpr meta16_t MakeInCellMetaForMode_48t(
+            BehaveOfMode48 cell_behavior = BehaveOfMode48::MODE_48_CLAIMED_GURANTEED,
             CellMap priority = CellMap::IN_CLOCKED_GENERIC_SPIKE, 
             PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
@@ -609,7 +611,7 @@ namespace PredictedAdaptedEncoding
                 static_cast<tag8_t>(locality),
                 static_cast<tag8_t>(page_class),
                 static_cast<tag8_t>(rel_offset_48),
-                static_cast<tag8_t>(PackedMode::MODE_48_ATOMIC_GUARANTEED),
+                static_cast<tag8_t>(cell_behavior),
                 static_cast<tag8_t>(cell_data_type)
             );
         }
@@ -683,9 +685,10 @@ namespace PredictedAdaptedEncoding
             PackedCellDataType cell_data_type = PackedCellDataType::UnsignedPCellDataType
         ) noexcept
         {
-            if (cell_mode == PackedMode::MODE_32_ATOMIC_GUARANTEED)
+            if (cell_mode == PackedMode::MODE_32_ATOMIC_GUARANTEED || cell_mode == PackedMode::MODE_32_CLAIMED_GUARANTEED)
             {
                 const meta16_t meta16_for_mode32 = MakeInCellMetaForMode_32t(
+                    static_cast<BehaveOfMode32>(cell_mode),
                     cell_priority,
                     node_authority,
                     cell_locality,
@@ -703,6 +706,7 @@ namespace PredictedAdaptedEncoding
             else
             {
                 const meta16_t meta16_for_mode48 = MakeInCellMetaForMode_48t(
+                    static_cast<BehaveOfMode48>(cell_mode),
                     cell_priority,
                     node_authority,
                     cell_locality,

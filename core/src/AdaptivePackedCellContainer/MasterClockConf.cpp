@@ -30,7 +30,7 @@ namespace PredictedAdaptedEncoding
             return PackedCell64_t::ComposeValue32u_64(
                 value32_of_provided_cell,
                 now_clk16,
-                PackedCell64_t::MakeInCellMetaForMode_32t(priority_of_provided_cell, node_authority, locality_of_provided_cell, rel_mask, reloffset32_of_provided_cell, dtype_of_provided_cell)
+                PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODE_32_ATOMIC_GUARANTEED, priority_of_provided_cell, node_authority, locality_of_provided_cell, rel_mask, reloffset32_of_provided_cell, dtype_of_provided_cell)
             );
         }
 
@@ -41,7 +41,7 @@ namespace PredictedAdaptedEncoding
             return PackedCell64_t::ComposeCLK48u_64(
                 now_ticks48,
                 //rename Strl to STRL(future)
-                PackedCell64_t::MakeInCellMetaForMode_48t(priority_of_provided_cell, node_authority, locality_of_provided_cell, rel_mask, reloffset48_of_provided_cell, dtype_of_provided_cell)
+                PackedCell64_t::MakeInCellMetaForMode_48t(BehaveOfMode48::MODE_48_ATOMIC_GUARANTEED, priority_of_provided_cell, node_authority, locality_of_provided_cell, rel_mask, reloffset48_of_provided_cell, dtype_of_provided_cell)
             );
         }
         return provided_packed_cell;

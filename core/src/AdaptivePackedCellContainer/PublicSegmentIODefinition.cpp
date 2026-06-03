@@ -58,7 +58,7 @@ namespace PredictedAdaptedEncoding
             return OwnedMasterClockConfPtr_->ComposePureClockCell48();
         }
         
-        meta16_t strl_clock48 = PackedCell64_t::MakeInCellMetaForMode_48t(priority, node_authority, locality, page_class, reloffset, dtype);
+        meta16_t strl_clock48 = PackedCell64_t::MakeInCellMetaForMode_48t(BehaveOfMode48::MODE_48_ATOMIC_GUARANTEED, priority, node_authority, locality, page_class, reloffset, dtype);
         if (clock48)
         {
             return PackedCell64_t::ComposeCLK48u_64(clock48.value(), strl_clock48);

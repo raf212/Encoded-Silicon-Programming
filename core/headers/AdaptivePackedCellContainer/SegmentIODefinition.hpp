@@ -127,7 +127,7 @@ protected:
         {
             return OwnedMasterClockConfPtr_->ComposeValue32WithCurrentThreadStamp16(value32, page_class, priority, locality, reloffset_mode32, dtype);
         }
-        meta16_t strl_moded32 = PackedCell64_t::MakeInCellMetaForMode_32t(priority, node_authority, locality, page_class, reloffset_mode32, dtype);
+        meta16_t strl_moded32 = PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODE_32_ATOMIC_GUARANTEED, priority, node_authority, locality, page_class, reloffset_mode32, dtype);
         return PackedCell64_t::ComposeValue32u_64(value32, UNSIGNED_ZERO, strl_moded32);
     }
 
@@ -152,7 +152,7 @@ protected:
         uint64_t raw48_value,
         APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
         CellMap priority = CellMap::IN_CLOCKED_GENERIC_SPIKE,
-        SubClassesOfMode48 rel_offset = SubClassesOfMode48::SUBDIVISION16x3_INTERNAL_CELL_MODEL
+        SubClassesOfMode48 rel_offset = SubClassesOfMode48::SELF_CLASS
     ) noexcept
     {
         size_t index = static_cast<size_t>(idx);
@@ -160,7 +160,7 @@ protected:
         {
             return;
         }
-        const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(priority, PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER, PackedCellLocalityTypes::PUBLISHED, page_class, rel_offset);
+        const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(BehaveOfMode48::MODE_48_ATOMIC_GUARANTEED, priority, PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER, PackedCellLocalityTypes::PUBLISHED, page_class, rel_offset);
         const packed64_t packed_cell = PackedCell64_t::ComposeCLK48u_64(raw48_value & MaskLowNBits(CLK_B48), meta16);
         BackingPtr[index].store(packed_cell, MoStoreSeq_);
         BackingPtr[index].notify_all();

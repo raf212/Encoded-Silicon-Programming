@@ -89,7 +89,7 @@ class AdaptivePackedCellContainer;
         )
         {
             const clk16_t now_clock16 = NowClock16();
-            const meta16_t strlfor32 = PackedCell64_t::MakeInCellMetaForMode_32t(desired_priority, desired_node_authority, desired_locality, desired_page_class, desired_reloffset, desired_dtype);
+            const meta16_t strlfor32 = PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODE_32_ATOMIC_GUARANTEED, desired_priority, desired_node_authority, desired_locality, desired_page_class, desired_reloffset, desired_dtype);
             return PackedCell64_t::ComposeValue32u_64(provided_cell_value32, now_clock16, strlfor32);
         }
 
@@ -99,13 +99,15 @@ class AdaptivePackedCellContainer;
         ) noexcept
         {
             const uint64_t full_clock48 = NowTicks48();
-            const meta16_t strl_for_pure48_clock = PackedCell64_t::MakeInCellMetaForMode_48t(desired_priority, 
-                                PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
-                                desired_locality, 
-                                APCPagedNodeSegmentClasses::CONTROL_SLOT,
-                                SubClassesOfMode48::PURE_TIMER_48,
-                                PackedCellDataType::UnsignedPCellDataType
-                            );
+            const meta16_t strl_for_pure48_clock = PackedCell64_t::MakeInCellMetaForMode_48t(
+                BehaveOfMode48::MODE_48_ATOMIC_GUARANTEED,
+                desired_priority, 
+                PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
+                desired_locality, 
+                APCPagedNodeSegmentClasses::CONTROL_SLOT,
+                SubClassesOfMode48::PURE_TIMER_48,
+                PackedCellDataType::UnsignedPCellDataType
+            );
             return PackedCell64_t::ComposeCLK48u_64(full_clock48, strl_for_pure48_clock);
         }
 

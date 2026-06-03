@@ -110,9 +110,21 @@ namespace PredictedAdaptedEncoding {
     enum class PackedMode : tag8_t
     {
         MODE_32_ATOMIC_GUARANTEED = 0,
-        MODE_48_ATOMIC_GUARANTEED = 1,
-        MODE_32_CLAIMED_GUARANTEED = 2,
+        MODE_32_CLAIMED_GUARANTEED = 1,
+        MODE_48_ATOMIC_GUARANTEED = 2,
         MODE_48_CLAIMED_GURANTEED = 3
+    };
+
+    enum class BehaveOfMode32 : tag8_t
+    {
+        MODE_32_ATOMIC_GUARANTEED = PackedMode::MODE_32_ATOMIC_GUARANTEED,
+        MODE_32_CLAIMED_GUARANTEED = PackedMode::MODE_32_CLAIMED_GUARANTEED
+    };
+
+    enum class BehaveOfMode48 : tag8_t
+    {
+        MODE_48_ATOMIC_GUARANTEED = PackedMode::MODE_48_ATOMIC_GUARANTEED,
+        MODE_48_CLAIMED_GURANTEED = PackedMode::MODE_48_CLAIMED_GURANTEED
     };
 
     enum class SubClassesOfMode32 : tag8_t

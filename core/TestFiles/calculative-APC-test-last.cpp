@@ -501,7 +501,7 @@ int main()
                         clock,
                         error_value,
                         APCPagedNodeSegmentClasses::ERROR_SLOT,
-                        CellMap::ERROR_FIRST
+                        CellMap::IN_CLOCKED_GENERIC_SPIKE
                     );
 
                 if (PublishBudgeted(
