@@ -73,13 +73,13 @@ namespace PredictedAdaptedEncoding
             PriorityPhysics priority = PriorityPhysics::VERSION_DEPENDENCY
         )noexcept;
 
-//checked-----------------------------------------------
-
-        bool UpdateValidPairedOccupancyApproximation_(
+        bool UpdateValidPairedOccupancyApproxAtomically_(
             PackedCellLocalityTypes desired_occupancy_of_locality, uint64_t desired_occupancy_value,
             bool force_update = false,
             clk16_t pair_version = APCDataStructure::BRANCH_VERSION
         ) noexcept;
+
+//checked-----------------------------------------------
 
         void ResetAll4TypesOfOccupancyMetaData() noexcept;
 

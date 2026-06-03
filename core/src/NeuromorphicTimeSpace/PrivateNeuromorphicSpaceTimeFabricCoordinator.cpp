@@ -106,139 +106,133 @@ namespace PredictedAdaptedEncoding
         );
     }
 
-    // //Integrate AtomicAdaptiveBackoff
-    // // add CAS_FAILURE_COUNT
-    // bool NeuromorphicSpaceTimeFabricCoordinator::UpdateValidPairedOccupancyApproximation_(
-    //     PackedCellLocalityTypes desired_occupancy_of_locality, uint64_t desired_occupancy_value,
-    //     bool force_update, clk16_t pair_version
-    // ) noexcept
-    // {
-    //     const FabricMetaIndicies desired_occupancy_low_idx = CoreOfFabricCoordinator::GetDesiredLowIdxOfOccupancyPairFromLocality(desired_occupancy_of_locality);
+    //Integrate AtomicAdaptiveBackoff
+    // add CAS_FAILURE_COUNT
+    bool NeuromorphicSpaceTimeFabricCoordinator::UpdateValidPairedOccupancyApproxAtomically_(
+        PackedCellLocalityTypes desired_occupancy_of_locality, uint64_t desired_occupancy_value,
+        bool force_update, clk16_t pair_version
+    ) noexcept
+    {
+        const FabricMetaIndicies desired_occupancy_low_idx = CoreOfFabricCoordinator::GetDesiredLowIdxOfOccupancyPairFromLocality(desired_occupancy_of_locality);
 
-    //     if (force_update && desired_occupancy_low_idx == FabricMetaIndicies::EOF_FABRIC_HEADER)
-    //     {
-    //         return false;
-    //     }
+        if (force_update && desired_occupancy_low_idx == FabricMetaIndicies::EOF_FABRIC_HEADER)
+        {
+            return false;
+        }
 
-    //     const size_t low_idx = static_cast<size_t>(desired_occupancy_low_idx);
-    //     const size_t high_idx = low_idx + 1;
+        const size_t low_idx = static_cast<size_t>(desired_occupancy_low_idx);
+        const size_t high_idx = low_idx + 1;
 
-    //     const std::pair<packed64_t, packed64_t> low32_and_probable_high32 = PairedVersionedCellModelOfMode32::GetPairOfLow32FAndHigh32SFromUnsigned64ForFabric(
-    //         desired_occupancy_value, pair_version,
-    //         PackedCellLocalityTypes::PUBLISHED,
-    //         FabricTableSegmentClasses::GENERIC_CONTROL
-    //     );
+        const std::pair<packed64_t, packed64_t> low32_and_probable_high32 = PairedVersionedCellModelOfMode32::GetPairOfLow32FAndHigh32SFromUnsigned64ForFabric(
+            desired_occupancy_value, pair_version,
+            PackedCellLocalityTypes::PUBLISHED,
+            FabricTableSegmentClasses::GENERIC_CONTROL
+        );
 
-    //     auto ForceUpdate = [&](){
-    //         AtomicallyStorePackedCellUnchecked(low_idx, low32_and_probable_high32.first);
-    //         AtomicallyStorePackedCellUnchecked(high_idx, low32_and_probable_high32.second);
-    //         return true;
-    //     };
+        auto ForceUpdate = [&](){
+            AtomicallyStorePackedCellUnchecked(low_idx, low32_and_probable_high32.first);
+            AtomicallyStorePackedCellUnchecked(high_idx, low32_and_probable_high32.second);
+            return true;
+        };
         
-    //     if (force_update)
-    //     {
-    //         return ForceUpdate();
-    //     }
+        if (force_update)
+        {
+            return ForceUpdate();
+        }
 
-    //     const PackedCell64_t::AuthoritiveCellView low32_half_view{};
-    //     const PackedCell64_t::AuthoritiveCellView high32_half_view{};
-    //     const std::optional<uint64_t> maybe_occupancy = ReadOccupancyApproxFromPairedIfValid(desired_occupancy_of_locality, &low32_half_view, &high32_half_view);
+        const PackedCell64_t::AuthoritiveCellView low32_half_view{};
+        const PackedCell64_t::AuthoritiveCellView high32_half_view{};
+        const std::optional<uint64_t> maybe_occupancy = ReadOccupancyApproxFromPairedIfValid(desired_occupancy_of_locality, &low32_half_view, &high32_half_view);
 
-    //     if (!maybe_occupancy|| *maybe_occupancy == PackedCell64_t::PACKED_CELL_SENTINAL)
-    //     {
-    //         return ForceUpdate();
-    //     }
+        if (!maybe_occupancy|| *maybe_occupancy == PackedCell64_t::PACKED_CELL_SENTINAL)
+        {
+            return ForceUpdate();
+        }
     
-    //     if (low32_half_view.LocalityOfCell == PackedCellLocalityTypes::CLAIMED || high32_half_view.LocalityOfCell == PackedCellLocalityTypes::CLAIMED)
-    //     {
-    //         return false;
-    //     }
+        if (low32_half_view.LocalityOfCell == PackedCellLocalityTypes::CLAIMED || high32_half_view.LocalityOfCell == PackedCellLocalityTypes::CLAIMED)
+        {
+            return false;
+        }
 
-    //     if (*maybe_occupancy!= PackedCell64_t::PACKED_CELL_SENTINAL)
-    //     {
-    //         //just cmpx  low
-    //         if (*maybe_occupancy < IN_CELL_VALUE_MODE32_SENTINAL && low32_and_probable_high32.second == PackedCell64_t::PACKED_CELL_SENTINAL)
-    //         {
-    //             packed64_t expected = low32_half_view.RawCell;
-    //             const packed64_t desired = low32_and_probable_high32.first;
-    //             for (size_t i = 0; i < DEFAULT_MAX_TRIES; i++)
-    //             {
-    //                 if (SlabBasePtr_[low_idx].compare_exchange_strong(
-    //                     expected, desired, OnExchangeSuccess, OnExchangeFailure
-    //                 ))
-    //                 {
-    //                     AtomicallyStorePackedCellUnchecked(high_idx, low32_and_probable_high32.second);
-    //                     return true;
-    //                 }
+        if (*maybe_occupancy!= PackedCell64_t::PACKED_CELL_SENTINAL)
+        {
+            //just cmpx  low
+            if (*maybe_occupancy < IN_CELL_VALUE_MODE32_SENTINAL && low32_and_probable_high32.second == PackedCell64_t::PACKED_CELL_SENTINAL)
+            {
+                packed64_t expected = low32_half_view.RawCell;
+                const packed64_t desired = low32_and_probable_high32.first;
+                for (size_t i = 0; i < DEFAULT_MAX_TRIES; i++)
+                {
+                    if (AtomicallyCompareAndExchangeStrongPackedCell(low_idx, expected, desired))
+                    {
+                        AtomicallyStorePackedCellUnchecked(high_idx, low32_and_probable_high32.second);
+                        return true;
+                    }
 
-    //                 if (PackedCell64_t::ExtractLocalityFromPacked(expected) == PackedCellLocalityTypes::CLAIMED)
-    //                 {
-    //                     return false;
-    //                 }
+                    if (PackedCell64_t::ExtractLocalityFromPacked(expected) == PackedCellLocalityTypes::CLAIMED)
+                    {
+                        return false;
+                    }
                     
-    //             }
-    //             //intehrate failure count and AtomicAdaptiveBackoff
-    //             return false;
-    //         }
+                }
+                //intehrate failure count and AtomicAdaptiveBackoff
+                return false;
+            }
 
-    //         //double cas 
-    //         if ((low32_half_view.IsCellValid && high32_half_view.IsCellValid) || desired_occupancy_value >= IN_CELL_VALUE_MODE32_SENTINAL)
-    //         {
-    //             packed64_t expected_low = low32_half_view.RawCell;
-    //             const packed64_t desired_claimed_low = PackedCell64_t::SetLocalityInPacked(low32_and_probable_high32.first, PackedCellLocalityTypes::CLAIMED);
+            //double cas 
+            if ((low32_half_view.IsCellValid && high32_half_view.IsCellValid) || desired_occupancy_value >= IN_CELL_VALUE_MODE32_SENTINAL)
+            {
+                packed64_t expected_low = low32_half_view.RawCell;
+                const packed64_t desired_claimed_low = PackedCell64_t::SetLocalityInPacked(low32_and_probable_high32.first, PackedCellLocalityTypes::CLAIMED);
 
-    //             auto RestoreLow = [&]()
-    //             {
-    //                 AtomicallyStorePackedCellUnchecked(low_idx, low32_half_view.RawCell);
-    //                 return false;
-    //             };
+                auto RestoreLow = [&]()
+                {
+                    AtomicallyStorePackedCellUnchecked(low_idx, low32_half_view.RawCell);
+                    return false;
+                };
 
-    //             for (size_t i = 0; i < DEFAULT_MAX_TRIES; i++)
-    //             {
-    //                 if (SlabBasePtr_[low_idx].compare_exchange_strong(
-    //                     expected_low, desired_claimed_low, OnExchangeSuccess, OnExchangeFailure
-    //                 ))
-    //                 {
-    //                     packed64_t expected_high = high32_half_view.RawCell;
+                for (size_t i = 0; i < DEFAULT_MAX_TRIES; i++)
+                {
+                    if (AtomicallyCompareAndExchangeStrongPackedCell(low_idx, expected_low, desired_claimed_low))
+                    {
+                        packed64_t expected_high = high32_half_view.RawCell;
 
-    //                     for (size_t j = 0; j < DEFAULT_MAX_TRIES; j++)
-    //                     {
-    //                         if (SlabBasePtr_[high_idx].compare_exchange_strong(
-    //                             expected_high, low32_and_probable_high32.second, OnExchangeSuccess, OnExchangeFailure
-    //                         ))
-    //                         {
-    //                             AtomicallyStorePackedCellUnchecked(low_idx, low32_and_probable_high32.first);
-    //                             return true;
-    //                         }
+                        for (size_t j = 0; j < DEFAULT_MAX_TRIES; j++)
+                        {
+                            if (AtomicallyCompareAndExchangeStrongPackedCell(high_idx, expected_high, low32_and_probable_high32.second))
+                            {
+                                AtomicallyStorePackedCellUnchecked(low_idx, low32_and_probable_high32.first);
+                                return true;
+                            }
 
-    //                         if (PackedCell64_t::ExtractLocalityFromPacked(expected_high) == PackedCellLocalityTypes::CLAIMED)
-    //                         {
-    //                             return RestoreLow();
-    //                         }
-    //                     }
+                            if (PackedCell64_t::ExtractLocalityFromPacked(expected_high) == PackedCellLocalityTypes::CLAIMED)
+                            {
+                                return RestoreLow();
+                            }
+                        }
 
-    //                     return RestoreLow();
-    //                 }
+                        return RestoreLow();
+                    }
 
-    //                 if (PackedCell64_t::ExtractLocalityFromPacked(expected_low) == PackedCellLocalityTypes::CLAIMED)
-    //                 {
-    //                     return false;
-    //                 }
-    //             }
-    //         }
+                    if (PackedCell64_t::ExtractLocalityFromPacked(expected_low) == PackedCellLocalityTypes::CLAIMED)
+                    {
+                        return false;
+                    }
+                }
+            }
 
-    //         return false;
-    //     }
+            return false;
+        }
 
-    //     return ForceUpdate(); 
-    // }
+        return ForceUpdate(); 
+    }
 
     void NeuromorphicSpaceTimeFabricCoordinator::ResetAll4TypesOfOccupancyMetaData() noexcept
     {
-        UpdateValidPairedOccupancyApproximation_(PackedCellLocalityTypes::IDLE, UNSIGNED_ZERO, true);
-        UpdateValidPairedOccupancyApproximation_(PackedCellLocalityTypes::PUBLISHED, UNSIGNED_ZERO, true);
-        UpdateValidPairedOccupancyApproximation_(PackedCellLocalityTypes::CLAIMED, UNSIGNED_ZERO, true);
-        UpdateValidPairedOccupancyApproximation_(PackedCellLocalityTypes::FAULTY, UNSIGNED_ZERO, true);
+        UpdateValidPairedOccupancyApproxAtomically_(PackedCellLocalityTypes::IDLE, UNSIGNED_ZERO, true);
+        UpdateValidPairedOccupancyApproxAtomically_(PackedCellLocalityTypes::PUBLISHED, UNSIGNED_ZERO, true);
+        UpdateValidPairedOccupancyApproxAtomically_(PackedCellLocalityTypes::CLAIMED, UNSIGNED_ZERO, true);
+        UpdateValidPairedOccupancyApproxAtomically_(PackedCellLocalityTypes::FAULTY, UNSIGNED_ZERO, true);
     }
 
 
