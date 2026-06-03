@@ -367,7 +367,7 @@ namespace PredictedAdaptedEncoding
         }
 
 
-        static constexpr uint32_t GetWidthOfValidFebricTable(FabricTableSegmentClasses table_idintity) noexcept
+        static constexpr uint32_t GetWidthOfValidFabricTable(FabricTableSegmentClasses table_idintity) noexcept
         {
             switch (table_idintity)
             {

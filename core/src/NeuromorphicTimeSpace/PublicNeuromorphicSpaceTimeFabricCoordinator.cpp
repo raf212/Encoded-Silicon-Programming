@@ -23,7 +23,7 @@ namespace PredictedAdaptedEncoding
         ResetScalarsofTheFabric_();
     }
 
-    packed64_t NeuromorphicSpaceTimeFabricCoordinator::ReadCompletePackedCellDirectly(size_t slab_index) noexcept
+    packed64_t constexpr NeuromorphicSpaceTimeFabricCoordinator::ReadCompletePackedCellDirectly(size_t slab_index) noexcept
     {
         if (!SlabBasePtr_ || slab_index >= SlabCellCount_)
         {

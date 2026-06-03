@@ -22,18 +22,6 @@ namespace PredictedAdaptedEncoding
         uint64_t DeviceViewRecordCount_{UNSIGNED_ZERO};
         uint64_t ThreadTableCapacity_{UNSIGNED_ZERO};
 
-        //--remove
-        struct CacheEntryOfFabricTable
-        {
-            size_t BeginIdx{UNSIGNED_ZERO};
-            size_t EndIdx{UNSIGNED_ZERO};
-            uint32_t RecordWidth{UNSIGNED_ZERO};
-            uint16_t VersionCount{UNSIGNED_ZERO};
-            bool IsThisEntryValid{false};
-        };
-        std::array<CacheEntryOfFabricTable, static_cast<size_t>(FabricTableSegmentClasses::COUNT)> TableCache_{};
-        //--remove
-
 
         std::atomic<bool> FabricInitialized_{false};
         std::atomic<bool> InitializationInProgress_{false};
@@ -79,22 +67,19 @@ namespace PredictedAdaptedEncoding
             clk16_t pair_version = APCDataStructure::BRANCH_VERSION
         ) noexcept;
 
-//checked-----------------------------------------------
-
-        void ResetAll4TypesOfOccupancyMetaData() noexcept;
-
+        void ResetAll4TypesOfOccupancyMetaData_() noexcept;
+    
         void WriteFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept;
 
-        bool DefaultCompareExchangeStrongUncheckedCell_(
-            size_t idx,
-            const std::pair<packed64_t, packed64_t> expectedF_desiresS,
-            bool is_claimed_invalid = true
+        size_t constexpr GetTableDirectoryCellSlabIndex_(
+            FabricTableSegmentClasses desired_table, 
+            TableEntryCellTypeOfFabric entry_type, 
+            std::optional<PackedCellLocalityTypes> invalid_cell_locality = std::nullopt
         ) noexcept;
+    
+//checked-----------------------------------------------
 
-
-        size_t GetTableDirectoryBeginIdx_(FabricTableSegmentClasses desired_table, uint8_t part = UNSIGNED_ZERO) noexcept;
-
-        void WriteDirectoryEntry_(FabricTableSegmentClasses table_id, size_t begin, size_t end, uint16_t version) noexcept;
+        bool WriteDirectoryEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end, uint16_t version) noexcept;
 
         void InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept;
     
@@ -125,7 +110,7 @@ namespace PredictedAdaptedEncoding
 
         void ShutDownFabric() noexcept;
         
-        packed64_t ReadCompletePackedCellDirectly(size_t slab_index) noexcept;
+        packed64_t constexpr ReadCompletePackedCellDirectly(size_t slab_index) noexcept;
 
         packed64_t AtomicallyLoadReadCompletePackedCell(size_t slab_index) noexcept;
 
@@ -153,17 +138,6 @@ namespace PredictedAdaptedEncoding
             const PackedCell64_t::AuthoritiveCellView* low_half_view_ptr = nullptr,
             const PackedCell64_t::AuthoritiveCellView* high_half_view_ptr = nullptr
         ) noexcept;
-
-        bool GetFabricTableCache(FabricTableSegmentClasses febric_class, CacheEntryOfFabricTable& cache_entry) noexcept;
-
-
-        bool IsThisAValidFabricTableCacheEntry(CacheEntryOfFabricTable& cache_entry) noexcept
-        {
-            const bool ok = cache_entry.VersionCount != UNSIGNED_ZERO && cache_entry.BeginIdx <= cache_entry.EndIdx &&
-                cache_entry.EndIdx <= SlabCellCount_;
-            cache_entry.IsThisEntryValid = ok;
-            return ok;
-        }
 
         bool InitializeFabric(
             uint16_t slot_count,
