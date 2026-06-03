@@ -7,7 +7,7 @@ namespace PredictedAdaptedEncoding
     class NeuromorphicSpaceTimeFabricCoordinator
     {
     private:
-        std::atomic<packed64_t>* SlabBasePtr_{nullptr};
+        packed64_t* SlabBasePtr_{nullptr};
 
         size_t SlabCellCount_{UNSIGNED_ZERO};
         uint64_t SlotCellCount_{UNSIGNED_ZERO};
@@ -20,7 +20,7 @@ namespace PredictedAdaptedEncoding
         uint64_t HashBucketCount_{UNSIGNED_ZERO};
         uint64_t RelationRecordCount_{UNSIGNED_ZERO};
         uint64_t DeviceViewRecordCount_{UNSIGNED_ZERO};
-        uint32_t ThreadTableCapacity_{UNSIGNED_ZERO};
+        uint64_t ThreadTableCapacity_{UNSIGNED_ZERO};
 
         //--remove
         struct CacheEntryOfFabricTable
@@ -41,10 +41,10 @@ namespace PredictedAdaptedEncoding
         AtomicAdaptiveBackoff AdaptiveBackoffCentral_;
         static constexpr uint32_t DEFAULT_MAX_TRIES = 128;
 
-        //METHODS
-        std::atomic<packed64_t>* AllocateAtomicCells_(size_t count_of_cells) noexcept;
+        //METHODS--------------------------------------------------------------------------------
+        packed64_t* AllocatePackedCellRaw_(size_t count_of_cells) noexcept;
         
-        void FreeAtomicCells_(std::atomic<packed64_t>* packed_cell_memory_ptr) noexcept;
+        void FreeRawPackedCells_(packed64_t*packed_cell_memory_ptr, size_t packed_cell_count) noexcept;
 
         void ResetScalarsofTheFabric_() noexcept;
 
@@ -53,11 +53,9 @@ namespace PredictedAdaptedEncoding
             const uint8_t alignment_value_15 = 16 - 1;
             return (value + alignment_value_15) & ~static_cast<size_t>(alignment_value_15);
         }
-
-        void StorePackedCellUnchecked_(size_t idx, packed64_t packed_cell) noexcept;
+//checked-----------------------------------------------
 
         bool CheckAndStoreAPrebuildCellInSlab_(size_t idx, packed64_t packed_cell) noexcept;
-        //checked
         
         bool MakeAndStoreAFabricOwnedCell_(
             size_t index, 
@@ -139,8 +137,27 @@ namespace PredictedAdaptedEncoding
         NeuromorphicSpaceTimeFabricCoordinator& operator = (const NeuromorphicSpaceTimeFabricCoordinator&) = delete;
 
         void ShutDownFabric() noexcept;
+        
+        packed64_t ReadCompletePackedCellDirectly(size_t slab_index) noexcept;
 
-        packed64_t GetTotalRawCellUnchackedCell(size_t idx) noexcept;
+        packed64_t AtomicallyLoadReadCompletePackedCell(size_t slab_index) noexcept;
+
+        void StorePackedCellUncheckedDirectly(size_t slab_index, packed64_t packed_cell) noexcept;
+
+        void AtomicallyStorePackedCellUnchecked(size_t slab_index, packed64_t packed_cell, std::memory_order mem_order = MoStoreSeq_) noexcept;
+
+        /// @brief Do not change default memory order unless have total idea
+        /// @param expected_packed_cell ->ADDRESS
+        /// @return bool
+        bool AtomicallyCompareAndExchangeStrongPackedCell(
+            size_t slab_index, 
+            packed64_t& expected_packed_cell, 
+            packed64_t desired_packed_cell,
+            std::memory_order mem_order_success = MoClaimSuccess,
+            std::memory_order mem_order_failure = MoClaimFailure
+        ) noexcept;
+
+/// checked--------------------------------------------------------
 
         bool GetMetaCellView(MetaIndexOfAPCNode fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept;
 

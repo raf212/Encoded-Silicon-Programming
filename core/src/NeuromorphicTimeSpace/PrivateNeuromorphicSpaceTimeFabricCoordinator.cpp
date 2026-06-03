@@ -5,26 +5,30 @@
 namespace PredictedAdaptedEncoding
 {
 
-    // std::atomic<packed64_t>* NeuromorphicSpaceTimeFabricCoordinator::AllocateAtomicCells_(size_t count_of_cells) noexcept
-    // {
-    //     auto allocation_function = AllocatorOfFabric_.AllocatePackedCellStorage ? 
-    //         AllocatorOfFabric_.AllocatePackedCellStorage : &RawPackedCellAllocator::DefaultAllocateAtomicCells;
+    packed64_t* NeuromorphicSpaceTimeFabricCoordinator::AllocatePackedCellRaw_(size_t count_of_cells) noexcept
+    {
+        auto allocation_function = AllocatorOfFabric_.AllocatePackedCellStorage ? 
+            AllocatorOfFabric_.AllocatePackedCellStorage : &RawPackedCellAllocator::DefaultAllocateAtomicCells;
         
-    //     size_t alignment = AllocatorOfFabric_.Alignment ? AllocatorOfFabric_.Alignment : BIT_LENGTH_OF_A_PACKED_CELL;
-    //     alignment = std::max<size_t>(alignment, alignof(std::atomic<packed64_t>));
+        size_t alignment = AllocatorOfFabric_.Alignment ? AllocatorOfFabric_.Alignment : BIT_LENGTH_OF_A_PACKED_CELL;
+        alignment = std::max<size_t>(alignment, alignof(packed64_t));
+        alignment = std::max<size_t>(alignment, BIT_LENGTH_OF_A_PACKED_CELL);
 
-    //     return allocation_function(count_of_cells, alignment, AllocatorOfFabric_.User);
+        return allocation_function(count_of_cells, alignment, AllocatorOfFabric_.User);
 
-    // }
+    }
 
 
-    // void NeuromorphicSpaceTimeFabricCoordinator::FreeAtomicCells_(std::atomic<packed64_t>* packed_cell_memory_ptr) noexcept
-    // {
-    //     RawPackedCellAllocator::FreeFunction free_function = AllocatorOfFabric_.FreePackedCellStorage ?
-    //                         AllocatorOfFabric_.FreePackedCellStorage : &RawPackedCellAllocator::DefaultFreeAtomicCells;
-    //     const size_t alignment = AllocatorOfFabric_.Alignment ? AllocatorOfFabric_.Alignment : BIT_LENGTH_OF_A_PACKED_CELL;
-    //     free_function(packed_cell_memory_ptr, SlabCellCount_, alignment, AllocatorOfFabric_.User);
-    // }
+    void NeuromorphicSpaceTimeFabricCoordinator::FreeRawPackedCells_(packed64_t* packed_cell_memory_ptr, size_t packed_cell_count) noexcept
+    {
+        RawPackedCellAllocator::FreeFunction free_function = AllocatorOfFabric_.FreePackedCellStorage ?
+                            AllocatorOfFabric_.FreePackedCellStorage : &RawPackedCellAllocator::DefaultFreeAtomicCells;
+        size_t alignment = AllocatorOfFabric_.Alignment ? AllocatorOfFabric_.Alignment : BIT_LENGTH_OF_A_PACKED_CELL;
+        alignment = std::max<size_t>(alignment, alignof(packed64_t));
+        alignment = std::max<size_t>(alignment, BIT_LENGTH_OF_A_PACKED_CELL);
+
+        free_function(packed_cell_memory_ptr, packed_cell_count, alignment, AllocatorOfFabric_.User);
+    }
 
     void NeuromorphicSpaceTimeFabricCoordinator::ResetScalarsofTheFabric_() noexcept
     {
@@ -34,8 +38,8 @@ namespace PredictedAdaptedEncoding
         SlotCount_ = UNSIGNED_ZERO;
         SlabId_ = APCDataStructure::BRANCH_VERSION;
 
-        SegmentPoolBegin_ = MINIMUM_BRANCH_CAPACITY;
-        SegmentPoolEnd_ = MINIMUM_BRANCH_CAPACITY;
+        SegmentPoolBegin_ = APCDataStructure::METACELL_COUNT;
+        SegmentPoolEnd_ = APCDataStructure::METACELL_COUNT;
 
         HashBucketCount_ = UNSIGNED_ZERO;
         RelationRecordCount_ = UNSIGNED_ZERO;
@@ -44,12 +48,6 @@ namespace PredictedAdaptedEncoding
 
         FabricInitialized_.store(false, MoStoreSeq_);
         InitializationInProgress_.store(false, MoStoreSeq_);
-    }
-
-    void NeuromorphicSpaceTimeFabricCoordinator::StorePackedCellUnchecked_(size_t idx, packed64_t packed_cell) noexcept
-    {
-        SlabBasePtr_[idx].store(packed_cell, MoStoreSeq_);
-        SlabBasePtr_[idx].notify_all();
     }
 
     bool NeuromorphicSpaceTimeFabricCoordinator::CheckAndStoreAPrebuildCellInSlab_(size_t idx, packed64_t packed_cell) noexcept
@@ -64,7 +62,7 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-        StorePackedCellUnchecked_(idx, packed_cell);
+        AtomicallyStorePackedCellUnchecked(idx, packed_cell);
 
         return true;
     }
@@ -116,7 +114,7 @@ namespace PredictedAdaptedEncoding
         if (idx < SlabCellCount_)
         {
             //MakeInitialFabricValidPackedCell::already checks validity
-            StorePackedCellUnchecked_(idx, a_valid_fabric_meta_cell32);
+            AtomicallyStorePackedCellUnchecked(idx, a_valid_fabric_meta_cell32);
             return true;
         }
 
@@ -135,132 +133,132 @@ namespace PredictedAdaptedEncoding
         );
     }
 
-    //Integrate AtomicAdaptiveBackoff
-    // add CAS_FAILURE_COUNT
-    bool NeuromorphicSpaceTimeFabricCoordinator::UpdateValidPairedOccupancyApproximation_(
-        PackedCellLocalityTypes desired_occupancy_of_locality, uint64_t desired_occupancy_value,
-        bool force_update, clk16_t pair_version
-    ) noexcept
-    {
-        const FabricMetaIndicies desired_occupancy_low_idx = CoreOfFabricCoordinator::GetDesiredLowIdxOfOccupancyPairFromLocality(desired_occupancy_of_locality);
+    // //Integrate AtomicAdaptiveBackoff
+    // // add CAS_FAILURE_COUNT
+    // bool NeuromorphicSpaceTimeFabricCoordinator::UpdateValidPairedOccupancyApproximation_(
+    //     PackedCellLocalityTypes desired_occupancy_of_locality, uint64_t desired_occupancy_value,
+    //     bool force_update, clk16_t pair_version
+    // ) noexcept
+    // {
+    //     const FabricMetaIndicies desired_occupancy_low_idx = CoreOfFabricCoordinator::GetDesiredLowIdxOfOccupancyPairFromLocality(desired_occupancy_of_locality);
 
-        if (force_update && desired_occupancy_low_idx == FabricMetaIndicies::EOF_FABRIC_HEADER)
-        {
-            return false;
-        }
+    //     if (force_update && desired_occupancy_low_idx == FabricMetaIndicies::EOF_FABRIC_HEADER)
+    //     {
+    //         return false;
+    //     }
 
-        const size_t low_idx = static_cast<size_t>(desired_occupancy_low_idx);
-        const size_t high_idx = low_idx + 1;
+    //     const size_t low_idx = static_cast<size_t>(desired_occupancy_low_idx);
+    //     const size_t high_idx = low_idx + 1;
 
-        const std::pair<packed64_t, packed64_t> low32_and_probable_high32 = PairedVersionedCellModelOfMode32::GetPairOfLow32FAndHigh32SFromUnsigned64ForFabric(
-            desired_occupancy_value, pair_version,
-            PackedCellLocalityTypes::PUBLISHED,
-            FabricTableSegmentClasses::GENERIC_CONTROL
-        );
+    //     const std::pair<packed64_t, packed64_t> low32_and_probable_high32 = PairedVersionedCellModelOfMode32::GetPairOfLow32FAndHigh32SFromUnsigned64ForFabric(
+    //         desired_occupancy_value, pair_version,
+    //         PackedCellLocalityTypes::PUBLISHED,
+    //         FabricTableSegmentClasses::GENERIC_CONTROL
+    //     );
 
-        auto ForceUpdate = [&](){
-            StorePackedCellUnchecked_(low_idx, low32_and_probable_high32.first);
-            StorePackedCellUnchecked_(high_idx, low32_and_probable_high32.second);
-            return true;
-        };
+    //     auto ForceUpdate = [&](){
+    //         AtomicallyStorePackedCellUnchecked(low_idx, low32_and_probable_high32.first);
+    //         AtomicallyStorePackedCellUnchecked(high_idx, low32_and_probable_high32.second);
+    //         return true;
+    //     };
         
-        if (force_update)
-        {
-            return ForceUpdate();
-        }
+    //     if (force_update)
+    //     {
+    //         return ForceUpdate();
+    //     }
 
-        const PackedCell64_t::AuthoritiveCellView low32_half_view{};
-        const PackedCell64_t::AuthoritiveCellView high32_half_view{};
-        const std::optional<uint64_t> maybe_occupancy = ReadOccupancyApproxFromPairedIfValid(desired_occupancy_of_locality, &low32_half_view, &high32_half_view);
+    //     const PackedCell64_t::AuthoritiveCellView low32_half_view{};
+    //     const PackedCell64_t::AuthoritiveCellView high32_half_view{};
+    //     const std::optional<uint64_t> maybe_occupancy = ReadOccupancyApproxFromPairedIfValid(desired_occupancy_of_locality, &low32_half_view, &high32_half_view);
 
-        if (!maybe_occupancy|| *maybe_occupancy == PackedCell64_t::PACKED_CELL_SENTINAL)
-        {
-            return ForceUpdate();
-        }
+    //     if (!maybe_occupancy|| *maybe_occupancy == PackedCell64_t::PACKED_CELL_SENTINAL)
+    //     {
+    //         return ForceUpdate();
+    //     }
     
-        if (low32_half_view.LocalityOfCell == PackedCellLocalityTypes::CLAIMED || high32_half_view.LocalityOfCell == PackedCellLocalityTypes::CLAIMED)
-        {
-            return false;
-        }
+    //     if (low32_half_view.LocalityOfCell == PackedCellLocalityTypes::CLAIMED || high32_half_view.LocalityOfCell == PackedCellLocalityTypes::CLAIMED)
+    //     {
+    //         return false;
+    //     }
 
-        if (*maybe_occupancy!= PackedCell64_t::PACKED_CELL_SENTINAL)
-        {
-            //just cmpx  low
-            if (*maybe_occupancy < IN_CELL_VALUE_MODE32_SENTINAL && low32_and_probable_high32.second == PackedCell64_t::PACKED_CELL_SENTINAL)
-            {
-                packed64_t expected = low32_half_view.RawCell;
-                const packed64_t desired = low32_and_probable_high32.first;
-                for (size_t i = 0; i < DEFAULT_MAX_TRIES; i++)
-                {
-                    if (SlabBasePtr_[low_idx].compare_exchange_strong(
-                        expected, desired, OnExchangeSuccess, OnExchangeFailure
-                    ))
-                    {
-                        StorePackedCellUnchecked_(high_idx, low32_and_probable_high32.second);
-                        return true;
-                    }
+    //     if (*maybe_occupancy!= PackedCell64_t::PACKED_CELL_SENTINAL)
+    //     {
+    //         //just cmpx  low
+    //         if (*maybe_occupancy < IN_CELL_VALUE_MODE32_SENTINAL && low32_and_probable_high32.second == PackedCell64_t::PACKED_CELL_SENTINAL)
+    //         {
+    //             packed64_t expected = low32_half_view.RawCell;
+    //             const packed64_t desired = low32_and_probable_high32.first;
+    //             for (size_t i = 0; i < DEFAULT_MAX_TRIES; i++)
+    //             {
+    //                 if (SlabBasePtr_[low_idx].compare_exchange_strong(
+    //                     expected, desired, OnExchangeSuccess, OnExchangeFailure
+    //                 ))
+    //                 {
+    //                     AtomicallyStorePackedCellUnchecked(high_idx, low32_and_probable_high32.second);
+    //                     return true;
+    //                 }
 
-                    if (PackedCell64_t::ExtractLocalityFromPacked(expected) == PackedCellLocalityTypes::CLAIMED)
-                    {
-                        return false;
-                    }
+    //                 if (PackedCell64_t::ExtractLocalityFromPacked(expected) == PackedCellLocalityTypes::CLAIMED)
+    //                 {
+    //                     return false;
+    //                 }
                     
-                }
-                //intehrate failure count and AtomicAdaptiveBackoff
-                return false;
-            }
+    //             }
+    //             //intehrate failure count and AtomicAdaptiveBackoff
+    //             return false;
+    //         }
 
-            //double cas 
-            if ((low32_half_view.IsCellValid && high32_half_view.IsCellValid) || desired_occupancy_value >= IN_CELL_VALUE_MODE32_SENTINAL)
-            {
-                packed64_t expected_low = low32_half_view.RawCell;
-                const packed64_t desired_claimed_low = PackedCell64_t::SetLocalityInPacked(low32_and_probable_high32.first, PackedCellLocalityTypes::CLAIMED);
+    //         //double cas 
+    //         if ((low32_half_view.IsCellValid && high32_half_view.IsCellValid) || desired_occupancy_value >= IN_CELL_VALUE_MODE32_SENTINAL)
+    //         {
+    //             packed64_t expected_low = low32_half_view.RawCell;
+    //             const packed64_t desired_claimed_low = PackedCell64_t::SetLocalityInPacked(low32_and_probable_high32.first, PackedCellLocalityTypes::CLAIMED);
 
-                auto RestoreLow = [&]()
-                {
-                    StorePackedCellUnchecked_(low_idx, low32_half_view.RawCell);
-                    return false;
-                };
+    //             auto RestoreLow = [&]()
+    //             {
+    //                 AtomicallyStorePackedCellUnchecked(low_idx, low32_half_view.RawCell);
+    //                 return false;
+    //             };
 
-                for (size_t i = 0; i < DEFAULT_MAX_TRIES; i++)
-                {
-                    if (SlabBasePtr_[low_idx].compare_exchange_strong(
-                        expected_low, desired_claimed_low, OnExchangeSuccess, OnExchangeFailure
-                    ))
-                    {
-                        packed64_t expected_high = high32_half_view.RawCell;
+    //             for (size_t i = 0; i < DEFAULT_MAX_TRIES; i++)
+    //             {
+    //                 if (SlabBasePtr_[low_idx].compare_exchange_strong(
+    //                     expected_low, desired_claimed_low, OnExchangeSuccess, OnExchangeFailure
+    //                 ))
+    //                 {
+    //                     packed64_t expected_high = high32_half_view.RawCell;
 
-                        for (size_t j = 0; j < DEFAULT_MAX_TRIES; j++)
-                        {
-                            if (SlabBasePtr_[high_idx].compare_exchange_strong(
-                                expected_high, low32_and_probable_high32.second, OnExchangeSuccess, OnExchangeFailure
-                            ))
-                            {
-                                StorePackedCellUnchecked_(low_idx, low32_and_probable_high32.first);
-                                return true;
-                            }
+    //                     for (size_t j = 0; j < DEFAULT_MAX_TRIES; j++)
+    //                     {
+    //                         if (SlabBasePtr_[high_idx].compare_exchange_strong(
+    //                             expected_high, low32_and_probable_high32.second, OnExchangeSuccess, OnExchangeFailure
+    //                         ))
+    //                         {
+    //                             AtomicallyStorePackedCellUnchecked(low_idx, low32_and_probable_high32.first);
+    //                             return true;
+    //                         }
 
-                            if (PackedCell64_t::ExtractLocalityFromPacked(expected_high) == PackedCellLocalityTypes::CLAIMED)
-                            {
-                                return RestoreLow();
-                            }
-                        }
+    //                         if (PackedCell64_t::ExtractLocalityFromPacked(expected_high) == PackedCellLocalityTypes::CLAIMED)
+    //                         {
+    //                             return RestoreLow();
+    //                         }
+    //                     }
 
-                        return RestoreLow();
-                    }
+    //                     return RestoreLow();
+    //                 }
 
-                    if (PackedCell64_t::ExtractLocalityFromPacked(expected_low) == PackedCellLocalityTypes::CLAIMED)
-                    {
-                        return false;
-                    }
-                }
-            }
+    //                 if (PackedCell64_t::ExtractLocalityFromPacked(expected_low) == PackedCellLocalityTypes::CLAIMED)
+    //                 {
+    //                     return false;
+    //                 }
+    //             }
+    //         }
 
-            return false;
-        }
+    //         return false;
+    //     }
 
-        return ForceUpdate(); 
-    }
+    //     return ForceUpdate(); 
+    // }
 
     void NeuromorphicSpaceTimeFabricCoordinator::ResetAll4TypesOfOccupancyMetaData() noexcept
     {
@@ -332,13 +330,13 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    size_t NeuromorphicSpaceTimeFabricCoordinator::GetTableDirectoryBeginIdx_(FabricTableSegmentClasses desired_table, uint8_t part) noexcept
-    {
-        const size_t  base_of_fabric_table = static_cast<size_t>(PackedCell64_t::ExtractValue32(
-            SlabBasePtr_[static_cast<size_t>(FabricMetaIndicies::TABLE_DIRECTORY_BEGIN)].load(MoLoad_)
-        ));
-        return base_of_fabric_table + static_cast<size_t>(desired_table) * TABLE_ENTRY_WIDTH_OF_FABRIC + static_cast<size_t>(part);
-    }
+    // size_t NeuromorphicSpaceTimeFabricCoordinator::GetTableDirectoryBeginIdx_(FabricTableSegmentClasses desired_table, uint8_t part) noexcept
+    // {
+    //     const size_t  base_of_fabric_table = static_cast<size_t>(PackedCell64_t::ExtractValue32(
+    //         AtomicallyLoadReadPackedCell(static_cast<size_t>(FabricMetaIndicies::TABLE_DIRECTORY_BEGIN))
+    //     ));
+    //     return base_of_fabric_table + static_cast<size_t>(desired_table) * TABLE_ENTRY_WIDTH_OF_FABRIC + static_cast<size_t>(part);
+    // }
 
     void NeuromorphicSpaceTimeFabricCoordinator::WriteDirectoryEntry_(FabricTableSegmentClasses table_id, size_t begin, size_t end, uint16_t version) noexcept
     {
@@ -460,35 +458,35 @@ namespace PredictedAdaptedEncoding
     // }
 
 
-    bool NeuromorphicSpaceTimeFabricCoordinator::DefaultCompareExchangeStrongUncheckedCell_(
-        size_t idx,
-        const std::pair<packed64_t, packed64_t> expectedF_desiresS,
-        bool is_claimed_invalid
-    ) noexcept
-    {
-        if (SlabBasePtr_ && idx >= SlabCellCount_)
-        {
-            return false;
-        }
+    // bool NeuromorphicSpaceTimeFabricCoordinator::DefaultCompareExchangeStrongUncheckedCell_(
+    //     size_t idx,
+    //     const std::pair<packed64_t, packed64_t> expectedF_desiresS,
+    //     bool is_claimed_invalid
+    // ) noexcept
+    // {
+    //     if (SlabBasePtr_ && idx >= SlabCellCount_)
+    //     {
+    //         return false;
+    //     }
 
-        packed64_t expected_cell = expectedF_desiresS.first;
-        for (size_t i = 0; i < DEFAULT_MAX_TRIES; i++)
-        {
-            if (SlabBasePtr_[idx].compare_exchange_strong(expected_cell, expectedF_desiresS.second, OnExchangeSuccess, OnExchangeFailure))
-            {
-                return true;
-            }
+    //     packed64_t expected_cell = expectedF_desiresS.first;
+    //     for (size_t i = 0; i < DEFAULT_MAX_TRIES; i++)
+    //     {
+    //         if (SlabBasePtr_[idx].compare_exchange_strong(expected_cell, expectedF_desiresS.second, OnExchangeSuccess, OnExchangeFailure))
+    //         {
+    //             return true;
+    //         }
             
-            if (is_claimed_invalid && PackedCell64_t::ExtractLocalityFromPacked(expected_cell) == PackedCellLocalityTypes::CLAIMED)
-            {
-                return false;
-            }
+    //         if (is_claimed_invalid && PackedCell64_t::ExtractLocalityFromPacked(expected_cell) == PackedCellLocalityTypes::CLAIMED)
+    //         {
+    //             return false;
+    //         }
 
-            //JUST AS A SLOT HOLDER AtomicAdaptiveBackoff has to be build for packed cell
-            AdaptiveBackoffCentral_.AdaptiveBackOffPacked(expected_cell);
-        }
+    //         //JUST AS A SLOT HOLDER AtomicAdaptiveBackoff has to be build for packed cell
+    //         AdaptiveBackoffCentral_.AdaptiveBackOffPacked(expected_cell);
+    //     }
         
-        return false;
-    }
+    //     return false;
+    // }
 
 }
