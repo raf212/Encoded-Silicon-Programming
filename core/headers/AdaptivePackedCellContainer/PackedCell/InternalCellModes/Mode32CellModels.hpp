@@ -71,7 +71,7 @@ namespace PredictedAdaptedEncoding
     struct PairedVersionedCellModelOfMode32
     {
         //In paired cell Ideology clk16 is a version count-> CLOCK is unnecessery because it will be mostly used for contron / paired pointers
-        static std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64ForAPC(
+        static constexpr std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64ForAPC(
             uint64_t value, clk16_t version,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT
@@ -88,7 +88,7 @@ namespace PredictedAdaptedEncoding
             return lowf_highs;
         }
 
-        static std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64ForFabric(
+        static constexpr std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64ForFabric(
             uint64_t value, clk16_t version,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
             FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GENERIC_CONTROL
@@ -106,7 +106,7 @@ namespace PredictedAdaptedEncoding
         }
 
     
-        static std::optional<uint64_t> GetFullUnsigned64FromPairedVersionedCell(
+        static constexpr std::optional<uint64_t> GetFullUnsigned64FromPairedVersionedCell(
             packed64_t low_half, packed64_t high_half,
             const PackedCell64_t::AuthoritiveCellView* low_half_view_ptr = nullptr,
             const PackedCell64_t::AuthoritiveCellView* high_half_view_ptr = nullptr
@@ -154,7 +154,7 @@ namespace PredictedAdaptedEncoding
         }
     
 private:
-        static std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64_(
+        static constexpr std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64_(
             uint64_t value, clk16_t version,
             PackedCellLocalityTypes locality,
             PackedCellOwnership ownership,

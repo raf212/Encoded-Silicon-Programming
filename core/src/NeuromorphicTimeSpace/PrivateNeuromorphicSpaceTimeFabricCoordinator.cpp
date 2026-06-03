@@ -52,7 +52,7 @@ namespace PredictedAdaptedEncoding
 
 
 
-    bool NeuromorphicSpaceTimeFabricCoordinator::MakeAndStoreDirectlyAFabricOwnedCell_(
+    constexpr bool NeuromorphicSpaceTimeFabricCoordinator::MakeAndStoreDirectlyAFabricOwnedCell_(
         size_t idx, uint64_t value32_or_64, 
         FabricTableSegmentClasses fabric_segment_class,
         PackedMode cell_mode, clk16_t extended_meta_value,
@@ -79,7 +79,7 @@ namespace PredictedAdaptedEncoding
         return true;
     }
 
-    bool NeuromorphicSpaceTimeFabricCoordinator::StoreFebricControlMeta48Directly_(
+    constexpr bool NeuromorphicSpaceTimeFabricCoordinator::StoreFebricControlMeta48Directly_(
         FabricMetaIndicies fabric_meta_idx, 
         uint64_t value, 
         PackedCellLocalityTypes cell_locality,
@@ -108,7 +108,7 @@ namespace PredictedAdaptedEncoding
 
     //Integrate AtomicAdaptiveBackoff
     // add CAS_FAILURE_COUNT
-    bool NeuromorphicSpaceTimeFabricCoordinator::UpdateValidPairedOccupancyApproxAtomically_(
+    constexpr bool NeuromorphicSpaceTimeFabricCoordinator::UpdateValidPairedOccupancyApproxAtomically_(
         PackedCellLocalityTypes desired_occupancy_of_locality, uint64_t desired_occupancy_value,
         bool force_update, clk16_t pair_version
     ) noexcept
@@ -227,7 +227,7 @@ namespace PredictedAdaptedEncoding
         return ForceUpdate(); 
     }
 
-    void NeuromorphicSpaceTimeFabricCoordinator::ResetAll4TypesOfOccupancyMetaData_() noexcept
+    constexpr void NeuromorphicSpaceTimeFabricCoordinator::ResetAll4TypesOfOccupancyMetaData_() noexcept
     {
         UpdateValidPairedOccupancyApproxAtomically_(PackedCellLocalityTypes::IDLE, UNSIGNED_ZERO, true);
         UpdateValidPairedOccupancyApproxAtomically_(PackedCellLocalityTypes::PUBLISHED, UNSIGNED_ZERO, true);
@@ -236,7 +236,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    void NeuromorphicSpaceTimeFabricCoordinator::WriteFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept
+    constexpr void NeuromorphicSpaceTimeFabricCoordinator::WriteFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept
     {
         StoreFebricControlMeta48Directly_(FabricMetaIndicies::MAGIC, APCDataStructure::FABRIC_MAGIC);
         StoreFebricControlMeta48Directly_(FabricMetaIndicies::VERSION, APCDataStructure::BRANCH_VERSION);
@@ -298,7 +298,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    size_t constexpr NeuromorphicSpaceTimeFabricCoordinator::GetTableDirectoryCellSlabIndex_(
+    constexpr size_t NeuromorphicSpaceTimeFabricCoordinator::GetTableDirectoryCellSlabIndex_(
         FabricTableSegmentClasses table_class, 
         TableEntryCellTypeOfFabric entry_type, 
         std::optional<PackedCellLocalityTypes> invalid_cell_locality
@@ -309,12 +309,8 @@ namespace PredictedAdaptedEncoding
         {
             return APCDataStructure::APC_SIZE_SENTINAL;
         }
-        const packed64_t directory_begin_cell = ReadCompletePackedCellDirectly(table_meta_index);
+        const packed64_t directory_begin_cell = ReadCompletePackedCellDirectly(table_meta_index, invalid_cell_locality);
         
-        if (invalid_cell_locality.has_value() && PackedCell64_t::ExtractLocalityFromPacked(directory_begin_cell) != *invalid_cell_locality)
-        {
-            return APCDataStructure::APC_SIZE_SENTINAL;
-        }
         const size_t base_idx = static_cast<size_t>(PackedCell64_t::ExtractClk48(directory_begin_cell));
         return base_idx + (table_meta_index * TABLE_ENTRY_WIDTH_OF_FABRIC) + static_cast<size_t>(entry_type);
 
@@ -340,7 +336,13 @@ namespace PredictedAdaptedEncoding
     //         return false;
     //     }
         
-    //     const size_t base = GetTableDirectoryCellSlabIndex_(table_id);
+    //     const size_t base = GetTableDirectoryCellSlabIndex_(table_class, TableEntryCellTypeOfFabric::BEGIN48, PackedCellLocalityTypes::CLAIMED);
+
+    //     if (base + TABLE_ENTRY_WIDTH_OF_FABRIC > SlabCellCount_)
+    //     {
+    //         return false;
+    //     }
+        
         
     //     MakeAndStoreDirectlyAFabricOwnedCell_(base + 0u, static_cast<uint64_t>(begin), table_id, PackedMode::MODE_32, version, 
     //         UNSIGNED_ZERO, PackedCellDataType::UnsignedPCellDataType, PackedCellLocalityTypes::PUBLISHED,

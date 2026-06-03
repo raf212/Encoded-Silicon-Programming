@@ -42,7 +42,7 @@ namespace PredictedAdaptedEncoding
             return (value + alignment_value_15) & ~static_cast<size_t>(alignment_value_15);
         }
         
-        bool MakeAndStoreDirectlyAFabricOwnedCell_(
+        constexpr bool MakeAndStoreDirectlyAFabricOwnedCell_(
             size_t index, 
             uint64_t value32_or_64, 
             FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
@@ -54,27 +54,30 @@ namespace PredictedAdaptedEncoding
             PriorityPhysics priority = PriorityPhysics::IMPORTANT
         ) noexcept;
 
-        bool StoreFebricControlMeta48Directly_(
+        constexpr bool StoreFebricControlMeta48Directly_(
             FabricMetaIndicies fabric_meta_idx, uint64_t value, 
             PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::PUBLISHED,
             SubClassesOfMode48 sub_class48 = SubClassesOfMode48::SELF_CLASS,
             PriorityPhysics priority = PriorityPhysics::VERSION_DEPENDENCY
         )noexcept;
 
-        bool UpdateValidPairedOccupancyApproxAtomically_(
+        constexpr bool UpdateValidPairedOccupancyApproxAtomically_(
             PackedCellLocalityTypes desired_occupancy_of_locality, uint64_t desired_occupancy_value,
             bool force_update = false,
             clk16_t pair_version = APCDataStructure::BRANCH_VERSION
         ) noexcept;
 
-        void ResetAll4TypesOfOccupancyMetaData_() noexcept;
+        constexpr void ResetAll4TypesOfOccupancyMetaData_() noexcept;
     
-        void WriteFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept;
+        constexpr void WriteFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept;
 
-        size_t constexpr GetTableDirectoryCellSlabIndex_(
+        /// @brief Do not change default parameter unless confident
+        /// @param invalid_cell_locality If the cell locality matches with invalid_cell_locality then SIZE_MAX
+        /// @return 
+        constexpr size_t GetTableDirectoryCellSlabIndex_(
             FabricTableSegmentClasses desired_table, 
             TableEntryCellTypeOfFabric entry_type, 
-            std::optional<PackedCellLocalityTypes> invalid_cell_locality = std::nullopt
+            std::optional<PackedCellLocalityTypes> invalid_cell_locality = PackedCellLocalityTypes::CLAIMED
         ) noexcept;
     
 //checked-----------------------------------------------
@@ -110,18 +113,18 @@ namespace PredictedAdaptedEncoding
 
         void ShutDownFabric() noexcept;
         
-        packed64_t constexpr ReadCompletePackedCellDirectly(size_t slab_index) noexcept;
+        constexpr packed64_t ReadCompletePackedCellDirectly(size_t slab_index, std::optional<PackedCellLocalityTypes> invalid_cell_locality = PackedCellLocalityTypes::CLAIMED) noexcept;
 
-        packed64_t AtomicallyLoadReadCompletePackedCell(size_t slab_index) noexcept;
+        constexpr packed64_t AtomicallyLoadReadCompletePackedCell(size_t slab_index, std::optional<PackedCellLocalityTypes> invalid_cell_locality = PackedCellLocalityTypes::CLAIMED) noexcept;
 
-        void StorePackedCellUncheckedDirectly(size_t slab_index, packed64_t packed_cell) noexcept;
+        constexpr void StorePackedCellUncheckedDirectly(size_t slab_index, packed64_t packed_cell) noexcept;
 
-        void AtomicallyStorePackedCellUnchecked(size_t slab_index, packed64_t packed_cell, std::memory_order mem_order = MoStoreSeq_) noexcept;
+        constexpr void AtomicallyStorePackedCellUnchecked(size_t slab_index, packed64_t packed_cell, std::memory_order mem_order = MoStoreSeq_) noexcept;
 
         /// @brief Do not change default memory order unless have total idea
         /// @param expected_packed_cell ->ADDRESS
         /// @return bool
-        bool AtomicallyCompareAndExchangeStrongPackedCell(
+        constexpr bool AtomicallyCompareAndExchangeStrongPackedCell(
             size_t slab_index, 
             packed64_t& expected_packed_cell, 
             packed64_t desired_packed_cell,

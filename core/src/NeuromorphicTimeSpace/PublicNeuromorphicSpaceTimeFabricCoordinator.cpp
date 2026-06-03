@@ -23,26 +23,40 @@ namespace PredictedAdaptedEncoding
         ResetScalarsofTheFabric_();
     }
 
-    packed64_t constexpr NeuromorphicSpaceTimeFabricCoordinator::ReadCompletePackedCellDirectly(size_t slab_index) noexcept
+    constexpr packed64_t NeuromorphicSpaceTimeFabricCoordinator::ReadCompletePackedCellDirectly(
+        size_t slab_index, std::optional<PackedCellLocalityTypes> invalid_cell_locality
+    ) noexcept
     {
         if (!SlabBasePtr_ || slab_index >= SlabCellCount_)
         {
             return PackedCell64_t::PACKED_CELL_SENTINAL;
         }
-        return SlabBasePtr_[slab_index];
+        const packed64_t desired_cell_raw = SlabBasePtr_[slab_index];
+        if (invalid_cell_locality.has_value() && PackedCell64_t::ExtractLocalityFromPacked(desired_cell_raw) != *invalid_cell_locality)
+        {
+            return APCDataStructure::APC_SIZE_SENTINAL;
+        }
+        return desired_cell_raw;
     } 
 
-    packed64_t NeuromorphicSpaceTimeFabricCoordinator::AtomicallyLoadReadCompletePackedCell(size_t slab_index) noexcept
+    constexpr packed64_t NeuromorphicSpaceTimeFabricCoordinator::AtomicallyLoadReadCompletePackedCell(
+        size_t slab_index, std::optional<PackedCellLocalityTypes> invalid_cell_locality
+    ) noexcept
     {
         if (!SlabBasePtr_ || slab_index >= SlabCellCount_)
         {
             return PackedCell64_t::PACKED_CELL_SENTINAL;
         }
         std::atomic_ref<const packed64_t> packed_cell_ref(SlabBasePtr_[slab_index]);
-        return packed_cell_ref.load(MoLoad_);
+        const packed64_t desired_cell_raw = packed_cell_ref.load(MoLoad_);
+        if (invalid_cell_locality.has_value() && PackedCell64_t::ExtractLocalityFromPacked(desired_cell_raw) != *invalid_cell_locality)
+        {
+            return APCDataStructure::APC_SIZE_SENTINAL;
+        }
+        return desired_cell_raw;
     }
 
-    void NeuromorphicSpaceTimeFabricCoordinator::StorePackedCellUncheckedDirectly(size_t slab_index, packed64_t packed_cell) noexcept
+    constexpr void NeuromorphicSpaceTimeFabricCoordinator::StorePackedCellUncheckedDirectly(size_t slab_index, packed64_t packed_cell) noexcept
     {
         if (!SlabBasePtr_ || slab_index >= SlabCellCount_)
         {
@@ -51,7 +65,7 @@ namespace PredictedAdaptedEncoding
         SlabBasePtr_[slab_index] = packed_cell;
     }
 
-    void NeuromorphicSpaceTimeFabricCoordinator::AtomicallyStorePackedCellUnchecked(
+    constexpr void NeuromorphicSpaceTimeFabricCoordinator::AtomicallyStorePackedCellUnchecked(
         size_t slab_index, packed64_t packed_cell,
         std::memory_order mem_order
     ) noexcept
@@ -65,7 +79,7 @@ namespace PredictedAdaptedEncoding
         packed_cell_ref.notify_all();
     }
 
-    bool NeuromorphicSpaceTimeFabricCoordinator::AtomicallyCompareAndExchangeStrongPackedCell(
+    constexpr bool NeuromorphicSpaceTimeFabricCoordinator::AtomicallyCompareAndExchangeStrongPackedCell(
         size_t slab_index, 
         packed64_t& expected_packed_cell, 
         packed64_t desired_packed_cell,

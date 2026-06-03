@@ -12,7 +12,7 @@ namespace PredictedAdaptedEncoding
         static constexpr uint64_t PACKED_CELL_SENTINAL = UINT64_MAX;
         static constexpr uint64_t MODE_48_MAX_UNSIGNED_LIMIT = 0xFFFFFFFFFFFF;
 
-        static bool IsThisCellValid(packed64_t packed_cell) noexcept
+        static constexpr bool IsThisCellValid(packed64_t packed_cell) noexcept
         {
             const PackedCell64_t::AuthoritiveCellView requested_cell_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
             if (!requested_cell_view.IsCellValid)
