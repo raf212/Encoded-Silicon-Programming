@@ -129,16 +129,16 @@ namespace PredictedAdaptedEncoding {
         FOUR_SUBDIVISION_2x16_AND_2x8 = 3
     };
 
-    enum class PriorityPhysics : tag8_t
+    enum class CellMapAndPriority : tag8_t
     {
         IDLE = 0,
-        IMPORTANT = 1,
-        VERSION_DEPENDENCY = 2,
-        INHERIT_SOURCE_PRIORITY = 3,
-        ERROR_FIRST = 4,
+        CLAIMED_CAS_DEPENDENT = 1,
+        VERSION_AND_CLAIMED_CAS_DEPENDENT = 2,
+        CAS_FOR_ALL_LOCALITIES = 3,
+        COMPLEATE_ATOMICITY = 4,
         OLDEST_CLOCK_FIRST = 5,
         PRESSURE_FIRST = 6,
-        MAX_OF_SOURCE_AND_TARGET = 7
+        ERROR_FIRST = 7
     };
 
     enum class APCPagedNodeSegmentClasses : tag8_t

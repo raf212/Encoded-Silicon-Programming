@@ -64,7 +64,7 @@ namespace
         MasterClockConf& clock,
         uint32_t value,
         APCPagedNodeSegmentClasses region,
-        PriorityPhysics priority = PriorityPhysics::IDLE
+        CellMapAndPriority priority = CellMapAndPriority::IDLE
     )
     {
         return clock.ComposeValue32WithCurrentThreadStamp16(
@@ -82,7 +82,7 @@ namespace
         MasterClockConf& clock,
         float value,
         APCPagedNodeSegmentClasses region,
-        PriorityPhysics priority = PriorityPhysics::IDLE
+        CellMapAndPriority priority = CellMapAndPriority::IDLE
     )
     {
         const uint32_t bits = BitCastMaybe<uint32_t>(value);
@@ -380,10 +380,10 @@ int main()
             for (uint32_t i = p + 1; i <= VALUE_COUNT; i += PRODUCER_COUNT)
             {
                 const packed64_t ff =
-                    PackU32(clock, i, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, PriorityPhysics::IMPORTANT);
+                    PackU32(clock, i, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, CellMapAndPriority::CLAIMED_CAS_DEPENDENT);
 
                 const packed64_t fb =
-                    PackU32(clock, i + 1u, APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE, PriorityPhysics::OLDEST_CLOCK_FIRST);
+                    PackU32(clock, i + 1u, APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE, CellMapAndPriority::OLDEST_CLOCK_FIRST);
 
                 if (PublishBudgeted(
                         Sensor,
@@ -462,7 +462,7 @@ int main()
                         clock,
                         state_value,
                         APCPagedNodeSegmentClasses::STATE_SLOT,
-                        PriorityPhysics::MAX_OF_SOURCE_AND_TARGET
+                        CellMapAndPriority::COMPLEATE_ATOMICITY
                     );
 
                 if (PublishBudgeted(
@@ -527,7 +527,7 @@ int main()
                         clock,
                         maybe_y.value(),
                         APCPagedNodeSegmentClasses::ERROR_SLOT,
-                        PriorityPhysics::ERROR_FIRST
+                        CellMapAndPriority::ERROR_FIRST
                     );
 
                 if (PublishBudgeted(
@@ -590,7 +590,7 @@ int main()
                                 clock,
                                 motor_value,
                                 APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                                PriorityPhysics::INHERIT_SOURCE_PRIORITY
+                                CellMapAndPriority::CAS_FOR_ALL_LOCALITIES
                             );
 
                         (void)PublishBudgeted(

@@ -208,7 +208,7 @@ namespace PredictedAdaptedEncoding
             
             const packed64_t graceful_idle_cell = PackedCell64_t::MakeInitialAPCValidPackedCell(
                 current_cell_view.CellMode, PackedCellLocalityTypes::IDLE, current_cell_view.CellOwnership,
-                region_kind, current_cell_view.CellValueDataType, UNSIGNED_ZERO, UNSIGNED_ZERO, PriorityPhysics::IDLE,
+                region_kind, current_cell_view.CellValueDataType, UNSIGNED_ZERO, UNSIGNED_ZERO, CellMapAndPriority::IDLE,
                 current_cell_view.SubClassOfMode32.has_value() ? *current_cell_view.SubClassOfMode32 : SubClassesOfMode32::SELF_CLASS,
                 current_cell_view.RelationOffsetForMode48.has_value() ? *current_cell_view.RelationOffsetForMode48 : SubClassesOfMode48::SELF_CLASS
             );
@@ -531,7 +531,7 @@ namespace PredictedAdaptedEncoding
             return 1u;
         }
 
-        const PriorityPhysics priority =
+        const CellMapAndPriority priority =
             PackedCell64_t::ExtractPriorityFromPacked(packed_cell);
 
         std::optional<LayoutBoundsOfSingleRelNodeClass> layout_bounds =
@@ -596,7 +596,7 @@ namespace PredictedAdaptedEncoding
         const uint32_t priority_u32 =
             static_cast<uint32_t>(priority);
 
-        if (priority_u32 > static_cast<uint32_t>(PriorityPhysics::IDLE))
+        if (priority_u32 > static_cast<uint32_t>(CellMapAndPriority::IDLE))
         {
             budget = std::max<uint32_t>(
                 1u,

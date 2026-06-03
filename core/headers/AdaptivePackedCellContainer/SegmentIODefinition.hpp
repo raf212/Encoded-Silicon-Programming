@@ -115,7 +115,7 @@ protected:
 
     packed64_t PackValue32InPackedCellwithClock16_(
         val32_t value32,
-        PriorityPhysics priority,
+        CellMapAndPriority priority,
         PackedCellLocalityTypes locality = PackedCellLocalityTypes::PUBLISHED,
         APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::NONE,
         SubClassesOfMode32 reloffset_mode32 = SubClassesOfMode32::SELF_CLASS,
@@ -134,7 +134,7 @@ protected:
     void WriteMetaCellMode32_(
         MetaIndexOfAPCNode idx,
         uint32_t value32,
-        PriorityPhysics priority = PriorityPhysics::IDLE,
+        CellMapAndPriority priority = CellMapAndPriority::IDLE,
         APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT
     ) noexcept
     {
@@ -151,7 +151,7 @@ protected:
         MetaIndexOfAPCNode idx,
         uint64_t raw48_value,
         APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
-        PriorityPhysics priority = PriorityPhysics::IDLE,
+        CellMapAndPriority priority = CellMapAndPriority::IDLE,
         SubClassesOfMode48 rel_offset = SubClassesOfMode48::SUBDIVISION16x3_INTERNAL_CELL_MODEL
     ) noexcept
     {
@@ -181,7 +181,7 @@ private:
 public:
     packed64_t PackPureClock48AsPackedCell(
         std::optional<uint64_t> clock48 = std::nullopt,
-        PriorityPhysics priority = PriorityPhysics::IDLE,
+        CellMapAndPriority priority = CellMapAndPriority::IDLE,
         PackedCellLocalityTypes locality = PackedCellLocalityTypes::PUBLISHED,
         APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
         SubClassesOfMode48 reloffset = SubClassesOfMode48::PURE_TIMER_48,
@@ -189,7 +189,7 @@ public:
         PackedCellOwnership node_authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
     ) noexcept;
 
-    void WriteOrUpdateMetaClock48(PriorityPhysics priority = PriorityPhysics::IDLE, std::optional<uint64_t>meta_clock_48 = std::nullopt) noexcept;
+    void WriteOrUpdateMetaClock48(CellMapAndPriority priority = CellMapAndPriority::IDLE, std::optional<uint64_t>meta_clock_48 = std::nullopt) noexcept;
 
     bool JustUpdateValueOfMeta32(
         MetaIndexOfAPCNode idx,
@@ -230,7 +230,7 @@ public:
         uint32_t aux_param_uint32 = UNSIGNED_ZERO,
         uint32_t branch_depth = UNSIGNED_ZERO,
         uint8_t branch_priority = UNSIGNED_ZERO,
-        PriorityPhysics write_cell_priority = PriorityPhysics::IDLE
+        CellMapAndPriority write_cell_priority = CellMapAndPriority::IDLE
 
     ) noexcept;
 
@@ -349,11 +349,11 @@ public:
 
     void MakeAPCBranchOwned() noexcept
     {
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::CURRENTLY_OWNED, 1u, PriorityPhysics::IMPORTANT);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::CURRENTLY_OWNED, 1u, CellMapAndPriority::CLAIMED_CAS_DEPENDENT);
     }
 
 
-    void ResetTotalCASFailureForThisBranch(PriorityPhysics priority = PriorityPhysics::IDLE) noexcept
+    void ResetTotalCASFailureForThisBranch(CellMapAndPriority priority = CellMapAndPriority::IDLE) noexcept
     {
         WriteMetaCellMode32_(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH, UNSIGNED_ZERO, priority);
     }

@@ -81,7 +81,7 @@ class AdaptivePackedCellContainer;
          packed64_t ComposeValue32WithCurrentThreadStamp16(
             val32_t provided_cell_value32,
             APCPagedNodeSegmentClasses desired_page_class = APCPagedNodeSegmentClasses::NONE,
-            PriorityPhysics desired_priority = PriorityPhysics::IDLE,
+            CellMapAndPriority desired_priority = CellMapAndPriority::IDLE,
             PackedCellLocalityTypes desired_locality = PackedCellLocalityTypes::PUBLISHED,
             SubClassesOfMode32 desired_reloffset = SubClassesOfMode32::SELF_CLASS,
             PackedCellDataType desired_dtype = PackedCellDataType::UnsignedPCellDataType,
@@ -94,7 +94,7 @@ class AdaptivePackedCellContainer;
         }
 
          packed64_t ComposePureClockCell48(
-            PriorityPhysics desired_priority = PriorityPhysics::IDLE,
+            CellMapAndPriority desired_priority = CellMapAndPriority::IDLE,
             PackedCellLocalityTypes desired_locality = PackedCellLocalityTypes::PUBLISHED
         ) noexcept
         {

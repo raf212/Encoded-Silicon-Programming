@@ -141,7 +141,7 @@ namespace PredictedAdaptedEncoding
             uint16_t faulty_count,
             APCPagedNodeSegmentClasses page_class,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::PUBLISHED,
-            PriorityPhysics priority = PriorityPhysics::VERSION_DEPENDENCY,
+            CellMapAndPriority priority = CellMapAndPriority::VERSION_AND_CLAIMED_CAS_DEPENDENT,
             PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
         ) noexcept
         {
@@ -215,7 +215,7 @@ namespace PredictedAdaptedEncoding
             uint16_t version_high,
             APCPagedNodeSegmentClasses page_class,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::PUBLISHED,
-            PriorityPhysics priority = PriorityPhysics::VERSION_DEPENDENCY,
+            CellMapAndPriority priority = CellMapAndPriority::VERSION_AND_CLAIMED_CAS_DEPENDENT,
             PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
         ) noexcept
         {

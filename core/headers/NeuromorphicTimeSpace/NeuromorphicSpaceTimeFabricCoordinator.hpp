@@ -51,14 +51,14 @@ namespace PredictedAdaptedEncoding
             tag8_t mode_sub_class = static_cast<tag8_t>(SubClassesOfMode32::SELF_CLASS),
             PackedCellDataType cell_data_type = PackedCellDataType::UnsignedPCellDataType,
             PackedCellLocalityTypes locality_of_cell = PackedCellLocalityTypes::IDLE, 
-            PriorityPhysics priority = PriorityPhysics::IMPORTANT
+            CellMapAndPriority priority = CellMapAndPriority::CLAIMED_CAS_DEPENDENT
         ) noexcept;
 
         constexpr bool StoreFebricControlMeta48Directly_(
             FabricMetaIndicies fabric_meta_idx, uint64_t value, 
             PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::PUBLISHED,
             SubClassesOfMode48 sub_class48 = SubClassesOfMode48::SELF_CLASS,
-            PriorityPhysics priority = PriorityPhysics::VERSION_DEPENDENCY
+            CellMapAndPriority priority = CellMapAndPriority::VERSION_AND_CLAIMED_CAS_DEPENDENT
         )noexcept;
 
         constexpr bool UpdateValidPairedOccupancyApproxAtomically_(

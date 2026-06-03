@@ -12,7 +12,7 @@ namespace PredictedAdaptedEncoding
         const uint64_t now_ticks48 = NowTicks48();
         const clk16_t now_clk16 = GetImmidiateDownShiftedClock16(now_ticks48);
 
-        const PriorityPhysics priority_of_provided_cell = PackedCell64_t::ExtractPriorityFromPacked(provided_packed_cell);
+        const CellMapAndPriority priority_of_provided_cell = PackedCell64_t::ExtractPriorityFromPacked(provided_packed_cell);
         const PackedCellOwnership node_authority = PackedCell64_t::ExtractNodeAuthorityFromPacked(provided_packed_cell);
         PackedCellLocalityTypes locality_of_provided_cell = PackedCell64_t::ExtractLocalityFromPacked(provided_packed_cell);
         if (override_locality.has_value())
@@ -121,7 +121,7 @@ std::optional<uint64_t> MasterClockConf::ReconstructCellClock16toFull48BySegment
         {
             return false;
         }
-        packed64_t wanted_pure_clock48 = ComposePureClockCell48(PriorityPhysics::OLDEST_CLOCK_FIRST);
+        packed64_t wanted_pure_clock48 = ComposePureClockCell48(CellMapAndPriority::OLDEST_CLOCK_FIRST);
         APCPtr_->BackingPtr[static_cast<size_t>(MetaIndexOfAPCNode::LOCAL_CLOCK48)].store(wanted_pure_clock48, MoStoreSeq_);
         APCPtr_->BackingPtr[static_cast<size_t>(MetaIndexOfAPCNode::LOCAL_CLOCK48)].notify_all();
         return true;

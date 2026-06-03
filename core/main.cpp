@@ -191,7 +191,7 @@ namespace
         MasterClockConf& clock,
         float value,
         APCPagedNodeSegmentClasses region,
-        PriorityPhysics priority = PriorityPhysics::IDLE
+        CellMapAndPriority priority = CellMapAndPriority::IDLE
     )
     {
         const uint32_t bits = BitCastPortable<uint32_t>(value);
@@ -636,7 +636,7 @@ namespace
                         clock,
                         value,
                         APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                        PriorityPhysics::OLDEST_CLOCK_FIRST
+                        CellMapAndPriority::OLDEST_CLOCK_FIRST
                     ),
                     manager,
                     growth_counter,
@@ -668,7 +668,7 @@ namespace
                         clock,
                         prediction,
                         APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
-                        PriorityPhysics::MAX_OF_SOURCE_AND_TARGET
+                        CellMapAndPriority::COMPLEATE_ATOMICITY
                     ),
                     manager,
                     growth_counter,
@@ -890,7 +890,7 @@ int main()
                 clock,
                 state,
                 APCPagedNodeSegmentClasses::STATE_SLOT,
-                PriorityPhysics::MAX_OF_SOURCE_AND_TARGET
+                CellMapAndPriority::COMPLEATE_ATOMICITY
             ),
             manager,
             grow_integrator,
@@ -904,7 +904,7 @@ int main()
                 clock,
                 error,
                 APCPagedNodeSegmentClasses::ERROR_SLOT,
-                PriorityPhysics::ERROR_FIRST
+                CellMapAndPriority::ERROR_FIRST
             ),
             manager,
             grow_integrator,
@@ -964,7 +964,7 @@ int main()
                 clock,
                 motor,
                 APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                PriorityPhysics::IMPORTANT
+                CellMapAndPriority::CLAIMED_CAS_DEPENDENT
             ),
             manager,
             grow_motor,
@@ -978,7 +978,7 @@ int main()
                 clock,
                 feedback,
                 APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
-                PriorityPhysics::ERROR_FIRST
+                CellMapAndPriority::ERROR_FIRST
             ),
             manager,
             grow_predictor,

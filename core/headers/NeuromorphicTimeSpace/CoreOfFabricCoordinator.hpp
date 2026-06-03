@@ -183,7 +183,7 @@ namespace PredictedAdaptedEncoding
         TABLE_DIRECTORY_COUNT = 38,
         TABLE_DIRECTORY_VERSION = 39,
 
-        //4 pairs of PackedCellLocalityTypes + PriorityPhysics::VERSION_DEPENDENCY based occupancy
+        //4 pairs of PackedCellLocalityTypes + CellMapAndPriority::VERSION_AND_CLAIMED_CAS_DEPENDENT based occupancy
         FABRIC_OCCUPANCY_APPROXIMATION_IDLE_LOW32 = 40,
         FABRIC_OCCUPANCY_APPROXIMATION_IDLE_HIGH32 = 41,
         FABRIC_OCCUPANCY_APPROXIMATION_PUBLISHED_LOW32 = 42,
@@ -419,7 +419,7 @@ namespace PredictedAdaptedEncoding
             clk16_t external_meta_or_prob_distance,
             FabricTableSegmentClasses table_class,
             PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::IDLE,
-            PriorityPhysics priority = PriorityPhysics::VERSION_DEPENDENCY,
+            CellMapAndPriority priority = CellMapAndPriority::VERSION_AND_CLAIMED_CAS_DEPENDENT,
             SubClassesOfMode32 subclass_of_mode32 = SubClassesOfMode32::SELF_CLASS
         )
         {
@@ -440,7 +440,7 @@ namespace PredictedAdaptedEncoding
             uint64_t value,
             FabricTableSegmentClasses table_class,
             PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::IDLE,
-            PriorityPhysics priority = PriorityPhysics::VERSION_DEPENDENCY,
+            CellMapAndPriority priority = CellMapAndPriority::VERSION_AND_CLAIMED_CAS_DEPENDENT,
             SubClassesOfMode48 subclass_of_mode48 = SubClassesOfMode48::SELF_CLASS
         )
         {
@@ -472,7 +472,7 @@ namespace PredictedAdaptedEncoding
                 external_handle,
                 fabric_segment_class, 
                 locality_of_cell, 
-                PriorityPhysics::VERSION_DEPENDENCY,
+                CellMapAndPriority::VERSION_AND_CLAIMED_CAS_DEPENDENT,
                 SubClassesOfMode32::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4
             );
 
