@@ -142,8 +142,8 @@ namespace PredictedAdaptedEncoding
         {
             const PackedCell64_t::AuthoritiveCellView this_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
             return this_cell_auth_view.CellMode == PackedMode::MODEL48 &&
-                this_cell_auth_view.RelationOffsetForMode48.has_value() &&
-                this_cell_auth_view.RelationOffsetForMode48.value() == Model48Subclass::FOUR_SUBDIVISION_2x16_AND_2x8 &&
+                this_cell_auth_view.SubClassOfModel48.has_value() &&
+                this_cell_auth_view.SubClassOfModel48.value() == Model48Subclass::FOUR_SUBDIVISION_2x16_AND_2x8 &&
                 this_cell_auth_view.CellValueDataType == InternalDataTypePolicy::UnsignedPCellDataType &&
                 this_cell_auth_view.LocalityOfCell != LocalityPolicy::FAULTY;
         }

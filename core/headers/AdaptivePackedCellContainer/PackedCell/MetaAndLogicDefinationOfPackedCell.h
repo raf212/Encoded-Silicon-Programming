@@ -58,25 +58,25 @@ namespace PredictedAdaptedEncoding {
     static constexpr unsigned PRIO_LEN = 2u;
     static constexpr unsigned NODE_AUTH_LEN = 2u;
     static constexpr unsigned LOCALITY_LEN = 2u;// will be 2u
-    static constexpr unsigned PCTYPE_LEN = 2u;
-    static constexpr unsigned RELMASK_LEN = 4u;
-    static constexpr unsigned RELOFFSET_LEN = 2u;
-    static constexpr unsigned PCELL_DATATYPE_LEN = 2u;
+    static constexpr unsigned CELL_MODE_LEN = 2u;
+    static constexpr unsigned CELL_CLASS_LEN = 4u;
+    static constexpr unsigned SUB_CLASS_OF_CELL_MODE_LEN = 2u;
+    static constexpr unsigned CELL_INTERNAL_DATA_TYPE_LEN = 2u;
 
     //shifts 
     static constexpr unsigned PCELL_DETATYPE_SHIFT = 0u;
-    static constexpr unsigned RELOFFSET_SHIFT = PCELL_DETATYPE_SHIFT + PCELL_DATATYPE_LEN;
-    static constexpr unsigned RELMASK_SHIFT = RELOFFSET_SHIFT + RELOFFSET_LEN;
-    static constexpr unsigned CELL_MODE_SHIFT = RELMASK_SHIFT + RELMASK_LEN;
-    static constexpr unsigned LOCALITY_SHIFT = CELL_MODE_SHIFT + PCTYPE_LEN;
+    static constexpr unsigned SUBCLASS_SHIFT = PCELL_DETATYPE_SHIFT + CELL_INTERNAL_DATA_TYPE_LEN;
+    static constexpr unsigned CELL_CLASS_SHIFT = SUBCLASS_SHIFT + SUB_CLASS_OF_CELL_MODE_LEN;
+    static constexpr unsigned CELL_MODE_SHIFT = CELL_CLASS_SHIFT + CELL_CLASS_LEN;
+    static constexpr unsigned LOCALITY_SHIFT = CELL_MODE_SHIFT + CELL_MODE_LEN;
     static constexpr unsigned NODE_AUTH_SHIFT = LOCALITY_SHIFT + LOCALITY_LEN;
     static constexpr unsigned PRIORITY_SHIFT = NODE_AUTH_SHIFT + NODE_AUTH_LEN;
     static_assert(PRIORITY_SHIFT + PRIO_LEN == META16_B16, "PNLTCOD must be 16 bits");
     //mask
-    static constexpr tag8_t PCELL_DATATYPE_MASK = static_cast<tag8_t>((1u << PCELL_DATATYPE_LEN) - 1u);
-    static constexpr tag8_t RELOFFSET_MASK = static_cast<tag8_t>((1u << RELOFFSET_LEN) - 1u);
-    static constexpr tag8_t RELMASK_MASK = static_cast<tag8_t>((1u << RELMASK_LEN) - 1u);
-    static constexpr tag8_t CELL_MODE_MASK = static_cast<tag8_t>((1u << PCTYPE_LEN) - 1u);
+    static constexpr tag8_t CELL_INTERNAL_DATA_TYPE_MASK = static_cast<tag8_t>((1u << CELL_INTERNAL_DATA_TYPE_LEN) - 1u);
+    static constexpr tag8_t SUBCLASS_MASK = static_cast<tag8_t>((1u << SUB_CLASS_OF_CELL_MODE_LEN) - 1u);
+    static constexpr tag8_t CELL_CLASS_MASK = static_cast<tag8_t>((1u << CELL_CLASS_LEN) - 1u);
+    static constexpr tag8_t CELL_MODE_MASK = static_cast<tag8_t>((1u << CELL_MODE_LEN) - 1u);
     static constexpr tag8_t LOCALITY_MASK = static_cast<tag8_t>((1u << LOCALITY_LEN) - 1u);
     static constexpr tag8_t NODE_AUTH_MASK = static_cast<tag8_t>((1u << NODE_AUTH_LEN) - 1u);
     static constexpr tag8_t PRIORITY_MASK = static_cast<tag8_t>((1u << PRIO_LEN) - 1u);
@@ -107,6 +107,10 @@ namespace PredictedAdaptedEncoding {
         UnsignedPCellDataType = 3
     };
 
+    /// @param MODEL32 -> Model32Subclass
+    /// @param MODEL48 -> Model48Subclass
+    /// @param VALUE32 -> AccessContractOfValue
+    /// @param VALUE48 -> AccessContractOfValue
     enum class PackedMode : tag8_t
     {
         MODEL32 = 0,
@@ -125,6 +129,18 @@ namespace PredictedAdaptedEncoding {
     {
         MODEL48 = PackedMode::MODEL48,
         VALUE48 = PackedMode::VALUE48
+    };
+
+    /// @param RAW_PRIVATE Caller owns range/cell; init/shutdown/private APC segment. 
+    /// @param ATOMIC_SLAMSHOT Atomic load/store whole 64-bit cell. Multiple writers are allowed only if last-writer-wins is acceptable.
+    /// @param CLAIMED_GURDED Exclusive mutation. After claim, writer may raw-store companion cells, then publish with release store.
+    /// @param CAS_RMW For counters, cursors, epochs, clocks, version increments, occupancy deltas. No `CLAIMED` state needed.
+    enum class AccessContractOfValue
+    {
+        RAW_PRIVATE = 0,
+        ATOMIC_SLAMSHOT = 1,
+        CLAIMED_GURDED = 2,
+        CAS_RMW = 3
     };
 
     enum class Model32Subclass : tag8_t

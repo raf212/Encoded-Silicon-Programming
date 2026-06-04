@@ -89,8 +89,8 @@ namespace PredictedAdaptedEncoding
         static  bool IsEmbededTimerCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
             return a_cell_view.CellMode == PackedMode::MODEL48 && 
-                a_cell_view.RelationOffsetForMode48.has_value() &&
-                *a_cell_view.RelationOffsetForMode48 == Model48Subclass::PURE_TIMER_48;
+                a_cell_view.SubClassOfModel48.has_value() &&
+                *a_cell_view.SubClassOfModel48 == Model48Subclass::PURE_TIMER_48;
         }
 
         static  bool IsThisCellAppropriateAndGenericToConsume(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
@@ -168,11 +168,11 @@ namespace PredictedAdaptedEncoding
             
             if (a_cell_view.CellMode == PackedMode::MODEL32)
             {
-                return a_cell_view.SubClassOfMode32.has_value() && *a_cell_view.SubClassOfMode32 == Model32Subclass::SELF_CLASS;
+                return a_cell_view.SubClassOfModel32.has_value() && *a_cell_view.SubClassOfModel32 == Model32Subclass::SELF_CLASS;
             }
             if (a_cell_view.CellMode == PackedMode::MODEL48)
             {
-                return a_cell_view.RelationOffsetForMode48.has_value() && *a_cell_view.RelationOffsetForMode48 == Model48Subclass::SELF_CLASS;
+                return a_cell_view.SubClassOfModel48.has_value() && *a_cell_view.SubClassOfModel48 == Model48Subclass::SELF_CLASS;
             }
             return false;
         }
@@ -186,8 +186,8 @@ namespace PredictedAdaptedEncoding
                 !occupancy_cell_view.IsCellValid || occupancy_cell_view.PageClass != APCPagedNodeSegmentClasses::CONTROL_SLOT ||
                 occupancy_cell_view.CellMode != PackedMode::MODEL48 ||
                 occupancy_cell_view.LocalityOfCell != desired_cell_locality ||
-                !occupancy_cell_view.RelationOffsetForMode48.has_value() ||
-                *occupancy_cell_view.RelationOffsetForMode48 != Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL
+                !occupancy_cell_view.SubClassOfModel48.has_value() ||
+                *occupancy_cell_view.SubClassOfModel48 != Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL
             )
             {
                 return false;

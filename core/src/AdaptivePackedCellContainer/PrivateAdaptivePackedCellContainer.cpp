@@ -209,8 +209,8 @@ namespace PredictedAdaptedEncoding
             const packed64_t graceful_idle_cell = PackedCell64_t::MakeInitialAPCValidPackedCell(
                 current_cell_view.CellMode, LocalityPolicy::IDLE, current_cell_view.CellOwnership,
                 region_kind, current_cell_view.CellValueDataType, UNSIGNED_ZERO, UNSIGNED_ZERO, PriorityPolicy::PRESSURE_FIRST,
-                current_cell_view.SubClassOfMode32.has_value() ? *current_cell_view.SubClassOfMode32 : Model32Subclass::SELF_CLASS,
-                current_cell_view.RelationOffsetForMode48.has_value() ? *current_cell_view.RelationOffsetForMode48 : Model48Subclass::SELF_CLASS
+                current_cell_view.SubClassOfModel32.has_value() ? *current_cell_view.SubClassOfModel32 : Model32Subclass::SELF_CLASS,
+                current_cell_view.SubClassOfModel48.has_value() ? *current_cell_view.SubClassOfModel48 : Model48Subclass::SELF_CLASS
             );
 
             const packed64_t idle_cell = (graceful_idle_cell == PackedCell64_t::PACKED_CELL_SENTINAL)  ? 

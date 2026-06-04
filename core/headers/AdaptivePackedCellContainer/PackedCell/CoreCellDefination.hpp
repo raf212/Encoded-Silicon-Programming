@@ -25,19 +25,35 @@ namespace PredictedAdaptedEncoding
         struct AuthoritiveCellView
         {
             packed64_t RawCell{0};
+
             meta16_t  InCellMeta16{0};
+
             PriorityPolicy Priority{PriorityPolicy::PRESSURE_FIRST};
+
             OwnershipPolicy CellOwnership{OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER};
+
             LocalityPolicy LocalityOfCell{LocalityPolicy::IDLE};
+
             PackedMode CellMode{PackedMode::MODEL32};
+
             APCPagedNodeSegmentClasses PageClass{APCPagedNodeSegmentClasses::NONE};
+
             FabricTableSegmentClasses FabricTableSegmentClass{FabricTableSegmentClasses::NONE};
-            std::optional<Model32Subclass> SubClassOfMode32{std::nullopt};
-            std::optional<Model48Subclass> RelationOffsetForMode48{std::nullopt};
+
+            std::optional<AccessContractOfValue> AccessContractOfValue{std::nullopt};
+
+            std::optional<Model32Subclass> SubClassOfModel32{std::nullopt};
+
+            std::optional<Model48Subclass> SubClassOfModel48{std::nullopt};
+
             InternalDataTypePolicy CellValueDataType{InternalDataTypePolicy::UnsignedPCellDataType};
+
             std::optional<clk16_t> InCellClock16{std::nullopt};
+
             std::optional<uint64_t> CellClock48{std::nullopt};
+
             std::optional<val32_t> CellValue32{std::nullopt};
+
             bool IsCellValid{false};
             bool ValidatedView{false};
 
@@ -72,13 +88,13 @@ namespace PredictedAdaptedEncoding
                         return false;
                     }
 
-                    if (SubClassOfMode32 != Model32Subclass::SELF_CLASS && CellValueDataType != InternalDataTypePolicy::UnsignedPCellDataType)
+                    if (SubClassOfModel32 != Model32Subclass::SELF_CLASS && CellValueDataType != InternalDataTypePolicy::UnsignedPCellDataType)
                     {
                         IsCellValid = false;
                         return false;
                     }
 
-                    if (SubClassOfMode32 == Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL || SubClassOfMode32 == Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL)
+                    if (SubClassOfModel32 == Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL || SubClassOfModel32 == Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL)
                     {
                         if (
                             (PageClass != APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY || 
@@ -92,7 +108,7 @@ namespace PredictedAdaptedEncoding
                     }
 
                     if(
-                        SubClassOfMode32 == Model32Subclass::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 &&
+                        SubClassOfModel32 == Model32Subclass::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 &&
                         CellOwnership == OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER &&
                         PageClass != APCPagedNodeSegmentClasses::CONTROL_SLOT
                     )
@@ -104,7 +120,7 @@ namespace PredictedAdaptedEncoding
                 }
                 else
                 {
-                    if (RelationOffsetForMode48 == Model48Subclass::PURE_TIMER_48 && CellValueDataType != InternalDataTypePolicy::UnsignedPCellDataType)
+                    if (SubClassOfModel48 == Model48Subclass::PURE_TIMER_48 && CellValueDataType != InternalDataTypePolicy::UnsignedPCellDataType)
                     {
                         IsCellValid = false;
                         return false;
@@ -351,12 +367,12 @@ namespace PredictedAdaptedEncoding
 
         static constexpr Model32Subclass ExtractRelOffset32FromPacked(packed64_t packed_cell) noexcept
         {
-            return static_cast<Model32Subclass>(ExtractRelOffsetFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
+            return static_cast<Model32Subclass>(ExtractSubClassOrContractFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
         }
 
         static constexpr Model48Subclass ExtractRelOffset48FromPacked(packed64_t packed_cell) noexcept
         {
-            return static_cast<Model48Subclass>(ExtractRelOffsetFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
+            return static_cast<Model48Subclass>(ExtractSubClassOrContractFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
         }
 
         static constexpr InternalDataTypePolicy ExtractPCellDataTypeFromPacked(packed64_t packed_cell) noexcept
@@ -389,16 +405,33 @@ namespace PredictedAdaptedEncoding
             out_packed_cell_view.CellOwnership =  static_cast<OwnershipPolicy>(ExtractCellLocalNodeAuthotityFromMETA16_U_(meta16));
             out_packed_cell_view.LocalityOfCell = static_cast<LocalityPolicy>(ExtractLocalityFromMETA16_U_(meta16));
             out_packed_cell_view.CellMode = static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16));
-            if (IsPackedCellVal32(packed_cell))
+
+            if (out_packed_cell_view.CellMode == PackedMode::MODEL32 || out_packed_cell_view.CellMode == PackedMode::VALUE32)
             {
-                out_packed_cell_view.SubClassOfMode32 = static_cast<Model32Subclass>(ExtractRelOffsetFromMETA16_U_(meta16));
+                if (out_packed_cell_view.CellMode == PackedMode::MODEL32)
+                {
+                    out_packed_cell_view.SubClassOfModel32 = static_cast<Model32Subclass>(ExtractSubClassOrContractFromMETA16_U_(meta16));
+                }
+                else
+                {
+                    out_packed_cell_view.AccessContractOfValue = static_cast<AccessContractOfValue>(ExtractSubClassOrContractFromMETA16_U_(meta16));
+                }
+                
                 out_packed_cell_view.InCellClock16 = ExtractClk16(packed_cell);
                 out_packed_cell_view.CellValue32 = ExtractValue32(packed_cell);
                 out_packed_cell_view.PageClass = static_cast<APCPagedNodeSegmentClasses>(ExtractRelMaskFromMETA16_U_(meta16));
             }
             else
             {
-                out_packed_cell_view.RelationOffsetForMode48 = static_cast<Model48Subclass>(ExtractRelOffsetFromMETA16_U_(meta16));
+                if (out_packed_cell_view.CellMode == PackedMode::MODEL48)
+                {
+                    out_packed_cell_view.SubClassOfModel48 = static_cast<Model48Subclass>(ExtractSubClassOrContractFromMETA16_U_(meta16));
+                }
+                else
+                {
+                    out_packed_cell_view.AccessContractOfValue = static_cast<AccessContractOfValue>(ExtractSubClassOrContractFromMETA16_U_(meta16));
+                }
+
                 out_packed_cell_view.CellClock48 = ExtractClk48(packed_cell);
                 out_packed_cell_view.FabricTableSegmentClass = static_cast<FabricTableSegmentClasses>(ExtractRelMaskFromMETA16_U_(meta16));
             }
@@ -466,8 +499,8 @@ namespace PredictedAdaptedEncoding
         {
             return SetIndicatedMetaInMeta16(
                 meta16,
-                RELMASK_SHIFT,
-                RELMASK_MASK,
+                CELL_CLASS_SHIFT,
+                CELL_CLASS_MASK,
                 static_cast<tag8_t>(page_class)
             );
         }
@@ -480,8 +513,8 @@ namespace PredictedAdaptedEncoding
         {
             return SetIndicatedMetaInMeta16(
                 meta16,
-                RELOFFSET_SHIFT,
-                RELOFFSET_MASK,
+                SUBCLASS_SHIFT,
+                SUBCLASS_MASK,
                 sub_class
             );
         }
@@ -526,7 +559,7 @@ namespace PredictedAdaptedEncoding
             return SetIndicatedMetaInMeta16(
                 meta16,
                 PCELL_DETATYPE_SHIFT,
-                PCELL_DATATYPE_MASK,
+                CELL_INTERNAL_DATA_TYPE_MASK,
                 static_cast<tag8_t>(cell_data_type)
             );
         }
@@ -753,17 +786,17 @@ namespace PredictedAdaptedEncoding
             meta16_t cell_authority = static_cast<meta16_t>(static_cast<tag8_t>(node_authority) & NODE_AUTH_MASK); 
             meta16_t cell_locality = static_cast<meta16_t>(static_cast<tag8_t>(locality) & LOCALITY_MASK);
             meta16_t cell_mode = static_cast<meta16_t>(static_cast<tag8_t>(pc_type) & CELL_MODE_MASK);
-            meta16_t relation_mask = static_cast<meta16_t>(rel_mask & RELMASK_MASK);
-            meta16_t relation_offset = static_cast<meta16_t>(static_cast<tag8_t>(sub_class) & RELOFFSET_MASK);
-            meta16_t cell_data_type = static_cast<meta16_t>(static_cast<unsigned>(pc_datatype) & PCELL_DATATYPE_MASK);
+            meta16_t relation_mask = static_cast<meta16_t>(rel_mask & CELL_CLASS_MASK);
+            meta16_t relation_offset = static_cast<meta16_t>(static_cast<tag8_t>(sub_class) & SUBCLASS_MASK);
+            meta16_t cell_data_type = static_cast<meta16_t>(static_cast<unsigned>(pc_datatype) & CELL_INTERNAL_DATA_TYPE_MASK);
 
             meta16_t cell_meta = static_cast<meta16_t>(
                 (cell_priority  << (PRIORITY_SHIFT))
                 | (cell_authority << (NODE_AUTH_SHIFT))
                 | (cell_locality << LOCALITY_SHIFT)
                 | (cell_mode << CELL_MODE_SHIFT)
-                | (relation_mask << RELMASK_SHIFT)
-                | (relation_offset << RELOFFSET_SHIFT)
+                | (relation_mask << CELL_CLASS_SHIFT)
+                | (relation_offset << SUBCLASS_SHIFT)
                 | cell_data_type
             );
             return cell_meta;
@@ -791,17 +824,17 @@ namespace PredictedAdaptedEncoding
 
         static constexpr tag8_t ExtractRelMaskFromMETA16_U_(meta16_t meta16) noexcept
         {
-            return static_cast<tag8_t>((meta16 >> RELMASK_SHIFT) & RELMASK_MASK);
+            return static_cast<tag8_t>((meta16 >> CELL_CLASS_SHIFT) & CELL_CLASS_MASK);
         }
 
-        static constexpr tag8_t ExtractRelOffsetFromMETA16_U_(meta16_t meta16) noexcept
+        static constexpr tag8_t ExtractSubClassOrContractFromMETA16_U_(meta16_t meta16) noexcept
         {
-            return static_cast<tag8_t>((meta16 >> RELOFFSET_SHIFT) & RELOFFSET_MASK);
+            return static_cast<tag8_t>((meta16 >> SUBCLASS_SHIFT) & SUBCLASS_MASK);
         }
 
         static constexpr tag8_t ExtractValueDataTypeFromMETA16_U_(meta16_t meta16) noexcept
         {
-            return static_cast<tag8_t>((meta16 >> PCELL_DETATYPE_SHIFT) & PCELL_DATATYPE_MASK);
+            return static_cast<tag8_t>((meta16 >> PCELL_DETATYPE_SHIFT) & CELL_INTERNAL_DATA_TYPE_MASK);
         }
 
     };

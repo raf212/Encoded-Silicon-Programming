@@ -1,1 +1,0 @@
-// whats the difference between BindExternalRootAPCToFabric && AllocateAPCObjectFromFabricCordinator ?? 
