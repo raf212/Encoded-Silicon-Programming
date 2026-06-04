@@ -63,7 +63,7 @@ namespace
         MasterClockConf& clock,
         uint32_t value,
         APCPagedNodeSegmentClasses region,
-        CellMap priority = CellMap::IN_CLOCKED_GENERIC_SPIKE
+        CellMap priority = CellMap::PRESSURE_FIRST
     )
     {
         return clock.ComposeValue32WithCurrentThreadStamp16(
@@ -81,7 +81,7 @@ namespace
         MasterClockConf& clock,
         float value,
         APCPagedNodeSegmentClasses region,
-        CellMap priority = CellMap::IN_CLOCKED_GENERIC_SPIKE
+        CellMap priority = CellMap::PRESSURE_FIRST
     )
     {
         const uint32_t bits = BitCastMaybe<uint32_t>(value);
@@ -373,10 +373,10 @@ int main()
             for (uint32_t i = p + 1; i <= VALUE_COUNT; i += PRODUCER_COUNT)
             {
                 const packed64_t ff =
-                    PackU32(clock, i, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, CellMap::IN_CLOCKED_GENERIC_SPIKE);
+                    PackU32(clock, i, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, CellMap::PRESSURE_FIRST);
 
                 const packed64_t fb =
-                    PackU32(clock, i + 1u, APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE, CellMap::IN_CLOCKED_GENERIC_SPIKE);
+                    PackU32(clock, i + 1u, APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE, CellMap::PRESSURE_FIRST);
 
                 if (PublishBudgeted(
                         Sensor,
@@ -444,7 +444,7 @@ int main()
                         clock,
                         state_value,
                         APCPagedNodeSegmentClasses::STATE_SLOT,
-                        CellMap::IN_CLOCKED_GENERIC_SPIKE
+                        CellMap::PRESSURE_FIRST
                     );
 
                 if (PublishBudgeted(
@@ -501,7 +501,7 @@ int main()
                         clock,
                         error_value,
                         APCPagedNodeSegmentClasses::ERROR_SLOT,
-                        CellMap::IN_CLOCKED_GENERIC_SPIKE
+                        CellMap::PRESSURE_FIRST
                     );
 
                 if (PublishBudgeted(
@@ -582,7 +582,7 @@ int main()
                         clock,
                         motor_value,
                         APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                        CellMap::IN_CLOCKED_GENERIC_SPIKE
+                        CellMap::PRESSURE_FIRST
                     );
 
                 if (PublishBudgeted(

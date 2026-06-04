@@ -65,8 +65,9 @@ namespace PredictedAdaptedEncoding
             cell_mode, locality_of_cell, 
             fabric_segment_class, cell_data_type, 
             value32_or_64, extended_meta_value,
-            priority,(cell_mode == PackedMode::MODE_32_ATOMIC_GUARANTEED) ? static_cast<SubClassesOfMode32>(mode_sub_class) : SubClassesOfMode32::SELF_CLASS,
-            (cell_mode == PackedMode::MODE_48_ATOMIC_GUARANTEED) ? static_cast<SubClassesOfMode48>(mode_sub_class) : SubClassesOfMode48::SELF_CLASS
+            priority,
+            (cell_mode == PackedMode::MODE_32_ATOMIC_GUARANTEED || cell_mode == PackedMode::MODE_32_CLAIMED_GUARANTEED) ? static_cast<SubClassesOfMode32>(mode_sub_class) : SubClassesOfMode32::SELF_CLASS,
+            (cell_mode == PackedMode::MODE_48_ATOMIC_GUARANTEED || cell_mode == PackedMode::MODE_48_CLAIMED_GURANTEED) ? static_cast<SubClassesOfMode48>(mode_sub_class) : SubClassesOfMode48::SELF_CLASS
         );
 
         if (a_valid_fabric_meta_cell32 == PackedCell64_t::PACKED_CELL_SENTINAL)
@@ -316,49 +317,60 @@ namespace PredictedAdaptedEncoding
 
     }
 
-    // bool NeuromorphicSpaceTimeFabricCoordinator::WriteDirectoryEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end, uint16_t version) noexcept
+    bool NeuromorphicSpaceTimeFabricCoordinator::WriteDirectoryEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end, uint8_t version) noexcept
+    {
+
+        if (!CoreOfFabricCoordinator::IsValidFabricTable(table_class))
+        {
+            return false;
+        }
+
+        // Is  begin < APCDataStructure::METACELL_COUNT-> This check valid ??
+        if (!SlabBasePtr_ || begin > end || end > SlabCellCount_ || begin < APCDataStructure::METACELL_COUNT)
+        {
+            return false;
+        }
+        
+        const size_t width = CoreOfFabricCoordinator::GetWidthOfValidFabricTable(table_class);
+        if (width == UNSIGNED_ZERO)
+        {
+            return false;
+        }
+        
+        const size_t base = GetTableDirectoryCellSlabIndex_(table_class, TableEntryCellTypeOfFabric::BEGIN48, PackedCellLocalityTypes::CLAIMED);
+
+        if (base + TABLE_ENTRY_WIDTH_OF_FABRIC > SlabCellCount_)
+        {
+            return false;
+        }
+
+        AtomicallyStorePackedCellUnchecked(
+            base + static_cast<size_t>(TableEntryCellTypeOfFabric::BEGIN48), 
+                CoreOfFabricCoordinator::MakeADirectoryEntryCellForFabric(
+                static_cast<uint32_t>(begin), TableEntryCellTypeOfFabric::BEGIN48,
+                table_class, version,
+                PackedCellLocalityTypes::PUBLISHED
+            )
+        );
+
+        AtomicallyStorePackedCellUnchecked(
+            base + static_cast<size_t>(TableEntryCellTypeOfFabric::BEGIN48), 
+                CoreOfFabricCoordinator::MakeADirectoryEntryCellForFabric(
+                static_cast<uint32_t>(end), TableEntryCellTypeOfFabric::END48,
+                table_class, version,
+                PackedCellLocalityTypes::PUBLISHED
+            )
+        );
+
+        return true;
+        
+    }
+
+    // void NeuromorphicSpaceTimeFabricCoordinator::InitializeLinearTable_(FabricTableSegmentClasses table_class, uint32_t record_width) noexcept
     // {
 
-    //     if (!CoreOfFabricCoordinator::IsValidFabricTable(table_class))
-    //     {
-    //         return false;
-    //     }
-
-    //     // Is  begin < APCDataStructure::METACELL_COUNT-> This check valid ??
-    //     if (!SlabBasePtr_ || begin > end || end > SlabCellCount_ || begin < APCDataStructure::METACELL_COUNT)
-    //     {
-    //         return false;
-    //     }
-        
-    //     const size_t width = CoreOfFabricCoordinator::GetWidthOfValidFabricTable(table_class);
-    //     if (width == UNSIGNED_ZERO)
-    //     {
-    //         return false;
-    //     }
-        
-    //     const size_t base = GetTableDirectoryCellSlabIndex_(table_class, TableEntryCellTypeOfFabric::BEGIN48, PackedCellLocalityTypes::CLAIMED);
-
-    //     if (base + TABLE_ENTRY_WIDTH_OF_FABRIC > SlabCellCount_)
-    //     {
-    //         return false;
-    //     }
-        
-        
-    //     MakeAndStoreDirectlyAFabricOwnedCell_(base + 0u, static_cast<uint64_t>(begin), table_id, PackedMode::MODE_32_ATOMIC_GUARANTEED, version, 
-    //         UNSIGNED_ZERO, PackedCellDataType::UnsignedPCellDataType, PackedCellLocalityTypes::PUBLISHED,
-    //         CellMap::VERSIONED
-    //     );
-
-    //     MakeAndStoreDirectlyAFabricOwnedCell_(base + 1u, static_cast<uint64_t>(end), table_id, PackedMode::MODE_32_ATOMIC_GUARANTEED, version,
-    //         UNSIGNED_ZERO, PackedCellDataType::UnsignedPCellDataType, PackedCellLocalityTypes::PUBLISHED,
-    //         CellMap::VERSIONED
-    //     );
-
-    //     MakeAndStoreDirectlyAFabricOwnedCell_(base + 2u, static_cast<uint64_t>(directory_width), table_id, PackedMode::MODE_32_ATOMIC_GUARANTEED, version,
-    //         UNSIGNED_ZERO, PackedCellDataType::UnsignedPCellDataType, PackedCellLocalityTypes::PUBLISHED,
-    //         CellMap::VERSIONED
-    //     );
     // }
+
 
 
 

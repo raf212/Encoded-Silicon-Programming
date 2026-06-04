@@ -208,7 +208,7 @@ namespace PredictedAdaptedEncoding
             
             const packed64_t graceful_idle_cell = PackedCell64_t::MakeInitialAPCValidPackedCell(
                 current_cell_view.CellMode, PackedCellLocalityTypes::IDLE, current_cell_view.CellOwnership,
-                region_kind, current_cell_view.CellValueDataType, UNSIGNED_ZERO, UNSIGNED_ZERO, CellMap::IN_CLOCKED_GENERIC_SPIKE,
+                region_kind, current_cell_view.CellValueDataType, UNSIGNED_ZERO, UNSIGNED_ZERO, CellMap::PRESSURE_FIRST,
                 current_cell_view.SubClassOfMode32.has_value() ? *current_cell_view.SubClassOfMode32 : SubClassesOfMode32::SELF_CLASS,
                 current_cell_view.RelationOffsetForMode48.has_value() ? *current_cell_view.RelationOffsetForMode48 : SubClassesOfMode48::SELF_CLASS
             );
@@ -596,7 +596,7 @@ namespace PredictedAdaptedEncoding
         const uint32_t priority_u32 =
             static_cast<uint32_t>(priority);
 
-        if (priority_u32 > static_cast<uint32_t>(CellMap::IN_CLOCKED_GENERIC_SPIKE))
+        if (priority_u32 > static_cast<uint32_t>(CellMap::PRESSURE_FIRST))
         {
             budget = std::max<uint32_t>(
                 1u,

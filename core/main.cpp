@@ -191,7 +191,7 @@ namespace
         MasterClockConf& clock,
         float value,
         APCPagedNodeSegmentClasses region,
-        CellMap priority = CellMap::IN_CLOCKED_GENERIC_SPIKE
+        CellMap priority = CellMap::PRESSURE_FIRST
     )
     {
         const uint32_t bits = BitCastPortable<uint32_t>(value);
@@ -636,7 +636,7 @@ namespace
                         clock,
                         value,
                         APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                        CellMap::IN_CLOCKED_GENERIC_SPIKE
+                        CellMap::PRESSURE_FIRST
                     ),
                     manager,
                     growth_counter,
@@ -668,7 +668,7 @@ namespace
                         clock,
                         prediction,
                         APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
-                        CellMap::IN_CLOCKED_GENERIC_SPIKE
+                        CellMap::PRESSURE_FIRST
                     ),
                     manager,
                     growth_counter,
@@ -890,7 +890,7 @@ int main()
                 clock,
                 state,
                 APCPagedNodeSegmentClasses::STATE_SLOT,
-                CellMap::IN_CLOCKED_GENERIC_SPIKE
+                CellMap::PRESSURE_FIRST
             ),
             manager,
             grow_integrator,
@@ -904,7 +904,7 @@ int main()
                 clock,
                 error,
                 APCPagedNodeSegmentClasses::ERROR_SLOT,
-                CellMap::IN_CLOCKED_GENERIC_SPIKE
+                CellMap::PRESSURE_FIRST
             ),
             manager,
             grow_integrator,
@@ -964,7 +964,7 @@ int main()
                 clock,
                 motor,
                 APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                CellMap::IN_CLOCKED_GENERIC_SPIKE
+                CellMap::PRESSURE_FIRST
             ),
             manager,
             grow_motor,
@@ -978,7 +978,7 @@ int main()
                 clock,
                 feedback,
                 APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
-                CellMap::IN_CLOCKED_GENERIC_SPIKE
+                CellMap::PRESSURE_FIRST
             ),
             manager,
             grow_predictor,

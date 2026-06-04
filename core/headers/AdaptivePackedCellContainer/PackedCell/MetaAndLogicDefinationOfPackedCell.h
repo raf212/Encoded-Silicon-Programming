@@ -145,9 +145,9 @@ namespace PredictedAdaptedEncoding {
 
     enum class CellMap : tag8_t
     {
-        IN_CLOCKED_GENERIC_SPIKE = 1,
         VERSIONED = 0,
-        PRESSURE_FIRST = 2,
+        PRESSURE_FIRST = 1,
+        IN_CLOCKED_GENERIC_SPIKE = 2,
         ERROR_FIRST = 3
     };
 

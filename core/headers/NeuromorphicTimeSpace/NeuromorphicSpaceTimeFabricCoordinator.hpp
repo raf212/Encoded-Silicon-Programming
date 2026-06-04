@@ -46,12 +46,12 @@ namespace PredictedAdaptedEncoding
             size_t index, 
             uint64_t value32_or_64, 
             FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
-            PackedMode cell_mode = PackedMode::MODE_48_ATOMIC_GUARANTEED, 
+            PackedMode cell_mode = PackedMode::MODE_48_CLAIMED_GURANTEED, 
             clk16_t extended_meta_value = UNSIGNED_ZERO,
             tag8_t mode_sub_class = static_cast<tag8_t>(SubClassesOfMode32::SELF_CLASS),
             PackedCellDataType cell_data_type = PackedCellDataType::UnsignedPCellDataType,
             PackedCellLocalityTypes locality_of_cell = PackedCellLocalityTypes::IDLE, 
-            CellMap priority = CellMap::IN_CLOCKED_GENERIC_SPIKE
+            CellMap priority = CellMap::PRESSURE_FIRST
         ) noexcept;
 
         constexpr bool StoreFebricControlMeta48Directly_(
@@ -80,9 +80,20 @@ namespace PredictedAdaptedEncoding
             std::optional<PackedCellLocalityTypes> invalid_cell_locality = PackedCellLocalityTypes::CLAIMED
         ) noexcept;
     
-//checked-----------------------------------------------
 
-        bool WriteDirectoryEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end, uint16_t version) noexcept;
+        bool WriteDirectoryEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end, uint8_t version) noexcept;
+        
+//checked-----------------------------------------------
+        // bool GetSlabIdxOfTableDirectoryCell_(FabricTableSegmentClasses table_class, size_t& begin, size_t& end, uint16_t& version) noexcept
+        // {
+        //     if (!CoreOfFabricCoordinator::IsValidFabricTable(table_class))
+        //     {
+
+        //     }
+            
+        // }
+
+        void InitializeLinearTable_(FabricTableSegmentClasses table_class, uint32_t record_width) noexcept;
 
         void InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept;
     
@@ -133,7 +144,6 @@ namespace PredictedAdaptedEncoding
         ) noexcept;
 
 /// checked--------------------------------------------------------
-
         bool GetMetaCellView(MetaIndexOfAPCNode fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept;
 
         std::optional<uint64_t> ReadOccupancyApproxFromPairedIfValid(

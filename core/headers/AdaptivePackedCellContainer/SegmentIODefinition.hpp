@@ -134,7 +134,7 @@ protected:
     void WriteMetaCellMode32_(
         MetaIndexOfAPCNode idx,
         uint32_t value32,
-        CellMap priority = CellMap::IN_CLOCKED_GENERIC_SPIKE,
+        CellMap priority = CellMap::PRESSURE_FIRST,
         APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT
     ) noexcept
     {
@@ -151,7 +151,7 @@ protected:
         MetaIndexOfAPCNode idx,
         uint64_t raw48_value,
         APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
-        CellMap priority = CellMap::IN_CLOCKED_GENERIC_SPIKE,
+        CellMap priority = CellMap::PRESSURE_FIRST,
         SubClassesOfMode48 rel_offset = SubClassesOfMode48::SELF_CLASS
     ) noexcept
     {
@@ -181,7 +181,7 @@ private:
 public:
     packed64_t PackPureClock48AsPackedCell(
         std::optional<uint64_t> clock48 = std::nullopt,
-        CellMap priority = CellMap::IN_CLOCKED_GENERIC_SPIKE,
+        CellMap priority = CellMap::PRESSURE_FIRST,
         PackedCellLocalityTypes locality = PackedCellLocalityTypes::PUBLISHED,
         APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
         SubClassesOfMode48 reloffset = SubClassesOfMode48::PURE_TIMER_48,
@@ -189,7 +189,7 @@ public:
         PackedCellOwnership node_authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
     ) noexcept;
 
-    void WriteOrUpdateMetaClock48(CellMap priority = CellMap::IN_CLOCKED_GENERIC_SPIKE, std::optional<uint64_t>meta_clock_48 = std::nullopt) noexcept;
+    void WriteOrUpdateMetaClock48(CellMap priority = CellMap::PRESSURE_FIRST, std::optional<uint64_t>meta_clock_48 = std::nullopt) noexcept;
 
     bool JustUpdateValueOfMeta32(
         MetaIndexOfAPCNode idx,
@@ -230,7 +230,7 @@ public:
         uint32_t aux_param_uint32 = UNSIGNED_ZERO,
         uint32_t branch_depth = UNSIGNED_ZERO,
         uint8_t branch_priority = UNSIGNED_ZERO,
-        CellMap write_cell_priority = CellMap::IN_CLOCKED_GENERIC_SPIKE
+        CellMap write_cell_priority = CellMap::PRESSURE_FIRST
 
     ) noexcept;
 
@@ -349,11 +349,11 @@ public:
 
     void MakeAPCBranchOwned() noexcept
     {
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::CURRENTLY_OWNED, 1u, CellMap::IN_CLOCKED_GENERIC_SPIKE);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::CURRENTLY_OWNED, 1u, CellMap::PRESSURE_FIRST);
     }
 
 
-    void ResetTotalCASFailureForThisBranch(CellMap priority = CellMap::IN_CLOCKED_GENERIC_SPIKE) noexcept
+    void ResetTotalCASFailureForThisBranch(CellMap priority = CellMap::PRESSURE_FIRST) noexcept
     {
         WriteMetaCellMode32_(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH, UNSIGNED_ZERO, priority);
     }

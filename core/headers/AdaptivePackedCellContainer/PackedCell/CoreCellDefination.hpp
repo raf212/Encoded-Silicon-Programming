@@ -26,7 +26,7 @@ namespace PredictedAdaptedEncoding
         {
             packed64_t RawCell{0};
             meta16_t  InCellMeta16{0};
-            CellMap Priority{CellMap::IN_CLOCKED_GENERIC_SPIKE};
+            CellMap Priority{CellMap::PRESSURE_FIRST};
             PackedCellOwnership CellOwnership{PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER};
             PackedCellLocalityTypes LocalityOfCell{PackedCellLocalityTypes::IDLE};
             PackedMode CellMode{PackedMode::MODE_32_ATOMIC_GUARANTEED};
@@ -175,7 +175,7 @@ namespace PredictedAdaptedEncoding
             PackedCellDataType in_cell_value_data_type = PackedCellDataType::UnsignedPCellDataType,
             uint64_t in_cell_value = UNSIGNED_ZERO,
             clk16_t in_cell_clk16 = UNSIGNED_ZERO,
-            CellMap cell_priority = CellMap::IN_CLOCKED_GENERIC_SPIKE,
+            CellMap cell_priority = CellMap::PRESSURE_FIRST,
             SubClassesOfMode32 probable_mode_subclass_type_32 = SubClassesOfMode32::SELF_CLASS,
             SubClassesOfMode48 probable_mode_subclass_type_48 = SubClassesOfMode48::SELF_CLASS
         ) noexcept
@@ -197,7 +197,7 @@ namespace PredictedAdaptedEncoding
             PackedCellDataType in_cell_value_data_type = PackedCellDataType::UnsignedPCellDataType,
             uint64_t in_cell_value = UNSIGNED_ZERO,
             clk16_t in_cell_clk16 = UNSIGNED_ZERO,
-            CellMap cell_priority = CellMap::IN_CLOCKED_GENERIC_SPIKE,
+            CellMap cell_priority = CellMap::PRESSURE_FIRST,
             SubClassesOfMode32 probable_mode_subclass_type_32 = SubClassesOfMode32::SELF_CLASS,
             SubClassesOfMode48 probable_mode_subclass_type_48 = SubClassesOfMode48::SELF_CLASS
         ) noexcept
@@ -576,7 +576,7 @@ namespace PredictedAdaptedEncoding
 
         static  constexpr meta16_t MakeInCellMetaForMode_32t(
             BehaveOfMode32 cell_behavior = BehaveOfMode32::MODE_32_CLAIMED_GUARANTEED,
-            CellMap priority = CellMap::IN_CLOCKED_GENERIC_SPIKE, 
+            CellMap priority = CellMap::PRESSURE_FIRST, 
             PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
@@ -597,7 +597,7 @@ namespace PredictedAdaptedEncoding
 
         static  constexpr meta16_t MakeInCellMetaForMode_48t(
             BehaveOfMode48 cell_behavior = BehaveOfMode48::MODE_48_CLAIMED_GURANTEED,
-            CellMap priority = CellMap::IN_CLOCKED_GENERIC_SPIKE, 
+            CellMap priority = CellMap::PRESSURE_FIRST, 
             PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
@@ -677,7 +677,7 @@ namespace PredictedAdaptedEncoding
             PackedMode cell_mode,
             uint64_t cell_value = UNSIGNED_ZERO,
             clk16_t clock16 = UNSIGNED_ZERO,
-            CellMap cell_priority = CellMap::IN_CLOCKED_GENERIC_SPIKE,
+            CellMap cell_priority = CellMap::PRESSURE_FIRST,
             PackedCellOwnership node_authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
             PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::IDLE, 
             tag8_t page_class = static_cast<tag8_t>(APCPagedNodeSegmentClasses::UNDEFINED),
@@ -721,7 +721,7 @@ namespace PredictedAdaptedEncoding
 
         static constexpr meta16_t MakeInCellMetaForAny_(
             PackedMode mode_of_cell ,
-            CellMap priority = CellMap::IN_CLOCKED_GENERIC_SPIKE, 
+            CellMap priority = CellMap::PRESSURE_FIRST, 
             PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
             PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,

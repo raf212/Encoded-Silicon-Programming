@@ -118,10 +118,10 @@ namespace PredictedAdaptedEncoding
         bool is_root_shared
     ) noexcept
     {
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::LOGICAL_NODE_ID, logical_node_id, CellMap::IN_CLOCKED_GENERIC_SPIKE);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::SHARED_ID, shared_id, CellMap::IN_CLOCKED_GENERIC_SPIKE);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::SHARED_PREVIOUS_ID, BRANCH_SENTINAL, CellMap::IN_CLOCKED_GENERIC_SPIKE);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::SHARED_NEXT_ID, BRANCH_SENTINAL, CellMap::IN_CLOCKED_GENERIC_SPIKE);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::LOGICAL_NODE_ID, logical_node_id, CellMap::PRESSURE_FIRST);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::SHARED_ID, shared_id, CellMap::PRESSURE_FIRST);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::SHARED_PREVIOUS_ID, BRANCH_SENTINAL, CellMap::PRESSURE_FIRST);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::SHARED_NEXT_ID, BRANCH_SENTINAL, CellMap::PRESSURE_FIRST);
         if (is_root_shared)
         {
             TurnOnMultipleSegmentFlagsAtOnce_(static_cast<uint32_t>(ControlEnumOfAPCSegment::IS_GRAPH_NODE) | static_cast<uint32_t>(ControlEnumOfAPCSegment::IS_SHARED_ROOT));
@@ -139,12 +139,12 @@ namespace PredictedAdaptedEncoding
         uint32_t aux_param_uint32
     ) noexcept
     {
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::NODE_COMPUTE_KIND, UNSIGNED_ZERO, CellMap::IN_CLOCKED_GENERIC_SPIKE);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::NODE_AUX_PARAM_U32, aux_param_uint32, CellMap::IN_CLOCKED_GENERIC_SPIKE);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_FORWARD_CLOCK16, UNSIGNED_ZERO, CellMap::IN_CLOCKED_GENERIC_SPIKE);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_BACKWARD_CLOCK16, UNSIGNED_ZERO, CellMap::IN_CLOCKED_GENERIC_SPIKE);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_EMITTED_FEED_FORWARD_CLOCK16, UNSIGNED_ZERO, CellMap::IN_CLOCKED_GENERIC_SPIKE);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_EMITTED_FEED_BACKWARD_CLOCK16, UNSIGNED_ZERO, CellMap::IN_CLOCKED_GENERIC_SPIKE);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::NODE_COMPUTE_KIND, UNSIGNED_ZERO, CellMap::PRESSURE_FIRST);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::NODE_AUX_PARAM_U32, aux_param_uint32, CellMap::PRESSURE_FIRST);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_FORWARD_CLOCK16, UNSIGNED_ZERO, CellMap::PRESSURE_FIRST);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_BACKWARD_CLOCK16, UNSIGNED_ZERO, CellMap::PRESSURE_FIRST);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_EMITTED_FEED_FORWARD_CLOCK16, UNSIGNED_ZERO, CellMap::PRESSURE_FIRST);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_EMITTED_FEED_BACKWARD_CLOCK16, UNSIGNED_ZERO, CellMap::PRESSURE_FIRST);
 
         WriteMetaCellMode32_(MetaIndexOfAPCNode::FEEDFORWARD_IN_TARGET_ID, BRANCH_SENTINAL);
         WriteMetaCellMode32_(MetaIndexOfAPCNode::FEEDFORWARD_OUT_TARGET_ID, BRANCH_SENTINAL);

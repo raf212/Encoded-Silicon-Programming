@@ -247,12 +247,12 @@ namespace PredictedAdaptedEncoding
                     else
                     {
                         val32_t tail_ptr_val32 = high32_half;
-                        meta16_t strl_tail = PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODE_32_ATOMIC_GUARANTEED, CellMap::IN_CLOCKED_GENERIC_SPIKE, PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER, PackedCellLocalityTypes::PUBLISHED, rel_mask_with_ptrflag, SubClassesOfMode32::LOW_OF_PAIRED_VERSIONED_CELL);
+                        meta16_t strl_tail = PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODE_32_ATOMIC_GUARANTEED, CellMap::PRESSURE_FIRST, PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER, PackedCellLocalityTypes::PUBLISHED, rel_mask_with_ptrflag, SubClassesOfMode32::LOW_OF_PAIRED_VERSIONED_CELL);
                         packed64_t tail_packed = PackedCell64_t::ComposeValue32u_64(tail_ptr_val32, 0u, strl_tail);
                         BackingPtr[tail].store(tail_packed, MoStoreSeq_);
 
                         val32_t head_ptr_value32 = low32_half;
-                        meta16_t strl_head = PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODE_32_ATOMIC_GUARANTEED, CellMap::IN_CLOCKED_GENERIC_SPIKE, PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER, PackedCellLocalityTypes::PUBLISHED, rel_mask_with_ptrflag, SubClassesOfMode32::HIGH_OF_PAIRED_VERSIONED_CELL);
+                        meta16_t strl_head = PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODE_32_ATOMIC_GUARANTEED, CellMap::PRESSURE_FIRST, PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER, PackedCellLocalityTypes::PUBLISHED, rel_mask_with_ptrflag, SubClassesOfMode32::HIGH_OF_PAIRED_VERSIONED_CELL);
                         packed64_t head_packed = PackedCell64_t::ComposeValue32u_64(head_ptr_value32, 0u, strl_head);
                         BackingPtr[head].store(head_packed, MoStoreSeq_);
                         BackingPtr[tail].notify_all();

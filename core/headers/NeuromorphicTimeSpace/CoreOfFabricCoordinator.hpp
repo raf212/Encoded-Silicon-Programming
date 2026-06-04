@@ -12,7 +12,7 @@ namespace PredictedAdaptedEncoding
     static constexpr uint32_t DEFAULT_HAS_CONST_2 = 0x846ca68bu;
 
     static constexpr size_t DEFAULT_FABRIC_CONTROLIO_LENGTH = 1024u;
-    static constexpr size_t TABLE_ENTRY_WIDTH_OF_FABRIC = 4u;
+    static constexpr size_t TABLE_ENTRY_WIDTH_OF_FABRIC = 2u;
     static constexpr size_t HASH_BUCKED_WIDTH_OF_FABRIC = 2u;
     static constexpr size_t SLOT_RECORD_WIDTH_OF_FABRIC = 12u;
     static constexpr size_t RELATION_WIDTH_OF_FABRIC = 8u;
@@ -22,7 +22,29 @@ namespace PredictedAdaptedEncoding
     static constexpr size_t THREAD_TABLE_RECORD_WIDTH = 4u;
     static constexpr size_t DEFAULT_THREAD_SLOT_OF_FABRIC = 256u;
 
+    enum class ReadContractResultOfPackedCell : uint8_t
+    {
+        UNDEFINED_ERROR = 0,
 
+        SUCCESSFUL_SINGLE_CELL_NON_ATOMIC_READ = 1,
+        SUCCESSFUL_SINGLE_CELL_ATOMIC_READ = 2,
+        SUCCESSFUL_PAIRED_VERSION_MATCHED_NON_ATOMIC_READ = 3,
+        SUCCESSFUL_PAIRED_VERSION_MATCHED_ATOMIC_READ = 4,
+
+        CLAIMED_CONTRACT_BREACHED = 5,
+        FAULTY_CONTRACT_BREACHED = 6,
+        VERSION_CONTRACT_BREACHED = 7,
+        MODE_CONTRACT_BREACHED = 8,
+        SUB_CLASS_CONTRACT_BREACHED = 9,
+        DTATA_TYPE_CONTRACT_BREACHED = 10,
+        MULTIPLE_CONTRACT_BREACHED = 11,
+
+        SEGMENT_IO_NODE_SEGMENT_CLASS_CONTRACT_BREACHED = 12,
+        FABRIC_TABLE_CLASS_CONTRACT_BREACHED = 13,
+
+        CELL_READ_CONTAINS_PACKED_CELL_SENTINAL = 14
+
+    };
     
     enum class HandleStateOfAPCFabric : uint8_t
     {
@@ -39,9 +61,7 @@ namespace PredictedAdaptedEncoding
     enum class TableEntryCellTypeOfFabric : size_t
     {
         BEGIN48 = 0,
-        END48 = 1,
-        RECORD_WIDTH32 = 3,
-        VERSION_FLAGS32 = 4
+        END48 = 1
     };
 
     enum class HashCellOfFabridc : size_t
@@ -420,11 +440,12 @@ namespace PredictedAdaptedEncoding
             FabricTableSegmentClasses table_class,
             PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::IDLE,
             CellMap priority = CellMap::VERSIONED,
-            SubClassesOfMode32 subclass_of_mode32 = SubClassesOfMode32::SELF_CLASS
+            SubClassesOfMode32 subclass_of_mode32 = SubClassesOfMode32::SELF_CLASS,
+            BehaveOfMode32 runtime_contract = BehaveOfMode32::MODE_32_CLAIMED_GUARANTEED
         )
         {
             return PackedCell64_t::MakeInitialFabricValidPackedCell(
-                PackedMode::MODE_32_ATOMIC_GUARANTEED,
+                static_cast<PackedMode>(runtime_contract),
                 cell_locality, 
                 table_class, 
                 PackedCellDataType::UnsignedPCellDataType,
@@ -441,11 +462,12 @@ namespace PredictedAdaptedEncoding
             FabricTableSegmentClasses table_class,
             PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::IDLE,
             CellMap priority = CellMap::VERSIONED,
-            SubClassesOfMode48 subclass_of_mode48 = SubClassesOfMode48::SELF_CLASS
+            SubClassesOfMode48 subclass_of_mode48 = SubClassesOfMode48::SELF_CLASS,
+            BehaveOfMode48 cell_behaviour = BehaveOfMode48::MODE_48_CLAIMED_GURANTEED
         )
         {
             return PackedCell64_t::MakeInitialFabricValidPackedCell(
-                PackedMode::MODE_48_ATOMIC_GUARANTEED,
+                static_cast<PackedMode>(cell_behaviour),
                 cell_locality, 
                 table_class, 
                 PackedCellDataType::UnsignedPCellDataType,
@@ -455,6 +477,27 @@ namespace PredictedAdaptedEncoding
                 SubClassesOfMode32::SELF_CLASS, 
                 subclass_of_mode48
             );
+        }
+
+        static constexpr packed64_t MakeADirectoryEntryCellForFabric(
+            uint32_t value,
+            TableEntryCellTypeOfFabric table_cell_type,
+            FabricTableSegmentClasses identity_of_desired_directory,
+            uint8_t version = static_cast<uint8_t>(APCDataStructure::BRANCH_VERSION),
+            PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::PUBLISHED
+        ) noexcept
+        {
+            const uint16_t external_handle = Clock16Subdivision1x8Plus2x4InMode32CellModel::Pack1x8Plus2x4InUnsigned16_(
+                version, static_cast<tag8_t>(table_cell_type), static_cast<tag8_t>(identity_of_desired_directory)
+            );
+
+            const packed64_t packed_cell = MakeAValidFabricMode32UnsignedCell(
+                value, external_handle, FabricTableSegmentClasses::TABLE_DIRECTORY,
+                cell_locality, CellMap::VERSIONED, 
+                SubClassesOfMode32::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4,
+                BehaveOfMode32::MODE_32_ATOMIC_GUARANTEED
+            );
+            return packed_cell;
         }
 
 
