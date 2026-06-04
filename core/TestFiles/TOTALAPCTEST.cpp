@@ -200,10 +200,10 @@ namespace
             bits,
             region,
             priority,
-            PackedCellLocalityTypes::PUBLISHED,
-            SubClassesOfMode32::SELF_CLASS,
-            PackedCellDataType::FloatPCellDataType,
-            PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
+            LocalityPolicy::PUBLISHED,
+            Model32Subclass::SELF_CLASS,
+            InternalDataTypePolicy::FloatPCellDataType,
+            OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
         );
     }
 
@@ -235,19 +235,19 @@ namespace
 
             switch (view.LocalityOfCell)
             {
-                case PackedCellLocalityTypes::IDLE:
+                case LocalityPolicy::IDLE:
                     ++out.Idle;
                     break;
 
-                case PackedCellLocalityTypes::PUBLISHED:
+                case LocalityPolicy::PUBLISHED:
                     ++out.Published;
                     break;
 
-                case PackedCellLocalityTypes::CLAIMED:
+                case LocalityPolicy::CLAIMED:
                     ++out.Claimed;
                     break;
 
-                case PackedCellLocalityTypes::FAULTY:
+                case LocalityPolicy::FAULTY:
                 default:
                     ++out.Faulty;
                     break;
@@ -315,15 +315,15 @@ namespace
         OccupancyTriple out{};
 
         out.Published = apc.ReadCentralAPCOccupancyOfALocality(
-            PackedCellLocalityTypes::PUBLISHED
+            LocalityPolicy::PUBLISHED
         );
 
         out.Claimed = apc.ReadCentralAPCOccupancyOfALocality(
-            PackedCellLocalityTypes::CLAIMED
+            LocalityPolicy::CLAIMED
         );
 
         out.Faulty = apc.ReadCentralAPCOccupancyOfALocality(
-            PackedCellLocalityTypes::FAULTY
+            LocalityPolicy::FAULTY
         );
 
         return out;
@@ -337,17 +337,17 @@ namespace
         OccupancyTriple out{};
 
         out.Published = apc.ReadRegionOccupancyOfALocality(
-            PackedCellLocalityTypes::PUBLISHED,
+            LocalityPolicy::PUBLISHED,
             region
         );
 
         out.Claimed = apc.ReadRegionOccupancyOfALocality(
-            PackedCellLocalityTypes::CLAIMED,
+            LocalityPolicy::CLAIMED,
             region
         );
 
         out.Faulty = apc.ReadRegionOccupancyOfALocality(
-            PackedCellLocalityTypes::FAULTY,
+            LocalityPolicy::FAULTY,
             region
         );
 

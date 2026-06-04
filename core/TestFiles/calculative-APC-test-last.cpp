@@ -63,17 +63,17 @@ namespace
         MasterClockConf& clock,
         uint32_t value,
         APCPagedNodeSegmentClasses region,
-        CellMap priority = CellMap::PRESSURE_FIRST
+        PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST
     )
     {
         return clock.ComposeValue32WithCurrentThreadStamp16(
             value,
             region,
             priority,
-            PackedCellLocalityTypes::PUBLISHED,
-            SubClassesOfMode32::SELF_CLASS,
-            PackedCellDataType::UnsignedPCellDataType,
-            PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
+            LocalityPolicy::PUBLISHED,
+            Model32Subclass::SELF_CLASS,
+            InternalDataTypePolicy::UnsignedPCellDataType,
+            OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
         );
     }
 
@@ -81,7 +81,7 @@ namespace
         MasterClockConf& clock,
         float value,
         APCPagedNodeSegmentClasses region,
-        CellMap priority = CellMap::PRESSURE_FIRST
+        PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST
     )
     {
         const uint32_t bits = BitCastMaybe<uint32_t>(value);
@@ -90,10 +90,10 @@ namespace
             bits,
             region,
             priority,
-            PackedCellLocalityTypes::PUBLISHED,
-            SubClassesOfMode32::SELF_CLASS,
-            PackedCellDataType::FloatPCellDataType,
-            PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
+            LocalityPolicy::PUBLISHED,
+            Model32Subclass::SELF_CLASS,
+            InternalDataTypePolicy::FloatPCellDataType,
+            OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
         );
     }
 
@@ -137,7 +137,7 @@ namespace
             const auto view = PackedCell64_t::GetAuthoritiveViewsForACell(cell);
 
             if (!view.IsCellValid ||
-                view.LocalityOfCell == PackedCellLocalityTypes::FAULTY)
+                view.LocalityOfCell == LocalityPolicy::FAULTY)
             {
                 ++out.Faulty;
                 continue;
@@ -145,19 +145,19 @@ namespace
 
             switch (view.LocalityOfCell)
             {
-                case PackedCellLocalityTypes::IDLE:
+                case LocalityPolicy::IDLE:
                     ++out.Idle;
                     break;
 
-                case PackedCellLocalityTypes::PUBLISHED:
+                case LocalityPolicy::PUBLISHED:
                     ++out.Published;
                     break;
 
-                case PackedCellLocalityTypes::CLAIMED:
+                case LocalityPolicy::CLAIMED:
                     ++out.Claimed;
                     break;
 
-                case PackedCellLocalityTypes::FAULTY:
+                case LocalityPolicy::FAULTY:
                 default:
                     ++out.Faulty;
                     break;
@@ -175,10 +175,10 @@ namespace
     static uint32_t HeaderLocalitySum(APCSegmentsCausalCordinator& apc)
     {
         return
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::IDLE) +
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::PUBLISHED) +
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::CLAIMED) +
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::FAULTY);
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::IDLE) +
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::PUBLISHED) +
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::CLAIMED) +
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::FAULTY);
     }
     
     static uint32_t RegionMeta(APCSegmentsCausalCordinator& apc, APCPagedNodeSegmentClasses region)
@@ -215,16 +215,16 @@ namespace
         const ExactLocalityCount exact = CountExactLocality(apc);
 
         const uint32_t header_idle =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::IDLE);
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::IDLE);
 
         const uint32_t header_pub =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::PUBLISHED);
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::PUBLISHED);
 
         const uint32_t header_claim =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::CLAIMED);
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::CLAIMED);
 
         const uint32_t header_fault =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::FAULTY);
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::FAULTY);
 
         const uint32_t header_sum = HeaderLocalitySum(apc);
         const uint32_t header_used = HeaderUsedSum(apc);
@@ -301,7 +301,7 @@ int main()
     MasterClockConf clock(nullptr, timer);
 
     ContainerConf cfg;
-    cfg.InitialMode = PackedMode::MODE_32_ATOMIC_GUARANTEED;
+    cfg.InitialMode = PackedMode::MODEL32;
     cfg.ProducerBlockSize = 8;
     cfg.RegionSize = 16;
     cfg.EnableBranching = true;
@@ -373,10 +373,10 @@ int main()
             for (uint32_t i = p + 1; i <= VALUE_COUNT; i += PRODUCER_COUNT)
             {
                 const packed64_t ff =
-                    PackU32(clock, i, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, CellMap::PRESSURE_FIRST);
+                    PackU32(clock, i, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, PriorityPolicy::PRESSURE_FIRST);
 
                 const packed64_t fb =
-                    PackU32(clock, i + 1u, APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE, CellMap::PRESSURE_FIRST);
+                    PackU32(clock, i + 1u, APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE, PriorityPolicy::PRESSURE_FIRST);
 
                 if (PublishBudgeted(
                         Sensor,
@@ -444,7 +444,7 @@ int main()
                         clock,
                         state_value,
                         APCPagedNodeSegmentClasses::STATE_SLOT,
-                        CellMap::PRESSURE_FIRST
+                        PriorityPolicy::PRESSURE_FIRST
                     );
 
                 if (PublishBudgeted(
@@ -501,7 +501,7 @@ int main()
                         clock,
                         error_value,
                         APCPagedNodeSegmentClasses::ERROR_SLOT,
-                        CellMap::PRESSURE_FIRST
+                        PriorityPolicy::PRESSURE_FIRST
                     );
 
                 if (PublishBudgeted(
@@ -582,7 +582,7 @@ int main()
                         clock,
                         motor_value,
                         APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                        CellMap::PRESSURE_FIRST
+                        PriorityPolicy::PRESSURE_FIRST
                     );
 
                 if (PublishBudgeted(

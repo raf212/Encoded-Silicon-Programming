@@ -83,7 +83,7 @@ namespace PredictedAdaptedEncoding {
     
     static constexpr uint8_t MAX_PRIORITY   = static_cast<tag8_t>(PRIORITY_MASK);
 
-    enum class PackedCellLocalityTypes : tag8_t
+    enum class LocalityPolicy : tag8_t
     {
         IDLE = 0,
         PUBLISHED = 1,
@@ -91,7 +91,7 @@ namespace PredictedAdaptedEncoding {
         FAULTY = 3
     };
 
-    enum class PackedCellOwnership : tag8_t
+    enum class OwnershipPolicy : tag8_t
     {
         ADAPTIVE_PACKED_CELL_CONTAINER = 0,
         NEUROMORPHIC_SPACE_TIME_FABRIC = 1,
@@ -99,7 +99,7 @@ namespace PredictedAdaptedEncoding {
         RESERVED_3 = 3
     };
 
-    enum class PackedCellDataType : tag8_t
+    enum class InternalDataTypePolicy : tag8_t
     {
         CharPCellDataType = 0,
         IntPCellDataType = 1,
@@ -109,25 +109,25 @@ namespace PredictedAdaptedEncoding {
 
     enum class PackedMode : tag8_t
     {
-        MODE_32_ATOMIC_GUARANTEED = 0,
-        MODE_32_CLAIMED_GUARANTEED = 1,
-        MODE_48_ATOMIC_GUARANTEED = 2,
-        MODE_48_CLAIMED_GURANTEED = 3
+        MODEL32 = 0,
+        VALUE32 = 1,
+        MODEL48 = 2,
+        VALUE48 = 3
     };
 
     enum class BehaveOfMode32 : tag8_t
     {
-        MODE_32_ATOMIC_GUARANTEED = PackedMode::MODE_32_ATOMIC_GUARANTEED,
-        MODE_32_CLAIMED_GUARANTEED = PackedMode::MODE_32_CLAIMED_GUARANTEED
+        MODEL32 = PackedMode::MODEL32,
+        VALUE32 = PackedMode::VALUE32
     };
 
     enum class BehaveOfMode48 : tag8_t
     {
-        MODE_48_ATOMIC_GUARANTEED = PackedMode::MODE_48_ATOMIC_GUARANTEED,
-        MODE_48_CLAIMED_GURANTEED = PackedMode::MODE_48_CLAIMED_GURANTEED
+        MODEL48 = PackedMode::MODEL48,
+        VALUE48 = PackedMode::VALUE48
     };
 
-    enum class SubClassesOfMode32 : tag8_t
+    enum class Model32Subclass : tag8_t
     {
         SELF_CLASS = 0,
         LOW_OF_PAIRED_VERSIONED_CELL = 1,
@@ -135,7 +135,7 @@ namespace PredictedAdaptedEncoding {
         SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 = 3
     };
 
-    enum class SubClassesOfMode48 : tag8_t
+    enum class Model48Subclass : tag8_t
     {
         SELF_CLASS = 0,
         PURE_TIMER_48 = 1,
@@ -143,7 +143,7 @@ namespace PredictedAdaptedEncoding {
         FOUR_SUBDIVISION_2x16_AND_2x8 = 3
     };
 
-    enum class CellMap : tag8_t
+    enum class PriorityPolicy : tag8_t
     {
         VERSIONED = 0,
         PRESSURE_FIRST = 1,
@@ -165,7 +165,7 @@ namespace PredictedAdaptedEncoding {
         AUX_SLOT = 0x9,
         HETEROGENOUS_RAW_MEMORY = 0xA,
         SLOT_TABLE_DESCRIPTOR = 0xB,
-        //paired pinter should be valid only in case of SubClassesOfMode32->Paired Subclass
+        //paired pinter should be valid only in case of Model32Subclass->Paired Subclass
         PAIRED_POINTER_IN_MEMORY = 0xC,
         FREE_SLOT     = 0xD,
         UNDEFINED = 0xE,
@@ -212,12 +212,12 @@ namespace PredictedAdaptedEncoding {
         static constexpr bool IS_UNSIGNED_LIKE = std::is_integral_v<Decayed> && std::is_unsigned_v<Decayed> && !IS_CHAR_LIKE;
 
 
-        static constexpr PackedCellDataType DType  = 
-            IS_FLOAT_LIKE           ? PackedCellDataType::FloatPCellDataType    :
-            IS_SIGNED_LIKE          ? PackedCellDataType::IntPCellDataType      :
-            IS_UNSIGNED_LIKE        ? PackedCellDataType::UnsignedPCellDataType :
-            IS_CHAR_LIKE            ? PackedCellDataType::CharPCellDataType     :
-                                    PackedCellDataType::UnsignedPCellDataType   ;
+        static constexpr InternalDataTypePolicy DType  = 
+            IS_FLOAT_LIKE           ? InternalDataTypePolicy::FloatPCellDataType    :
+            IS_SIGNED_LIKE          ? InternalDataTypePolicy::IntPCellDataType      :
+            IS_UNSIGNED_LIKE        ? InternalDataTypePolicy::UnsignedPCellDataType :
+            IS_CHAR_LIKE            ? InternalDataTypePolicy::CharPCellDataType     :
+                                    InternalDataTypePolicy::UnsignedPCellDataType   ;
         static constexpr bool FITS_MODE_32 = (sizeof(Decayed) <= sizeof(val32_t));
         static constexpr bool FITS_MODE_48 = (sizeof(Decayed) <= SIZE_OF_MODE_48);
         static constexpr bool IS_SUPPORTED_TYPE = IS_FLOAT_LIKE || IS_SIGNED_LIKE || IS_UNSIGNED_LIKE || IS_CHAR_LIKE;
@@ -226,7 +226,7 @@ namespace PredictedAdaptedEncoding {
 
 
     template<typename PCDT>
-     constexpr PackedCellDataType BridgeOfPackedCellDataType_v = PackedCellTypeBridge<PCDT>::DType;
+     constexpr InternalDataTypePolicy BridgeOfPackedCellDataType_v = PackedCellTypeBridge<PCDT>::DType;
 
 
     template <typename To, typename From>

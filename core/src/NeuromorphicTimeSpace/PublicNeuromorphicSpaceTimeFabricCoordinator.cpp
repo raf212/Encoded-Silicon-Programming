@@ -24,7 +24,7 @@ namespace PredictedAdaptedEncoding
     }
 
     constexpr packed64_t NeuromorphicSpaceTimeFabricCoordinator::ReadCompletePackedCellDirectly(
-        size_t slab_index, std::optional<PackedCellLocalityTypes> invalid_cell_locality
+        size_t slab_index, std::optional<LocalityPolicy> invalid_cell_locality
     ) noexcept
     {
         if (!SlabBasePtr_ || slab_index >= SlabCellCount_)
@@ -40,7 +40,7 @@ namespace PredictedAdaptedEncoding
     } 
 
     constexpr packed64_t NeuromorphicSpaceTimeFabricCoordinator::AtomicallyLoadReadCompletePackedCell(
-        size_t slab_index, std::optional<PackedCellLocalityTypes> invalid_cell_locality
+        size_t slab_index, std::optional<LocalityPolicy> invalid_cell_locality
     ) noexcept
     {
         if (!SlabBasePtr_ || slab_index >= SlabCellCount_)
@@ -116,7 +116,7 @@ namespace PredictedAdaptedEncoding
 
 
     std::optional<uint64_t> NeuromorphicSpaceTimeFabricCoordinator::ReadOccupancyApproxFromPairedIfValid(
-        PackedCellLocalityTypes desired_occupancy_class,
+        LocalityPolicy desired_occupancy_class,
         const PackedCell64_t::AuthoritiveCellView* low_half_view_ptr,
         const PackedCell64_t::AuthoritiveCellView* high_half_view_ptr
     ) noexcept
@@ -240,7 +240,7 @@ namespace PredictedAdaptedEncoding
 
     //     SlabCellCount_ = SegmentPoolEnd_;
 
-    //     const packed64_t idle_free32 = PackedCell64_t::MakeInitialFabricValidPackedCell(PackedMode::MODE_32_ATOMIC_GUARANTEED);
+    //     const packed64_t idle_free32 = PackedCell64_t::MakeInitialFabricValidPackedCell(PackedMode::MODEL32);
 
     //     for (size_t i = 0; i < SlabCellCount_; i++)
     //     {

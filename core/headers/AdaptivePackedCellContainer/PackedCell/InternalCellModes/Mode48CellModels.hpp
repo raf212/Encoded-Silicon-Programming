@@ -54,9 +54,9 @@ namespace PredictedAdaptedEncoding
 
         static constexpr bool IsThisCellASubdevision_3x16_48t(packed64_t packed_cell) noexcept
         {
-            return PackedCell64_t::ExtractModeOfPackedCellFromPacked(packed_cell) == PackedMode::MODE_48_ATOMIC_GUARANTEED &&
-                PackedCell64_t::ExtractRelOffset48FromPacked(packed_cell) == SubClassesOfMode48::SUBDIVISION16x3_INTERNAL_CELL_MODEL &&
-                PackedCell64_t::ExtractLocalityFromPacked(packed_cell) != PackedCellLocalityTypes::FAULTY;
+            return PackedCell64_t::ExtractModeOfPackedCellFromPacked(packed_cell) == PackedMode::MODEL48 &&
+                PackedCell64_t::ExtractRelOffset48FromPacked(packed_cell) == Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL &&
+                PackedCell64_t::ExtractLocalityFromPacked(packed_cell) != LocalityPolicy::FAULTY;
         }
 
         static constexpr bool ExtractLowMidHighFromMode48_(uint64_t raw48, uint16_t& low, uint16_t& mid, uint16_t& high)
@@ -141,11 +141,11 @@ namespace PredictedAdaptedEncoding
         static constexpr bool IsThisCellAFourSubdevision_48t(packed64_t packed_cell) noexcept
         {
             const PackedCell64_t::AuthoritiveCellView this_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
-            return this_cell_auth_view.CellMode == PackedMode::MODE_48_ATOMIC_GUARANTEED &&
+            return this_cell_auth_view.CellMode == PackedMode::MODEL48 &&
                 this_cell_auth_view.RelationOffsetForMode48.has_value() &&
-                this_cell_auth_view.RelationOffsetForMode48.value() == SubClassesOfMode48::FOUR_SUBDIVISION_2x16_AND_2x8 &&
-                this_cell_auth_view.CellValueDataType == PackedCellDataType::UnsignedPCellDataType &&
-                this_cell_auth_view.LocalityOfCell != PackedCellLocalityTypes::FAULTY;
+                this_cell_auth_view.RelationOffsetForMode48.value() == Model48Subclass::FOUR_SUBDIVISION_2x16_AND_2x8 &&
+                this_cell_auth_view.CellValueDataType == InternalDataTypePolicy::UnsignedPCellDataType &&
+                this_cell_auth_view.LocalityOfCell != LocalityPolicy::FAULTY;
         }
 
         static constexpr bool ExtractAll4SubdivisionInOneGoIfValid_(

@@ -473,7 +473,7 @@ namespace PredictedAdaptedEncoding
 
     PublishResult AdaptivePackedCellContainer::PublishCellByRegionMAskTraverseStartsFromThisAPC(
         APCPagedNodeSegmentClasses page_class, packed64_t cell_to_publish,
-        PackedCellOwnership authority,
+        OwnershipPolicy authority,
         std::optional<uint16_t> max_tries
     ) noexcept
     {

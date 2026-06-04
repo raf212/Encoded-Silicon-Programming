@@ -140,19 +140,19 @@ namespace PredictedAdaptedEncoding
             uint16_t claimed_count,
             uint16_t faulty_count,
             APCPagedNodeSegmentClasses page_class,
-            PackedCellLocalityTypes locality = PackedCellLocalityTypes::PUBLISHED,
-            CellMap priority = CellMap::VERSIONED,
-            PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
+            LocalityPolicy locality = LocalityPolicy::PUBLISHED,
+            PriorityPolicy priority = PriorityPolicy::VERSIONED,
+            OwnershipPolicy authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
         ) noexcept
         {
             const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(
-                BehaveOfMode48::MODE_48_ATOMIC_GUARANTEED,
+                BehaveOfMode48::MODEL48,
                 priority, 
                 authority,
                 locality,
                 page_class,
-                SubClassesOfMode48::SUBDIVISION16x3_INTERNAL_CELL_MODEL,
-                PackedCellDataType::UnsignedPCellDataType
+                Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL,
+                InternalDataTypePolicy::UnsignedPCellDataType
             );
             return Subdevision16x3InternalMode48CellModel::Compose3Unsigned16bitIndependentInMode48(
                 published_count,
@@ -164,7 +164,7 @@ namespace PredictedAdaptedEncoding
 
         static std::optional<uint16_t>GetOccuupancyFromPackedCellMode48(
             packed64_t packed_cell,
-            PackedCellLocalityTypes desired_occupancy_bucket,
+            LocalityPolicy desired_occupancy_bucket,
             uint16_t physical_capacity
         ) noexcept
         {
@@ -180,13 +180,13 @@ namespace PredictedAdaptedEncoding
             
             switch (desired_occupancy_bucket)
             {
-            case PackedCellLocalityTypes::PUBLISHED :
+            case LocalityPolicy::PUBLISHED :
                 return Subdevision16x3InternalMode48CellModel::ExtractLow16FromUnsigned48_(raw48);
-            case PackedCellLocalityTypes::CLAIMED :
+            case LocalityPolicy::CLAIMED :
                 return Subdevision16x3InternalMode48CellModel::ExtractMid16FromUnsigned48_(raw48);
-            case PackedCellLocalityTypes::FAULTY :
+            case LocalityPolicy::FAULTY :
                 return Subdevision16x3InternalMode48CellModel::ExtractHigh16FromUnsigned48_(raw48);
-            case PackedCellLocalityTypes::IDLE :
+            case LocalityPolicy::IDLE :
                 return DerivedIdleFromPackedCell48(packed_cell, physical_capacity);
             default:
                 return std::nullopt;
@@ -215,12 +215,12 @@ namespace PredictedAdaptedEncoding
             uint16_t end_mid,
             uint16_t version_high,
             APCPagedNodeSegmentClasses page_class,
-            PackedCellLocalityTypes locality = PackedCellLocalityTypes::PUBLISHED,
-            CellMap priority = CellMap::VERSIONED,
-            PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
+            LocalityPolicy locality = LocalityPolicy::PUBLISHED,
+            PriorityPolicy priority = PriorityPolicy::VERSIONED,
+            OwnershipPolicy authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
         ) noexcept
         {
-            const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(BehaveOfMode48::MODE_48_ATOMIC_GUARANTEED, priority, authority, locality, page_class, SubClassesOfMode48::SUBDIVISION16x3_INTERNAL_CELL_MODEL, PackedCellDataType::UnsignedPCellDataType);
+            const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(BehaveOfMode48::MODEL48, priority, authority, locality, page_class, Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL, InternalDataTypePolicy::UnsignedPCellDataType);
             return Subdevision16x3InternalMode48CellModel::Compose3Unsigned16bitIndependentInMode48(begin_low, end_mid, version_high, meta16);
         }
 

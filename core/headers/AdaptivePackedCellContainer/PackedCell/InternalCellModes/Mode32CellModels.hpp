@@ -59,11 +59,11 @@ namespace PredictedAdaptedEncoding
         static constexpr bool IsThisCellA32BitMetaNoClock16Mode32(packed64_t packed_cell) noexcept
         {
             const PackedCell64_t::AuthoritiveCellView this_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
-            return this_cell_auth_view.CellMode == PackedMode::MODE_32_ATOMIC_GUARANTEED &&
+            return this_cell_auth_view.CellMode == PackedMode::MODEL32 &&
                 this_cell_auth_view.SubClassOfMode32.has_value() &&
-                this_cell_auth_view.SubClassOfMode32.value() == SubClassesOfMode32::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 &&
-                this_cell_auth_view.CellValueDataType == PackedCellDataType::UnsignedPCellDataType &&
-                this_cell_auth_view.LocalityOfCell != PackedCellLocalityTypes::FAULTY;
+                this_cell_auth_view.SubClassOfMode32.value() == Model32Subclass::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 &&
+                this_cell_auth_view.CellValueDataType == InternalDataTypePolicy::UnsignedPCellDataType &&
+                this_cell_auth_view.LocalityOfCell != LocalityPolicy::FAULTY;
         }
 
     };
@@ -73,12 +73,12 @@ namespace PredictedAdaptedEncoding
         //In paired cell Ideology clk16 is a version count-> CLOCK is unnecessery because it will be mostly used for contron / paired pointers
         static constexpr std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64ForAPC(
             uint64_t value, clk16_t version,
-            PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
+            LocalityPolicy locality = LocalityPolicy::IDLE,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT
         ) noexcept
         {
             const std::pair<packed64_t, packed64_t> lowf_highs = GetPairOfLow32FAndHigh32SFromUnsigned64_(
-                value, version, locality, PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER, static_cast<tag8_t>(page_class)
+                value, version, locality, OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, static_cast<tag8_t>(page_class)
             );
 
             if (page_class == APCPagedNodeSegmentClasses::CONTROL_SLOT && value <= IN_CELL_VALUE_MODE32_SENTINAL)
@@ -90,12 +90,12 @@ namespace PredictedAdaptedEncoding
 
         static constexpr std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64ForFabric(
             uint64_t value, clk16_t version,
-            PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
+            LocalityPolicy locality = LocalityPolicy::IDLE,
             FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GENERIC_CONTROL
         ) noexcept
         {
             const std::pair<packed64_t, packed64_t> lowf_highs = GetPairOfLow32FAndHigh32SFromUnsigned64_(
-                value, version, locality, PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC, static_cast<tag8_t>(fabric_segment_class)
+                value, version, locality, OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC, static_cast<tag8_t>(fabric_segment_class)
             );
 
             if (fabric_segment_class != FabricTableSegmentClasses::GLOBAL_AND_CONFIG && value <= IN_CELL_VALUE_MODE32_SENTINAL)
@@ -123,7 +123,7 @@ namespace PredictedAdaptedEncoding
             if (
                 high_half_view.RawCell == PackedCell64_t::PACKED_CELL_SENTINAL && 
                 low_half_view.IsCellValid && 
-                low_half_view.SubClassOfMode32 == SubClassesOfMode32::LOW_OF_PAIRED_VERSIONED_CELL 
+                low_half_view.SubClassOfMode32 == Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL 
             )
             {
                 return static_cast<uint64_t>(*low_half_view.CellValue32);
@@ -131,8 +131,8 @@ namespace PredictedAdaptedEncoding
 
             if (
                 low_half_view.IsCellValid && high_half_view.IsCellValid &&
-                low_half_view.SubClassOfMode32 == SubClassesOfMode32::LOW_OF_PAIRED_VERSIONED_CELL && 
-                high_half_view.SubClassOfMode32 == SubClassesOfMode32::HIGH_OF_PAIRED_VERSIONED_CELL
+                low_half_view.SubClassOfMode32 == Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL && 
+                high_half_view.SubClassOfMode32 == Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL
             )
             {
                 return static_cast<packed64_t>(*low_half_view.CellValue32) | 
@@ -156,8 +156,8 @@ namespace PredictedAdaptedEncoding
 private:
         static constexpr std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64_(
             uint64_t value, clk16_t version,
-            PackedCellLocalityTypes locality,
-            PackedCellOwnership ownership,
+            LocalityPolicy locality,
+            OwnershipPolicy ownership,
             tag8_t page_class
         ) noexcept
         {
@@ -165,17 +165,17 @@ private:
             const uint32_t high_half32 = static_cast<uint32_t>((value >> VALBITS) & MaskLowNBits(VALBITS));
 
             const packed64_t low_half_packed_cell = PackedCell64_t::MakeInitialValidBlindPackedCell(
-                PackedMode::MODE_32_ATOMIC_GUARANTEED, locality, ownership, page_class,
-                PackedCellDataType::UnsignedPCellDataType, low_half32, version,
-                CellMap::VERSIONED, 
-                static_cast<tag8_t>(SubClassesOfMode32::LOW_OF_PAIRED_VERSIONED_CELL)
+                PackedMode::MODEL32, locality, ownership, page_class,
+                InternalDataTypePolicy::UnsignedPCellDataType, low_half32, version,
+                PriorityPolicy::VERSIONED, 
+                static_cast<tag8_t>(Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL)
             );
     
             const packed64_t high_half_packed_cell = PackedCell64_t::MakeInitialValidBlindPackedCell(
-                PackedMode::MODE_32_ATOMIC_GUARANTEED, locality, ownership, page_class,
-                PackedCellDataType::UnsignedPCellDataType, high_half32, version,
-                CellMap::VERSIONED, 
-                static_cast<tag8_t>(SubClassesOfMode32::HIGH_OF_PAIRED_VERSIONED_CELL)
+                PackedMode::MODEL32, locality, ownership, page_class,
+                InternalDataTypePolicy::UnsignedPCellDataType, high_half32, version,
+                PriorityPolicy::VERSIONED, 
+                static_cast<tag8_t>(Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL)
             );
 
             return std::pair(low_half_packed_cell, high_half_packed_cell);

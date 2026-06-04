@@ -6,42 +6,42 @@ namespace PredictedAdaptedEncoding
     packed64_t MasterClockConf::RefreshPackedCellClockOnly(
         packed64_t provided_packed_cell,
         APCPagedNodeSegmentClasses force_rel_mask,
-        std::optional<PackedCellLocalityTypes> override_locality
+        std::optional<LocalityPolicy> override_locality
     ) noexcept
     {
         const uint64_t now_ticks48 = NowTicks48();
         const clk16_t now_clk16 = GetImmidiateDownShiftedClock16(now_ticks48);
 
-        const CellMap priority_of_provided_cell = PackedCell64_t::ExtractPriorityFromPacked(provided_packed_cell);
-        const PackedCellOwnership node_authority = PackedCell64_t::ExtractNodeAuthorityFromPacked(provided_packed_cell);
-        PackedCellLocalityTypes locality_of_provided_cell = PackedCell64_t::ExtractLocalityFromPacked(provided_packed_cell);
+        const PriorityPolicy priority_of_provided_cell = PackedCell64_t::ExtractPriorityFromPacked(provided_packed_cell);
+        const OwnershipPolicy node_authority = PackedCell64_t::ExtractNodeAuthorityFromPacked(provided_packed_cell);
+        LocalityPolicy locality_of_provided_cell = PackedCell64_t::ExtractLocalityFromPacked(provided_packed_cell);
         if (override_locality.has_value())
         {
             locality_of_provided_cell = *override_locality;
         }
         const APCPagedNodeSegmentClasses rel_mask = (force_rel_mask == APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL) ? 
                         PackedCell64_t::ExtractRelMaskFromPacked(provided_packed_cell) : force_rel_mask;
-        const PackedCellDataType dtype_of_provided_cell = PackedCell64_t::ExtractPCellDataTypeFromPacked(provided_packed_cell);
+        const InternalDataTypePolicy dtype_of_provided_cell = PackedCell64_t::ExtractPCellDataTypeFromPacked(provided_packed_cell);
         const PackedMode mode_of_provided_cell = PackedCell64_t::ExtractModeOfPackedCellFromPacked(provided_packed_cell);
-        if (mode_of_provided_cell == PackedMode::MODE_32_ATOMIC_GUARANTEED)
+        if (mode_of_provided_cell == PackedMode::MODEL32)
         {
             const val32_t value32_of_provided_cell = PackedCell64_t::ExtractValue32(provided_packed_cell);
-            const SubClassesOfMode32 reloffset32_of_provided_cell = PackedCell64_t::ExtractRelOffset32FromPacked(provided_packed_cell);
+            const Model32Subclass reloffset32_of_provided_cell = PackedCell64_t::ExtractRelOffset32FromPacked(provided_packed_cell);
             return PackedCell64_t::ComposeValue32u_64(
                 value32_of_provided_cell,
                 now_clk16,
-                PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODE_32_ATOMIC_GUARANTEED, priority_of_provided_cell, node_authority, locality_of_provided_cell, rel_mask, reloffset32_of_provided_cell, dtype_of_provided_cell)
+                PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODEL32, priority_of_provided_cell, node_authority, locality_of_provided_cell, rel_mask, reloffset32_of_provided_cell, dtype_of_provided_cell)
             );
         }
 
-        const SubClassesOfMode48 reloffset48_of_provided_cell = PackedCell64_t::ExtractRelOffset48FromPacked(provided_packed_cell);
+        const Model48Subclass reloffset48_of_provided_cell = PackedCell64_t::ExtractRelOffset48FromPacked(provided_packed_cell);
         
-        if (reloffset48_of_provided_cell == SubClassesOfMode48::PURE_TIMER_48)
+        if (reloffset48_of_provided_cell == Model48Subclass::PURE_TIMER_48)
         {
             return PackedCell64_t::ComposeCLK48u_64(
                 now_ticks48,
                 //rename Strl to STRL(future)
-                PackedCell64_t::MakeInCellMetaForMode_48t(BehaveOfMode48::MODE_48_ATOMIC_GUARANTEED, priority_of_provided_cell, node_authority, locality_of_provided_cell, rel_mask, reloffset48_of_provided_cell, dtype_of_provided_cell)
+                PackedCell64_t::MakeInCellMetaForMode_48t(BehaveOfMode48::MODEL48, priority_of_provided_cell, node_authority, locality_of_provided_cell, rel_mask, reloffset48_of_provided_cell, dtype_of_provided_cell)
             );
         }
         return provided_packed_cell;
@@ -50,7 +50,7 @@ namespace PredictedAdaptedEncoding
     std::optional<packed64_t> MasterClockConf::TouchPackedCellClockAndGetCellWithNewClock(
         size_t index_of_packed_cell,
         APCPagedNodeSegmentClasses force_rel_mask,
-        std::optional<PackedCellLocalityTypes> override_locality
+        std::optional<LocalityPolicy> override_locality
     ) noexcept
     {
         if (!APCPtr_)
@@ -121,7 +121,7 @@ std::optional<uint64_t> MasterClockConf::ReconstructCellClock16toFull48BySegment
         {
             return false;
         }
-        packed64_t wanted_pure_clock48 = ComposePureClockCell48(CellMap::PRESSURE_FIRST);
+        packed64_t wanted_pure_clock48 = ComposePureClockCell48(PriorityPolicy::PRESSURE_FIRST);
         APCPtr_->BackingPtr[static_cast<size_t>(MetaIndexOfAPCNode::LOCAL_CLOCK48)].store(wanted_pure_clock48, MoStoreSeq_);
         APCPtr_->BackingPtr[static_cast<size_t>(MetaIndexOfAPCNode::LOCAL_CLOCK48)].notify_all();
         return true;

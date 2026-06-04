@@ -191,7 +191,7 @@ namespace
         MasterClockConf& clock,
         float value,
         APCPagedNodeSegmentClasses region,
-        CellMap priority = CellMap::PRESSURE_FIRST
+        PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST
     )
     {
         const uint32_t bits = BitCastPortable<uint32_t>(value);
@@ -200,10 +200,10 @@ namespace
             bits,
             region,
             priority,
-            PackedCellLocalityTypes::PUBLISHED,
-            SubClassesOfMode32::SELF_CLASS,
-            PackedCellDataType::FloatPCellDataType,
-            PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
+            LocalityPolicy::PUBLISHED,
+            Model32Subclass::SELF_CLASS,
+            InternalDataTypePolicy::FloatPCellDataType,
+            OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
         );
     }
 
@@ -235,19 +235,19 @@ namespace
 
             switch (view.LocalityOfCell)
             {
-                case PackedCellLocalityTypes::IDLE:
+                case LocalityPolicy::IDLE:
                     ++out.Idle;
                     break;
 
-                case PackedCellLocalityTypes::PUBLISHED:
+                case LocalityPolicy::PUBLISHED:
                     ++out.Published;
                     break;
 
-                case PackedCellLocalityTypes::CLAIMED:
+                case LocalityPolicy::CLAIMED:
                     ++out.Claimed;
                     break;
 
-                case PackedCellLocalityTypes::FAULTY:
+                case LocalityPolicy::FAULTY:
                 default:
                     ++out.Faulty;
                     break;
@@ -315,15 +315,15 @@ namespace
         OccupancyTriple out{};
 
         out.Published = apc.ReadCentralAPCOccupancyOfALocality(
-            PackedCellLocalityTypes::PUBLISHED
+            LocalityPolicy::PUBLISHED
         );
 
         out.Claimed = apc.ReadCentralAPCOccupancyOfALocality(
-            PackedCellLocalityTypes::CLAIMED
+            LocalityPolicy::CLAIMED
         );
 
         out.Faulty = apc.ReadCentralAPCOccupancyOfALocality(
-            PackedCellLocalityTypes::FAULTY
+            LocalityPolicy::FAULTY
         );
 
         return out;
@@ -337,17 +337,17 @@ namespace
         OccupancyTriple out{};
 
         out.Published = apc.ReadRegionOccupancyOfALocality(
-            PackedCellLocalityTypes::PUBLISHED,
+            LocalityPolicy::PUBLISHED,
             region
         );
 
         out.Claimed = apc.ReadRegionOccupancyOfALocality(
-            PackedCellLocalityTypes::CLAIMED,
+            LocalityPolicy::CLAIMED,
             region
         );
 
         out.Faulty = apc.ReadRegionOccupancyOfALocality(
-            PackedCellLocalityTypes::FAULTY,
+            LocalityPolicy::FAULTY,
             region
         );
 
@@ -636,7 +636,7 @@ namespace
                         clock,
                         value,
                         APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                        CellMap::PRESSURE_FIRST
+                        PriorityPolicy::PRESSURE_FIRST
                     ),
                     manager,
                     growth_counter,
@@ -668,7 +668,7 @@ namespace
                         clock,
                         prediction,
                         APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
-                        CellMap::PRESSURE_FIRST
+                        PriorityPolicy::PRESSURE_FIRST
                     ),
                     manager,
                     growth_counter,
@@ -701,7 +701,7 @@ int main()
     MasterClockConf clock(nullptr, timer);
 
     ContainerConf cfg;
-    cfg.InitialMode = PackedMode::MODE_32_ATOMIC_GUARANTEED;
+    cfg.InitialMode = PackedMode::MODEL32;
     cfg.ProducerBlockSize = 4;
     cfg.RegionSize = 8;
     cfg.EnableBranching = true;
@@ -890,7 +890,7 @@ int main()
                 clock,
                 state,
                 APCPagedNodeSegmentClasses::STATE_SLOT,
-                CellMap::PRESSURE_FIRST
+                PriorityPolicy::PRESSURE_FIRST
             ),
             manager,
             grow_integrator,
@@ -904,7 +904,7 @@ int main()
                 clock,
                 error,
                 APCPagedNodeSegmentClasses::ERROR_SLOT,
-                CellMap::PRESSURE_FIRST
+                PriorityPolicy::PRESSURE_FIRST
             ),
             manager,
             grow_integrator,
@@ -964,7 +964,7 @@ int main()
                 clock,
                 motor,
                 APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                CellMap::PRESSURE_FIRST
+                PriorityPolicy::PRESSURE_FIRST
             ),
             manager,
             grow_motor,
@@ -978,7 +978,7 @@ int main()
                 clock,
                 feedback,
                 APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
-                CellMap::PRESSURE_FIRST
+                PriorityPolicy::PRESSURE_FIRST
             ),
             manager,
             grow_predictor,

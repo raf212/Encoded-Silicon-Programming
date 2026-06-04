@@ -203,7 +203,7 @@ namespace PredictedAdaptedEncoding
         TABLE_DIRECTORY_COUNT = 38,
         TABLE_DIRECTORY_VERSION = 39,
 
-        //4 pairs of PackedCellLocalityTypes + CellMap::VERSIONED based occupancy
+        //4 pairs of LocalityPolicy + PriorityPolicy::VERSIONED based occupancy
         FABRIC_OCCUPANCY_APPROXIMATION_IDLE_LOW32 = 40,
         FABRIC_OCCUPANCY_APPROXIMATION_IDLE_HIGH32 = 41,
         FABRIC_OCCUPANCY_APPROXIMATION_PUBLISHED_LOW32 = 42,
@@ -365,20 +365,20 @@ namespace PredictedAdaptedEncoding
                 table_class == FabricTableSegmentClasses::WORK_QUEUE;
         }
 
-        static constexpr FabricMetaIndicies GetDesiredLowIdxOfOccupancyPairFromLocality(PackedCellLocalityTypes locality) noexcept
+        static constexpr FabricMetaIndicies GetDesiredLowIdxOfOccupancyPairFromLocality(LocalityPolicy locality) noexcept
         {
             switch (locality)
             {
-            case PackedCellLocalityTypes::IDLE :
+            case LocalityPolicy::IDLE :
                 return FabricMetaIndicies::FABRIC_OCCUPANCY_APPROXIMATION_IDLE_LOW32;
 
-            case PackedCellLocalityTypes::PUBLISHED :
+            case LocalityPolicy::PUBLISHED :
                 return FabricMetaIndicies::FABRIC_OCCUPANCY_APPROXIMATION_PUBLISHED_LOW32;
 
-            case PackedCellLocalityTypes::CLAIMED :
+            case LocalityPolicy::CLAIMED :
                 return FabricMetaIndicies::FABRIC_OCCUPANCY_APPROXIMATION_CLAIMED_LOW32;
 
-            case PackedCellLocalityTypes::FAULTY :
+            case LocalityPolicy::FAULTY :
                 return FabricMetaIndicies::FABRIC_OCCUPANCY_APPROXIMATION_FAULTY_LOW32;
 
             default:
@@ -438,43 +438,43 @@ namespace PredictedAdaptedEncoding
             uint32_t value,
             clk16_t external_meta_or_prob_distance,
             FabricTableSegmentClasses table_class,
-            PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::IDLE,
-            CellMap priority = CellMap::VERSIONED,
-            SubClassesOfMode32 subclass_of_mode32 = SubClassesOfMode32::SELF_CLASS,
-            BehaveOfMode32 runtime_contract = BehaveOfMode32::MODE_32_CLAIMED_GUARANTEED
+            LocalityPolicy cell_locality = LocalityPolicy::IDLE,
+            PriorityPolicy priority = PriorityPolicy::VERSIONED,
+            Model32Subclass subclass_of_mode32 = Model32Subclass::SELF_CLASS,
+            BehaveOfMode32 runtime_contract = BehaveOfMode32::VALUE32
         )
         {
             return PackedCell64_t::MakeInitialFabricValidPackedCell(
                 static_cast<PackedMode>(runtime_contract),
                 cell_locality, 
                 table_class, 
-                PackedCellDataType::UnsignedPCellDataType,
+                InternalDataTypePolicy::UnsignedPCellDataType,
                 value, 
                 external_meta_or_prob_distance, 
                 priority, 
                 subclass_of_mode32,
-                SubClassesOfMode48::SELF_CLASS
+                Model48Subclass::SELF_CLASS
             );
         }
 
         static constexpr packed64_t MakeAValidFabricMode48UnsignedCell(
             uint64_t value,
             FabricTableSegmentClasses table_class,
-            PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::IDLE,
-            CellMap priority = CellMap::VERSIONED,
-            SubClassesOfMode48 subclass_of_mode48 = SubClassesOfMode48::SELF_CLASS,
-            BehaveOfMode48 cell_behaviour = BehaveOfMode48::MODE_48_CLAIMED_GURANTEED
+            LocalityPolicy cell_locality = LocalityPolicy::IDLE,
+            PriorityPolicy priority = PriorityPolicy::VERSIONED,
+            Model48Subclass subclass_of_mode48 = Model48Subclass::SELF_CLASS,
+            BehaveOfMode48 cell_behaviour = BehaveOfMode48::VALUE48
         )
         {
             return PackedCell64_t::MakeInitialFabricValidPackedCell(
                 static_cast<PackedMode>(cell_behaviour),
                 cell_locality, 
                 table_class, 
-                PackedCellDataType::UnsignedPCellDataType,
+                InternalDataTypePolicy::UnsignedPCellDataType,
                 value, 
                 UNSIGNED_ZERO, 
                 priority, 
-                SubClassesOfMode32::SELF_CLASS, 
+                Model32Subclass::SELF_CLASS, 
                 subclass_of_mode48
             );
         }
@@ -484,7 +484,7 @@ namespace PredictedAdaptedEncoding
             TableEntryCellTypeOfFabric table_cell_type,
             FabricTableSegmentClasses identity_of_desired_directory,
             uint8_t version = static_cast<uint8_t>(APCDataStructure::BRANCH_VERSION),
-            PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::PUBLISHED
+            LocalityPolicy cell_locality = LocalityPolicy::PUBLISHED
         ) noexcept
         {
             const uint16_t external_handle = Clock16Subdivision1x8Plus2x4InMode32CellModel::Pack1x8Plus2x4InUnsigned16_(
@@ -493,9 +493,9 @@ namespace PredictedAdaptedEncoding
 
             const packed64_t packed_cell = MakeAValidFabricMode32UnsignedCell(
                 value, external_handle, FabricTableSegmentClasses::TABLE_DIRECTORY,
-                cell_locality, CellMap::VERSIONED, 
-                SubClassesOfMode32::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4,
-                BehaveOfMode32::MODE_32_ATOMIC_GUARANTEED
+                cell_locality, PriorityPolicy::VERSIONED, 
+                Model32Subclass::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4,
+                BehaveOfMode32::MODEL32
             );
             return packed_cell;
         }
@@ -506,7 +506,7 @@ namespace PredictedAdaptedEncoding
             uint8_t slab_id, uint8_t generation, 
             HandleStateOfAPCFabric handle_state = HandleStateOfAPCFabric::APC_SEGMENT,
             FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
-            PackedCellLocalityTypes locality_of_cell = PackedCellLocalityTypes::IDLE
+            LocalityPolicy locality_of_cell = LocalityPolicy::IDLE
         ) noexcept
         {
             const uint16_t external_handle = Clock16Subdivision1x8Plus2x4InMode32CellModel::Pack1x8Plus2x4InUnsigned16_(slab_id, generation, static_cast<uint8_t>(handle_state));
@@ -515,8 +515,8 @@ namespace PredictedAdaptedEncoding
                 external_handle,
                 fabric_segment_class, 
                 locality_of_cell, 
-                CellMap::VERSIONED,
-                SubClassesOfMode32::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4
+                PriorityPolicy::VERSIONED,
+                Model32Subclass::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4
             );
 
             return packed_cell;

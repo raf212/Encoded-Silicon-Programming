@@ -41,13 +41,13 @@ class AdaptivePackedCellContainer;
         packed64_t RefreshPackedCellClockOnly(
             packed64_t provided_packed_cell,
             APCPagedNodeSegmentClasses force_rel_mask = APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL,
-            std::optional<PackedCellLocalityTypes> override_locality = std::nullopt
+            std::optional<LocalityPolicy> override_locality = std::nullopt
         ) noexcept;
 
         std::optional<packed64_t> TouchPackedCellClockAndGetCellWithNewClock(
             size_t index_of_packed_cell,
             APCPagedNodeSegmentClasses force_rel_mask = APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL,
-            std::optional<PackedCellLocalityTypes> override_locality = std::nullopt
+            std::optional<LocalityPolicy> override_locality = std::nullopt
         ) noexcept;
 
         bool TouchSegmentLocalClock48HighPriority() noexcept;
@@ -81,32 +81,32 @@ class AdaptivePackedCellContainer;
          packed64_t ComposeValue32WithCurrentThreadStamp16(
             val32_t provided_cell_value32,
             APCPagedNodeSegmentClasses desired_page_class = APCPagedNodeSegmentClasses::NONE,
-            CellMap desired_priority = CellMap::PRESSURE_FIRST,
-            PackedCellLocalityTypes desired_locality = PackedCellLocalityTypes::PUBLISHED,
-            SubClassesOfMode32 desired_reloffset = SubClassesOfMode32::SELF_CLASS,
-            PackedCellDataType desired_dtype = PackedCellDataType::UnsignedPCellDataType,
-            PackedCellOwnership desired_node_authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
+            PriorityPolicy desired_priority = PriorityPolicy::PRESSURE_FIRST,
+            LocalityPolicy desired_locality = LocalityPolicy::PUBLISHED,
+            Model32Subclass desired_reloffset = Model32Subclass::SELF_CLASS,
+            InternalDataTypePolicy desired_dtype = InternalDataTypePolicy::UnsignedPCellDataType,
+            OwnershipPolicy desired_node_authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
         )
         {
             const clk16_t now_clock16 = NowClock16();
-            const meta16_t strlfor32 = PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODE_32_ATOMIC_GUARANTEED, desired_priority, desired_node_authority, desired_locality, desired_page_class, desired_reloffset, desired_dtype);
+            const meta16_t strlfor32 = PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODEL32, desired_priority, desired_node_authority, desired_locality, desired_page_class, desired_reloffset, desired_dtype);
             return PackedCell64_t::ComposeValue32u_64(provided_cell_value32, now_clock16, strlfor32);
         }
 
          packed64_t ComposePureClockCell48(
-            CellMap desired_priority = CellMap::PRESSURE_FIRST,
-            PackedCellLocalityTypes desired_locality = PackedCellLocalityTypes::PUBLISHED
+            PriorityPolicy desired_priority = PriorityPolicy::PRESSURE_FIRST,
+            LocalityPolicy desired_locality = LocalityPolicy::PUBLISHED
         ) noexcept
         {
             const uint64_t full_clock48 = NowTicks48();
             const meta16_t strl_for_pure48_clock = PackedCell64_t::MakeInCellMetaForMode_48t(
-                BehaveOfMode48::MODE_48_ATOMIC_GUARANTEED,
+                BehaveOfMode48::MODEL48,
                 desired_priority, 
-                PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
+                OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
                 desired_locality, 
                 APCPagedNodeSegmentClasses::CONTROL_SLOT,
-                SubClassesOfMode48::PURE_TIMER_48,
-                PackedCellDataType::UnsignedPCellDataType
+                Model48Subclass::PURE_TIMER_48,
+                InternalDataTypePolicy::UnsignedPCellDataType
             );
             return PackedCell64_t::ComposeCLK48u_64(full_clock48, strl_for_pure48_clock);
         }

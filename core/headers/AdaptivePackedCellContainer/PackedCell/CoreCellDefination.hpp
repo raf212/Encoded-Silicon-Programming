@@ -26,15 +26,15 @@ namespace PredictedAdaptedEncoding
         {
             packed64_t RawCell{0};
             meta16_t  InCellMeta16{0};
-            CellMap Priority{CellMap::PRESSURE_FIRST};
-            PackedCellOwnership CellOwnership{PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER};
-            PackedCellLocalityTypes LocalityOfCell{PackedCellLocalityTypes::IDLE};
-            PackedMode CellMode{PackedMode::MODE_32_ATOMIC_GUARANTEED};
+            PriorityPolicy Priority{PriorityPolicy::PRESSURE_FIRST};
+            OwnershipPolicy CellOwnership{OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER};
+            LocalityPolicy LocalityOfCell{LocalityPolicy::IDLE};
+            PackedMode CellMode{PackedMode::MODEL32};
             APCPagedNodeSegmentClasses PageClass{APCPagedNodeSegmentClasses::NONE};
             FabricTableSegmentClasses FabricTableSegmentClass{FabricTableSegmentClasses::NONE};
-            std::optional<SubClassesOfMode32> SubClassOfMode32{std::nullopt};
-            std::optional<SubClassesOfMode48> RelationOffsetForMode48{std::nullopt};
-            PackedCellDataType CellValueDataType{PackedCellDataType::UnsignedPCellDataType};
+            std::optional<Model32Subclass> SubClassOfMode32{std::nullopt};
+            std::optional<Model48Subclass> RelationOffsetForMode48{std::nullopt};
+            InternalDataTypePolicy CellValueDataType{InternalDataTypePolicy::UnsignedPCellDataType};
             std::optional<clk16_t> InCellClock16{std::nullopt};
             std::optional<uint64_t> CellClock48{std::nullopt};
             std::optional<val32_t> CellValue32{std::nullopt};
@@ -45,26 +45,26 @@ namespace PredictedAdaptedEncoding
             {
                 ValidatedView = true;
 
-                if (LocalityOfCell == PackedCellLocalityTypes::FAULTY)
+                if (LocalityOfCell == LocalityPolicy::FAULTY)
                 {
                     IsCellValid = false;
                     return false;
                 }
 
-                if (CellOwnership == PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER && (PageClass == APCPagedNodeSegmentClasses::NONE || PageClass == APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL))
+                if (CellOwnership == OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER && (PageClass == APCPagedNodeSegmentClasses::NONE || PageClass == APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL))
                 {
                     IsCellValid = false;
                     return false;
                 }
 
-                if (CellOwnership == PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC && (PageClass == APCPagedNodeSegmentClasses::NONE))
+                if (CellOwnership == OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC && (PageClass == APCPagedNodeSegmentClasses::NONE))
                 {
                     IsCellValid = false;
                     return false;
                 }
 
 
-                if (CellMode == PackedMode::MODE_32_ATOMIC_GUARANTEED)
+                if (CellMode == PackedMode::MODEL32)
                 {
                     if (!CellValue32)
                     {
@@ -72,18 +72,18 @@ namespace PredictedAdaptedEncoding
                         return false;
                     }
 
-                    if (SubClassOfMode32 != SubClassesOfMode32::SELF_CLASS && CellValueDataType != PackedCellDataType::UnsignedPCellDataType)
+                    if (SubClassOfMode32 != Model32Subclass::SELF_CLASS && CellValueDataType != InternalDataTypePolicy::UnsignedPCellDataType)
                     {
                         IsCellValid = false;
                         return false;
                     }
 
-                    if (SubClassOfMode32 == SubClassesOfMode32::LOW_OF_PAIRED_VERSIONED_CELL || SubClassOfMode32 == SubClassesOfMode32::HIGH_OF_PAIRED_VERSIONED_CELL)
+                    if (SubClassOfMode32 == Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL || SubClassOfMode32 == Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL)
                     {
                         if (
                             (PageClass != APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY || 
                             PageClass != APCPagedNodeSegmentClasses::CONTROL_SLOT) &&
-                            Priority != CellMap::VERSIONED
+                            Priority != PriorityPolicy::VERSIONED
                         )
                         {
                             IsCellValid = false;
@@ -92,8 +92,8 @@ namespace PredictedAdaptedEncoding
                     }
 
                     if(
-                        SubClassOfMode32 == SubClassesOfMode32::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 &&
-                        CellOwnership == PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER &&
+                        SubClassOfMode32 == Model32Subclass::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 &&
+                        CellOwnership == OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER &&
                         PageClass != APCPagedNodeSegmentClasses::CONTROL_SLOT
                     )
                     {
@@ -104,7 +104,7 @@ namespace PredictedAdaptedEncoding
                 }
                 else
                 {
-                    if (RelationOffsetForMode48 == SubClassesOfMode48::PURE_TIMER_48 && CellValueDataType != PackedCellDataType::UnsignedPCellDataType)
+                    if (RelationOffsetForMode48 == Model48Subclass::PURE_TIMER_48 && CellValueDataType != InternalDataTypePolicy::UnsignedPCellDataType)
                     {
                         IsCellValid = false;
                         return false;
@@ -126,18 +126,18 @@ namespace PredictedAdaptedEncoding
         static constexpr packed64_t MakeFaultyCell() noexcept
         {
             return MakeAnUncheckedCellBasedOnMode_(
-                PackedMode::MODE_32_ATOMIC_GUARANTEED,
+                PackedMode::MODEL32,
                 IN_CELL_VALUE_MODE32_SENTINAL,
                 UINT16_MAX,
-                CellMap::ERROR_FIRST,
-                PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
-                PackedCellLocalityTypes::FAULTY
+                PriorityPolicy::ERROR_FIRST,
+                OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+                LocalityPolicy::FAULTY
             );
         }
 
         static constexpr packed64_t ComposeValue32u_64(val32_t in_cell_value, clk16_t clock16, meta16_t meta16) noexcept
         {
-            if(static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16)) != PackedMode::MODE_32_ATOMIC_GUARANTEED)
+            if(static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16)) != PackedMode::MODEL32)
             {
                 return MakeFaultyCell();
             }
@@ -149,7 +149,7 @@ namespace PredictedAdaptedEncoding
 
         static constexpr packed64_t ComposeCLK48u_64(uint64_t clockor_value48, meta16_t meta16) noexcept
         {
-            if(static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16)) != PackedMode::MODE_48_ATOMIC_GUARANTEED)
+            if(static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16)) != PackedMode::MODEL48)
             {
                 return MakeFaultyCell();
             }
@@ -169,18 +169,18 @@ namespace PredictedAdaptedEncoding
 
         static constexpr packed64_t MakeInitialAPCValidPackedCell(
             PackedMode cell_mode,
-            PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::IDLE,
-            PackedCellOwnership cell_ownership = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
+            LocalityPolicy cell_locality = LocalityPolicy::IDLE,
+            OwnershipPolicy cell_ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::UNDEFINED,
-            PackedCellDataType in_cell_value_data_type = PackedCellDataType::UnsignedPCellDataType,
+            InternalDataTypePolicy in_cell_value_data_type = InternalDataTypePolicy::UnsignedPCellDataType,
             uint64_t in_cell_value = UNSIGNED_ZERO,
             clk16_t in_cell_clk16 = UNSIGNED_ZERO,
-            CellMap cell_priority = CellMap::PRESSURE_FIRST,
-            SubClassesOfMode32 probable_mode_subclass_type_32 = SubClassesOfMode32::SELF_CLASS,
-            SubClassesOfMode48 probable_mode_subclass_type_48 = SubClassesOfMode48::SELF_CLASS
+            PriorityPolicy cell_priority = PriorityPolicy::PRESSURE_FIRST,
+            Model32Subclass probable_mode_subclass_type_32 = Model32Subclass::SELF_CLASS,
+            Model48Subclass probable_mode_subclass_type_48 = Model48Subclass::SELF_CLASS
         ) noexcept
         {
-            const tag8_t sub_class = (cell_mode == PackedMode::MODE_32_ATOMIC_GUARANTEED) ? 
+            const tag8_t sub_class = (cell_mode == PackedMode::MODEL32) ? 
                 static_cast<tag8_t>(probable_mode_subclass_type_32) : static_cast<tag8_t>(probable_mode_subclass_type_48);
             
             return MakeInitialValidBlindPackedCell(
@@ -192,22 +192,22 @@ namespace PredictedAdaptedEncoding
 
         static constexpr packed64_t MakeInitialFabricValidPackedCell(
             PackedMode cell_mode,
-            PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::IDLE,
+            LocalityPolicy cell_locality = LocalityPolicy::IDLE,
             FabricTableSegmentClasses fabric_table_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
-            PackedCellDataType in_cell_value_data_type = PackedCellDataType::UnsignedPCellDataType,
+            InternalDataTypePolicy in_cell_value_data_type = InternalDataTypePolicy::UnsignedPCellDataType,
             uint64_t in_cell_value = UNSIGNED_ZERO,
             clk16_t in_cell_clk16 = UNSIGNED_ZERO,
-            CellMap cell_priority = CellMap::PRESSURE_FIRST,
-            SubClassesOfMode32 probable_mode_subclass_type_32 = SubClassesOfMode32::SELF_CLASS,
-            SubClassesOfMode48 probable_mode_subclass_type_48 = SubClassesOfMode48::SELF_CLASS
+            PriorityPolicy cell_priority = PriorityPolicy::PRESSURE_FIRST,
+            Model32Subclass probable_mode_subclass_type_32 = Model32Subclass::SELF_CLASS,
+            Model48Subclass probable_mode_subclass_type_48 = Model48Subclass::SELF_CLASS
         ) noexcept
         {
-            const tag8_t sub_class = (cell_mode == PackedMode::MODE_32_ATOMIC_GUARANTEED) ? 
+            const tag8_t sub_class = (cell_mode == PackedMode::MODEL32) ? 
                 static_cast<tag8_t>(probable_mode_subclass_type_32) : static_cast<tag8_t>(probable_mode_subclass_type_48);
             
             return MakeInitialValidBlindPackedCell(
                 cell_mode, cell_locality, 
-                PackedCellOwnership::NEUROMORPHIC_SPACE_TIME_FABRIC, 
+                OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC, 
                 static_cast<tag8_t>(fabric_table_class),
                 in_cell_value_data_type, in_cell_value, in_cell_clk16,
                 cell_priority, sub_class
@@ -216,13 +216,13 @@ namespace PredictedAdaptedEncoding
 
         static constexpr packed64_t MakeInitialValidBlindPackedCell(
             PackedMode cell_mode,
-            PackedCellLocalityTypes cell_locality,
-            PackedCellOwnership cell_ownership,
+            LocalityPolicy cell_locality,
+            OwnershipPolicy cell_ownership,
             tag8_t page_class,
-            PackedCellDataType in_cell_value_data_type,
+            InternalDataTypePolicy in_cell_value_data_type,
             uint64_t in_cell_value,
             clk16_t in_cell_clk16,
-            CellMap cell_priority,
+            PriorityPolicy cell_priority,
             tag8_t probable_mode_subclass
         ) noexcept
         {
@@ -242,12 +242,12 @@ namespace PredictedAdaptedEncoding
         static constexpr  packed64_t ComposeTypedModeValue32Cell(PCDT value32, clk16_t clock16, meta16_t meta16) noexcept
         {
             static_assert(PackedCellTypeBridge<PCDT>::IS_SUPPORTED_TYPE, "Unsupported Cell type");
-            static_assert(PackedCellTypeBridge<PCDT>::FITS_MODE_32, "Value type is too large to fite MODE_32_ATOMIC_GUARANTEED");
-            if (static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16)) != PackedMode::MODE_32_ATOMIC_GUARANTEED)
+            static_assert(PackedCellTypeBridge<PCDT>::FITS_MODE_32, "Value type is too large to fite MODEL32");
+            if (static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16)) != PackedMode::MODEL32)
             {
                 return MakeFaultyCell();
             }
-            if (static_cast<PackedCellDataType>(ExtractValueDataTypeFromMETA16_U_(meta16))!= BridgeOfPackedCellDataType_v<PCDT> )
+            if (static_cast<InternalDataTypePolicy>(ExtractValueDataTypeFromMETA16_U_(meta16))!= BridgeOfPackedCellDataType_v<PCDT> )
             {
                 return MakeFaultyCell();
             }
@@ -260,12 +260,12 @@ namespace PredictedAdaptedEncoding
         static constexpr  packed64_t ComposeTypedModeValue48Cell(PCDT value_clock48, meta16_t meta16) noexcept
         {
             static_assert(PackedCellTypeBridge<PCDT>::IS_SUPPORTED_TYPE, "Unsupported Cell type");
-            static_assert(PackedCellTypeBridge<PCDT>::FITS_MODE_48, "Value type is too large to fite MODE_32_ATOMIC_GUARANTEED");
-            if (static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16)) != PackedMode::MODE_48_ATOMIC_GUARANTEED)
+            static_assert(PackedCellTypeBridge<PCDT>::FITS_MODE_48, "Value type is too large to fite MODEL32");
+            if (static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16)) != PackedMode::MODEL48)
             {
                 return MakeFaultyCell();
             }
-            if (static_cast<PackedCellDataType>(ExtractValueDataTypeFromMETA16_U_(meta16)) != BridgeOfPackedCellDataType_v<PCDT> )
+            if (static_cast<InternalDataTypePolicy>(ExtractValueDataTypeFromMETA16_U_(meta16)) != BridgeOfPackedCellDataType_v<PCDT> )
             {
                 return MakeFaultyCell();
             }
@@ -295,7 +295,7 @@ namespace PredictedAdaptedEncoding
 
         static constexpr  bool IsPackedCellVal32(packed64_t packed_cell) noexcept
         {
-            if (ExtractModeOfPackedCellFromPacked(packed_cell) == PackedMode::MODE_32_ATOMIC_GUARANTEED)
+            if (ExtractModeOfPackedCellFromPacked(packed_cell) == PackedMode::MODEL32)
             {
                 return true;
             }
@@ -329,19 +329,19 @@ namespace PredictedAdaptedEncoding
             return static_cast<uint64_t>(packed_cell & MaskLowNBits(CLK_B48));
         }
 
-        static constexpr CellMap ExtractPriorityFromPacked(packed64_t packed_cell) noexcept
+        static constexpr PriorityPolicy ExtractPriorityFromPacked(packed64_t packed_cell) noexcept
         {
-            return static_cast<CellMap>(ExtractPriorityFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
+            return static_cast<PriorityPolicy>(ExtractPriorityFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
         }
 
-        static constexpr PackedCellLocalityTypes ExtractLocalityFromPacked(packed64_t packed_cell) noexcept
+        static constexpr LocalityPolicy ExtractLocalityFromPacked(packed64_t packed_cell) noexcept
         {
-            return static_cast<PackedCellLocalityTypes>(ExtractLocalityFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
+            return static_cast<LocalityPolicy>(ExtractLocalityFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
         }
 
-        static constexpr PackedCellOwnership ExtractNodeAuthorityFromPacked(packed64_t packed_cell) noexcept
+        static constexpr OwnershipPolicy ExtractNodeAuthorityFromPacked(packed64_t packed_cell) noexcept
         {
-            return static_cast<PackedCellOwnership>(ExtractCellLocalNodeAuthotityFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
+            return static_cast<OwnershipPolicy>(ExtractCellLocalNodeAuthotityFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
         }
 
         static constexpr APCPagedNodeSegmentClasses ExtractRelMaskFromPacked(packed64_t packed_cell) noexcept
@@ -349,19 +349,19 @@ namespace PredictedAdaptedEncoding
             return static_cast<APCPagedNodeSegmentClasses>(ExtractRelMaskFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
         }
 
-        static constexpr SubClassesOfMode32 ExtractRelOffset32FromPacked(packed64_t packed_cell) noexcept
+        static constexpr Model32Subclass ExtractRelOffset32FromPacked(packed64_t packed_cell) noexcept
         {
-            return static_cast<SubClassesOfMode32>(ExtractRelOffsetFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
+            return static_cast<Model32Subclass>(ExtractRelOffsetFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
         }
 
-        static constexpr SubClassesOfMode48 ExtractRelOffset48FromPacked(packed64_t packed_cell) noexcept
+        static constexpr Model48Subclass ExtractRelOffset48FromPacked(packed64_t packed_cell) noexcept
         {
-            return static_cast<SubClassesOfMode48>(ExtractRelOffsetFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
+            return static_cast<Model48Subclass>(ExtractRelOffsetFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
         }
 
-        static constexpr PackedCellDataType ExtractPCellDataTypeFromPacked(packed64_t packed_cell) noexcept
+        static constexpr InternalDataTypePolicy ExtractPCellDataTypeFromPacked(packed64_t packed_cell) noexcept
         {
-            return static_cast<PackedCellDataType>(ExtractValueDataTypeFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
+            return static_cast<InternalDataTypePolicy>(ExtractValueDataTypeFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
         }
 
         static constexpr bool HasHigherPriorityBetweenCellA_B(packed64_t cell_A, packed64_t cell_B) noexcept
@@ -385,31 +385,31 @@ namespace PredictedAdaptedEncoding
             const meta16_t meta16 = ExtractMeta16fromPackedCell(packed_cell);
             out_packed_cell_view.RawCell = packed_cell;
             out_packed_cell_view.InCellMeta16 = meta16;
-            out_packed_cell_view.Priority = static_cast<CellMap>(ExtractPriorityFromMETA16_U_(meta16));
-            out_packed_cell_view.CellOwnership =  static_cast<PackedCellOwnership>(ExtractCellLocalNodeAuthotityFromMETA16_U_(meta16));
-            out_packed_cell_view.LocalityOfCell = static_cast<PackedCellLocalityTypes>(ExtractLocalityFromMETA16_U_(meta16));
+            out_packed_cell_view.Priority = static_cast<PriorityPolicy>(ExtractPriorityFromMETA16_U_(meta16));
+            out_packed_cell_view.CellOwnership =  static_cast<OwnershipPolicy>(ExtractCellLocalNodeAuthotityFromMETA16_U_(meta16));
+            out_packed_cell_view.LocalityOfCell = static_cast<LocalityPolicy>(ExtractLocalityFromMETA16_U_(meta16));
             out_packed_cell_view.CellMode = static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16));
             if (IsPackedCellVal32(packed_cell))
             {
-                out_packed_cell_view.SubClassOfMode32 = static_cast<SubClassesOfMode32>(ExtractRelOffsetFromMETA16_U_(meta16));
+                out_packed_cell_view.SubClassOfMode32 = static_cast<Model32Subclass>(ExtractRelOffsetFromMETA16_U_(meta16));
                 out_packed_cell_view.InCellClock16 = ExtractClk16(packed_cell);
                 out_packed_cell_view.CellValue32 = ExtractValue32(packed_cell);
                 out_packed_cell_view.PageClass = static_cast<APCPagedNodeSegmentClasses>(ExtractRelMaskFromMETA16_U_(meta16));
             }
             else
             {
-                out_packed_cell_view.RelationOffsetForMode48 = static_cast<SubClassesOfMode48>(ExtractRelOffsetFromMETA16_U_(meta16));
+                out_packed_cell_view.RelationOffsetForMode48 = static_cast<Model48Subclass>(ExtractRelOffsetFromMETA16_U_(meta16));
                 out_packed_cell_view.CellClock48 = ExtractClk48(packed_cell);
                 out_packed_cell_view.FabricTableSegmentClass = static_cast<FabricTableSegmentClasses>(ExtractRelMaskFromMETA16_U_(meta16));
             }
-            out_packed_cell_view.CellValueDataType = static_cast<PackedCellDataType>(ExtractValueDataTypeFromMETA16_U_(meta16));
+            out_packed_cell_view.CellValueDataType = static_cast<InternalDataTypePolicy>(ExtractValueDataTypeFromMETA16_U_(meta16));
             out_packed_cell_view.IsThisPackedCellValidInRuntime();
             return out_packed_cell_view;      
         }
 
         static  constexpr meta16_t SetPriorityInMETA16(
             meta16_t meta16,
-            CellMap priority
+            PriorityPolicy priority
         ) noexcept
         {
             return SetIndicatedMetaInMeta16(
@@ -422,7 +422,7 @@ namespace PredictedAdaptedEncoding
 
         static  constexpr meta16_t SetNodeAuthorityInMETA16(
             meta16_t meta16,
-            PackedCellOwnership node_authority
+            OwnershipPolicy node_authority
         ) noexcept
         {
             return SetIndicatedMetaInMeta16(
@@ -435,7 +435,7 @@ namespace PredictedAdaptedEncoding
 
         static  constexpr meta16_t SetLocalityInMETA16(
             meta16_t meta16,
-            PackedCellLocalityTypes locality
+            LocalityPolicy locality
         ) noexcept
         {
             return SetIndicatedMetaInMeta16(
@@ -488,14 +488,14 @@ namespace PredictedAdaptedEncoding
 
         static  constexpr meta16_t SetRelOffset32InMETA16(
             meta16_t meta16,
-            SubClassesOfMode32 rel_offset_32
+            Model32Subclass rel_offset_32
         ) noexcept
         {
-            if (static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16)) != PackedMode::MODE_32_ATOMIC_GUARANTEED)
+            if (static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16)) != PackedMode::MODEL32)
             {
                 return meta16;
             }
-            meta16 = SetCellModeInMETA16(meta16, PackedMode::MODE_32_ATOMIC_GUARANTEED);
+            meta16 = SetCellModeInMETA16(meta16, PackedMode::MODEL32);
             return SetRelOffsetInMETA16_U(
                 meta16,
                 static_cast<tag8_t>(rel_offset_32)
@@ -504,14 +504,14 @@ namespace PredictedAdaptedEncoding
 
         static  constexpr meta16_t SetRelOffset48InMETA16(
             meta16_t meta16,
-            SubClassesOfMode48 rel_offset_48
+            Model48Subclass rel_offset_48
         ) noexcept
         {
-            if (static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16)) != PackedMode::MODE_48_ATOMIC_GUARANTEED)
+            if (static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16)) != PackedMode::MODEL48)
             {
                 return meta16;
             }
-            meta16 = SetCellModeInMETA16(meta16, PackedMode::MODE_48_ATOMIC_GUARANTEED);
+            meta16 = SetCellModeInMETA16(meta16, PackedMode::MODEL48);
             return SetRelOffsetInMETA16_U(
                 meta16,
                 static_cast<tag8_t>(rel_offset_48)
@@ -520,7 +520,7 @@ namespace PredictedAdaptedEncoding
 
         static  constexpr meta16_t SetCellDataTypeInMETA16(
             meta16_t meta16,
-            PackedCellDataType cell_data_type
+            InternalDataTypePolicy cell_data_type
         ) noexcept
         {
             return SetIndicatedMetaInMeta16(
@@ -531,19 +531,19 @@ namespace PredictedAdaptedEncoding
             );
         }
 
-        static constexpr packed64_t SetPriorityInPacked(packed64_t packed_cell, CellMap priority) noexcept
+        static constexpr packed64_t SetPriorityInPacked(packed64_t packed_cell, PriorityPolicy priority) noexcept
         {
             const meta16_t new_desired_meta = SetPriorityInMETA16(ExtractMeta16fromPackedCell(packed_cell), priority);
             return SetMETA16InPacked(packed_cell, new_desired_meta);
         }
 
-        static constexpr packed64_t SetSegmentLayoutInPacked(packed64_t packed_cell, PackedCellOwnership segment_layout) noexcept
+        static constexpr packed64_t SetSegmentLayoutInPacked(packed64_t packed_cell, OwnershipPolicy segment_layout) noexcept
         {
             const meta16_t new_desired_meta = SetNodeAuthorityInMETA16(ExtractMeta16fromPackedCell(packed_cell), segment_layout);
             return SetMETA16InPacked(packed_cell, new_desired_meta);
         }
 
-        static constexpr packed64_t SetLocalityInPacked(packed64_t packed_cell, PackedCellLocalityTypes local_state) noexcept
+        static constexpr packed64_t SetLocalityInPacked(packed64_t packed_cell, LocalityPolicy local_state) noexcept
         {
             const meta16_t new_desired_meta = SetLocalityInMETA16(ExtractMeta16fromPackedCell(packed_cell), local_state);
             return SetMETA16InPacked(packed_cell, new_desired_meta);
@@ -556,32 +556,32 @@ namespace PredictedAdaptedEncoding
             return SetMETA16InPacked(packed_cell, new_desired_meta);
         }
 
-        static constexpr packed64_t SetRelOffsetForMode32InPacked(packed64_t packed_cell, SubClassesOfMode32 reloffset) noexcept
+        static constexpr packed64_t SetRelOffsetForMode32InPacked(packed64_t packed_cell, Model32Subclass reloffset) noexcept
         {
             const meta16_t new_desired_meta = SetRelOffset32InMETA16(ExtractMeta16fromPackedCell(packed_cell), reloffset);
             return SetMETA16InPacked(packed_cell, new_desired_meta);
         }
 
-        static constexpr packed64_t SetRelOffsetForMode48InPacked(packed64_t packed_cell, SubClassesOfMode48 reloffset) noexcept
+        static constexpr packed64_t SetRelOffsetForMode48InPacked(packed64_t packed_cell, Model48Subclass reloffset) noexcept
         {
             const meta16_t new_desired_meta = SetRelOffset48InMETA16(ExtractMeta16fromPackedCell(packed_cell), reloffset);
             return SetMETA16InPacked(packed_cell, new_desired_meta);
         }
 
-        static constexpr packed64_t SetPCellDataTypeInPacked(packed64_t packed_cell, PackedCellDataType cell_data_type)
+        static constexpr packed64_t SetPCellDataTypeInPacked(packed64_t packed_cell, InternalDataTypePolicy cell_data_type)
         {
             const meta16_t new_desired_meta = SetCellDataTypeInMETA16(ExtractMeta16fromPackedCell(packed_cell), cell_data_type);
             return SetMETA16InPacked(packed_cell, new_desired_meta);
         }
 
         static  constexpr meta16_t MakeInCellMetaForMode_32t(
-            BehaveOfMode32 cell_behavior = BehaveOfMode32::MODE_32_CLAIMED_GUARANTEED,
-            CellMap priority = CellMap::PRESSURE_FIRST, 
-            PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
-            PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
+            BehaveOfMode32 cell_behavior = BehaveOfMode32::VALUE32,
+            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
+            OwnershipPolicy authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+            LocalityPolicy locality = LocalityPolicy::IDLE,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
-            SubClassesOfMode32 rel_offset_32 = SubClassesOfMode32::SELF_CLASS,
-            PackedCellDataType cell_data_type = PackedCellDataType::UnsignedPCellDataType
+            Model32Subclass rel_offset_32 = Model32Subclass::SELF_CLASS,
+            InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
         ) noexcept
         {
             return MakeInCellMetaFromUnsigned_16t_(
@@ -596,13 +596,13 @@ namespace PredictedAdaptedEncoding
         }
 
         static  constexpr meta16_t MakeInCellMetaForMode_48t(
-            BehaveOfMode48 cell_behavior = BehaveOfMode48::MODE_48_CLAIMED_GURANTEED,
-            CellMap priority = CellMap::PRESSURE_FIRST, 
-            PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
-            PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
+            BehaveOfMode48 cell_behavior = BehaveOfMode48::VALUE48,
+            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
+            OwnershipPolicy authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+            LocalityPolicy locality = LocalityPolicy::IDLE,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
-            SubClassesOfMode48 rel_offset_48 = SubClassesOfMode48::SELF_CLASS,
-            PackedCellDataType cell_data_type = PackedCellDataType::UnsignedPCellDataType
+            Model48Subclass rel_offset_48 = Model48Subclass::SELF_CLASS,
+            InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
         ) noexcept
         {
             return MakeInCellMetaFromUnsigned_16t_(
@@ -619,7 +619,7 @@ namespace PredictedAdaptedEncoding
         template <typename PCDT>
         static constexpr std::optional<PCDT> ExtractAnyPackedValueX(packed64_t packed_cell)
         {
-            constexpr PackedCellDataType expected_dtype = BridgeOfPackedCellDataType_v<PCDT>;
+            constexpr InternalDataTypePolicy expected_dtype = BridgeOfPackedCellDataType_v<PCDT>;
             if(ExtractPCellDataTypeFromPacked(packed_cell) != expected_dtype)
             {
                 return std::nullopt;
@@ -677,15 +677,15 @@ namespace PredictedAdaptedEncoding
             PackedMode cell_mode,
             uint64_t cell_value = UNSIGNED_ZERO,
             clk16_t clock16 = UNSIGNED_ZERO,
-            CellMap cell_priority = CellMap::PRESSURE_FIRST,
-            PackedCellOwnership node_authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
-            PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::IDLE, 
+            PriorityPolicy cell_priority = PriorityPolicy::PRESSURE_FIRST,
+            OwnershipPolicy node_authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+            LocalityPolicy cell_locality = LocalityPolicy::IDLE, 
             tag8_t page_class = static_cast<tag8_t>(APCPagedNodeSegmentClasses::UNDEFINED),
-            tag8_t sub_class = static_cast<tag8_t>(SubClassesOfMode32::SELF_CLASS),
-            PackedCellDataType cell_data_type = PackedCellDataType::UnsignedPCellDataType
+            tag8_t sub_class = static_cast<tag8_t>(Model32Subclass::SELF_CLASS),
+            InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
         ) noexcept
         {
-            if (cell_mode == PackedMode::MODE_32_ATOMIC_GUARANTEED || cell_mode == PackedMode::MODE_32_CLAIMED_GUARANTEED)
+            if (cell_mode == PackedMode::MODEL32 || cell_mode == PackedMode::VALUE32)
             {
                 const meta16_t meta16_for_mode32 = MakeInCellMetaForMode_32t(
                     static_cast<BehaveOfMode32>(cell_mode),
@@ -693,7 +693,7 @@ namespace PredictedAdaptedEncoding
                     node_authority,
                     cell_locality,
                     static_cast<APCPagedNodeSegmentClasses>(page_class),
-                    static_cast<SubClassesOfMode32>(sub_class),
+                    static_cast<Model32Subclass>(sub_class),
                     cell_data_type
                 );
 
@@ -711,7 +711,7 @@ namespace PredictedAdaptedEncoding
                     node_authority,
                     cell_locality,
                     static_cast<APCPagedNodeSegmentClasses>(page_class),
-                    static_cast<SubClassesOfMode48>(sub_class),
+                    static_cast<Model48Subclass>(sub_class),
                     cell_data_type
                 );
 
@@ -721,12 +721,12 @@ namespace PredictedAdaptedEncoding
 
         static constexpr meta16_t MakeInCellMetaForAny_(
             PackedMode mode_of_cell ,
-            CellMap priority = CellMap::PRESSURE_FIRST, 
-            PackedCellOwnership authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER,
-            PackedCellLocalityTypes locality = PackedCellLocalityTypes::IDLE,
+            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
+            OwnershipPolicy authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+            LocalityPolicy locality = LocalityPolicy::IDLE,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
-            tag8_t rel_offset_any = static_cast<tag8_t>(SubClassesOfMode32::SELF_CLASS),
-            PackedCellDataType cell_data_type = PackedCellDataType::UnsignedPCellDataType
+            tag8_t rel_offset_any = static_cast<tag8_t>(Model32Subclass::SELF_CLASS),
+            InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
         ) noexcept
         {
             return MakeInCellMetaFromUnsigned_16t_(

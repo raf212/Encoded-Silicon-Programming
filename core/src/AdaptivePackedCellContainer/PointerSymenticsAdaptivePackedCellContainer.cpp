@@ -30,15 +30,15 @@ namespace PredictedAdaptedEncoding
         while (curent_tries++ < max_claim_attempts)
         {
             packed64_t packed_cell_value64 = BackingPtr[probable_idx].load(MoLoad_);
-            SubClassesOfMode32 curent_ptr_position = PackedCell64_t::ExtractRelOffset32FromPacked(packed_cell_value64);
+            Model32Subclass curent_ptr_position = PackedCell64_t::ExtractRelOffset32FromPacked(packed_cell_value64);
             size_t head_idx = APCDataStructure::APC_SIZE_SENTINAL;
             size_t tail_idx = APCDataStructure::APC_SIZE_SENTINAL;
-            if (curent_ptr_position == SubClassesOfMode32::HIGH_OF_PAIRED_VERSIONED_CELL)
+            if (curent_ptr_position == Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL)
             {
                 head_idx = probable_idx;
                 tail_idx = (probable_idx + 1) % PayloadCapacityFromHeader();
             }
-            else if (curent_ptr_position == SubClassesOfMode32::LOW_OF_PAIRED_VERSIONED_CELL)
+            else if (curent_ptr_position == Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL)
             {
                 head_idx = (probable_idx + PayloadCapacityFromHeader() - 1) % PayloadCapacityFromHeader();
                 tail_idx = probable_idx;
@@ -56,12 +56,12 @@ namespace PredictedAdaptedEncoding
                 return std::nullopt;
             }
 
-            PackedCellLocalityTypes head_locality = PackedCell64_t::ExtractLocalityFromPacked(head_screenshot);
-            PackedCellLocalityTypes tail_locality = PackedCell64_t::ExtractLocalityFromPacked(tail_screenshot);
+            LocalityPolicy head_locality = PackedCell64_t::ExtractLocalityFromPacked(head_screenshot);
+            LocalityPolicy tail_locality = PackedCell64_t::ExtractLocalityFromPacked(tail_screenshot);
 
             if (!claim_ownership)
             {
-                if (head_locality != PackedCellLocalityTypes::PUBLISHED || tail_locality != PackedCellLocalityTypes::PUBLISHED)
+                if (head_locality != LocalityPolicy::PUBLISHED || tail_locality != LocalityPolicy::PUBLISHED)
                 {
                     return std::nullopt;
                 }
@@ -75,12 +75,12 @@ namespace PredictedAdaptedEncoding
                 return out_paired_ptr_struct;
             }
             
-            if (head_locality != PackedCellLocalityTypes::PUBLISHED || tail_locality != PackedCellLocalityTypes::PUBLISHED)
+            if (head_locality != LocalityPolicy::PUBLISHED || tail_locality != LocalityPolicy::PUBLISHED)
             {
                 return std::nullopt;
             }
-            packed64_t want_head = PackedCell64_t::SetLocalityInPacked(head_screenshot, PackedCellLocalityTypes::CLAIMED);
-            packed64_t want_tail = PackedCell64_t::SetLocalityInPacked(tail_screenshot, PackedCellLocalityTypes::CLAIMED);
+            packed64_t want_head = PackedCell64_t::SetLocalityInPacked(head_screenshot, LocalityPolicy::CLAIMED);
+            packed64_t want_tail = PackedCell64_t::SetLocalityInPacked(tail_screenshot, LocalityPolicy::CLAIMED);
             packed64_t expected_head = head_screenshot;
             if (!BackingPtr[head_idx].compare_exchange_strong(expected_head, want_head, OnExchangeSuccess, OnExchangeFailure))
             {
@@ -115,7 +115,7 @@ namespace PredictedAdaptedEncoding
         return std::nullopt;
     }
 
-    bool PointerSymenticsAdaptivePackedCellContainer::ReleaseAcquiredPairedPtr(const AcquirePairedPointerStruct& acquired_paired_pointer_struct, PackedCellLocalityTypes desired_locality) noexcept
+    bool PointerSymenticsAdaptivePackedCellContainer::ReleaseAcquiredPairedPtr(const AcquirePairedPointerStruct& acquired_paired_pointer_struct, LocalityPolicy desired_locality) noexcept
     {
         if (!acquired_paired_pointer_struct.Ownership)
         {
@@ -157,7 +157,7 @@ namespace PredictedAdaptedEncoding
         {
             return;
         }
-        packed64_t idle32 = PackedCell64_t::MakeInitialAPCValidPackedCell(PackedMode::MODE_32_ATOMIC_GUARANTEED);
+        packed64_t idle32 = PackedCell64_t::MakeInitialAPCValidPackedCell(PackedMode::MODEL32);
         BackingPtr[acquired_paired_pointer_struct.HeadIdx].store(idle32, MoStoreSeq_);
         BackingPtr[acquired_paired_pointer_struct.TailIdx].store(idle32, MoStoreSeq_);
         BackingPtr[acquired_paired_pointer_struct.HeadIdx].notify_all();
@@ -224,12 +224,12 @@ namespace PredictedAdaptedEncoding
             size_t tail = (head + 1);
             packed64_t cur_head = BackingPtr[head].load(MoLoad_);
             packed64_t cur_tail = BackingPtr[tail].load(MoLoad_);
-            PackedCellLocalityTypes head_locality = PackedCell64_t::ExtractLocalityFromPacked(cur_head);
-            PackedCellLocalityTypes tail_locality = PackedCell64_t::ExtractLocalityFromPacked(cur_tail);
-            if (head_locality == PackedCellLocalityTypes::IDLE && tail_locality == PackedCellLocalityTypes::IDLE)
+            LocalityPolicy head_locality = PackedCell64_t::ExtractLocalityFromPacked(cur_head);
+            LocalityPolicy tail_locality = PackedCell64_t::ExtractLocalityFromPacked(cur_tail);
+            if (head_locality == LocalityPolicy::IDLE && tail_locality == LocalityPolicy::IDLE)
             {
-                packed64_t claimed_cur_head = PackedCell64_t::SetLocalityInPacked(cur_head, PackedCellLocalityTypes::CLAIMED);
-                packed64_t claimed_cur_tail = PackedCell64_t::SetLocalityInPacked(cur_tail, PackedCellLocalityTypes::CLAIMED);
+                packed64_t claimed_cur_head = PackedCell64_t::SetLocalityInPacked(cur_head, LocalityPolicy::CLAIMED);
+                packed64_t claimed_cur_tail = PackedCell64_t::SetLocalityInPacked(cur_tail, LocalityPolicy::CLAIMED);
                 packed64_t expected_head = cur_head;
                 if (!BackingPtr[head].compare_exchange_strong(expected_head, claimed_cur_head, OnExchangeSuccess, OnExchangeFailure))
                 {
@@ -247,12 +247,12 @@ namespace PredictedAdaptedEncoding
                     else
                     {
                         val32_t tail_ptr_val32 = high32_half;
-                        meta16_t strl_tail = PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODE_32_ATOMIC_GUARANTEED, CellMap::PRESSURE_FIRST, PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER, PackedCellLocalityTypes::PUBLISHED, rel_mask_with_ptrflag, SubClassesOfMode32::LOW_OF_PAIRED_VERSIONED_CELL);
+                        meta16_t strl_tail = PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODEL32, PriorityPolicy::PRESSURE_FIRST, OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, LocalityPolicy::PUBLISHED, rel_mask_with_ptrflag, Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL);
                         packed64_t tail_packed = PackedCell64_t::ComposeValue32u_64(tail_ptr_val32, 0u, strl_tail);
                         BackingPtr[tail].store(tail_packed, MoStoreSeq_);
 
                         val32_t head_ptr_value32 = low32_half;
-                        meta16_t strl_head = PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODE_32_ATOMIC_GUARANTEED, CellMap::PRESSURE_FIRST, PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER, PackedCellLocalityTypes::PUBLISHED, rel_mask_with_ptrflag, SubClassesOfMode32::HIGH_OF_PAIRED_VERSIONED_CELL);
+                        meta16_t strl_head = PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODEL32, PriorityPolicy::PRESSURE_FIRST, OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, LocalityPolicy::PUBLISHED, rel_mask_with_ptrflag, Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL);
                         packed64_t head_packed = PackedCell64_t::ComposeValue32u_64(head_ptr_value32, 0u, strl_head);
                         BackingPtr[head].store(head_packed, MoStoreSeq_);
                         BackingPtr[tail].notify_all();

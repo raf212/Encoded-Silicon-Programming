@@ -458,7 +458,7 @@ namespace PredictedAdaptedEncoding
             const packed64_t wanted_cell = ComposeAPCOccupancyModel_16x3_48t(
                 published, claimed, faulty,
                 APCPagedNodeSegmentClasses ::CONTROL_SLOT,
-                PackedCellLocalityTypes::PUBLISHED
+                LocalityPolicy::PUBLISHED
             );
             BackingPtr[static_cast<size_t>(meta_idx)].store(wanted_cell, MoStoreSeq_);
             BackingPtr[static_cast<size_t>(meta_idx)].notify_all();
@@ -572,8 +572,8 @@ namespace PredictedAdaptedEncoding
     }
 
     bool SegmentIODefinition::ApplyRegionalMigrationOccupancyTransitionCell(
-        PackedCellLocalityTypes from_locality_of_source_cell,
-        PackedCellLocalityTypes destination_to_locality_of_source_cell,
+        LocalityPolicy from_locality_of_source_cell,
+        LocalityPolicy destination_to_locality_of_source_cell,
         APCPagedNodeSegmentClasses source_page_class,
         APCPagedNodeSegmentClasses destination_page_class
     ) noexcept
@@ -588,8 +588,8 @@ namespace PredictedAdaptedEncoding
         */
         const bool source_region_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(
             from_locality_of_source_cell,
-            PackedCellLocalityTypes::IDLE, source_page_class,
-            PackedCellLocalityTypes::PUBLISHED, false
+            LocalityPolicy::IDLE, source_page_class,
+            LocalityPolicy::PUBLISHED, false
         );
 
         if (!source_region_ok)
@@ -601,17 +601,17 @@ namespace PredictedAdaptedEncoding
             2. destination region: idle -> destination_to
         */
         const bool destination_region_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(
-            PackedCellLocalityTypes::IDLE,
+            LocalityPolicy::IDLE,
             destination_to_locality_of_source_cell, destination_page_class,
-            PackedCellLocalityTypes::PUBLISHED, false
+            LocalityPolicy::PUBLISHED, false
         );
 
         if (!destination_region_ok)
         {
             CasUpdateOccupancy3x16ThreeSubdivisionCell__(
-                PackedCellLocalityTypes::IDLE,
+                LocalityPolicy::IDLE,
                 from_locality_of_source_cell, source_page_class,
-                PackedCellLocalityTypes::PUBLISHED, false
+                LocalityPolicy::PUBLISHED, false
             );
             return false;
         }
@@ -621,25 +621,25 @@ namespace PredictedAdaptedEncoding
         */
        const bool central_source_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(
         from_locality_of_source_cell,
-        PackedCellLocalityTypes::IDLE, std::nullopt,
-        PackedCellLocalityTypes::PUBLISHED, true
+        LocalityPolicy::IDLE, std::nullopt,
+        LocalityPolicy::PUBLISHED, true
        );
 
        if (!central_source_ok)
        {
             CasUpdateOccupancy3x16ThreeSubdivisionCell__(
                 destination_to_locality_of_source_cell,
-                PackedCellLocalityTypes::IDLE,
+                LocalityPolicy::IDLE,
                 destination_page_class,
-                PackedCellLocalityTypes::PUBLISHED,
+                LocalityPolicy::PUBLISHED,
                 false
             );
             
             CasUpdateOccupancy3x16ThreeSubdivisionCell__(
-                PackedCellLocalityTypes::IDLE,
+                LocalityPolicy::IDLE,
                 from_locality_of_source_cell,
                 source_page_class,
-                PackedCellLocalityTypes::PUBLISHED,
+                LocalityPolicy::PUBLISHED,
                 false
             );
             return false;
@@ -650,29 +650,29 @@ namespace PredictedAdaptedEncoding
         */
         
         const bool central_destination_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(
-            PackedCellLocalityTypes::IDLE, destination_to_locality_of_source_cell,
-            std::nullopt, PackedCellLocalityTypes::PUBLISHED,
+            LocalityPolicy::IDLE, destination_to_locality_of_source_cell,
+            std::nullopt, LocalityPolicy::PUBLISHED,
             true
         );
 
         if (!central_destination_ok)
         {
             CasUpdateOccupancy3x16ThreeSubdivisionCell__(
-                PackedCellLocalityTypes::IDLE, from_locality_of_source_cell,
-                std::nullopt, PackedCellLocalityTypes::PUBLISHED,
+                LocalityPolicy::IDLE, from_locality_of_source_cell,
+                std::nullopt, LocalityPolicy::PUBLISHED,
                 true
             );
             CasUpdateOccupancy3x16ThreeSubdivisionCell__(
                 destination_to_locality_of_source_cell,
-                PackedCellLocalityTypes::IDLE, destination_page_class,
-                PackedCellLocalityTypes::PUBLISHED,
+                LocalityPolicy::IDLE, destination_page_class,
+                LocalityPolicy::PUBLISHED,
                 false
             );
             CasUpdateOccupancy3x16ThreeSubdivisionCell__(
-                PackedCellLocalityTypes::IDLE,
+                LocalityPolicy::IDLE,
                 from_locality_of_source_cell,
                 source_page_class,
-                PackedCellLocalityTypes::PUBLISHED,
+                LocalityPolicy::PUBLISHED,
                 false
             );
             return false;
@@ -697,14 +697,14 @@ namespace PredictedAdaptedEncoding
                 continue;
             }
             
-            published_sum += ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::PUBLISHED, page_class);
-            claimed_sum += ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::CLAIMED, page_class);
-            faulty_sum += ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::FAULTY, page_class);
+            published_sum += ReadRegionOccupancyOfALocality(LocalityPolicy::PUBLISHED, page_class);
+            claimed_sum += ReadRegionOccupancyOfALocality(LocalityPolicy::CLAIMED, page_class);
+            faulty_sum += ReadRegionOccupancyOfALocality(LocalityPolicy::FAULTY, page_class);
         }
 
-        const uint32_t central_published = ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::PUBLISHED);
-        const uint32_t central_claimed = ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::CLAIMED);
-        const uint32_t central_faulty = ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::FAULTY);
+        const uint32_t central_published = ReadCentralAPCOccupancyOfALocality(LocalityPolicy::PUBLISHED);
+        const uint32_t central_claimed = ReadCentralAPCOccupancyOfALocality(LocalityPolicy::CLAIMED);
+        const uint32_t central_faulty = ReadCentralAPCOccupancyOfALocality(LocalityPolicy::FAULTY);
 
         return central_published == published_sum &&
             central_claimed == claimed_sum &&

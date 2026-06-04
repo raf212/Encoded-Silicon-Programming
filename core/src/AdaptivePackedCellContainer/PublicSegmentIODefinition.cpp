@@ -5,7 +5,7 @@
 namespace PredictedAdaptedEncoding
 {
 
-    uint16_t SegmentIODefinition::ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes locality_type) noexcept
+    uint16_t SegmentIODefinition::ReadCentralAPCOccupancyOfALocality(LocalityPolicy locality_type) noexcept
     {
         const uint16_t total_capacity = static_cast<uint16_t>(
             std::min<size_t>(GetTotalCapacityForThisAPC(), APC_MAX_LENGTH_OR_COUNTER)
@@ -40,15 +40,15 @@ namespace PredictedAdaptedEncoding
 
     packed64_t SegmentIODefinition::PackPureClock48AsPackedCell(
         std::optional<uint64_t> clock48,
-        CellMap priority,
-        PackedCellLocalityTypes locality,
+        PriorityPolicy priority,
+        LocalityPolicy locality,
         APCPagedNodeSegmentClasses page_class,
-        SubClassesOfMode48 reloffset,
-        PackedCellDataType dtype,
-        PackedCellOwnership node_authority
+        Model48Subclass reloffset,
+        InternalDataTypePolicy dtype,
+        OwnershipPolicy node_authority
     ) noexcept
     {
-        if ((reloffset != SubClassesOfMode48::PURE_TIMER_48))
+        if ((reloffset != Model48Subclass::PURE_TIMER_48))
         {
             return PackedCell64_t::MakeFaultyCell();
         }
@@ -58,7 +58,7 @@ namespace PredictedAdaptedEncoding
             return OwnedMasterClockConfPtr_->ComposePureClockCell48();
         }
         
-        meta16_t strl_clock48 = PackedCell64_t::MakeInCellMetaForMode_48t(BehaveOfMode48::MODE_48_ATOMIC_GUARANTEED, priority, node_authority, locality, page_class, reloffset, dtype);
+        meta16_t strl_clock48 = PackedCell64_t::MakeInCellMetaForMode_48t(BehaveOfMode48::MODEL48, priority, node_authority, locality, page_class, reloffset, dtype);
         if (clock48)
         {
             return PackedCell64_t::ComposeCLK48u_64(clock48.value(), strl_clock48);
@@ -67,10 +67,10 @@ namespace PredictedAdaptedEncoding
         return PackedCell64_t::ComposeCLK48u_64((now_timer.NowTicks() & MaskLowNBits(CLK_B48)), strl_clock48);
     }
 
-    void SegmentIODefinition::WriteOrUpdateMetaClock48(CellMap priority, std::optional<uint64_t>meta_clock_48 ) noexcept
+    void SegmentIODefinition::WriteOrUpdateMetaClock48(PriorityPolicy priority, std::optional<uint64_t>meta_clock_48 ) noexcept
     {
         size_t idx = static_cast<size_t>(MetaIndexOfAPCNode::LOCAL_CLOCK48);
-        packed64_t wanted_cell = PackPureClock48AsPackedCell(meta_clock_48, priority, PackedCellLocalityTypes::PUBLISHED);
+        packed64_t wanted_cell = PackPureClock48AsPackedCell(meta_clock_48, priority, LocalityPolicy::PUBLISHED);
         BackingPtr[idx].store(wanted_cell, MoStoreSeq_);
         BackingPtr[idx].notify_all();
     }
@@ -92,7 +92,7 @@ namespace PredictedAdaptedEncoding
         {
             return false;
         }
-        if (PackedCell64_t::ExtractLocalityFromPacked(expected_packed) == PackedCellLocalityTypes::CLAIMED)
+        if (PackedCell64_t::ExtractLocalityFromPacked(expected_packed) == LocalityPolicy::CLAIMED)
         {
             return false;
         }
@@ -118,10 +118,10 @@ namespace PredictedAdaptedEncoding
         bool is_root_shared
     ) noexcept
     {
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::LOGICAL_NODE_ID, logical_node_id, CellMap::PRESSURE_FIRST);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::SHARED_ID, shared_id, CellMap::PRESSURE_FIRST);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::SHARED_PREVIOUS_ID, BRANCH_SENTINAL, CellMap::PRESSURE_FIRST);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::SHARED_NEXT_ID, BRANCH_SENTINAL, CellMap::PRESSURE_FIRST);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::LOGICAL_NODE_ID, logical_node_id, PriorityPolicy::PRESSURE_FIRST);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::SHARED_ID, shared_id, PriorityPolicy::PRESSURE_FIRST);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::SHARED_PREVIOUS_ID, BRANCH_SENTINAL, PriorityPolicy::PRESSURE_FIRST);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::SHARED_NEXT_ID, BRANCH_SENTINAL, PriorityPolicy::PRESSURE_FIRST);
         if (is_root_shared)
         {
             TurnOnMultipleSegmentFlagsAtOnce_(static_cast<uint32_t>(ControlEnumOfAPCSegment::IS_GRAPH_NODE) | static_cast<uint32_t>(ControlEnumOfAPCSegment::IS_SHARED_ROOT));
@@ -139,12 +139,12 @@ namespace PredictedAdaptedEncoding
         uint32_t aux_param_uint32
     ) noexcept
     {
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::NODE_COMPUTE_KIND, UNSIGNED_ZERO, CellMap::PRESSURE_FIRST);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::NODE_AUX_PARAM_U32, aux_param_uint32, CellMap::PRESSURE_FIRST);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_FORWARD_CLOCK16, UNSIGNED_ZERO, CellMap::PRESSURE_FIRST);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_BACKWARD_CLOCK16, UNSIGNED_ZERO, CellMap::PRESSURE_FIRST);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_EMITTED_FEED_FORWARD_CLOCK16, UNSIGNED_ZERO, CellMap::PRESSURE_FIRST);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_EMITTED_FEED_BACKWARD_CLOCK16, UNSIGNED_ZERO, CellMap::PRESSURE_FIRST);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::NODE_COMPUTE_KIND, UNSIGNED_ZERO, PriorityPolicy::PRESSURE_FIRST);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::NODE_AUX_PARAM_U32, aux_param_uint32, PriorityPolicy::PRESSURE_FIRST);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_FORWARD_CLOCK16, UNSIGNED_ZERO, PriorityPolicy::PRESSURE_FIRST);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_BACKWARD_CLOCK16, UNSIGNED_ZERO, PriorityPolicy::PRESSURE_FIRST);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_EMITTED_FEED_FORWARD_CLOCK16, UNSIGNED_ZERO, PriorityPolicy::PRESSURE_FIRST);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_EMITTED_FEED_BACKWARD_CLOCK16, UNSIGNED_ZERO, PriorityPolicy::PRESSURE_FIRST);
 
         WriteMetaCellMode32_(MetaIndexOfAPCNode::FEEDFORWARD_IN_TARGET_ID, BRANCH_SENTINAL);
         WriteMetaCellMode32_(MetaIndexOfAPCNode::FEEDFORWARD_OUT_TARGET_ID, BRANCH_SENTINAL);
@@ -166,7 +166,7 @@ namespace PredictedAdaptedEncoding
         uint32_t aux_param_uint32,
         uint32_t branch_depth,
         uint8_t branch_priority,
-        CellMap write_cell_priority
+        PriorityPolicy write_cell_priority
 
     ) noexcept
     {
@@ -829,7 +829,7 @@ namespace PredictedAdaptedEncoding
         }
     }
 
-    uint16_t SegmentIODefinition::ReadRegionOccupancyOfALocality(PackedCellLocalityTypes locality_type, APCPagedNodeSegmentClasses page_class) noexcept
+    uint16_t SegmentIODefinition::ReadRegionOccupancyOfALocality(LocalityPolicy locality_type, APCPagedNodeSegmentClasses page_class) noexcept
     {
 
         if (!APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(page_class))
@@ -873,10 +873,10 @@ namespace PredictedAdaptedEncoding
 
 
     bool SegmentIODefinition::CasUpdateOccupancy3x16ThreeSubdivisionCell__(
-        PackedCellLocalityTypes from_locality,
-        PackedCellLocalityTypes to_locality,
+        LocalityPolicy from_locality,
+        LocalityPolicy to_locality,
         std::optional<APCPagedNodeSegmentClasses> page_class,
-        PackedCellLocalityTypes control_or_meta_cells_own_locality,
+        LocalityPolicy control_or_meta_cells_own_locality,
         bool is_this_cell_central_occupancy_counter
     ) noexcept
     {
@@ -930,14 +930,14 @@ namespace PredictedAdaptedEncoding
                 return false;
             }
 
-            auto DecrementLocalityCount = [&](PackedCellLocalityTypes locality) noexcept->bool
+            auto DecrementLocalityCount = [&](LocalityPolicy locality) noexcept->bool
             {
                 switch (locality)
                 {
-                case PackedCellLocalityTypes::IDLE :
+                case LocalityPolicy::IDLE :
                     return true;
 
-                case PackedCellLocalityTypes::PUBLISHED :
+                case LocalityPolicy::PUBLISHED :
                     if (published_count > UNSIGNED_ZERO)
                     {
                         --published_count;
@@ -945,7 +945,7 @@ namespace PredictedAdaptedEncoding
                     }
                     return false;
 
-                case PackedCellLocalityTypes::CLAIMED :
+                case LocalityPolicy::CLAIMED :
                     if (claimed_count > UNSIGNED_ZERO)
                     {
                         --claimed_count;
@@ -953,7 +953,7 @@ namespace PredictedAdaptedEncoding
                     }
                     return false;
 
-                case PackedCellLocalityTypes::FAULTY :
+                case LocalityPolicy::FAULTY :
                     if (faulty_count > UNSIGNED_ZERO)
                     {
                         --faulty_count;
@@ -966,27 +966,27 @@ namespace PredictedAdaptedEncoding
                 }
             };
 
-            auto IncrementLocalityCount = [&](PackedCellLocalityTypes locality) noexcept
+            auto IncrementLocalityCount = [&](LocalityPolicy locality) noexcept
             {
                 switch (locality)
                 {
-                case PackedCellLocalityTypes::IDLE :
+                case LocalityPolicy::IDLE :
                     return true;
-                case PackedCellLocalityTypes::PUBLISHED :
+                case LocalityPolicy::PUBLISHED :
                     if (published_count < APC_MAX_LENGTH_OR_COUNTER)
                     {
                         published_count++;
                         return true;
                     }
                     return false;
-                case PackedCellLocalityTypes::CLAIMED :
+                case LocalityPolicy::CLAIMED :
                     if (claimed_count < APC_MAX_LENGTH_OR_COUNTER)
                     {
                         claimed_count++;
                         return true;
                     }
                     return false;
-                case PackedCellLocalityTypes::FAULTY :
+                case LocalityPolicy::FAULTY :
                     if (faulty_count < APC_MAX_LENGTH_OR_COUNTER)
                     {
                         faulty_count++;
@@ -1039,8 +1039,8 @@ namespace PredictedAdaptedEncoding
         APCPagedNodeSegmentClasses physical_page_class
     ) noexcept
     {
-        const PackedCellLocalityTypes from_locality = PackedCell64_t::ExtractLocalityFromPacked(old_cell);
-        const PackedCellLocalityTypes to_locality = PackedCell64_t::ExtractLocalityFromPacked(new_cell);
+        const LocalityPolicy from_locality = PackedCell64_t::ExtractLocalityFromPacked(old_cell);
+        const LocalityPolicy to_locality = PackedCell64_t::ExtractLocalityFromPacked(new_cell);
         if (from_locality == to_locality)
         {
             return true;
@@ -1054,14 +1054,14 @@ namespace PredictedAdaptedEncoding
 
 
         
-        const bool region_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(from_locality, to_locality, physical_page_class, PackedCellLocalityTypes::PUBLISHED, false);
+        const bool region_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(from_locality, to_locality, physical_page_class, LocalityPolicy::PUBLISHED, false);
 
         if (!region_ok)
         {
             return false;
         }
 
-        const bool central_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(from_locality, to_locality, std::nullopt, PackedCellLocalityTypes::PUBLISHED, true);
+        const bool central_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(from_locality, to_locality, std::nullopt, LocalityPolicy::PUBLISHED, true);
 
         if (!central_ok)
         {
@@ -1069,7 +1069,7 @@ namespace PredictedAdaptedEncoding
                 to_locality,
                 from_locality,
                 physical_page_class,
-                PackedCellLocalityTypes::PUBLISHED,
+                LocalityPolicy::PUBLISHED,
                 false
             );
             return false;

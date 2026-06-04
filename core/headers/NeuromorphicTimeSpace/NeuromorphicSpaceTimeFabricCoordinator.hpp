@@ -46,23 +46,23 @@ namespace PredictedAdaptedEncoding
             size_t index, 
             uint64_t value32_or_64, 
             FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
-            PackedMode cell_mode = PackedMode::MODE_48_CLAIMED_GURANTEED, 
+            PackedMode cell_mode = PackedMode::VALUE48, 
             clk16_t extended_meta_value = UNSIGNED_ZERO,
-            tag8_t mode_sub_class = static_cast<tag8_t>(SubClassesOfMode32::SELF_CLASS),
-            PackedCellDataType cell_data_type = PackedCellDataType::UnsignedPCellDataType,
-            PackedCellLocalityTypes locality_of_cell = PackedCellLocalityTypes::IDLE, 
-            CellMap priority = CellMap::PRESSURE_FIRST
+            tag8_t mode_sub_class = static_cast<tag8_t>(Model32Subclass::SELF_CLASS),
+            InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType,
+            LocalityPolicy locality_of_cell = LocalityPolicy::IDLE, 
+            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST
         ) noexcept;
 
         constexpr bool StoreFebricControlMeta48Directly_(
             FabricMetaIndicies fabric_meta_idx, uint64_t value, 
-            PackedCellLocalityTypes cell_locality = PackedCellLocalityTypes::PUBLISHED,
-            SubClassesOfMode48 sub_class48 = SubClassesOfMode48::SELF_CLASS,
-            CellMap priority = CellMap::VERSIONED
+            LocalityPolicy cell_locality = LocalityPolicy::PUBLISHED,
+            Model48Subclass sub_class48 = Model48Subclass::SELF_CLASS,
+            PriorityPolicy priority = PriorityPolicy::VERSIONED
         )noexcept;
 
         constexpr bool UpdateValidPairedOccupancyApproxAtomically_(
-            PackedCellLocalityTypes desired_occupancy_of_locality, uint64_t desired_occupancy_value,
+            LocalityPolicy desired_occupancy_of_locality, uint64_t desired_occupancy_value,
             bool force_update = false,
             clk16_t pair_version = APCDataStructure::BRANCH_VERSION
         ) noexcept;
@@ -77,7 +77,7 @@ namespace PredictedAdaptedEncoding
         constexpr size_t GetTableDirectoryCellSlabIndex_(
             FabricTableSegmentClasses desired_table, 
             TableEntryCellTypeOfFabric entry_type, 
-            std::optional<PackedCellLocalityTypes> invalid_cell_locality = PackedCellLocalityTypes::CLAIMED
+            std::optional<LocalityPolicy> invalid_cell_locality = LocalityPolicy::CLAIMED
         ) noexcept;
     
 
@@ -106,7 +106,7 @@ namespace PredictedAdaptedEncoding
             SlotCellTypeOfAPCFabric slote_state,
             uint32_t value32, 
             clk16_t extended_meta_value,
-            PackedCellLocalityTypes locality_of_cell = PackedCellLocalityTypes::IDLE
+            LocalityPolicy locality_of_cell = LocalityPolicy::IDLE
         ) noexcept;
 
         uint64_t IncrementOrDecrementDeltaFromFabricTrackerMetaIdx_(FabricMetaIndicies meta_idx) noexcept;
@@ -124,9 +124,9 @@ namespace PredictedAdaptedEncoding
 
         void ShutDownFabric() noexcept;
         
-        constexpr packed64_t ReadCompletePackedCellDirectly(size_t slab_index, std::optional<PackedCellLocalityTypes> invalid_cell_locality = PackedCellLocalityTypes::CLAIMED) noexcept;
+        constexpr packed64_t ReadCompletePackedCellDirectly(size_t slab_index, std::optional<LocalityPolicy> invalid_cell_locality = LocalityPolicy::CLAIMED) noexcept;
 
-        constexpr packed64_t AtomicallyLoadReadCompletePackedCell(size_t slab_index, std::optional<PackedCellLocalityTypes> invalid_cell_locality = PackedCellLocalityTypes::CLAIMED) noexcept;
+        constexpr packed64_t AtomicallyLoadReadCompletePackedCell(size_t slab_index, std::optional<LocalityPolicy> invalid_cell_locality = LocalityPolicy::CLAIMED) noexcept;
 
         constexpr void StorePackedCellUncheckedDirectly(size_t slab_index, packed64_t packed_cell) noexcept;
 
@@ -147,7 +147,7 @@ namespace PredictedAdaptedEncoding
         bool GetMetaCellView(MetaIndexOfAPCNode fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept;
 
         std::optional<uint64_t> ReadOccupancyApproxFromPairedIfValid(
-            PackedCellLocalityTypes desired_occupancy_class,
+            LocalityPolicy desired_occupancy_class,
             const PackedCell64_t::AuthoritiveCellView* low_half_view_ptr = nullptr,
             const PackedCell64_t::AuthoritiveCellView* high_half_view_ptr = nullptr
         ) noexcept;

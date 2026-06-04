@@ -106,8 +106,8 @@ protected:
     std::optional<LayoutBoundsOfSingleRelNodeClass> GetVirtualControlSlotLayout_() noexcept;
 
     bool ApplyRegionalMigrationOccupancyTransitionCell(
-        PackedCellLocalityTypes from_locality_of_source_cell,
-        PackedCellLocalityTypes destination_locality_of_source_cell,
+        LocalityPolicy from_locality_of_source_cell,
+        LocalityPolicy destination_locality_of_source_cell,
         APCPagedNodeSegmentClasses source_page_class,
         APCPagedNodeSegmentClasses destination_page_class
     ) noexcept;
@@ -115,26 +115,26 @@ protected:
 
     packed64_t PackValue32InPackedCellwithClock16_(
         val32_t value32,
-        CellMap priority,
-        PackedCellLocalityTypes locality = PackedCellLocalityTypes::PUBLISHED,
+        PriorityPolicy priority,
+        LocalityPolicy locality = LocalityPolicy::PUBLISHED,
         APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::NONE,
-        SubClassesOfMode32 reloffset_mode32 = SubClassesOfMode32::SELF_CLASS,
-        PackedCellDataType dtype = PackedCellDataType::UnsignedPCellDataType,
-        PackedCellOwnership node_authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
+        Model32Subclass reloffset_mode32 = Model32Subclass::SELF_CLASS,
+        InternalDataTypePolicy dtype = InternalDataTypePolicy::UnsignedPCellDataType,
+        OwnershipPolicy node_authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
     ) noexcept
     {
         if (OwnedMasterClockConfPtr_)
         {
             return OwnedMasterClockConfPtr_->ComposeValue32WithCurrentThreadStamp16(value32, page_class, priority, locality, reloffset_mode32, dtype);
         }
-        meta16_t strl_moded32 = PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODE_32_ATOMIC_GUARANTEED, priority, node_authority, locality, page_class, reloffset_mode32, dtype);
+        meta16_t strl_moded32 = PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODEL32, priority, node_authority, locality, page_class, reloffset_mode32, dtype);
         return PackedCell64_t::ComposeValue32u_64(value32, UNSIGNED_ZERO, strl_moded32);
     }
 
     void WriteMetaCellMode32_(
         MetaIndexOfAPCNode idx,
         uint32_t value32,
-        CellMap priority = CellMap::PRESSURE_FIRST,
+        PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST,
         APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT
     ) noexcept
     {
@@ -143,7 +143,7 @@ protected:
         {
             return;
         }
-        BackingPtr[index].store(PackValue32InPackedCellwithClock16_(value32, priority, PackedCellLocalityTypes::PUBLISHED, page_class), MoStoreSeq_);
+        BackingPtr[index].store(PackValue32InPackedCellwithClock16_(value32, priority, LocalityPolicy::PUBLISHED, page_class), MoStoreSeq_);
         BackingPtr[index].notify_all();
     }
 
@@ -151,8 +151,8 @@ protected:
         MetaIndexOfAPCNode idx,
         uint64_t raw48_value,
         APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
-        CellMap priority = CellMap::PRESSURE_FIRST,
-        SubClassesOfMode48 rel_offset = SubClassesOfMode48::SELF_CLASS
+        PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST,
+        Model48Subclass rel_offset = Model48Subclass::SELF_CLASS
     ) noexcept
     {
         size_t index = static_cast<size_t>(idx);
@@ -160,7 +160,7 @@ protected:
         {
             return;
         }
-        const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(BehaveOfMode48::MODE_48_ATOMIC_GUARANTEED, priority, PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER, PackedCellLocalityTypes::PUBLISHED, page_class, rel_offset);
+        const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(BehaveOfMode48::MODEL48, priority, OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, LocalityPolicy::PUBLISHED, page_class, rel_offset);
         const packed64_t packed_cell = PackedCell64_t::ComposeCLK48u_64(raw48_value & MaskLowNBits(CLK_B48), meta16);
         BackingPtr[index].store(packed_cell, MoStoreSeq_);
         BackingPtr[index].notify_all();
@@ -170,10 +170,10 @@ protected:
 private:
 
     bool CasUpdateOccupancy3x16ThreeSubdivisionCell__(
-        PackedCellLocalityTypes from_locality,
-        PackedCellLocalityTypes to_locality,
+        LocalityPolicy from_locality,
+        LocalityPolicy to_locality,
         std::optional<APCPagedNodeSegmentClasses> page_class = std::nullopt,
-        PackedCellLocalityTypes control_cells_own_locality = PackedCellLocalityTypes::PUBLISHED,
+        LocalityPolicy control_cells_own_locality = LocalityPolicy::PUBLISHED,
         bool is_this_cell_central_occupancy_counter = false
     ) noexcept;
 
@@ -181,15 +181,15 @@ private:
 public:
     packed64_t PackPureClock48AsPackedCell(
         std::optional<uint64_t> clock48 = std::nullopt,
-        CellMap priority = CellMap::PRESSURE_FIRST,
-        PackedCellLocalityTypes locality = PackedCellLocalityTypes::PUBLISHED,
+        PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST,
+        LocalityPolicy locality = LocalityPolicy::PUBLISHED,
         APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
-        SubClassesOfMode48 reloffset = SubClassesOfMode48::PURE_TIMER_48,
-        PackedCellDataType dtype = PackedCellDataType::UnsignedPCellDataType,
-        PackedCellOwnership node_authority = PackedCellOwnership::ADAPTIVE_PACKED_CELL_CONTAINER
+        Model48Subclass reloffset = Model48Subclass::PURE_TIMER_48,
+        InternalDataTypePolicy dtype = InternalDataTypePolicy::UnsignedPCellDataType,
+        OwnershipPolicy node_authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
     ) noexcept;
 
-    void WriteOrUpdateMetaClock48(CellMap priority = CellMap::PRESSURE_FIRST, std::optional<uint64_t>meta_clock_48 = std::nullopt) noexcept;
+    void WriteOrUpdateMetaClock48(PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, std::optional<uint64_t>meta_clock_48 = std::nullopt) noexcept;
 
     bool JustUpdateValueOfMeta32(
         MetaIndexOfAPCNode idx,
@@ -230,7 +230,7 @@ public:
         uint32_t aux_param_uint32 = UNSIGNED_ZERO,
         uint32_t branch_depth = UNSIGNED_ZERO,
         uint8_t branch_priority = UNSIGNED_ZERO,
-        CellMap write_cell_priority = CellMap::PRESSURE_FIRST
+        PriorityPolicy write_cell_priority = PriorityPolicy::PRESSURE_FIRST
 
     ) noexcept;
 
@@ -349,11 +349,11 @@ public:
 
     void MakeAPCBranchOwned() noexcept
     {
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::CURRENTLY_OWNED, 1u, CellMap::PRESSURE_FIRST);
+        WriteMetaCellMode32_(MetaIndexOfAPCNode::CURRENTLY_OWNED, 1u, PriorityPolicy::PRESSURE_FIRST);
     }
 
 
-    void ResetTotalCASFailureForThisBranch(CellMap priority = CellMap::PRESSURE_FIRST) noexcept
+    void ResetTotalCASFailureForThisBranch(PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST) noexcept
     {
         WriteMetaCellMode32_(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH, UNSIGNED_ZERO, priority);
     }
@@ -385,7 +385,7 @@ public:
         );
     }
 
-    uint16_t ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes locality_type) noexcept;
+    uint16_t ReadCentralAPCOccupancyOfALocality(LocalityPolicy locality_type) noexcept;
 
     bool GetPublishedClaimedFaultyFromCentral(
         uint16_t& published_occupancy,
@@ -399,28 +399,28 @@ public:
         return ok;
     }
 
-    uint16_t ReadRegionOccupancyOfALocality(PackedCellLocalityTypes locality_type, APCPagedNodeSegmentClasses page_class) noexcept;
+    uint16_t ReadRegionOccupancyOfALocality(LocalityPolicy locality_type, APCPagedNodeSegmentClasses page_class) noexcept;
 
     uint16_t ReadPublishedOccupancyOfAPageClass(APCPagedNodeSegmentClasses page_class) noexcept
     {
-        return ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::PUBLISHED, page_class);
+        return ReadRegionOccupancyOfALocality(LocalityPolicy::PUBLISHED, page_class);
     }
 
     uint16_t ReadIdleOccupancyOfAPAgeClass(APCPagedNodeSegmentClasses page_class) noexcept
     {
-        return ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::IDLE, page_class);
+        return ReadRegionOccupancyOfALocality(LocalityPolicy::IDLE, page_class);
     }
 
 
     uint16_t ReadClaimedOccupancyOfAPAgeClass(APCPagedNodeSegmentClasses page_class) noexcept
     {
-        return ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::CLAIMED, page_class);
+        return ReadRegionOccupancyOfALocality(LocalityPolicy::CLAIMED, page_class);
     }
     
 
     uint16_t ReadFaultyOccupancyOfAPAgeClass(APCPagedNodeSegmentClasses page_class) noexcept
     {
-        return ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::FAULTY, page_class);
+        return ReadRegionOccupancyOfALocality(LocalityPolicy::FAULTY, page_class);
     }
 
     uint16_t ReadTotalUsedOccupancyOfARegion(APCPagedNodeSegmentClasses page_class) noexcept
