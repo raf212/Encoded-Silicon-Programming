@@ -24,9 +24,9 @@
     #include <intrin.h>
 #endif
 // META16 / PNLTCOD:
-// [ priority:3 | node_authority:2 | locality:2 | cell_mode:1 | relmask:4 | reloffset:2 | dtype:2 ]
+// [ priority:2 | node_authority:2 | locality:2 | cell_mode:2 | cell_class:4 | mode_subclass:2 | dtype:2 ]
 // shifts:
-// priority=13, node_authority=11, locality=9, cell_mode=8, relmask=4, reloffset=2, dtype=0
+// priority=14, node_authority=12, locality=10, cell_mode= 8, cell_class=4, mode_subclass=2, dtype=0
 
 
 namespace PredictedAdaptedEncoding {
@@ -41,8 +41,12 @@ namespace PredictedAdaptedEncoding {
     static constexpr ::std::memory_order MoLoad_      = ::std::memory_order_acquire;
     static constexpr ::std::memory_order MoStoreSeq_  = ::std::memory_order_release;
     static constexpr ::std::memory_order MoStoreUnSeq_= ::std::memory_order_relaxed;
+    static constexpr std::memory_order MoClaimSuccess = std::memory_order_acq_rel;
+    static constexpr std::memory_order MoClaimFailure = MoLoad_;
+    //will be removed
     static constexpr ::std::memory_order OnExchangeSuccess   = ::std::memory_order_acq_rel;
     static constexpr ::std::memory_order OnExchangeFailure   = ::std::memory_order_relaxed;
+    //--
 
     static constexpr unsigned CLK_B48 = 48u;
     static constexpr unsigned VALBITS  = 32u;
@@ -51,55 +55,54 @@ namespace PredictedAdaptedEncoding {
     static constexpr unsigned STBITS   = 8u;
     static constexpr unsigned TOTAL_LOW = 48u;
 
-    static constexpr unsigned PRIO_LEN = 3u;
+    static constexpr unsigned PRIO_LEN = 2u;
     static constexpr unsigned NODE_AUTH_LEN = 2u;
     static constexpr unsigned LOCALITY_LEN = 2u;// will be 2u
-    static constexpr unsigned PCTYPE_LEN = 1u;
-    static constexpr unsigned RELMASK_LEN = 4u;
-    static constexpr unsigned RELOFFSET_LEN = 2u;
-    static constexpr unsigned PCELL_DATATYPE_LEN = 2u;
+    static constexpr unsigned CELL_MODE_LEN = 2u;
+    static constexpr unsigned CELL_CLASS_LEN = 4u;
+    static constexpr unsigned SUB_CLASS_OF_CELL_MODE_LEN = 2u;
+    static constexpr unsigned CELL_INTERNAL_DATA_TYPE_LEN = 2u;
 
     //shifts 
     static constexpr unsigned PCELL_DETATYPE_SHIFT = 0u;
-    static constexpr unsigned RELOFFSET_SHIFT = PCELL_DETATYPE_SHIFT + PCELL_DATATYPE_LEN;
-    static constexpr unsigned RELMASK_SHIFT = RELOFFSET_SHIFT + RELOFFSET_LEN;
-    static constexpr unsigned CELL_MODE_SHIFT = RELMASK_SHIFT + RELMASK_LEN;
-    static constexpr unsigned LOCALITY_SHIFT = CELL_MODE_SHIFT + PCTYPE_LEN;
+    static constexpr unsigned SUBCLASS_SHIFT = PCELL_DETATYPE_SHIFT + CELL_INTERNAL_DATA_TYPE_LEN;
+    static constexpr unsigned CELL_CLASS_SHIFT = SUBCLASS_SHIFT + SUB_CLASS_OF_CELL_MODE_LEN;
+    static constexpr unsigned CELL_MODE_SHIFT = CELL_CLASS_SHIFT + CELL_CLASS_LEN;
+    static constexpr unsigned LOCALITY_SHIFT = CELL_MODE_SHIFT + CELL_MODE_LEN;
     static constexpr unsigned NODE_AUTH_SHIFT = LOCALITY_SHIFT + LOCALITY_LEN;
     static constexpr unsigned PRIORITY_SHIFT = NODE_AUTH_SHIFT + NODE_AUTH_LEN;
     static_assert(PRIORITY_SHIFT + PRIO_LEN == META16_B16, "PNLTCOD must be 16 bits");
     //mask
-    static constexpr tag8_t PCELL_DATATYPE_MASK = static_cast<tag8_t>((1u << PCELL_DATATYPE_LEN) - 1u);
-    static constexpr tag8_t RELOFFSET_MASK = static_cast<tag8_t>((1u << RELOFFSET_LEN) - 1u);
-    static constexpr tag8_t RELMASK_MASK = static_cast<tag8_t>((1u << RELMASK_LEN) - 1u);
-    static constexpr tag8_t CELL_MODE_MASK = static_cast<tag8_t>((1u << PCTYPE_LEN) - 1u);
+    static constexpr tag8_t CELL_INTERNAL_DATA_TYPE_MASK = static_cast<tag8_t>((1u << CELL_INTERNAL_DATA_TYPE_LEN) - 1u);
+    static constexpr tag8_t SUBCLASS_MASK = static_cast<tag8_t>((1u << SUB_CLASS_OF_CELL_MODE_LEN) - 1u);
+    static constexpr tag8_t CELL_CLASS_MASK = static_cast<tag8_t>((1u << CELL_CLASS_LEN) - 1u);
+    static constexpr tag8_t CELL_MODE_MASK = static_cast<tag8_t>((1u << CELL_MODE_LEN) - 1u);
     static constexpr tag8_t LOCALITY_MASK = static_cast<tag8_t>((1u << LOCALITY_LEN) - 1u);
     static constexpr tag8_t NODE_AUTH_MASK = static_cast<tag8_t>((1u << NODE_AUTH_LEN) - 1u);
     static constexpr tag8_t PRIORITY_MASK = static_cast<tag8_t>((1u << PRIO_LEN) - 1u);
     
     static constexpr uint8_t MAX_PRIORITY   = static_cast<tag8_t>(PRIORITY_MASK);
 
-    enum class PackedCellLocalityTypes : tag8_t
+    /// @brief HIGHEST_TRUTH of Packed Cell
+    enum class LocalityPolicy : tag8_t
     {
-        ST_IDLE = 0,
-        ST_PUBLISHED = 1,
-        ST_CLAIMED = 2,
-        ST_EXCEPTION_BIT_FAULTY = 3
+        IDLE = 0,
+        PUBLISHED = 1,
+        CLAIMED = 2,
+        FAULTY = 3
     };
 
-
-    static constexpr tag8_t REL_ALL_LOW_4   = static_cast<tag8_t>(RELMASK_MASK);
-    static constexpr tag8_t REL_MASK4_NONE = 0;
-
-    enum class PackedCellNodeAuthority : tag8_t
+    /// @brief HIGHEST_TRUTH of Packed Cell
+    enum class OwnershipPolicy : tag8_t
     {
-        IDLE_OR_FREE = 0,
-        CAUSAL_LINIAR_SAGMENT = 1,
-        NEUROMORPHIC_PAGED_GRAPH = 2,
-        BIDIRECTIONAL_NEUROMORPHIC_SYSTEM = 3
+        ADAPTIVE_PACKED_CELL_CONTAINER = 0,
+        NEUROMORPHIC_SPACE_TIME_FABRIC = 1,
+        RESERVED_2 = 2,
+        RESERVED_3 = 3
     };
 
-    enum class PackedCellDataType : tag8_t
+    /// @brief HIGHEST_TRUTH of Packed Cell
+    enum class InternalDataTypePolicy : tag8_t
     {
         CharPCellDataType = 0,
         IntPCellDataType = 1,
@@ -107,41 +110,80 @@ namespace PredictedAdaptedEncoding {
         UnsignedPCellDataType = 3
     };
 
+    /// @brief HIGHEST_TRUTH of Packed Cell
+    /// @param MODEL32 -> Model32Subclass
+    /// @param MODEL48 -> Model48Subclass
+    /// @param VALUE32 -> AccessContractOfValue
+    /// @param VALUE48 -> AccessContractOfValue
     enum class PackedMode : tag8_t
     {
-        MODE_VALUE32 = 0,
-        MODE_CLKVAL48 = 1
+        MODEL32 = 0,
+        VALUE32 = 1,
+        MODEL48 = 2,
+        VALUE48 = 3
     };
 
-    enum class RelOffsetMode32 : tag8_t
+    enum class ModelFamily : tag8_t
     {
-        RELOFFSET_GENERIC_VALUE = 0,
-        RELOFFSET_TAIL_PTR = 1,
-        REL_OFFSET_HEAD_PTR = 2,
-        RESERVED = 3
+        MODEL32 = PackedMode::MODEL32,
+        MODEL48 = PackedMode::MODEL48
     };
 
-    enum class RelOffsetMode48 : tag8_t
+    enum class TypeFamily : tag8_t
     {
-        RELOFFSET_GENERIC_VALUE = 0,
-        RELOFFSET_PURE_TIMER = 1,
-        THREE_16_BIT_SUB_DIVISION  = 2,
-        RESERVED = 3
+        VALUE32 = PackedMode::VALUE32,
+        VALUE48 = PackedMode::VALUE48
     };
 
-    enum class PriorityPhysics : tag8_t
+    enum class StructureFamily32 : tag8_t
     {
-        IDLE = 0,
-        DEFAULT_PRIORITY = 1,
-        IMPORTANT = 2,
-        URGENT = 3,
-        HANDLE_NOW = 4,
-        STRUCTURAL_DEPENDENCY = 5,
-        TIME_DEPENDENCY = 6,
-        ERROR_DEPENDENCY = 7
+        MODEL32 = PackedMode::MODEL32,
+        VALUE32 = PackedMode::VALUE32
     };
 
-    enum class APCPagedNodeRelMaskClasses : tag8_t
+    enum class StructureFamily48 : tag8_t
+    {
+        MODEL48 = PackedMode::MODEL48,
+        VALUE48 = PackedMode::VALUE48
+    };
+
+    /// @param RAW_PRIVATE Caller owns range/cell; init/shutdown/private APC segment. 
+    /// @param ATOMIC_SLAMSHOT Atomic load/store whole 64-bit cell. Multiple writers are allowed only if last-writer-wins is acceptable.
+    /// @param CLAIMED_GURDED Exclusive mutation. After claim, writer may raw-store companion cells, then publish with release store.
+    /// @param CAS_RMW For counters, cursors, epochs, clocks, version increments, occupancy deltas. No `CLAIMED` state needed.
+    enum class AccessContractOfValue
+    {
+        RAW_PRIVATE = 0,
+        ATOMIC_SLAMSHOT = 1,
+        CLAIMED_GURDED = 2,
+        CAS_RMW = 3
+    };
+
+    enum class Model32Subclass : tag8_t
+    {
+        SELF_CLASS = 0,
+        LOW_OF_PAIRED_VERSIONED_CELL = 1,
+        HIGH_OF_PAIRED_VERSIONED_CELL = 2,
+        SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 = 3
+    };
+
+    enum class Model48Subclass : tag8_t
+    {
+        SELF_CLASS = 0,
+        PURE_TIMER_48 = 1,
+        SUBDIVISION16x3_INTERNAL_CELL_MODEL  = 2,
+        FOUR_SUBDIVISION_2x16_AND_2x8 = 3
+    };
+
+    enum class PriorityPolicy : tag8_t
+    {
+        VERSIONED = 0,
+        PRESSURE_FIRST = 1,
+        IN_CLOCKED_GENERIC_SPIKE = 2,
+        ERROR_FIRST = 3
+    };
+
+    enum class APCPagedNodeSegmentClasses : tag8_t
     {
         NONE = 0x0,
         FEEDFORWARD_MESSAGE  = 0x1,
@@ -153,18 +195,40 @@ namespace PredictedAdaptedEncoding {
         WEIGHT_SLOT = 0x7,
         CONTROL_SLOT = 0x8,
         AUX_SLOT = 0x9,
-        HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT = 0xA,
-        PAIRED_POINTER_LOCAL_MEMORY = 0xB,
-        PAIRED_POINTER_DISTANCE_MEMORY = 0xC,
+        HETEROGENOUS_RAW_MEMORY = 0xA,
+        SLOT_TABLE_DESCRIPTOR = 0xB,
+        //paired pinter should be valid only in case of Model32Subclass->Paired Subclass
+        PAIRED_POINTER_IN_MEMORY = 0xC,
         FREE_SLOT     = 0xD,
         UNDEFINED = 0xE,
-        NANNULL     = 0xF
+        NULLNAN     = 0xF
     };
 
-    static inline constexpr packed64_t MaskLowNBits(unsigned n) noexcept
+    enum class FabricTableSegmentClasses : uint16_t //14
+    {   //none should be invalid identifier
+        NONE = 0,
+        //GLOBAL_AND_CONFIG used for everything else where FabricTableSegmentClasses fails 
+        GLOBAL_AND_CONFIG = 1,
+        TABLE_DIRECTORY = 2,
+        SLOT_DIRECTORY = 3,
+        BRANCH_HASH = 4,
+        LOGICAL_HASH = 5,
+        SHARED_HASH = 6,
+        EDGE_TABLE = 7,
+        FREE_RETIRE_TABLE = 8,
+        READY_QUEUE = 9,
+        WORK_QUEUE = 10,
+        DEVICE_VIEW_TABLE = 11,
+        THREAD_TABLE  = 12,
+        SEGMENT_POOL = 13,
+        COUNT = 14,
+        GENERIC_CONTROL = 15
+    };
+
+    static  constexpr packed64_t MaskLowNBits(unsigned n) noexcept
     {
         if (n == UNSIGNED_ZERO) return packed64_t(0);
-        if (n >= MAX_VAL) return ~packed64_t(0);
+        if (n >= BIT_LENGTH_OF_A_PACKED_CELL) return ~packed64_t(0);
         // produce low-n ones without shifting by >= width
         return ((packed64_t(1) << n) - 1u);                  
     }
@@ -180,12 +244,12 @@ namespace PredictedAdaptedEncoding {
         static constexpr bool IS_UNSIGNED_LIKE = std::is_integral_v<Decayed> && std::is_unsigned_v<Decayed> && !IS_CHAR_LIKE;
 
 
-        static constexpr PackedCellDataType DType  = 
-            IS_FLOAT_LIKE           ? PackedCellDataType::FloatPCellDataType    :
-            IS_SIGNED_LIKE          ? PackedCellDataType::IntPCellDataType      :
-            IS_UNSIGNED_LIKE        ? PackedCellDataType::UnsignedPCellDataType :
-            IS_CHAR_LIKE            ? PackedCellDataType::CharPCellDataType     :
-                                    PackedCellDataType::UnsignedPCellDataType   ;
+        static constexpr InternalDataTypePolicy DType  = 
+            IS_FLOAT_LIKE           ? InternalDataTypePolicy::FloatPCellDataType    :
+            IS_SIGNED_LIKE          ? InternalDataTypePolicy::IntPCellDataType      :
+            IS_UNSIGNED_LIKE        ? InternalDataTypePolicy::UnsignedPCellDataType :
+            IS_CHAR_LIKE            ? InternalDataTypePolicy::CharPCellDataType     :
+                                    InternalDataTypePolicy::UnsignedPCellDataType   ;
         static constexpr bool FITS_MODE_32 = (sizeof(Decayed) <= sizeof(val32_t));
         static constexpr bool FITS_MODE_48 = (sizeof(Decayed) <= SIZE_OF_MODE_48);
         static constexpr bool IS_SUPPORTED_TYPE = IS_FLOAT_LIKE || IS_SIGNED_LIKE || IS_UNSIGNED_LIKE || IS_CHAR_LIKE;
@@ -194,11 +258,11 @@ namespace PredictedAdaptedEncoding {
 
 
     template<typename PCDT>
-    inline constexpr PackedCellDataType BridgeOfPackedCellDataType_v = PackedCellTypeBridge<PCDT>::DType;
+     constexpr InternalDataTypePolicy BridgeOfPackedCellDataType_v = PackedCellTypeBridge<PCDT>::DType;
 
 
     template <typename To, typename From>
-    inline To BitCastMaybe(const From& from_address)
+     To BitCastMaybe(const From& from_address)
     {
         To out;
         if constexpr (sizeof(To) == sizeof(From))

@@ -1,4 +1,4 @@
-#include "APCSegmentsCausalCordinator.hpp"
+#include "NeuromorphicTimeSpace/APCSegmentsCausalCordinator.hpp"
 #include "PackedCellContainerManager.hpp"
 #include <iostream>
 
@@ -160,8 +160,8 @@ namespace PredictedAdaptedEncoding
 
 
     std::optional<packed64_t> AdaptivePackedCellContainer::TryConsumeAndIdleFromRegionLocal_(
-        APCPagedNodeRelMaskClasses region_kind, size_t& scan_cursor,
-        PackedCellNodeAuthority desired_authority_of_updated_cell
+        APCPagedNodeSegmentClasses region_kind, size_t& scan_cursor,
+        OwnershipPolicy desired_authority_of_updated_cell
     ) noexcept
     {
         (void) desired_authority_of_updated_cell;
@@ -205,8 +205,16 @@ namespace PredictedAdaptedEncoding
             {
                 continue;
             }
+            
+            const packed64_t graceful_idle_cell = PackedCell64_t::MakeInitialAPCValidPackedCell(
+                current_cell_view.CellMode, LocalityPolicy::IDLE, current_cell_view.CellOwnership,
+                region_kind, current_cell_view.CellValueDataType, UNSIGNED_ZERO, UNSIGNED_ZERO, PriorityPolicy::PRESSURE_FIRST,
+                current_cell_view.SubClassOfModel32.has_value() ? *current_cell_view.SubClassOfModel32 : Model32Subclass::SELF_CLASS,
+                current_cell_view.SubClassOfModel48.has_value() ? *current_cell_view.SubClassOfModel48 : Model48Subclass::SELF_CLASS
+            );
 
-            const packed64_t idle_cell = PackedCell64_t::MakeInitialPacked(current_cell_view.CellMode, PriorityPhysics::IDLE, PackedCellLocalityTypes::ST_IDLE, region_kind, current_cell_view.CellValueDataType);
+            const packed64_t idle_cell = (graceful_idle_cell == PackedCell64_t::PACKED_CELL_SENTINAL)  ? 
+                    PackedCell64_t::MakeInitialAPCValidPackedCell(current_cell_view.CellMode) : graceful_idle_cell;
 
             packed64_t expected_cell = current_cell;
             if (!BackingPtr[idx].compare_exchange_strong(expected_cell, idle_cell, OnExchangeSuccess, OnExchangeFailure))
@@ -234,7 +242,7 @@ namespace PredictedAdaptedEncoding
         return std::nullopt;
     }
 
-    void AdaptivePackedCellContainer::UpdateRegionRelMaskForIdx_(APCPagedNodeRelMaskClasses rel_mask) noexcept
+    void AdaptivePackedCellContainer::UpdateRegionRelMaskForIdx_(APCPagedNodeSegmentClasses rel_mask) noexcept
     {
         if (!IfAPCBranchValid())
         {
@@ -263,12 +271,12 @@ namespace PredictedAdaptedEncoding
 
     PublishResult AdaptivePackedCellContainer::TryPublishToRegionLocal_(
         packed64_t packed_cell_for_publish, 
-        APCPagedNodeRelMaskClasses region_kind,
-        PackedCellNodeAuthority node_authority, 
+        APCPagedNodeSegmentClasses region_kind,
+        OwnershipPolicy node_authority, 
         uint16_t max_tries
     ) noexcept
     {
-        const PublishResult failed_result{PublishStatus::INVALID, SIZE_MAX};
+        const PublishResult failed_result{PublishStatus::INVALID, APCDataStructure::APC_SIZE_SENTINAL};
         if (!IfAPCBranchValid())
         {
             return failed_result;
@@ -280,7 +288,7 @@ namespace PredictedAdaptedEncoding
         }
         if (HasThisControlEnumFlag(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT))
         {
-            return {PublishStatus::FULL, SIZE_MAX};
+            return {PublishStatus::FULL, APCDataStructure::APC_SIZE_SENTINAL};
         }
         
 
@@ -302,13 +310,13 @@ namespace PredictedAdaptedEncoding
 
         if (span == 0)
         {
-            return {PublishStatus::FULL, SIZE_MAX};
+            return {PublishStatus::FULL, APCDataStructure::APC_SIZE_SENTINAL};
         }
         
         const size_t next_producer_sequense = NextProducerSequence();
-        if (next_producer_sequense == SIZE_MAX)
+        if (next_producer_sequense == APCDataStructure::APC_SIZE_SENTINAL)
         {
-            return {PublishStatus::FULL, SIZE_MAX};
+            return {PublishStatus::FULL, APCDataStructure::APC_SIZE_SENTINAL};
         }
 
         const size_t seed_idx = (next_producer_sequense >= PayloadBegin()) ? (next_producer_sequense - PayloadBegin()) : 0;
@@ -326,7 +334,7 @@ namespace PredictedAdaptedEncoding
             packed64_t observed_cell = BackingPtr[current_index].load(MoLoad_);
             const PackedCell64_t::AuthoritiveCellView observed_cell_view = PackedCell64_t::GetAuthoritiveViewsForACell(observed_cell);
 
-            if (observed_cell_view.LocalityOfCell != PackedCellLocalityTypes::ST_IDLE)
+            if (observed_cell_view.LocalityOfCell != LocalityPolicy::IDLE)
             {
                 continue;
             }
@@ -335,7 +343,7 @@ namespace PredictedAdaptedEncoding
                 continue;
             }
             
-            packed64_t claimd_local_inplace_cell = PackedCell64_t::SetLocalityInPacked(observed_cell, PackedCellLocalityTypes::ST_CLAIMED);
+            packed64_t claimd_local_inplace_cell = PackedCell64_t::SetLocalityInPacked(observed_cell, LocalityPolicy::CLAIMED);
             claimd_local_inplace_cell = PackedCell64_t::SetSegmentLayoutInPacked(claimd_local_inplace_cell, node_authority);
 
             packed64_t expected_cell = observed_cell;
@@ -359,7 +367,7 @@ namespace PredictedAdaptedEncoding
             return {PublishStatus::OK, current_index};
         }
 
-        return {PublishStatus::FULL, SIZE_MAX};
+        return {PublishStatus::FULL, APCDataStructure::APC_SIZE_SENTINAL};
     }
 
     uint32_t AdaptivePackedCellContainer::SuggestedInternalAPCExpension_(CompleteAPCNodeRegionsLayout* complete_layout, uint8_t prefared_percentage_of_free) noexcept
@@ -372,7 +380,7 @@ namespace PredictedAdaptedEncoding
         prefared_percentage_of_free = std::min<uint8_t>(prefared_percentage_of_free, 100u);
         
         complete_layout->NormalizePercentagesIfNeeded();
-        LayoutBoundsOfSingleRelNodeClass* free_layout = complete_layout->GetALayoutByRelMask(APCPagedNodeRelMaskClasses::FREE_SLOT);
+        LayoutBoundsOfSingleRelNodeClass* free_layout = complete_layout->GetALayoutByRelMask(APCPagedNodeSegmentClasses::FREE_SLOT);
         if (!free_layout || free_layout->IsEmpty())
         {
             return UNSIGNED_ZERO;
@@ -441,7 +449,7 @@ namespace PredictedAdaptedEncoding
         const size_t number_of_regions = (PayloadCapacityFromHeader() + region_size - 1u) / region_size;
         RegionRelArray_.reset(new std::atomic<uint8_t>[number_of_regions]);
         RegionEpochArray_.reset(new std::atomic<uint64_t>[number_of_regions]);
-        const size_t words = (number_of_regions + MAX_VAL - 1) / MAX_VAL;
+        const size_t words = (number_of_regions + BIT_LENGTH_OF_A_PACKED_CELL - 1) / BIT_LENGTH_OF_A_PACKED_CELL;
         RelBitmaps_.assign(APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses, std::vector<uint64_t>(words, 0ull));
         uint32_t global_ready_mask = UNSIGNED_ZERO;
         for (size_t region = 0; region < number_of_regions; region++)
@@ -454,19 +462,19 @@ namespace PredictedAdaptedEncoding
             {
                 const size_t absolute_idx = PayloadBegin() + i;
                 const packed64_t absolute_packed_cell = BackingPtr[absolute_idx].load(MoLoad_);
-                if (PackedCell64_t::ExtractLocalityFromPacked(absolute_packed_cell) != PackedCellLocalityTypes::ST_PUBLISHED)
+                if (PackedCell64_t::ExtractLocalityFromPacked(absolute_packed_cell) != LocalityPolicy::PUBLISHED)
                 {
                     continue;
                 }
-                const APCPagedNodeRelMaskClasses absolute_cell_relation_mask = APCAndPagedNodeHelpers::ExtractPagedRelMaskFromPacked(absolute_packed_cell);
+                const APCPagedNodeSegmentClasses absolute_cell_relation_mask = APCAndPagedNodeHelpers::ExtractPagedRelMaskFromPacked(absolute_packed_cell);
                 region_ready_mask |= APCAndPagedNodeHelpers::MakeOneAPCNodeClassReadyBit(absolute_cell_relation_mask);
                 region_epoch = std::max<uint64_t>(region_epoch, PackedCell64_t::ExtractClk16(absolute_packed_cell));
 
                 global_ready_mask |= region_ready_mask;
                 if (region_ready_mask != UNSIGNED_ZERO)
                 {
-                    const size_t word = region / MAX_VAL;
-                    const size_t bit = region % MAX_VAL;
+                    const size_t word = region / BIT_LENGTH_OF_A_PACKED_CELL;
+                    const size_t bit = region % BIT_LENGTH_OF_A_PACKED_CELL;
                     const uint64_t region_mask = (1ull << bit);
                     for (unsigned rel_class = 0; rel_class < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses; rel_class++)
                     {
@@ -493,29 +501,29 @@ namespace PredictedAdaptedEncoding
 
     packed64_t AdaptivePackedCellContainer::NormalizeDesiredPublishedCellForRegion_(
         packed64_t out_going_cell,
-        APCPagedNodeRelMaskClasses region_kind,
-        PackedCellNodeAuthority node_authority
+        APCPagedNodeSegmentClasses region_kind,
+        OwnershipPolicy node_authority
     ) noexcept
     {
         out_going_cell = PackedCell64_t::SetPageClassInPacked(out_going_cell, region_kind);
         out_going_cell = PackedCell64_t::SetSegmentLayoutInPacked(out_going_cell, node_authority);
-        out_going_cell = PackedCell64_t::SetLocalityInPacked(out_going_cell, PackedCellLocalityTypes::ST_PUBLISHED);
+        out_going_cell = PackedCell64_t::SetLocalityInPacked(out_going_cell, LocalityPolicy::PUBLISHED);
 
         const PackedMode mode = PackedCell64_t::ExtractModeOfPackedCellFromPacked(out_going_cell);
-        if (mode == PackedMode::MODE_VALUE32)
+        if (mode == PackedMode::MODEL32)
         {
-            out_going_cell = PackedCell64_t::SetRelOffsetForMode32InPacked(out_going_cell, RelOffsetMode32::RELOFFSET_GENERIC_VALUE);
+            out_going_cell = PackedCell64_t::SetSubClassForModel32InPacked(out_going_cell, Model32Subclass::SELF_CLASS);
         }
         else
         {
-            out_going_cell = PackedCell64_t::SetRelOffsetForMode48InPacked(out_going_cell, RelOffsetMode48::RELOFFSET_GENERIC_VALUE);
+            out_going_cell = PackedCell64_t::SetSubClassForModel48InPacked(out_going_cell, Model48Subclass::SELF_CLASS);
         }
         return out_going_cell;
     }
 
     uint16_t AdaptivePackedCellContainer::ComputeAdaptivemaxTreies_(packed64_t packed_cell) noexcept
     {
-        const APCPagedNodeRelMaskClasses page_class =
+        const APCPagedNodeSegmentClasses page_class =
             PackedCell64_t::ExtractRelMaskFromPacked(packed_cell);
 
         if (!APCAndPagedNodeHelpers::IsDataConsumablePageClass(page_class))
@@ -523,7 +531,7 @@ namespace PredictedAdaptedEncoding
             return 1u;
         }
 
-        const PriorityPhysics priority =
+        const PriorityPolicy priority =
             PackedCell64_t::ExtractPriorityFromPacked(packed_cell);
 
         std::optional<LayoutBoundsOfSingleRelNodeClass> layout_bounds =
@@ -588,7 +596,7 @@ namespace PredictedAdaptedEncoding
         const uint32_t priority_u32 =
             static_cast<uint32_t>(priority);
 
-        if (priority_u32 > static_cast<uint32_t>(PriorityPhysics::IDLE))
+        if (priority_u32 > static_cast<uint32_t>(PriorityPolicy::PRESSURE_FIRST))
         {
             budget = std::max<uint32_t>(
                 1u,

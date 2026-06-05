@@ -1,4 +1,4 @@
-#include "APCSegmentsCausalCordinator.hpp"
+#include "NeuromorphicTimeSpace/APCSegmentsCausalCordinator.hpp"
 #include "PackedCellContainerManager.hpp"
 #include <iostream>
 
@@ -27,12 +27,12 @@ namespace PredictedAdaptedEncoding
     {
         if (!IfAPCBranchValid() || number_of_slots == 0)
         {
-            return SIZE_MAX;
+            return APCDataStructure::APC_SIZE_SENTINAL;
         }
         const size_t payload_capacity = PayloadCapacityFromHeader();
         if (payload_capacity == 0)
         {
-            return SIZE_MAX;
+            return APCDataStructure::APC_SIZE_SENTINAL;
         }
 
         if (payload_capacity == 1)
@@ -87,7 +87,7 @@ namespace PredictedAdaptedEncoding
         }
 
         TotalCASFailForThisBranchIncreaseAndGet(1);
-        return SIZE_MAX;
+        return APCDataStructure::APC_SIZE_SENTINAL;
     }
 
     void AdaptivePackedCellContainer::SetManagerForGlobalAPC(PackedCellContainerManager* pointer_of_global_apc_manager) noexcept
@@ -114,7 +114,7 @@ namespace PredictedAdaptedEncoding
         
         BackingPtr = AllocateAlignedAtomicCells_(container_capacity);
         BranchCapacity_ = container_capacity;
-        packed64_t idle_cell = PackedCell64_t::MakeInitialPacked(container_cfg.InitialMode);
+        packed64_t idle_cell = PackedCell64_t::MakeInitialAPCValidPackedCell(container_cfg.InitialMode);
         for (size_t i = 0; i < container_capacity; i++)
         {
             BackingPtr[i].store(idle_cell, MoStoreUnSeq_);
@@ -158,7 +158,6 @@ namespace PredictedAdaptedEncoding
             container_capacity,
             container_cfg,
             true,
-            APCNodeComputeKind::NONE,
             UNSIGNED_ZERO,
             UNSIGNED_ZERO
         );
@@ -177,12 +176,11 @@ namespace PredictedAdaptedEncoding
     void AdaptivePackedCellContainer::InitAPCAsNode(
         size_t capacity,
         const ContainerConf& container_configuration,
-        APCNodeComputeKind compute_kind,
         uint32_t aux_param_u32
     )
     {
         InitOwned(capacity, container_configuration);
-        InitNodeSemantics(compute_kind, aux_param_u32);
+        InitNodeSemantics(aux_param_u32);
         SetGraphNodeFlag();
     }
 
@@ -220,7 +218,7 @@ namespace PredictedAdaptedEncoding
     {
         if (!IfAPCBranchValid())
         {
-            return SIZE_MAX;
+            return APCDataStructure::APC_SIZE_SENTINAL;
         }
 
         struct ProducerBlockCacheTLS
@@ -245,7 +243,7 @@ namespace PredictedAdaptedEncoding
         const size_t payload_capacity = PayloadCapacityFromHeader();
         if (payload_capacity == UNSIGNED_ZERO)
         {
-            return SIZE_MAX;
+            return APCDataStructure::APC_SIZE_SENTINAL;
         }
         
 
@@ -258,9 +256,9 @@ namespace PredictedAdaptedEncoding
         if (cache.BlockLeft == 0)
         {
             const size_t base = ReserveProducerSlots(safe_block);
-            if (base == SIZE_MAX)
+            if (base == APCDataStructure::APC_SIZE_SENTINAL)
             {
-                return SIZE_MAX;
+                return APCDataStructure::APC_SIZE_SENTINAL;
             }
             cache.BlockBase = base;
             cache.BlockLeft = safe_block;
@@ -273,7 +271,7 @@ namespace PredictedAdaptedEncoding
 
 
 
-    void AdaptivePackedCellContainer::TryCreateBranchIfNeeded(APCPagedNodeRelMaskClasses rel_mask_hint) noexcept
+    void AdaptivePackedCellContainer::TryCreateBranchIfNeeded(APCPagedNodeSegmentClasses rel_mask_hint) noexcept
     {
         if (!IfAPCBranchValid() || !APCManagerPtr_)
         {
@@ -393,7 +391,7 @@ namespace PredictedAdaptedEncoding
         return true;
     }
 
-    bool AdaptivePackedCellContainer::TryPublishRegionalSharedGrowthOnce(APCPagedNodeRelMaskClasses region_kind, packed64_t packed_cell, std::atomic<uint64_t>* growth_counter) noexcept
+    bool AdaptivePackedCellContainer::TryPublishRegionalSharedGrowthOnce(APCPagedNodeSegmentClasses region_kind, packed64_t packed_cell, std::atomic<uint64_t>* growth_counter) noexcept
     {
         PublishResult local_result = PublishCellByRegionMAskTraverseStartsFromThisAPC(region_kind, packed_cell);
         if (local_result.ResultStatus == PublishStatus::OK)
@@ -433,7 +431,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    std::optional<packed64_t> AdaptivePackedCellContainer::ConsumeCellByRegionMaskTraverseStartFromThisAPC(APCPagedNodeRelMaskClasses region_kind, size_t& scan_cursor) noexcept
+    std::optional<packed64_t> AdaptivePackedCellContainer::ConsumeCellByRegionMaskTraverseStartFromThisAPC(APCPagedNodeSegmentClasses region_kind, size_t& scan_cursor) noexcept
     {
         if (!IfAPCBranchValid())
         {
@@ -474,8 +472,8 @@ namespace PredictedAdaptedEncoding
     }
 
     PublishResult AdaptivePackedCellContainer::PublishCellByRegionMAskTraverseStartsFromThisAPC(
-        APCPagedNodeRelMaskClasses page_class, packed64_t cell_to_publish,
-        PackedCellNodeAuthority authority,
+        APCPagedNodeSegmentClasses page_class, packed64_t cell_to_publish,
+        OwnershipPolicy authority,
         std::optional<uint16_t> max_tries
     ) noexcept
     {
@@ -523,7 +521,7 @@ namespace PredictedAdaptedEncoding
         return local_result;
     }
 
-    AdaptivePackedCellContainer* AdaptivePackedCellContainer::GrowSharedNodeByRegionKind(APCPagedNodeRelMaskClasses desired_region_kind, bool enable_recursive_branching) noexcept
+    AdaptivePackedCellContainer* AdaptivePackedCellContainer::GrowSharedNodeByRegionKind(APCPagedNodeSegmentClasses desired_region_kind, bool enable_recursive_branching) noexcept
     {
         if (!IfAPCBranchValid() || !APCManagerPtr_)
         {
@@ -613,9 +611,6 @@ namespace PredictedAdaptedEncoding
             new_child_segment_ptr->GetTotalCapacityForThisAPC(),
             child_configuration,
             false,
-            static_cast<APCNodeComputeKind>(
-                root_apc_ptr->ReadMetaCellValue32(MetaIndexOfAPCNode::NODE_COMPUTE_KIND)
-            ),
             root_apc_ptr->ReadMetaCellValue32(MetaIndexOfAPCNode::NODE_AUX_PARAM_U32),
             child_depth,
             static_cast<uint8_t>(root_apc_ptr->ReadMetaCellValue32(MetaIndexOfAPCNode::BRANCH_PRIORITY))
@@ -778,7 +773,7 @@ namespace PredictedAdaptedEncoding
             return;
         }
         
-        const packed64_t idle = OwnedMasterClockConfPtr_->ComposeValue32WithCurrentThreadStamp16(UNSIGNED_ZERO);
+        const packed64_t idle = OwnedMasterClockConfPtr_->ComposeClockedModel32FroAPC(UNSIGNED_ZERO);
         BackingPtr[static_cast<size_t>(MetaIndexOfAPCNode::MANAGER_CONTROL_FLAGS)].store(idle, MoStoreSeq_);
     }
 
@@ -809,7 +804,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    uint32_t AdaptivePackedCellContainer::CountExactLocalRegionalOccupancy(APCPagedNodeRelMaskClasses desired_region_class) noexcept
+    uint32_t AdaptivePackedCellContainer::CountExactLocalRegionalOccupancy(APCPagedNodeSegmentClasses desired_region_class) noexcept
     {
         if (!IfAPCBranchValid())
         {
@@ -834,7 +829,7 @@ namespace PredictedAdaptedEncoding
         return count;
     }
 
-    uint32_t AdaptivePackedCellContainer::CountExactTotalChainOccupancy(APCPagedNodeRelMaskClasses desired_region_class) noexcept
+    uint32_t AdaptivePackedCellContainer::CountExactTotalChainOccupancy(APCPagedNodeSegmentClasses desired_region_class) noexcept
     {
         uint32_t total = 0;
         AdaptivePackedCellContainer* current_apc = FindSharedRootOrThis();
@@ -862,7 +857,7 @@ namespace PredictedAdaptedEncoding
         uint32_t mask = 0;
         for (uint8_t rel_class = 0; rel_class < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses; rel_class++)
         {
-            const auto current_region = static_cast<APCPagedNodeRelMaskClasses>(rel_class);
+            const auto current_region = static_cast<APCPagedNodeSegmentClasses>(rel_class);
             if (CountExactTotalChainOccupancy(current_region) > UNSIGNED_ZERO)
             {
                 mask |= APCAndPagedNodeHelpers::MakeOneAPCNodeClassReadyBit(current_region);

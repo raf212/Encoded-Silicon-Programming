@@ -1,340 +1,251 @@
 # AdaptivePackedCellContainer (APC)
 
-AdaptivePackedCellContainer is an experimental C++ data-structure/runtime for **64-bit atomic packed cells**, causal message passing, segmented node memory, and multidirectional graph-style computation.
+AdaptivePackedCellContainer is an experimental C++ runtime substrate for **atomic, region-aware, causally tagged data cells**. It is designed around a simple but unusual idea: a cell should not only carry a value; it should also carry enough local metadata to describe its state, priority, signal class, datatype, and causal time.
 
-The project asks one central design question:
-
-> Can a C++ data structure behave like a simulated-biological, heterogeneous, multidirectional, neuromorphic memory node: a structure that can hold values, carry compute-relevant metadata, remember its observer/state at a moment in time, and still run on ordinary silicon that supports C++ and 64-bit atomics?
-
-The current answer is: **partly yes as a working prototype, but not yet as a finished production system**. The current demo proves that APC can move feedforward, feedback, state, error, and final values through an asynchronous graph. The current tests also expose real accounting and region-isolation bugs that must be fixed before the system should be treated as authoritative infrastructure.
-
----
+The current implementation should be read as a research prototype and systems experiment, not as a production-ready container library. The uploaded build shows strong evidence that the publish/consume pipeline can move thousands of values without terminal failure, but it also exposes important accounting and efficiency issues that must be fixed before the structure can be treated as stable.
 
 ## Project status
 
-APC is currently a **research prototype**.
+**Status:** research prototype / experimental runtime.
 
-It is already capable of:
+**Current demonstrated strengths:**
 
-- packing a value, clock, locality, region class, priority, data type, and authority into one 64-bit cell;
-- initializing an APC node with a 96-cell metadata header and a segmented payload region;
-- publishing and consuming cells by semantic region;
-- tracking local and per-region occupancy;
-- rebuilding ready masks from exact scans;
-- dynamically growing shared segments when a region is under pressure;
+- 64-bit atomic packed cell representation.
+- 96-cell APC header/control plane.
+- Regioned payload layout for feedforward, feedbackward, state, error, aux, control, weight, edge, free, undefined, and heterogeneous-memory classes.
+- Bidirectional/predictive test topology using Sensor, Predictor, Comparator, Integrator, and Motor nodes.
+- Shared-chain growth for logical nodes that exceed one physical segment.
+- Causal clock fields and accepted/emitted clock metadata.
+- Adaptive backoff and manager/QSBR scaffolding.
 
-It is not yet:
+**Current demonstrated weaknesses:**
 
-- a production lock-free container;
-- a complete neural-network framework;
-- a replacement for PyTorch, oneDNN, TensorFlow, or an LLM runtime;
-- a proven neuromorphic learning algorithm;
-- fully correct under all multi-region/shared-chain accounting cases.
+- Header/locality accounting can still disagree with exact payload scans.
+- Shared-chain growth works but is currently very inefficient for small regions.
+- The updated growth-oriented test reports final PASS, but it still produces long chains for a small burst.
+- Some instrumentation counters are not fully consistent with visible chain growth.
+- Some spelling and API naming issues remain; this matters because this code is complex and invariant-heavy.
 
----
+## What APC is
 
-## Core idea
+APC is best understood as a **paged, segmented, heterogeneous event/state container**. It is not just a vector, queue, tensor, or graph node. It combines properties of all four:
 
-A normal container stores values. APC stores **self-describing atomic events**.
+- like a vector, it stores cells in contiguous memory;
+- like a queue, it publishes and consumes values;
+- like a graph node, it has logical identity and directional ports;
+- like a neural runtime substrate, it separates feedforward, feedbackward, state, error, and auxiliary signal regions;
+- like an event system, each cell carries clock and locality information.
 
-Each cell is a `uint64_t`-sized atomic word. In the common `MODE_VALUE32` mode, the cell is conceptually split as:
+The main architectural goal is to make each APC node a small self-describing computational region. A node can hold values, local state, prediction/error messages, graph edge descriptors, weights, auxiliary information, and future heterogeneous-memory references.
 
-- `MODE_VALUE32`
+## What APC is not
 
-```text
-+------------------+------------------+------------------+
-| meta16           | clock16          | value32          |
-+------------------+------------------+------------------+
-| type/state/route | local time stamp | payload value    |
-+------------------+------------------+------------------+
-```
+APC is not yet a finished neural-network framework, tensor library, scheduler, or production allocator. It also should not be treated as a replacement for optimized matrix libraries. The intended future role is more realistic if APC becomes a **control plane and event substrate** while heavy numerical tensor work remains in proven libraries.
 
-The `value32` or `value48` field can hold a `uint32_t`, `int32_t`, `float`, or small supported data type. The `clock16` field carries a local down-shifted clock stamp. The `meta16` field carries compact metadata: mode, priority, locality, region class, relative-offset mode, data type, and node authority.
+In practical terms, APC should eventually orchestrate:
 
-- `MODE_CLKVAL48`
+- which cells are active;
+- which region they belong to;
+- whether the signal is feedforward, feedbackward, error, state, or auxiliary;
+- whether the signal is stale or current;
+- which node should receive the signal;
+- which CPU/GPU/SIMD backend should process the numeric part.
 
-```text
-+------------------+------------------+------------------+
-| meta16           |                    value48          |
-+------------------+------------------+------------------+
-| type/state/route | local time stamp / payload value    |
-+------------------+------------------+------------------+
-```
+The dense numerical part should remain in optimized tensor/matrix systems.
 
-The important design principle is:
+## Core design model
 
-> A cell should not be only a number. It should also carry enough information to say what kind of signal it is, where it belongs, how fresh it is, and how urgently it should be handled.
+### 1. PackedCell64 model
 
----
+The smallest unit is `PackedCell64_t`, a 64-bit atomic-compatible cell. The cell has two storage modes:
 
-## Repository model
+| Mode | Payload role | Control role |
+|---|---:|---|
+| `MODEL32` | 32-bit value | 16-bit clock + 16-bit metadata |
+| `MODEL48` | 48-bit value/clock/counter payload | 16-bit metadata |
 
-The current combined header/demo file contains these major pieces:
+The metadata field acts as a compact control word. It encodes ideas such as:
 
-| Component | Purpose |
+- cell priority;
+- node authority;
+- cell locality/state;
+- packed mode;
+- APC region class;
+- relation/offset mode;
+- datatype.
+
+This means a cell can be interpreted not merely as `float` or `uint32_t`, but as a **typed, staged, prioritized, region-aware event**.
+
+### 2. APC header model
+
+Every APC segment reserves 96 metacells before payload. The payload begins at index `96`.
+
+The header contains identity, runtime, graph, layout, occupancy, and lifecycle information. Important fields include:
+
+- magic ID and EOF header marker;
+- manager and segment control flags;
+- branch/logical/shared IDs;
+- previous/next shared-chain IDs;
+- branch depth and max depth;
+- split threshold;
+- region size/count;
+- ready-bit mask;
+- producer/consumer cursors;
+- active thread count;
+- CAS failure counter;
+- graph ports;
+- last accepted/emitted feedforward and feedbackward clocks;
+- node compute kind;
+- per-region layout bounds/version cells;
+- per-region occupancy cells;
+- central combined occupancy cell.
+
+This is why APC should be understood as a **self-describing node segment**, not a plain container.
+
+### 3. Region model
+
+The payload is divided into semantic regions. The current source defines classes including:
+
+| Region class | Intended meaning |
 |---|---|
-| `PackedCell64_t` | Encodes, decodes, inspects, and mutates one 64-bit packed cell. |
-| `Timer48` | Provides a 48-bit-ish monotonic timing source. |
-| `MasterClockConf` | Converts timer ticks into `clock16`, refreshes packed-cell clocks, and composes timestamped cells. |
-| `AtomicAdaptiveBackoff` | Chooses spin/yield/sleep/park behavior during contention. |
-| `SegmentIODefinition` | Owns most APC node metadata operations, layout operations, occupancy operations, and region helpers. |
-| `AdaptivePackedCellContainer` | Main segmented container/node abstraction. |
-| `PackedCellContainerManager` | Manager for thread registration, QSBR-style epoch tracking, adaptive backoff, and shared branch support. |
-| `APCSegmentsCausalCordinator` | Thin causal graph wrapper over APC that tracks accepted/emitted clocks and offers causal publish/consume operations. |
-| `main.cpp` demo | Builds a small Sensor → Integrator → Motor and Predictor → Comparator graph and prints runtime counters. |
-| `TOTALAPCTEST` style test main | Runs focused invariant tests for packed cells, manager/QSBR, layout, occupancy, ready mask repair, growth, concurrency, and graph flow. |
+| `FEEDFORWARD_MESSAGE` | Bottom-up/evidence signal |
+| `FEEDBACKWARD_MESSAGE` | Top-down/prediction/context signal |
+| `LATERAL_MESAGE` | Peer-to-peer signal |
+| `STATE_SLOT` | Local state or hidden state |
+| `ERROR_SLOT` | Prediction error/residual/surprise |
+| `EDGE_DESCRIPTOR` | Graph edge/routing information |
+| `WEIGHT_SLOT` | Local or referenced parameters |
+| `CONTROL_SLOT` | Header/control metadata |
+| `AUX_SLOT` | Auxiliary/neuromodulatory/control values |
+| `HETEROGENOUS_RAW_MEMORY` | Future external-memory bridge |
+| `SLOT_TABLE_DESCRIPTOR` | Local pointer-pair storage |
+| `PAIRED_POINTER_IN_MEMORY` | Remote pointer-pair storage |
+| `FREE_SLOT` | Free payload capacity |
+| `UNDEFINED` | Region for unclassified/emergent cells |
+| `NULLNAN` | Invalid/null/sentinel region |
 
----
+This region model is the part that makes APC naturally suitable for bidirectional or predictive computation: feedforward, feedbackward, state, and error are first-class storage lanes rather than comments in a higher-level algorithm.
 
-## Memory layout
+### 4. Timer and causal-clock model
 
-Each APC branch has a fixed metadata header followed by a payload region.
+APC uses two clock ideas:
 
-```text
-index 0                                     index 95       index 96
-+------------------------------------------+--------------+------------------+
-| APC metadata / control header            | EOF header   | payload cells... |
-+------------------------------------------+--------------+------------------+
-```
+- a 48-bit timer/clock cell for segment-level time;
+- a compressed 16-bit clock inside value cells.
 
-The current header uses `METACELL_COUNT = 96`. The payload begins at index `96`.
+The 16-bit clock is useful as a compact local recency marker. It should be described carefully as a **local compressed causal/temporal stamp**, not as a complete proof of global ordering. It can approximate local freshness and help reject stale feedforward/feedbackward signals, but it is not by itself a full global logical-clock protocol.
 
-Important header cells include:
+The design intent is strong: each publish, consume, cursor move, and readiness decision should eventually be explainable using:
 
-| Header area | Examples |
+1. packed-cell priority;
+2. packed-cell causality/clock;
+3. region class;
+4. node authority.
+
+That principle is the right north star for this architecture.
+
+### 5. SegmentIO model
+
+`SegmentIODefinition` is the control surface for reading/writing APC metadata, layout bounds, occupancy counters, ready bits, clocks, ports, and region summaries.
+
+It is responsible for:
+
+- reading/writing metacells;
+- initializing logical node identity;
+- initializing node semantics;
+- setting default segmented layout;
+- reading and validating layout bounds/version fields;
+- mutating layout under a mutation-in-flight flag;
+- updating central and regional occupancy cells;
+- reading published/claimed/faulty counters;
+- setting/clearing ready bits;
+- interpreting region pressure.
+
+This component is the bridge between raw packed cells and the higher-level APC node model.
+
+### 6. Occupancy model
+
+The occupancy model has three layers:
+
+| Layer | Purpose |
 |---|---|
-| identity | magic id, branch id, logical id, shared id, previous/next shared id |
-| runtime control | branch depth, max depth, branch priority, active threads, split threshold |
-| capacity/layout | total capacity, region size, region count, producer/consumer cursors |
-| clocking | local clock48, last accepted FF/FB clock16, last emitted FF/FB clock16 |
-| graph ports | FF input/output target, FB input/output target, lateral targets |
-| layout versions | FF, FB, lateral, state, error, edge, weight, aux, free, undefined |
-| occupancy | central 3x16 occupancy cell and per-region occupancy cells |
-| status | ready-bit mask, currently-owned flag, CAS failure count, EOF marker |
+| Exact payload scan | Ground-truth debug view of actual payload cell localities |
+| Regional occupancy cells | Fast summary per semantic region |
+| Central combined occupancy cell | Node-level summary of published/claimed/faulty counts |
 
-The payload is divided into semantic regions. In the current demo, the important regions are:
-
-| Region | Meaning |
-|---|---|
-| `FEEDFORWARD_MESSAGE` / `FF` | bottom-up message/evidence stream |
-| `FEEDBACKWARD_MESSAGE` / `FB` | top-down prediction/control stream |
-| `STATE_SLOT` | local state or integrated values |
-| `ERROR_SLOT` | error, residual, surprise, or feedback-derived computation |
-| `AUX_SLOT` | auxiliary/control data |
-| `FREE_SLOT` | available payload space |
-| `UNDEFINED` | fallback/unknown region for future repair or migration logic |
-
----
-
-## PackedCell model
-
-A packed cell has four major conceptual planes:
-
-1. **Value plane**  
-   The payload itself: `uint32_t`, `float`, signed integer, char-like value, or a 48-bit clock/value in `MODE_CLKVAL48`.
-
-2. **Time plane**  
-   The local `clock16` stamp or a larger 48-bit timer field. This is not a global truth clock. It is a compact local ordering hint used for causal admission and emission tracking.
-
-3. **State plane**  
-   The locality state:
-   - `ST_IDLE`
-   - `ST_PUBLISHED`
-   - `ST_CLAIMED`
-   - `ST_EXCEPTION_BIT_FAULTY`
-
-4. **Semantic/control plane**  
-   The cell says what it means:
-   - priority: idle, important, urgent, handle-now, structural dependency, time dependency, error dependency;
-   - page/region class: FF, FB, state, error, aux, weight, edge, free, undefined;
-   - data type: unsigned, signed, float, char;
-   - node authority: idle/free, causal segment, neuromorphic paged graph, bidirectional neuromorphic system.
-
-This is the main novelty of APC: the smallest unit of storage is also a small routing/control packet.
-
----
-
-## Timer and clock model
-
-`Timer48` and `MasterClockConf` provide the timing layer.
-
-The current clocking model works like this:
-
-1. A 48-bit timer value is read from `Timer48`.
-2. `MasterClockConf` down-shifts the timer into a compact `clock16`.
-3. New cells are composed with the current `clock16`.
-4. APC nodes keep metadata for last accepted and last emitted FF/FB clocks.
-5. `APCSegmentsCausalCordinator` uses these clocks to reject older cells when the clock comparison says they are not newer.
-
-This is a local causal-clock approximation, not a perfect global ordering mechanism. The `clock16` field can wrap, so clock comparison must always be treated as local and bounded.
-
----
-
-## Backoff model
-
-`AtomicAdaptiveBackoff` is used when a publish, consume, metadata update, or contention-heavy loop cannot progress immediately.
-
-The backoff layer estimates whether to:
-
-- spin immediately;
-- spin for a short duration;
-- yield/sleep/park;
-- wait/block depending on configuration and observed activity.
-
-The intent is to avoid wasting CPU during long contention while still reacting quickly when a cell is likely to become available soon.
-
-This matters because APC uses many CAS-style transitions. Without backoff, a failing thread can burn CPU while repeatedly scanning or trying to claim the same kind of cell.
-
----
-
-## SegmentIO model
-
-`SegmentIODefinition` is the main low-level API for a branch/node.
-
-It handles:
-
-- reading and updating metadata cells;
-- writing and reading the local clock;
-- initializing node identity and node semantics;
-- initializing the default segmented layout;
-- reading region bounds and layout versions;
-- setting layout bounds while a layout-mutation flag is held;
-- extending a region by borrowing space from a neighbor or free region;
-- reading central and per-region occupancy;
-- updating occupancy through 3x16 packed counters;
-- refreshing ready bits for regions;
-- rebuilding the ready mask from exact payload scans.
-
-Think of `SegmentIODefinition` as the node-control layer. It makes the first 96 cells behave like a small control plane for the payload.
-
----
-
-## Causal coordinator model
-
-`APCSegmentsCausalCordinator` is a graph-friendly wrapper over the main APC container.
-
-It adds:
-
-- accepted-clock tracking;
-- emitted-clock tracking;
-- `PublishCausal(region, cell, growth_counter)`;
-- `ConsumeCausal(region, cursor, older_counter, drop_older)`;
-- region-aware causal admission.
-
-The current demo creates five coordinator nodes:
+The intended invariant is:
 
 ```text
-Sensor      -> publishes FF cells
-Predictor   -> publishes FB cells
-Comparator  -> consumes/produces ERROR path data
-Integrator  -> consumes FF and produces STATE cells
-Motor       -> consumes final FF float cells
+central summary ~= sum of relevant regional summaries ~= exact scan of payload/control scope
 ```
 
-Current demo dataflow:
+However, the current output shows that this invariant is not always cleanly represented. In the simple run, exact payload scans report `OK`, but header locality reports `BAD` because the header/locality summary includes control/metacell accounting in a way that does not match the exact payload-only scan.
 
-```mermaid
-flowchart LR
-    Producer["Producer threads"] --> Sensor["Sensor node<br/>FF region"]
-    Producer --> Predictor["Predictor node<br/>FB region"]
+This is not fatal to the idea, but it is a correctness-warning for the current implementation. The project should clearly separate:
 
-    Sensor -->|consume FF| FFWorkers["FF workers"]
-    FFWorkers -->|state = input + 1| Integrator["Integrator node<br/>STATE region"]
+- control/metacell occupancy;
+- payload occupancy;
+- region occupancy;
+- whole-segment occupancy;
+- whole-chain occupancy.
 
-    Predictor -->|consume FB| FBWorkers["FB workers"]
-    FBWorkers -->|error cell emitted| Comparator["Comparator node<br/>ERROR region"]
+Until those scopes are separated, an invariant may look bad for the wrong reason or look good only after the payload drains.
 
-    Integrator -->|consume STATE| FinalWorker["Final worker"]
-    Comparator -->|consume ERROR<br/>counted/observed| FinalWorker
-    FinalWorker -->|motor float = state + 0.5| Motor["Motor node<br/>FF region"]
-    Motor --> Collected["Final collected values"]
-```
+### 7. Adaptive backoff model
 
-Important current truth: in `main.cpp` run, the final printed motor values are generated as `state + 0.5`. The first outputs are therefore `2.5, 3.5, 4.5, ...`, matching the pasted output.
+The adaptive backoff system exists to avoid wasting CPU cycles during contention. When CAS loops fail, or when workers find no useful work, the runtime can spin, yield, park, or sleep depending on estimated pressure and priority.
 
----
+This matters because APC is not a simple single-thread vector. It is intended for concurrent publish/consume behavior, background management, shared-chain growth, and eventual heterogeneous scheduling.
 
-## Occupancy model
+### 8. Manager and QSBR model
 
-APC uses three views of occupancy:
+`PackedCellContainerManager` provides background management ideas:
 
-### 1. Cell-local truth
+- thread registration;
+- epoch tracking;
+- waiting/waking;
+- work stack handling;
+- cleanup stack handling;
+- registry compaction;
+- adaptive manager backoff.
 
-Each payload cell has its own locality inside `meta16`:
+The QSBR model is important because shared-chain growth and cleanup need safe reclamation. The current design has the right direction, but the README should honestly state that this must be heavily stress-tested before the structure can be called memory-safe under all concurrent workloads.
+
+## Neural/predictive interpretation
+
+The current demo models a small predictive neural fabric:
 
 ```text
-IDLE / PUBLISHED / CLAIMED / FAULTY
+Sensor.FF  ───────┐
+                  │
+                  v
+              Comparator ── ERROR ──> Integrator ── STATE/MOTOR ──> Motor.FF
+                  ^                                      │
+                  │                                      v
+Predictor.FB ─────┘                              Predictor.FB feedback
 ```
 
-This is the most direct truth for a single cell.
+Interpretation:
 
-### 2. Central occupancy
+- Sensor produces feedforward evidence.
+- Predictor produces feedbackward prediction.
+- Comparator compares evidence and prediction.
+- Comparator emits error/state-like signals.
+- Integrator combines state and error.
+- Motor receives final feedforward output.
+- Predictor receives feedback for later prediction updates.
 
-The APC header stores a combined central occupancy cell:
+This is a good conceptual fit for APC because feedforward, feedbackward, state, and error are stored as different region classes instead of being mixed in one flat queue.
 
-```text
-COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48
-```
+## Current output summary
 
-This packs three 16-bit counters into a 48-bit field:
+### Simple 25,600-item run
 
-```text
-published count | claimed count | faulty count
-```
+The simple run completed the full dataflow with no terminal failures:
 
-This gives a cheap node-level summary.
-
-### 3. Per-region occupancy
-
-Each region also has a region occupancy cell, for example:
-
-- `REGION_OCCUPANCY_FF`
-- `REGION_OCCUPANCY_FB`
-- `REGION_OCCUPANCY_STATE`
-- `REGION_OCCUPANCY_ERROR`
-- `REGION_OCCUPANCY_AUX`
-
-These let the node ask whether FF, FB, STATE, ERROR, or AUX has published data without scanning the full payload.
-
-### Required invariant
-
-At quiescent points, the ideal invariant is:
-
-```text
-exact payload scan == central header occupancy == per-region occupancy summaries
-```
-
-The ready mask should agree with the per-region published count:
-
-```text
-region has published cells  => ready bit set
-region has no published cells => ready bit clear
-```
-
-The current code has a repair function, `RebuildExectReadyMask`, which can rebuild the ready mask from exact region scans.
-
----
-
-## Current test output summary
-
-The current `TOTALAPCTEST` output shows strong basic behavior and one important failure area.
-
-| Test group | Current result |
-|---|---|
-| PackedCell encoding/extraction | passing |
-| Manager thread registration / QSBR | passing |
-| APC init/header/layout invariants | passing |
-| Single-region publish/consume/occupancy | passing |
-| Multi-region isolation | failing for FF/FB meta count and FF drain affecting FB meta expectation |
-| Ready-mask corruption/rebuild | passing |
-| Layout extension smoke test | passing |
-| Shared growth / chain traversal / chain drain | passing in pasted section |
-
-The current bidirectional causal demo completed:
-
-| Counter | Value |
+| Metric | Value |
 |---|---:|
-| Runtime | 4,842,252 us |
+| Runtime | 4,706,711 µs |
 | Sensor FF produced | 25,600 |
 | Predictor FB produced | 25,600 |
 | FF consumed | 25,600 |
@@ -346,306 +257,243 @@ The current bidirectional causal demo completed:
 | Forward emitted | 25,600 |
 | Feedback emitted | 25,600 |
 | Final collected | 25,600 |
-| Retry | 507 |
+| Grow FF | 136 |
+| Grow FB | 38 |
+| Grow STATE | 87 |
+| Grow ERROR | 97 |
+| Retry | 496 |
 | Terminal fail | 0 |
-| Older FF observed | 16,375 |
-| Older FB observed | 17,889 |
+| Older FF observed | 16,382 |
+| Older FB observed | 18,205 |
 
-### Runtime pressure line graph
+This proves the high-level pipeline can complete, but the node summaries show a critical accounting issue: header locality reports `invariant=BAD` while exact payload locality reports `invariant=OK`. That means the current implementation should not yet be considered fully authoritative for occupancy accounting.
+
+### Updated growth-oriented 320-burst run
+
+The updated test is cleaner as a structural demonstration. It begins with five one-segment nodes, runs burst publication and draining through five phases, and finishes with all final invariants passing.
+
+| Final metric | Value |
+|---|---:|
+| Runtime | 1,565,413 µs |
+| Burst size | 320 |
+| Node capacity | 256 |
+| Sensor chain length | 63 |
+| Predictor chain length | 46 |
+| Comparator chain length | 64 |
+| Integrator chain length | 64 |
+| Motor chain length | 65 |
+| Older cells observed | 1,373 |
+| Motor outputs | 320 |
+| Feedback outputs | 320 |
+| Final overall invariant | PASS |
+
+The result is mixed:
+
+- correctness at the end is good;
+- throughput of the test is acceptable for a prototype;
+- chain growth is very high for only 320 values;
+- the growth counter values printed as zero despite visible chain growth, so the instrumentation path is incomplete or not connected to this test path.
+
+## Chain-growth line graph
 
 ```mermaid
 xychart-beta
-    title "APC demo: growth, retry, and failure pressure"
-    x-axis ["Grow FF", "Grow FB", "Grow STATE", "Grow ERROR", "Retry", "Terminal fail"]
-    y-axis "count" 0 --> 507
-    line [149, 70, 98, 111, 507, 0]
+    title "APC shared-chain growth across updated predictive fabric test"
+    x-axis ["Initial", "Input burst", "Comparator burst", "Integrator burst", "Final drain"]
+    y-axis "Chain length" 0 --> 70
+    line "Sensor" [1, 63, 63, 63, 63]
+    line "Predictor" [1, 46, 46, 46, 46]
+    line "Comparator" [1, 1, 64, 64, 64]
+    line "Integrator" [1, 1, 1, 64, 64]
+    line "Motor" [1, 1, 1, 65, 65]
 ```
 
----
-
-## How to use the system
-
-The current user-facing flow is:
-
-1. Create or access a `PackedCellContainerManager`.
-2. Start the manager.
-3. Create a `Timer48`.
-4. Create a `MasterClockConf`.
-5. Create a `ContainerConf`.
-6. Set basic configuration:
-   - `InitialMode = MODE_VALUE32`
-   - `ProducerBlockSize`
-   - `RegionSize`
-   - `EnableBranching`
-   - split threshold
-   - max branch depth
-   - minimum child capacity
-   - node group size
-7. Create one or more `APCSegmentsCausalCordinator` nodes.
-8. Attach the manager to every node.
-9. Initialize each node with `InitAPCAsNode`.
-10. Compose cells using the clock helper.
-11. Publish cells into a semantic region with `PublishCausal`.
-12. Consume cells from a semantic region with `ConsumeCausal`.
-13. Rebuild the ready mask when validating or recovering from corruption.
-14. Free nodes with `FreeAll`.
-15. Stop the manager.
+The graph shows that the shared-chain mechanism works, but it also shows the largest present weakness: APC currently grows many physical segments for a small logical burst. That points to region sizing, probe budgeting, split thresholds, and local packing policy as the next optimization targets.
 
-The intended beginner mental model is:
+## Invariants to preserve
 
-```text
-APC node = header control plane + segmented payload
-Packed cell = value + clock + metadata
-Publish = place a self-describing event into a region
-Consume = claim and remove an event from a region
-Manager = thread registration + backoff + growth/epoch support
-```
+A correct APC build should preserve these invariants:
 
----
+1. The first 96 cells are metacells; payload begins at index 96.
+2. `MAGIC_ID` and `EOF_APC_HEADER` must be valid after initialization.
+3. `TOTAL_CAPACITY_OF_THIS_SEGEMENT` must match the allocated segment size.
+4. All region bounds must stay inside `[METACELL_COUNT, total_capacity]`.
+5. Region bounds must be ordered and non-overlapping.
+6. All layout bounds should share the same global layout version unless a layout mutation is in flight.
+7. `PAGED_NODE_READY_BIT` should agree with whether tracked regions have published payload cells.
+8. Exact payload scan and regional occupancy summaries must agree for the same scope.
+9. Central occupancy must clearly define its scope: control-only, payload-only, segment-wide, or chain-wide.
+10. Published → claimed → idle/faulty transitions must not lose or double-count cells.
+11. Shared chains must not form self-loops or broken previous/next links.
+12. Consuming an older clocked cell should be observable and counted, not silently treated as normal progress.
+13. `FreeAll()` and manager cleanup must not reclaim a segment while another registered thread can still observe it.
 
-## Design invariants
+## Known limitations and bugs
 
-The following invariants define the intended correctness model.
+### 1. Occupancy-scope confusion
 
-### Header invariants
+The current simple output shows header locality sums such as `sum=256 invariant=BAD`, while exact payload scans show `sum=160 invariant=OK`. This means the debug logic is mixing or comparing different scopes: full segment/control accounting versus payload-only accounting.
 
-- Header contains a valid magic id.
-- Header ends at `EOF_APC_HEADER`.
-- `METACELL_COUNT` is 96.
-- Payload begins at index 96.
-- `TOTAL_CAPACITY_OF_THIS_SEGEMENT` matches the allocated branch capacity.
-- Payload capacity equals `total_capacity - METACELL_COUNT`.
+**Recommended fix direction:** define separate names and invariant checks for:
 
-### Layout invariants
+- `control_occupancy`;
+- `payload_occupancy`;
+- `region_occupancy`;
+- `segment_occupancy`;
+- `chain_occupancy`.
 
-- Every active region has valid bounds.
-- Region bounds must stay inside the payload.
-- Region begin must be less than or equal to region end.
-- Layout version must agree with the global layout version unless the caller explicitly holds the layout mutation flag.
-- Layout mutation should happen while `LAYOUT_MUTATION_INFLIGHT` is active.
-- Region extension must leave the full ordered layout valid.
+Never compare counters from different scopes as if they were the same invariant.
 
-### Cell invariants
+### 2. Chain growth is too aggressive
 
-- A valid cell must decode into a known mode.
-- `MODE_VALUE32` cells must have a 32-bit value lane and `clock16`.
-- `MODE_CLKVAL48` cells must use the 48-bit lane consistently.
-- Cell locality must be one of idle, published, claimed, or faulty.
-- A cell's region class should match the physical region that owns it, except for intentional control/metacell cases.
+In the updated run, 320 burst values produce chains of 46 to 65 segments. This indicates that the current local insertion/probing/extension policy is not packing enough payload cells before growing.
 
-### Occupancy invariants
+**Recommended fix direction:** improve region-local indexing, increase useful probe budget, add free-slot borrowing logic, and avoid growing a child segment until local capacity and adjacent expandable region space are truly exhausted.
 
-- Central occupancy should match the exact count of published/claimed/faulty payload cells.
-- Per-region occupancy should match exact physical-region scans.
-- Ready bits should match whether the region has published cells.
-- A locality transition should update:
-  1. the cell itself,
-  2. the central occupancy summary,
-  3. the per-region occupancy summary,
-  4. the ready mask if publication status changed.
+### 3. Growth counters do not match visible growth
 
-### Causal invariants
+The updated output reports `grow_sensor=0`, `grow_predictor=0`, and so on, even though chain lengths clearly increase. This likely means the counter passed into the test is not connected to the actual path that performs shared-chain allocation, or that the counter is reset/not incremented for the current growth path.
 
-- Accepted FF/FB clocks should move forward according to APC's local `clock16` comparison.
-- Emitted FF/FB clocks should move forward according to APC's local `clock16` comparison.
-- Older cells may be counted as observed old traffic.
-- `clock16` is a bounded local approximation and must not be treated as an absolute global timestamp.
+### 4. Linear/probing search remains a scaling risk
 
-### Shared-growth invariants
+The code contains region arrays/bitmaps and cursor logic, but the publish/consume model still relies heavily on probing and scanning. That can be acceptable for early validation, but not for a high-performance neural runtime.
 
-- Shared branches must preserve logical node identity through `shared_id`.
-- Shared previous/next links must not create cycles.
-- Chain traversal must terminate.
-- Chain-level published counts may differ from root-local physical counts unless explicitly aggregated.
+**Recommended fix direction:** introduce authoritative region indexes:
 
----
+- one bitmap per region for published cells;
+- one bitmap per region for claimed cells if needed;
+- optional clock buckets for stale/young cells;
+- per-region head/tail cursors;
+- generation/version counters to validate indexes after layout mutation.
 
-## Known bugs and limitations
+### 5. Layout mutation needs stronger transactional semantics
 
-### 1. Multi-region isolation is not fully correct yet
+The current design has a layout mutation flag and global version. That is the right direction. The next step is to make layout mutation transactional:
 
-The pasted `TOTALAPCTEST` output reports:
+1. claim mutation flag;
+2. validate old version;
+3. build candidate layout;
+4. publish all new bounds under one new version;
+5. update global version;
+6. rebuild or validate indexes;
+7. release mutation flag.
 
-- `Multi: FF meta count == N` failed.
-- `Multi: FB meta count == N` failed.
-- `Multi: draining FF does not drain FB` failed.
+If any stage fails, the old layout must remain authoritative.
 
-This means the current multi-region accounting is not yet fully authoritative. The exact scans may still agree with meta values at validation points, but the direct test expectations show that FF/FB regional publication counts or drain behavior are not isolated enough.
+### 6. Pointer and heterogeneous-memory semantics are not finished
 
-### 2. Root/header metadata can drift from exact local payload state
+The source includes paired-pointer and heterogeneous-memory classes, but this part should be treated as future infrastructure unless tests prove acquisition, release, ownership, and reclamation are safe under concurrency.
 
-In the pasted main demo output, some nodes report residual per-region published pressure even when the exact local payload says all cells are idle. For example, the Sensor and Predictor sections show metadata pressure after the workers joined. This likely means the code is mixing local-branch truth, root-header truth, and shared-chain truth in a way that is not fully reconciled.
+### 7. Naming and spelling issues reduce maintainability
 
-This is fixable, but it is important: do not claim that APC currently has perfect authoritative occupancy under all shared-growth cases.
+Examples include names such as `SEGEMENT`, `THRASHOLD`, `Cursore`, `LATERAL_MESAGE`, `HETEROGENOUS`, and `PREDECTIVE`. These do not change runtime behavior, but they make a complex architecture harder to audit.
 
-### 3. Occupancy transitions are not a full transaction
+## Why APC is not garbage
 
-The current design wants cell state, central occupancy, and region occupancy to update together. In practice, they are separate atomic/CAS operations. That means a failure between these steps can temporarily or permanently desynchronize metadata unless every path has a strict rollback or repair rule.
+APC is not garbage because it has a real systems thesis:
 
-A future version should centralize all locality transitions through one authoritative transition function and define rollback behavior for partial success.
+> A memory cell in a neural/event runtime should carry value, state, datatype, signal direction, priority, and local time in one atomic unit.
 
-### 4. 16-bit counters and clocks have natural limits
+That idea is coherent. It directly addresses problems that plain tensors do not address well:
 
-APC intentionally packs a lot into 64 bits. That creates limits:
+- asynchronous online computation;
+- local state and memory;
+- signal direction;
+- stale-message detection;
+- heterogeneous signal classes;
+- predictive/bidirectional dataflow;
+- lock-free publication and consumption;
+- future CPU/GPU orchestration.
 
-- `clock16` wraps;
-- 3x16 occupancy counters saturate at 16-bit scale;
-- layout begin/end/version fields are compact;
-- very large payloads and very long chains need careful overflow strategy.
+The code is not merely redundant with `std::vector`, `std::queue`, or a tensor. Those structures do not make each slot self-describing in the way APC attempts to do.
 
-### 5. Some operations still scan
+## Why APC is not finished
 
-APC has ready masks and region metadata, but some validation, repair, and consume paths still rely on scanning. This is fine for correctness testing, but high-performance versions need better indexes or per-region queues.
+APC is also not yet a proven runtime. The current implementation still has serious risks:
 
-### 6. The current compute model is a demo, not a learning model
+- occupancy counters need a stricter model;
+- shared-chain growth needs better packing efficiency;
+- manager/QSBR behavior needs stress testing;
+- layout mutation must become transactional;
+- scanning/probing must be replaced or assisted by indexes;
+- heterogeneous-memory support needs tests;
+- published benchmarks must distinguish control overhead from useful numeric work.
 
-The current main graph demonstrates message flow, causal coordination, typed cells, growth, and final float output. It does not yet implement backpropagation, reinforcement learning, transformer attention, or a trained neuromorphic model.
+The correct engineering conclusion is:
 
-### 7. Naming and API cleanup are needed
+> APC is a novel and promising prototype, but it is not production-stable yet.
 
-Several names are misspelled or inconsistent, for example:
+## Developer bias / design philosophy
 
-- `Cordinator`
-- `PREDECTIVE`
-- `LATERAL_MESAGE`
-- `Brench`
-- `Cursore`
-- `Thrashold`
-- `Exect`
+The architecture is strongly biased toward **self-aware cells**. In this context, “self-aware” means every cell knows enough about its own role to be interpreted without relying entirely on external container context.
 
----
+That bias produces the following design choices:
 
-## Novelty
+- metadata is stored inside the cell;
+- direction is encoded as a region class;
+- priority is encoded inside the cell;
+- local time is encoded inside the cell;
+- payload and control live in one unified packed-cell memory model;
+- nodes are designed as graph-like entities, not plain arrays;
+- predictive/bidirectional computation is favored over one-way feedforward computation.
 
-The novel part of APC is not that it stores numbers or uses atomics. Many systems do that.
+This bias is valuable for neuromorphic and event-driven research. It is also expensive: the design pays overhead in metadata, CAS loops, layout complexity, and debugging difficulty.
 
-The novel part is the combination:
+## How to use the current system conceptually
 
-```text
-64-bit atomic cell
-+ local clock
-+ compact metadata
-+ semantic region class
-+ locality state
-+ priority
-+ data type
-+ node authority
-+ segmented APC node
-+ causal publish/consume
-+ central and per-region occupancy
-+ shared growth
-```
+A typical APC test or application has this lifecycle:
 
-This creates a data structure that is closer to a small event-processing memory node than to a normal array, vector, queue, or tensor.
+1. Create a `PackedCellContainerManager`.
+2. Configure `ContainerConf` with capacity, region size, branching, split threshold, max depth, producer block size, and node group size.
+3. Create one or more `APCSegmentsCausalCordinator` nodes.
+4. Initialize each node with a compute kind such as generator, bidirectional predictive, or generic vector.
+5. Publish cells into semantic regions such as feedforward, feedbackward, state, or error.
+6. Consume cells from regions using region-aware cursors.
+7. Perform application-level computation on extracted values.
+8. Publish the resulting cells into downstream regions/nodes.
+9. Inspect exact payload scans, region pressure, ready bits, chain length, clocks, and final invariant summaries.
+10. Free all nodes and stop the manager.
 
-The architecture is especially interesting for:
+For beginners, the important idea is: **do not treat APC as a normal array**. Treat it as a node with control header, payload regions, clocks, occupancy summaries, and shared-chain growth.
 
-- predictive coding experiments;
-- bidirectional graph computation;
-- local-state neural simulations;
-- event-driven systems;
-- heterogeneous memory scheduling;
-- CPU-orchestrated / accelerator-computed hybrid models;
-- future masked tensor or sparse active-subset computation.
+## Future ML / neuromorphic direction
 
----
+The most realistic future for APC is not to replace PyTorch, oneDNN, oneMKL, or other optimized tensor systems. The better path is to let APC become the **mutable control/event substrate** around optimized numeric kernels.
 
-## Design bias
+A future APC neural model could look like this:
 
-APC has a clear design bias:
+- APC cells hold local event state, priority, region class, and clock.
+- APC regions hold feedforward, feedbackward, state, error, and auxiliary signals.
+- APC node chains represent logical neural modules or microcircuits.
+- Dense parameter tensors remain in optimized tensor libraries.
+- CPU/ARM/x86 SIMD controls headers, ready bits, clocks, routing, and compact indexes.
+- GPU/XPU kernels operate on extracted float32/bfloat16 value batches and masks.
+- Results are scattered back into APC cells with updated value, clock, locality, and metadata.
 
-> Put as much local meaning as possible inside the cell itself.
-
-That bias produces a system where each cell is not only a value but also a statement:
-
-```text
-I am published.
-I belong to the feedforward region.
-I carry a float/unsigned value.
-I have this local time stamp.
-I have this priority.
-I belong to this kind of node authority.
-```
-
-This is powerful because scheduling and routing can be decided from the cell. It is dangerous because the cell, the region, the central header, and the shared chain must never disagree. Most current bugs are accounting-consistency bugs caused by this exact tension.
-
----
-
-## Recommended next fixes
-
-1. **Unify the occupancy transition path**  
-   All cell locality transitions should go through one function that updates cell state, central occupancy, regional occupancy, and ready bit with a defined rollback/repair strategy.
-
-2. **Separate local truth from chain truth**  
-   Add explicit APIs such as:
-   - local physical occupancy;
-   - root-local summary;
-   - full shared-chain aggregate occupancy.
-
-3. **Fix FF/FB isolation first**  
-   The current multi-region failure should be treated as a priority bug. FF drain must not change FB accounting unless there is an explicit cross-region rule.
-
-4. **Add chain-aware validation**  
-   Keep current exact local scans, but add exact chain scans that compare root metadata against full logical-node state.
-
-5. **Add transition audit counters**  
-   Track failed occupancy updates, rollback attempts, repaired ready masks, stale meta counts, and chain/local mismatches.
-
-6. **Stabilize naming before public API use**  
-   Fix spelling and normalize public class/function names before external users depend on them.
-
-7. **Keep dense math outside APC**  
-   APC should manage event memory, masks, region routing, and causality. Dense tensor math should be delegated to proven libraries such as PyTorch C++/LibTorch, oneDNN, oneMath, or custom SYCL kernels only where APC-specific gather/scatter is needed.
-
----
-
-## Expected role in a future ML system
-
-A finished APC-based ML system should probably look like this:
-
-```text
-APC packed cells:
-    routing, state, region, priority, causal clock, typed event memory
-
-Existing tensor libraries:
-    dense matrix multiplication, attention, normalization, autodiff, optimizer math
-
-Bridge layer:
-    gather active APC cells -> build masked tensor/view -> compute -> scatter results back into APC cells
-```
-
-In this model, APC is not trying to replace tensor libraries. It is trying to become the control/memory fabric around them.
-
----
+This is the cleanest way to “renovate the wheel” without rebuilding the already-proven matrix/tensor wheel.
 
 ## Minimal glossary
 
 | Term | Meaning |
 |---|---|
 | APC | AdaptivePackedCellContainer |
-| Packed cell | One 64-bit self-describing atomic cell |
-| Metacell | One of the first 96 header cells |
-| Payload | Cells after the 96-cell header |
-| Region | A semantic section of payload memory |
-| FF | Feedforward message region |
-| FB | Feedbackward message region |
-| STATE | Persistent/integrated state region |
-| ERROR | Error/residual/surprise region |
-| AUX | Auxiliary control region |
-| Ready bit | Header bit saying a region has published data |
-| Central occupancy | Header summary of all published/claimed/faulty payload cells |
-| Region occupancy | Per-region summary of published/claimed/faulty cells |
-| Shared chain | Linked APC branches that represent one logical growing node |
-| Clock16 | Compact local cell timestamp |
-| Timer48 | Wider timer source used to derive local clocks |
-
----
+| PackedCell | 64-bit value/control cell |
+| Metacell | Header/control cell inside the first 96 cells |
+| Payload | Data area after the metacells |
+| Region | Semantic payload lane such as FF, FB, STATE, ERROR |
+| FF | Feedforward message/evidence |
+| FB | Feedbackward message/prediction/context |
+| Locality | Cell state: idle, published, claimed, faulty |
+| Clock16 | Compact in-cell clock/freshness stamp |
+| Clock48 | Larger segment/timer clock field |
+| Ready bit | Header bitmask showing which regions may contain work |
+| Shared chain | Linked physical segments representing one logical node |
+| QSBR | Quiescent-state-based reclamation strategy |
 
 ## Honest conclusion
 
-It is a coherent and original C++ systems prototype for self-describing, region-aware, causally stamped atomic cells. The current output proves useful bidirectional event flow and dynamic growth. The same output also proves that multi-region occupancy and shared-chain accounting still need repair.
+AdaptivePackedCellContainer is a serious and original systems experiment. Its strongest idea is the packed cell: a 64-bit atomic datum that combines value, local clock, state, priority, datatype, authority, and signal class. That is a meaningful foundation for asynchronous, predictive, bidirectional, heterogeneous neural computation.
 
-The right way to describe APC today is:
+The current implementation is not yet clean enough to claim production correctness. The biggest immediate issues are occupancy accounting, growth efficiency, instrumentation consistency, indexing, and transactional layout mutation.
 
-> An experimental packed-cell runtime for multidirectional, causal, heterogeneous event-memory computation, with promising architecture and unfinished correctness work around authoritative occupancy.
-
+> APC is a novel research prototype with a coherent architecture, real test progress, and clear correctness/efficiency problems that must be fixed next.

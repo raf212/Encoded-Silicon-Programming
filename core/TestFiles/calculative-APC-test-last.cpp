@@ -8,7 +8,7 @@
 #include <array>
 #include <optional>
 
-#include "APCSegmentsCausalCordinator.hpp"
+#include "NeuromorphicTimeSpace/APCSegmentsCausalCordinator.hpp"
 #include "PackedCellContainerManager.hpp"
 
 using namespace PredictedAdaptedEncoding;
@@ -62,44 +62,44 @@ namespace
     static packed64_t PackU32(
         MasterClockConf& clock,
         uint32_t value,
-        APCPagedNodeRelMaskClasses region,
-        PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY
+        APCPagedNodeSegmentClasses region,
+        PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST
     )
     {
-        return clock.ComposeValue32WithCurrentThreadStamp16(
+        return clock.ComposeClockedModel32FroAPC(
             value,
             region,
             priority,
-            PackedCellLocalityTypes::ST_PUBLISHED,
-            RelOffsetMode32::RELOFFSET_GENERIC_VALUE,
-            PackedCellDataType::UnsignedPCellDataType,
-            PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM
+            LocalityPolicy::PUBLISHED,
+            Model32Subclass::SELF_CLASS,
+            InternalDataTypePolicy::UnsignedPCellDataType,
+            OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
         );
     }
 
     static packed64_t PackFloat32(
         MasterClockConf& clock,
         float value,
-        APCPagedNodeRelMaskClasses region,
-        PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY
+        APCPagedNodeSegmentClasses region,
+        PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST
     )
     {
         const uint32_t bits = BitCastMaybe<uint32_t>(value);
 
-        return clock.ComposeValue32WithCurrentThreadStamp16(
+        return clock.ComposeClockedModel32FroAPC(
             bits,
             region,
             priority,
-            PackedCellLocalityTypes::ST_PUBLISHED,
-            RelOffsetMode32::RELOFFSET_GENERIC_VALUE,
-            PackedCellDataType::FloatPCellDataType,
-            PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM
+            LocalityPolicy::PUBLISHED,
+            Model32Subclass::SELF_CLASS,
+            InternalDataTypePolicy::FloatPCellDataType,
+            OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
         );
     }
 
     static bool PublishBudgeted(
         APCSegmentsCausalCordinator& apc,
-        APCPagedNodeRelMaskClasses region,
+        APCPagedNodeSegmentClasses region,
         packed64_t cell,
         PackedCellContainerManager& manager,
         std::atomic<uint64_t>* grow_counter,
@@ -137,7 +137,7 @@ namespace
             const auto view = PackedCell64_t::GetAuthoritiveViewsForACell(cell);
 
             if (!view.IsCellValid ||
-                view.LocalityOfCell == PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY)
+                view.LocalityOfCell == LocalityPolicy::FAULTY)
             {
                 ++out.Faulty;
                 continue;
@@ -145,19 +145,19 @@ namespace
 
             switch (view.LocalityOfCell)
             {
-                case PackedCellLocalityTypes::ST_IDLE:
+                case LocalityPolicy::IDLE:
                     ++out.Idle;
                     break;
 
-                case PackedCellLocalityTypes::ST_PUBLISHED:
+                case LocalityPolicy::PUBLISHED:
                     ++out.Published;
                     break;
 
-                case PackedCellLocalityTypes::ST_CLAIMED:
+                case LocalityPolicy::CLAIMED:
                     ++out.Claimed;
                     break;
 
-                case PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY:
+                case LocalityPolicy::FAULTY:
                 default:
                     ++out.Faulty;
                     break;
@@ -175,13 +175,13 @@ namespace
     static uint32_t HeaderLocalitySum(APCSegmentsCausalCordinator& apc)
     {
         return
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_IDLE) +
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED) +
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_CLAIMED) +
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY);
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::IDLE) +
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::PUBLISHED) +
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::CLAIMED) +
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::FAULTY);
     }
     
-    static uint32_t RegionMeta(APCSegmentsCausalCordinator& apc, APCPagedNodeRelMaskClasses region)
+    static uint32_t RegionMeta(APCSegmentsCausalCordinator& apc, APCPagedNodeSegmentClasses region)
     {
         return apc.ReadPublishedOccupancyOfAPageClass(region);
     }
@@ -189,7 +189,7 @@ namespace
     static void PrintRegion(
         const char* label,
         APCSegmentsCausalCordinator& apc,
-        APCPagedNodeRelMaskClasses region
+        APCPagedNodeSegmentClasses region
     )
     {
         const auto maybe = apc.ReadLayoutBoundsAndVersion(region);
@@ -215,16 +215,16 @@ namespace
         const ExactLocalityCount exact = CountExactLocality(apc);
 
         const uint32_t header_idle =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_IDLE);
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::IDLE);
 
         const uint32_t header_pub =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED);
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::PUBLISHED);
 
         const uint32_t header_claim =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_CLAIMED);
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::CLAIMED);
 
         const uint32_t header_fault =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY);
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::FAULTY);
 
         const uint32_t header_sum = HeaderLocalitySum(apc);
         const uint32_t header_used = HeaderUsedSum(apc);
@@ -273,17 +273,17 @@ namespace
                   << "\n";
 
         std::cout << "  region published-data pressure:\n";
-        PrintRegion("FF   ", apc, APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE);
-        PrintRegion("FB   ", apc, APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE);
-        PrintRegion("STATE", apc, APCPagedNodeRelMaskClasses::STATE_SLOT);
-        PrintRegion("ERROR", apc, APCPagedNodeRelMaskClasses::ERROR_SLOT);
-        PrintRegion("AUX  ", apc, APCPagedNodeRelMaskClasses::AUX_SLOT);
+        PrintRegion("FF   ", apc, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE);
+        PrintRegion("FB   ", apc, APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE);
+        PrintRegion("STATE", apc, APCPagedNodeSegmentClasses::STATE_SLOT);
+        PrintRegion("ERROR", apc, APCPagedNodeSegmentClasses::ERROR_SLOT);
+        PrintRegion("AUX  ", apc, APCPagedNodeSegmentClasses::AUX_SLOT);
 
         std::cout << "  clocks: "
-                  << "accFF=" << apc.ReadLastAcceptedClok16ForThisSegment(APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE)
-                  << " emitFF=" << apc.ReadLastEmittedClok16ForThisSegment(APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE)
-                  << " accFB=" << apc.ReadLastAcceptedClok16ForThisSegment(APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE)
-                  << " emitFB=" << apc.ReadLastEmittedClok16ForThisSegment(APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE)
+                  << "accFF=" << apc.ReadLastAcceptedClok16ForThisSegment(APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE)
+                  << " emitFF=" << apc.ReadLastEmittedClok16ForThisSegment(APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE)
+                  << " accFB=" << apc.ReadLastAcceptedClok16ForThisSegment(APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE)
+                  << " emitFB=" << apc.ReadLastEmittedClok16ForThisSegment(APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE)
                   << "\n";
     }
 }
@@ -301,7 +301,7 @@ int main()
     MasterClockConf clock(nullptr, timer);
 
     ContainerConf cfg;
-    cfg.InitialMode = PackedMode::MODE_VALUE32;
+    cfg.InitialMode = PackedMode::MODEL32;
     cfg.ProducerBlockSize = 8;
     cfg.RegionSize = 16;
     cfg.EnableBranching = true;
@@ -324,37 +324,27 @@ int main()
 
     Sensor.InitAPCAsNode(
         cfg.BranchMinChildCapacity,
-        cfg,
-        SegmentIODefinition::APCNodeComputeKind::GENERATOR_UINT32,
-        0
+        cfg
     );
 
     Predictor.InitAPCAsNode(
         cfg.BranchMinChildCapacity,
-        cfg,
-        SegmentIODefinition::APCNodeComputeKind::BIDIRECTIONAL_PREDECTIVE,
-        0
+        cfg
     );
 
     Comparator.InitAPCAsNode(
         cfg.BranchMinChildCapacity,
-        cfg,
-        SegmentIODefinition::APCNodeComputeKind::ADD_UINT32,
-        0
+        cfg
     );
 
     Integrator.InitAPCAsNode(
         cfg.BranchMinChildCapacity,
-        cfg,
-        SegmentIODefinition::APCNodeComputeKind::GENERIC_VECTOR,
-        0
+        cfg
     );
 
     Motor.InitAPCAsNode(
         cfg.BranchMinChildCapacity,
-        cfg,
-        SegmentIODefinition::APCNodeComputeKind::GENERIC_VECTOR,
-        0
+        cfg
     );
 
     GraphStats stats;
@@ -383,14 +373,14 @@ int main()
             for (uint32_t i = p + 1; i <= VALUE_COUNT; i += PRODUCER_COUNT)
             {
                 const packed64_t ff =
-                    PackU32(clock, i, APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE, PriorityPhysics::IMPORTANT);
+                    PackU32(clock, i, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, PriorityPolicy::PRESSURE_FIRST);
 
                 const packed64_t fb =
-                    PackU32(clock, i + 1u, APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE, PriorityPhysics::TIME_DEPENDENCY);
+                    PackU32(clock, i + 1u, APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE, PriorityPolicy::PRESSURE_FIRST);
 
                 if (PublishBudgeted(
                         Sensor,
-                        APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE,
+                        APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
                         ff,
                         manager,
                         &stats.GrowFF,
@@ -402,7 +392,7 @@ int main()
 
                 if (PublishBudgeted(
                         Predictor,
-                        APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE,
+                        APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
                         fb,
                         manager,
                         &stats.GrowFB,
@@ -428,7 +418,7 @@ int main()
             {
                 auto maybe =
                     Sensor.ConsumeCausal(
-                        APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE,
+                        APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
                         cursor,
                         &stats.OlderFFObserved
                     );
@@ -453,13 +443,13 @@ int main()
                     PackU32(
                         clock,
                         state_value,
-                        APCPagedNodeRelMaskClasses::STATE_SLOT,
-                        PriorityPhysics::STRUCTURAL_DEPENDENCY
+                        APCPagedNodeSegmentClasses::STATE_SLOT,
+                        PriorityPolicy::PRESSURE_FIRST
                     );
 
                 if (PublishBudgeted(
                         Integrator,
-                        APCPagedNodeRelMaskClasses::STATE_SLOT,
+                        APCPagedNodeSegmentClasses::STATE_SLOT,
                         state_cell,
                         manager,
                         &stats.GrowSTATE,
@@ -485,7 +475,7 @@ int main()
             {
                 auto maybe =
                     Predictor.ConsumeCausal(
-                        APCPagedNodeRelMaskClasses::FEEDBACKWARD_MESSAGE,
+                        APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
                         cursor,
                         &stats.OlderFBObserved
                     );
@@ -510,13 +500,13 @@ int main()
                     PackU32(
                         clock,
                         error_value,
-                        APCPagedNodeRelMaskClasses::ERROR_SLOT,
-                        PriorityPhysics::ERROR_DEPENDENCY
+                        APCPagedNodeSegmentClasses::ERROR_SLOT,
+                        PriorityPolicy::PRESSURE_FIRST
                     );
 
                 if (PublishBudgeted(
                         Comparator,
-                        APCPagedNodeRelMaskClasses::ERROR_SLOT,
+                        APCPagedNodeSegmentClasses::ERROR_SLOT,
                         error_cell,
                         manager,
                         &stats.GrowERROR,
@@ -544,7 +534,7 @@ int main()
             {
                 auto maybe_state =
                     Integrator.ConsumeCausal(
-                        APCPagedNodeRelMaskClasses::STATE_SLOT,
+                        APCPagedNodeSegmentClasses::STATE_SLOT,
                         state_cursor,
                         nullptr
                     );
@@ -567,7 +557,7 @@ int main()
 
                 auto maybe_error =
                     Comparator.ConsumeCausal(
-                        APCPagedNodeRelMaskClasses::ERROR_SLOT,
+                        APCPagedNodeSegmentClasses::ERROR_SLOT,
                         error_cursor,
                         nullptr
                     );
@@ -591,13 +581,13 @@ int main()
                     PackFloat32(
                         clock,
                         motor_value,
-                        APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE,
-                        PriorityPhysics::HANDLE_NOW
+                        APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
+                        PriorityPolicy::PRESSURE_FIRST
                     );
 
                 if (PublishBudgeted(
                         Motor,
-                        APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE,
+                        APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
                         motor_cell,
                         manager,
                         nullptr,
@@ -610,7 +600,7 @@ int main()
 
                 auto final_cell =
                     Motor.ConsumeCausal(
-                        APCPagedNodeRelMaskClasses::FEEDFORWARD_MESSAGE,
+                        APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
                         motor_cursor,
                         nullptr
                     );

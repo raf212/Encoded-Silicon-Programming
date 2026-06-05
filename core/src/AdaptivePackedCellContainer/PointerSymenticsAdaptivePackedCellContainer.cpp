@@ -1,4 +1,4 @@
-#include "APCSegmentsCausalCordinator.hpp"
+#include "NeuromorphicTimeSpace/APCSegmentsCausalCordinator.hpp"
 #include "AdaptivePackedCellContainer/PointerSymenticsAdaptivePackedCellContainer.hpp"
 #include <iostream>
 
@@ -30,15 +30,15 @@ namespace PredictedAdaptedEncoding
         while (curent_tries++ < max_claim_attempts)
         {
             packed64_t packed_cell_value64 = BackingPtr[probable_idx].load(MoLoad_);
-            RelOffsetMode32 curent_ptr_position = PackedCell64_t::ExtractRelOffset32FromPacked(packed_cell_value64);
-            size_t head_idx = SIZE_MAX;
-            size_t tail_idx = SIZE_MAX;
-            if (curent_ptr_position == RelOffsetMode32::REL_OFFSET_HEAD_PTR)
+            Model32Subclass curent_ptr_position = PackedCell64_t::ExtractRelOffset32FromPacked(packed_cell_value64);
+            size_t head_idx = APCDataStructure::APC_SIZE_SENTINAL;
+            size_t tail_idx = APCDataStructure::APC_SIZE_SENTINAL;
+            if (curent_ptr_position == Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL)
             {
                 head_idx = probable_idx;
                 tail_idx = (probable_idx + 1) % PayloadCapacityFromHeader();
             }
-            else if (curent_ptr_position == RelOffsetMode32::RELOFFSET_TAIL_PTR)
+            else if (curent_ptr_position == Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL)
             {
                 head_idx = (probable_idx + PayloadCapacityFromHeader() - 1) % PayloadCapacityFromHeader();
                 tail_idx = probable_idx;
@@ -51,17 +51,17 @@ namespace PredictedAdaptedEncoding
             packed64_t head_screenshot = BackingPtr[head_idx].load(MoLoad_);
             packed64_t tail_screenshot = BackingPtr[tail_idx].load(MoLoad_);
 
-            if (!PackedCell64_t::IsPackedCellVal32(head_screenshot) || !PackedCell64_t::IsPackedCellVal32(tail_screenshot))
+            if (!PackedCell64_t::IsPackedCellFrom32BitFamily(head_screenshot) || !PackedCell64_t::IsPackedCellFrom32BitFamily(tail_screenshot))
             {
                 return std::nullopt;
             }
 
-            PackedCellLocalityTypes head_locality = PackedCell64_t::ExtractLocalityFromPacked(head_screenshot);
-            PackedCellLocalityTypes tail_locality = PackedCell64_t::ExtractLocalityFromPacked(tail_screenshot);
+            LocalityPolicy head_locality = PackedCell64_t::ExtractLocalityFromPacked(head_screenshot);
+            LocalityPolicy tail_locality = PackedCell64_t::ExtractLocalityFromPacked(tail_screenshot);
 
             if (!claim_ownership)
             {
-                if (head_locality != PackedCellLocalityTypes::ST_PUBLISHED || tail_locality != PackedCellLocalityTypes::ST_PUBLISHED)
+                if (head_locality != LocalityPolicy::PUBLISHED || tail_locality != LocalityPolicy::PUBLISHED)
                 {
                     return std::nullopt;
                 }
@@ -75,12 +75,12 @@ namespace PredictedAdaptedEncoding
                 return out_paired_ptr_struct;
             }
             
-            if (head_locality != PackedCellLocalityTypes::ST_PUBLISHED || tail_locality != PackedCellLocalityTypes::ST_PUBLISHED)
+            if (head_locality != LocalityPolicy::PUBLISHED || tail_locality != LocalityPolicy::PUBLISHED)
             {
                 return std::nullopt;
             }
-            packed64_t want_head = PackedCell64_t::SetLocalityInPacked(head_screenshot, PackedCellLocalityTypes::ST_CLAIMED);
-            packed64_t want_tail = PackedCell64_t::SetLocalityInPacked(tail_screenshot, PackedCellLocalityTypes::ST_CLAIMED);
+            packed64_t want_head = PackedCell64_t::SetLocalityInPacked(head_screenshot, LocalityPolicy::CLAIMED);
+            packed64_t want_tail = PackedCell64_t::SetLocalityInPacked(tail_screenshot, LocalityPolicy::CLAIMED);
             packed64_t expected_head = head_screenshot;
             if (!BackingPtr[head_idx].compare_exchange_strong(expected_head, want_head, OnExchangeSuccess, OnExchangeFailure))
             {
@@ -115,7 +115,7 @@ namespace PredictedAdaptedEncoding
         return std::nullopt;
     }
 
-    bool PointerSymenticsAdaptivePackedCellContainer::ReleaseAcquiredPairedPtr(const AcquirePairedPointerStruct& acquired_paired_pointer_struct, PackedCellLocalityTypes desired_locality) noexcept
+    bool PointerSymenticsAdaptivePackedCellContainer::ReleaseAcquiredPairedPtr(const AcquirePairedPointerStruct& acquired_paired_pointer_struct, LocalityPolicy desired_locality) noexcept
     {
         if (!acquired_paired_pointer_struct.Ownership)
         {
@@ -157,7 +157,7 @@ namespace PredictedAdaptedEncoding
         {
             return;
         }
-        packed64_t idle32 = PackedCell64_t::MakeInitialPacked(PackedMode::MODE_VALUE32);
+        packed64_t idle32 = PackedCell64_t::MakeInitialAPCValidPackedCell(PackedMode::MODEL32);
         BackingPtr[acquired_paired_pointer_struct.HeadIdx].store(idle32, MoStoreSeq_);
         BackingPtr[acquired_paired_pointer_struct.TailIdx].store(idle32, MoStoreSeq_);
         BackingPtr[acquired_paired_pointer_struct.HeadIdx].notify_all();
@@ -194,24 +194,25 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    PublishResult PointerSymenticsAdaptivePackedCellContainer::PublishHeapPtrPair_(void* object_ptr, APCPagedNodeRelMaskClasses rel_mask_with_ptrflag, int max_probs) noexcept
+    PublishResult PointerSymenticsAdaptivePackedCellContainer::PublishHeapPtrPair_(void* object_ptr, APCPagedNodeSegmentClasses cell_class, int max_probs) noexcept
     {
+        (void) cell_class;
         if (!IfAPCBranchValid())
         {
-            return { PublishStatus::INVALID, SIZE_MAX};
+            return { PublishStatus::INVALID, APCDataStructure::APC_SIZE_SENTINAL};
         }
         if (PayloadCapacityFromHeader() < MINIMUM_BRANCH_CAPACITY)
         {
-            return {PublishStatus::FULL, SIZE_MAX};
+            return {PublishStatus::FULL, APCDataStructure::APC_SIZE_SENTINAL};
         }
         
         uint64_t full_ptrval = reinterpret_cast<uint64_t>(object_ptr);
         uint32_t low32_half = static_cast<uint32_t>(full_ptrval & MaskLowNBits(VALBITS));
         uint32_t high32_half = static_cast<uint32_t>((full_ptrval >> VALBITS) & MaskLowNBits(VALBITS));
         size_t next_sequence = NextProducerSequence();
-        if (next_sequence == SIZE_MAX)
+        if (next_sequence == APCDataStructure::APC_SIZE_SENTINAL)
         {
-            return {PublishStatus::INVALID, SIZE_MAX};
+            return {PublishStatus::INVALID, APCDataStructure::APC_SIZE_SENTINAL};
         }
         
         size_t start = PayloadBegin() + ((next_sequence - PayloadBegin()) % PayloadCapacityFromHeader());
@@ -224,12 +225,12 @@ namespace PredictedAdaptedEncoding
             size_t tail = (head + 1);
             packed64_t cur_head = BackingPtr[head].load(MoLoad_);
             packed64_t cur_tail = BackingPtr[tail].load(MoLoad_);
-            PackedCellLocalityTypes head_locality = PackedCell64_t::ExtractLocalityFromPacked(cur_head);
-            PackedCellLocalityTypes tail_locality = PackedCell64_t::ExtractLocalityFromPacked(cur_tail);
-            if (head_locality == PackedCellLocalityTypes::ST_IDLE && tail_locality == PackedCellLocalityTypes::ST_IDLE)
+            LocalityPolicy head_locality = PackedCell64_t::ExtractLocalityFromPacked(cur_head);
+            LocalityPolicy tail_locality = PackedCell64_t::ExtractLocalityFromPacked(cur_tail);
+            if (head_locality == LocalityPolicy::IDLE && tail_locality == LocalityPolicy::IDLE)
             {
-                packed64_t claimed_cur_head = PackedCell64_t::SetLocalityInPacked(cur_head, PackedCellLocalityTypes::ST_CLAIMED);
-                packed64_t claimed_cur_tail = PackedCell64_t::SetLocalityInPacked(cur_tail, PackedCellLocalityTypes::ST_CLAIMED);
+                packed64_t claimed_cur_head = PackedCell64_t::SetLocalityInPacked(cur_head, LocalityPolicy::CLAIMED);
+                packed64_t claimed_cur_tail = PackedCell64_t::SetLocalityInPacked(cur_tail, LocalityPolicy::CLAIMED);
                 packed64_t expected_head = cur_head;
                 if (!BackingPtr[head].compare_exchange_strong(expected_head, claimed_cur_head, OnExchangeSuccess, OnExchangeFailure))
                 {
@@ -247,13 +248,23 @@ namespace PredictedAdaptedEncoding
                     else
                     {
                         val32_t tail_ptr_val32 = high32_half;
-                        meta16_t strl_tail = PackedCell64_t::MakeInCellMetaForMode_32t(PriorityPhysics::IDLE, PackedCellNodeAuthority::IDLE_OR_FREE, PackedCellLocalityTypes::ST_PUBLISHED, rel_mask_with_ptrflag, RelOffsetMode32::RELOFFSET_TAIL_PTR);
-                        packed64_t tail_packed = PackedCell64_t::ComposeValue32u_64(tail_ptr_val32, 0u, strl_tail);
+                        meta16_t meta16_tail = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_32t(
+                            OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+                            static_cast<tag8_t>(APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY),
+                            Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL,
+                            PriorityPolicy::VERSIONED
+                        );
+                        packed64_t tail_packed = PackedCell64_t::Compose32BitFamilyPackedCell(tail_ptr_val32, 0u, meta16_tail);
                         BackingPtr[tail].store(tail_packed, MoStoreSeq_);
 
                         val32_t head_ptr_value32 = low32_half;
-                        meta16_t strl_head = PackedCell64_t::MakeInCellMetaForMode_32t(PriorityPhysics::IDLE, PackedCellNodeAuthority::IDLE_OR_FREE, PackedCellLocalityTypes::ST_PUBLISHED, rel_mask_with_ptrflag, RelOffsetMode32::REL_OFFSET_HEAD_PTR);
-                        packed64_t head_packed = PackedCell64_t::ComposeValue32u_64(head_ptr_value32, 0u, strl_head);
+                        meta16_t meta16_head = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_32t(
+                            OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+                            static_cast<tag8_t>(APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY),
+                            Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL,
+                            PriorityPolicy::VERSIONED
+                        );
+                        packed64_t head_packed = PackedCell64_t::Compose32BitFamilyPackedCell(head_ptr_value32, 0u, meta16_head);
                         BackingPtr[head].store(head_packed, MoStoreSeq_);
                         BackingPtr[tail].notify_all();
                         BackingPtr[head].notify_all();
@@ -264,7 +275,7 @@ namespace PredictedAdaptedEncoding
             ++probes;
             if ((max_probs >=0 && probes >= max_probs) || probes >= static_cast<int>(PayloadCapacityFromHeader()))
             {
-                return {PublishStatus::FULL, SIZE_MAX};
+                return {PublishStatus::FULL, APCDataStructure::APC_SIZE_SENTINAL};
             }
             idx = (((idx - PayloadBegin()) + step) % PayloadCapacityFromHeader()) + PayloadBegin();
         }
@@ -276,7 +287,7 @@ namespace PredictedAdaptedEncoding
 
         while (publish_attempt <= max_retries)
         {
-            PublishResult publish_result = PublishHeapPtrPair_(target_publishable_ptr, APCPagedNodeRelMaskClasses::FREE_SLOT);
+            PublishResult publish_result = PublishHeapPtrPair_(target_publishable_ptr, APCPagedNodeSegmentClasses::FREE_SLOT);
             if (publish_result.ResultStatus == PublishStatus::OK)
             {
                 return true;
