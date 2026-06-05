@@ -152,12 +152,13 @@ protected:
         BackingPtr[index].notify_all();
     }
 
-    void WritBranchMeta48_(
+    void WrireAPCMetaModel_48t(
         MetaIndexOfAPCNode idx,
         uint64_t raw48_value,
-        APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
-        PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST,
-        Model48Subclass rel_offset = Model48Subclass::SELF_CLASS
+        Model48Subclass sub_class = Model48Subclass::SELF_CLASS,
+        LocalityPolicy locality = LocalityPolicy::PUBLISHED,
+        InternalDataTypePolicy dtype = InternalDataTypePolicy::UnsignedPCellDataType,
+        PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST
     ) noexcept
     {
         size_t index = static_cast<size_t>(idx);
@@ -165,7 +166,11 @@ protected:
         {
             return;
         }
-        const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(StructureFamily48::MODEL48, priority, OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, LocalityPolicy::PUBLISHED, page_class, rel_offset);
+        const meta16_t meta16 = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_48t(
+            OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+            static_cast<tag8_t>(APCPagedNodeSegmentClasses::CONTROL_SLOT),
+            sub_class, priority, locality, dtype
+        );
         const packed64_t packed_cell = PackedCell64_t::Compose48BitFamilyPackedCell(raw48_value & MaskLowNBits(CLK_B48), meta16);
         BackingPtr[index].store(packed_cell, MoStoreSeq_);
         BackingPtr[index].notify_all();

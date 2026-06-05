@@ -752,6 +752,30 @@ public:
             );
         }
 
+        /// @brief Make meta for ANY: OwnershipPolicy of ModelFamily::MODEL48
+        /// @param page_class uint8_t :: For safer use Use like static_cast<uint8_t>(Param->enum::value)
+        /// @return 
+        static constexpr meta16_t MakeMeta16ForAnyOwnerAndItsClassModel_48t(
+            OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+            tag8_t cell_class = static_cast<tag8_t>(APCPagedNodeSegmentClasses::FREE_SLOT),
+            Model48Subclass sub_class = Model48Subclass::SELF_CLASS,
+            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
+            LocalityPolicy locality = LocalityPolicy::IDLE,
+            InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
+        ) noexcept
+        {
+            return MakeInCellMeta_16t(
+                PackedMode::MODEL48,
+                locality,
+                ownership,
+                cell_data_type,
+                static_cast<tag8_t>(cell_class),
+                static_cast<tag8_t>(sub_class),
+                static_cast<tag8_t>(priority)
+            );
+        }
+
+
         /// @brief Make meta for ANY: OwnershipPolicy of ModelFamily::MODEL32
         /// @param page_class uint8_t :: For safer use Use like static_cast<uint8_t>(Param->enum::value)
         /// @return 

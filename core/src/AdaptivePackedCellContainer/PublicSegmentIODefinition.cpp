@@ -188,7 +188,7 @@ namespace PredictedAdaptedEncoding
         WriteMetaCellMode32_(MetaIndexOfAPCNode::BRANCH_PRIORITY, branch_priority, write_cell_priority);
         WriteMetaCellMode32_(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS, container_configuration.EnableBranching ? static_cast<uint32_t>(ControlEnumOfAPCSegment::ENABLE_BRANCHING) : static_cast<uint32_t>(ControlEnumOfAPCSegment::NONE), write_cell_priority);
         WriteMetaCellMode32_(MetaIndexOfAPCNode::CURRENT_ACTIVE_THREADS, UNSIGNED_ZERO, write_cell_priority);
-        WritBranchMeta48_(MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48, UNSIGNED_ZERO);
+        WrireAPCMetaModel_48t(MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48, UNSIGNED_ZERO);
         WriteMetaCellMode32_(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE, container_configuration.BranchSplitThresholdPercentage, write_cell_priority);
         WriteMetaCellMode32_(MetaIndexOfAPCNode::SEGMENT_KIND, static_cast<uint32_t>(APCPagedNodeSegmentClasses::FREE_SLOT), write_cell_priority);
         WriteMetaCellMode32_(MetaIndexOfAPCNode::MAX_DEPTH, container_configuration.BranchMaxDepth, write_cell_priority);
