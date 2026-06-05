@@ -51,7 +51,7 @@ namespace PredictedAdaptedEncoding
         static constexpr uint32_t MakeOneAPCNodeClassReadyBit(APCPagedNodeSegmentClasses desired_rel_class) noexcept
         {
             const uint32_t rel_class = static_cast<uint8_t>(desired_rel_class) & HIGH_FOUR_NIBBLE;
-            if (rel_class == static_cast<uint8_t>(APCPagedNodeSegmentClasses::NONE) || rel_class == static_cast<uint8_t>(APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL))
+            if (rel_class == static_cast<uint8_t>(APCPagedNodeSegmentClasses::NONE) || rel_class == static_cast<uint8_t>(APCPagedNodeSegmentClasses::NULLNAN))
             {
                 return UNSIGNED_ZERO;
             }
@@ -142,7 +142,7 @@ namespace PredictedAdaptedEncoding
                 Normal idle free capacity is still derived, not counted.
             */
             return page_class != APCPagedNodeSegmentClasses::NONE &&
-                page_class != APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL;
+                page_class != APCPagedNodeSegmentClasses::NULLNAN;
         }
 
         static  bool IsDataConsumablePageClass(APCPagedNodeSegmentClasses page_class) noexcept
@@ -151,10 +151,10 @@ namespace PredictedAdaptedEncoding
                 These regions may contain normal user/runtime data.
                 CONTROL_SLOT is not data-consumable.
                 FREE_SLOT is not data-consumable.
-                NONE/FABRIC_SEGMENT_POOL are invalid.
+                NONE/NULLNAN are invalid.
             */
             return page_class != APCPagedNodeSegmentClasses::NONE &&
-                page_class != APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL &&
+                page_class != APCPagedNodeSegmentClasses::NULLNAN &&
                 page_class != APCPagedNodeSegmentClasses::CONTROL_SLOT &&
                 page_class != APCPagedNodeSegmentClasses::FREE_SLOT;
         }
@@ -201,7 +201,7 @@ namespace PredictedAdaptedEncoding
     {
         uint32_t BeginIndex = APCDataStructure::BRANCH_SENTINAL;
         uint32_t EndIndex = APCDataStructure::BRANCH_SENTINAL;
-        APCPagedNodeSegmentClasses PAGE_LAYOUT_CLASS = APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL;
+        APCPagedNodeSegmentClasses PAGE_LAYOUT_CLASS = APCPagedNodeSegmentClasses::NULLNAN;
         float InitialOrCurrentPercentage = 0u;
         uint16_t VersionNumber = 0u;
 
@@ -263,12 +263,12 @@ namespace PredictedAdaptedEncoding
 
         constexpr bool IsValid(uint32_t payload_begain, uint32_t payload_end) const noexcept
         {
-            return BeginIndex >= payload_begain && EndIndex >= BeginIndex && EndIndex <= payload_end && PAGE_LAYOUT_CLASS!= APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL;
+            return BeginIndex >= payload_begain && EndIndex >= BeginIndex && EndIndex <= payload_end && PAGE_LAYOUT_CLASS!= APCPagedNodeSegmentClasses::NULLNAN;
         }
 
         bool IsEmpty() const noexcept
         {
-            return EndIndex <= BeginIndex || PAGE_LAYOUT_CLASS == APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL;
+            return EndIndex <= BeginIndex || PAGE_LAYOUT_CLASS == APCPagedNodeSegmentClasses::NULLNAN;
         }
 
         uint32_t GetPayloadSpan() const noexcept
@@ -278,12 +278,12 @@ namespace PredictedAdaptedEncoding
 
         constexpr bool CanBorrowRightFrom(const LayoutBoundsOfSingleRelNodeClass& right) const noexcept
         {
-            return EndIndex == right.BeginIndex && right.GetPayloadSpan() > 0u && right.PAGE_LAYOUT_CLASS != APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL;
+            return EndIndex == right.BeginIndex && right.GetPayloadSpan() > 0u && right.PAGE_LAYOUT_CLASS != APCPagedNodeSegmentClasses::NULLNAN;
         }
 
         constexpr bool CanBorrowLeftFrom(const LayoutBoundsOfSingleRelNodeClass& left) const noexcept
         {
-            return BeginIndex == left.EndIndex && left.GetPayloadSpan() > 0u && left.PAGE_LAYOUT_CLASS != APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL;
+            return BeginIndex == left.EndIndex && left.GetPayloadSpan() > 0u && left.PAGE_LAYOUT_CLASS != APCPagedNodeSegmentClasses::NULLNAN;
         }
 
         bool TryGrowRight(uint32_t amount, LayoutBoundsOfSingleRelNodeClass& right) noexcept

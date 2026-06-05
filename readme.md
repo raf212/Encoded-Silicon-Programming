@@ -122,7 +122,7 @@ The payload is divided into semantic regions. The current source defines classes
 | `PAIRED_POINTER_IN_MEMORY` | Remote pointer-pair storage |
 | `FREE_SLOT` | Free payload capacity |
 | `UNDEFINED` | Region for unclassified/emergent cells |
-| `FABRIC_SEGMENT_POOL` | Invalid/null/sentinel region |
+| `NULLNAN` | Invalid/null/sentinel region |
 
 This region model is the part that makes APC naturally suitable for bidirectional or predictive computation: feedforward, feedbackward, state, and error are first-class storage lanes rather than comments in a higher-level algorithm.
 

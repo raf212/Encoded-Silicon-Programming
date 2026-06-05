@@ -115,20 +115,25 @@ protected:
 
     packed64_t PackValue32InPackedCellwithClock16_(
         val32_t value32,
-        PriorityPolicy priority,
+        PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST,
         LocalityPolicy locality = LocalityPolicy::PUBLISHED,
         APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::NONE,
-        Model32Subclass reloffset_mode32 = Model32Subclass::SELF_CLASS,
-        InternalDataTypePolicy dtype = InternalDataTypePolicy::UnsignedPCellDataType,
-        OwnershipPolicy node_authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
+        Model32Subclass subclass32 = Model32Subclass::SELF_CLASS,
+        InternalDataTypePolicy dtype = InternalDataTypePolicy::UnsignedPCellDataType
     ) noexcept
     {
         if (OwnedMasterClockConfPtr_)
         {
-            return OwnedMasterClockConfPtr_->ComposeValue32WithCurrentThreadStamp16(value32, page_class, priority, locality, reloffset_mode32, dtype);
+            return OwnedMasterClockConfPtr_->ComposeValue32WithCurrentThreadStamp16(value32, page_class, priority, locality, subclass32, dtype);
         }
-        meta16_t strl_moded32 = PackedCell64_t::MakeCellMetaForModel_32t(StructureFamily32::MODEL32, priority, node_authority, locality, page_class, reloffset_mode32, dtype);
-        return PackedCell64_t::Compose32BitFamilyPackedCell(value32, UNSIGNED_ZERO, strl_moded32);
+        meta16_t meta16_for_apc = PackedCell64_t::MakeInCellMetaForAnyModel_32t(
+            OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, 
+            static_cast<tag8_t>(page_class),
+            subclass32,
+            priority, locality,
+            dtype
+        );
+        return PackedCell64_t::Compose32BitFamilyPackedCell(value32, UNSIGNED_ZERO, meta16_for_apc);
     }
 
     void WriteMetaCellMode32_(
@@ -271,12 +276,12 @@ public:
     bool ApplyCentralAndRegionOccupancyTransitionCell(
         packed64_t old_cell,
         packed64_t new_cell,
-        APCPagedNodeSegmentClasses physical_page_class = APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL
+        APCPagedNodeSegmentClasses physical_page_class = APCPagedNodeSegmentClasses::NULLNAN
     ) noexcept;
 
     bool RefreshReadyBitForRegionFromOccupancy(APCPagedNodeSegmentClasses page_class) noexcept;
 
-    uint16_t ReadTotalOccuPancyOfAnyPageClass(APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL) noexcept;
+    uint16_t ReadTotalOccuPancyOfAnyPageClass(APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::NULLNAN) noexcept;
     
     bool WriteExactMetaCellJustNewValue(MetaIndexOfAPCNode idx, uint32_t value) noexcept;
 

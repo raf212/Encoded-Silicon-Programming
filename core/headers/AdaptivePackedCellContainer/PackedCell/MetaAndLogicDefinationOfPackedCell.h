@@ -201,7 +201,7 @@ namespace PredictedAdaptedEncoding {
         PAIRED_POINTER_IN_MEMORY = 0xC,
         FREE_SLOT     = 0xD,
         UNDEFINED = 0xE,
-        FABRIC_SEGMENT_POOL     = 0xF
+        NULLNAN     = 0xF
     };
 
     enum class FabricTableSegmentClasses : uint16_t //14

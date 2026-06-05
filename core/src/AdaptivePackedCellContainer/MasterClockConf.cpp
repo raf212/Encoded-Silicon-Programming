@@ -3,6 +3,74 @@
 namespace PredictedAdaptedEncoding
 {
 
+
+
+    // packed64_t MasterClockConf::RefreshPackedCellClockOnly(
+    //     packed64_t provided_packed_cell,
+    //     APCPagedNodeSegmentClasses force_rel_mask,
+    //     std::optional<LocalityPolicy> override_locality
+    // ) noexcept
+    // {
+    //     const uint64_t now_ticks48 = NowTicks48();
+    //     const clk16_t now_clk16 = GetImmidiateDownShiftedClock16(now_ticks48);
+
+    //     const PackedCell64_t::AuthoritiveCellView desired_authoretive_view = PackedCell64_t::GetAuthoritiveViewsForACell(provided_packed_cell);
+    //     if (!desired_authoretive_view.IsCellValid)
+    //     {
+    //         return provided_packed_cell;
+    //     }
+        
+    //     if (
+    //         (desired_authoretive_view.CellMode == PackedMode::MODEL32 || desired_authoretive_view.CellMode == PackedMode::MODEL48 ) &&
+    //         desired_authoretive_view.SubClassOfModel32 != Model32Subclass::SELF_CLASS
+    //     )
+    //     {
+    //         return provided_packed_cell;
+    //     }
+
+    //     const tag8_t desired_class = UNSIGNED_ZERO;
+    //     if (desired_authoretive_view.PageClass != APCPagedNodeSegmentClasses)
+    //     {
+    //         /* code */
+    //     }
+        
+        
+    //     if (
+    //         (desired_authoretive_view.CellMode == PackedMode::MODEL32 || desired_authoretive_view.CellMode == PackedMode::VALUE32) &&
+    //         (desired_authoretive_view.AccessContractOfValue.has_value() || desired_authoretive_view.SubClassOfModel32.has_value())
+    //     )
+    //     {
+    //     return PackedCell64_t::Compose32BitFamilyPackedCell(
+    //         desired_authoretive_view.CellValue32.value_or(UNSIGNED_ZERO),
+    //         now_clk16,
+    //         PackedCell64_t::MakeInCellMetaForAnyModel_32t(
+    //             desired_authoretive_view.CellOwnership,
+    //             static_cast<tag8_t>(desired_authoretive_view.PageClass) > 
+    //         )
+    //         PackedCell64_t::MakeCellMetaForModel_32t(
+    //             StructureFamily32::MODEL32, priority_of_provided_cell, node_authority, 
+    //             locality_of_provided_cell, rel_mask, reloffset32_of_provided_cell, dtype_of_provided_cell)
+    //     );
+
+    //     }
+        
+
+
+
+
+    //     const Model48Subclass reloffset48_of_provided_cell = PackedCell64_t::ExtractRelOffset48FromPacked(provided_packed_cell);
+        
+    //     if (reloffset48_of_provided_cell == Model48Subclass::PURE_TIMER_48)
+    //     {
+    //         return PackedCell64_t::Compose48BitFamilyPackedCell(
+    //             now_ticks48,
+    //             //rename Strl to STRL(future)
+    //             PackedCell64_t::MakeInCellMetaForMode_48t(StructureFamily48::MODEL48, priority_of_provided_cell, node_authority, locality_of_provided_cell, rel_mask, reloffset48_of_provided_cell, dtype_of_provided_cell)
+    //         );
+    //     }
+    //     return provided_packed_cell;
+    // }
+
     packed64_t MasterClockConf::RefreshPackedCellClockOnly(
         packed64_t provided_packed_cell,
         APCPagedNodeSegmentClasses force_rel_mask,
@@ -19,7 +87,7 @@ namespace PredictedAdaptedEncoding
         {
             locality_of_provided_cell = *override_locality;
         }
-        const APCPagedNodeSegmentClasses rel_mask = (force_rel_mask == APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL) ? 
+        const APCPagedNodeSegmentClasses rel_mask = (force_rel_mask == APCPagedNodeSegmentClasses::NULLNAN) ? 
                         PackedCell64_t::ExtractRelMaskFromPacked(provided_packed_cell) : force_rel_mask;
         const InternalDataTypePolicy dtype_of_provided_cell = PackedCell64_t::ExtractPCellDataTypeFromPacked(provided_packed_cell);
         const PackedMode mode_of_provided_cell = PackedCell64_t::ExtractModeOfPackedCellFromPacked(provided_packed_cell);

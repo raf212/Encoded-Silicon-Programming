@@ -67,18 +67,27 @@ namespace PredictedAdaptedEncoding
                     return false;
                 }
 
-                if (CellOwnership == OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER && (PageClass == APCPagedNodeSegmentClasses::NONE || PageClass == APCPagedNodeSegmentClasses::FABRIC_SEGMENT_POOL))
+                if (
+                    CellOwnership == OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER && 
+                    (
+                        PageClass == APCPagedNodeSegmentClasses::NONE || 
+                        PageClass == APCPagedNodeSegmentClasses::NULLNAN &&
+                        FabricTableSegmentClass != FabricTableSegmentClasses::NONE
+                    )
+                )
                 {
                     IsCellValid = false;
                     return false;
                 }
 
-                if (CellOwnership == OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC && (PageClass == APCPagedNodeSegmentClasses::NONE))
+                if (
+                    CellOwnership == OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC && 
+                    (FabricTableSegmentClass == FabricTableSegmentClasses::NONE || PageClass != APCPagedNodeSegmentClasses::NONE)
+                )
                 {
                     IsCellValid = false;
                     return false;
                 }
-
 
                 if (CellMode == PackedMode::MODEL32)
                 {
@@ -97,13 +106,16 @@ namespace PredictedAdaptedEncoding
                     if (SubClassOfModel32 == Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL || SubClassOfModel32 == Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL)
                     {
                         if (
-                            (PageClass != APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY || 
-                            PageClass != APCPagedNodeSegmentClasses::CONTROL_SLOT) &&
+                            FabricTableSegmentClass == FabricTableSegmentClasses::NONE  && 
+                            (   
+                                PageClass != APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY || 
+                                PageClass != APCPagedNodeSegmentClasses::CONTROL_SLOT
+                            ) &&
                             Priority != PriorityPolicy::VERSIONED
                         )
                         {
                             IsCellValid = false;
-                            return false;
+                            return false;                            
                         }
                     }
 
@@ -440,7 +452,18 @@ namespace PredictedAdaptedEncoding
             out_packed_cell_view.LocalityOfCell = static_cast<LocalityPolicy>(ExtractLocalityFromMETA16_U_(meta16));
             out_packed_cell_view.CellMode = static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16));
 
-            if (out_packed_cell_view.CellMode == PackedMode::MODEL32 || out_packed_cell_view.CellMode == PackedMode::VALUE32)
+            if (out_packed_cell_view.CellOwnership == OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER)
+            {
+                out_packed_cell_view.PageClass = static_cast<APCPagedNodeSegmentClasses>(ExtractRelMaskFromMETA16_U_(meta16));
+            }
+            else
+            {
+                out_packed_cell_view.FabricTableSegmentClass = static_cast<FabricTableSegmentClasses>(ExtractRelMaskFromMETA16_U_(meta16));
+            }
+
+            if (out_packed_cell_view.CellMode == PackedMode::MODEL32 || 
+                out_packed_cell_view.CellMode == PackedMode::VALUE32
+            )
             {
                 if (out_packed_cell_view.CellMode == PackedMode::MODEL32)
                 {
@@ -452,7 +475,6 @@ namespace PredictedAdaptedEncoding
                 }
                 out_packed_cell_view.InCellClock16 = ExtractClk16(packed_cell);
                 out_packed_cell_view.CellValue32 = ExtractValue32(packed_cell);
-                out_packed_cell_view.PageClass = static_cast<APCPagedNodeSegmentClasses>(ExtractRelMaskFromMETA16_U_(meta16));
             }
             else
             {
@@ -466,8 +488,8 @@ namespace PredictedAdaptedEncoding
                 }
 
                 out_packed_cell_view.CellClock48 = ExtractClk48(packed_cell);
-                out_packed_cell_view.FabricTableSegmentClass = static_cast<FabricTableSegmentClasses>(ExtractRelMaskFromMETA16_U_(meta16));
             }
+
             out_packed_cell_view.CellValueDataType = static_cast<InternalDataTypePolicy>(ExtractValueDataTypeFromMETA16_U_(meta16));
             out_packed_cell_view.IsThisPackedCellValidInRuntime();
             return out_packed_cell_view;      
@@ -608,53 +630,6 @@ namespace PredictedAdaptedEncoding
             return SetMETA16InPacked(packed_cell, new_desired_meta);
         }
 
-        /// @brief Can be used to create Packed Cell of ANY: PackedMode, CellClass, SubClass
-        ///-> FAMILY -> ModelFamily / TypeFamily && SUB-CLASS-> Model32Subclass / Model48Subclass / AccessContractOfValue
-        /// @param cell_class Should derive from -> APCPagedNodeSegmentClasses / FabricTableSegmentClasses
-        /// @param sub_class Should derive from -> Model32Subclass / Model48Subclass / AccessContractOfValue
-        /// @return VALID -> Packed Cell -> OR: UINT64_MAX
-        static  constexpr meta16_t MakeCellMetaForModel_32t(
-            StructureFamily32 cell_behavior = StructureFamily32::VALUE32,
-            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
-            OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
-            LocalityPolicy locality = LocalityPolicy::IDLE,
-            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
-            Model32Subclass sub_class = Model32Subclass::SELF_CLASS,
-            InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
-        ) noexcept
-        {
-            return MakeInCellMeta_16t(
-                static_cast<PackedMode>(cell_behavior),
-                locality,
-                ownership,
-                cell_data_type,
-                static_cast<tag8_t>(page_class),
-                static_cast<tag8_t>(sub_class),
-                static_cast<tag8_t>(priority)
-            );
-        }
-
-        static  constexpr meta16_t MakeInCellMetaForMode_48t(
-            StructureFamily48 cell_behavior = StructureFamily48::VALUE48,
-            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
-            OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
-            LocalityPolicy locality = LocalityPolicy::IDLE,
-            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
-            Model48Subclass sub_class = Model48Subclass::SELF_CLASS,
-            InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
-        ) noexcept
-        {
-            return MakeInCellMeta_16t(
-                static_cast<PackedMode>(cell_behavior),
-                locality,
-                ownership,
-                cell_data_type,
-                static_cast<tag8_t>(page_class),
-                static_cast<tag8_t>(sub_class),
-                static_cast<tag8_t>(priority)
-            );
-        }
-
         template <typename PCDT>
         static constexpr std::optional<PCDT> ExtractAnyPackedValueX(packed64_t packed_cell)
         {
@@ -748,32 +723,83 @@ namespace PredictedAdaptedEncoding
                 return Compose48BitFamilyPackedCell(cell_value, desired_meta16);
             }
         }
-
-        static constexpr meta16_t MakeInCellMetaForAny_(
-            PackedMode mode_of_cell ,
+public:
+        /// @brief Can be used to create Packed Cell of ANY: PackedMode, CellClass, SubClass
+        ///-> FAMILY -> ModelFamily / TypeFamily && SUB-CLASS-> Model32Subclass / Model48Subclass / AccessContractOfValue
+        /// @param cell_class Should derive from -> APCPagedNodeSegmentClasses / FabricTableSegmentClasses
+        /// @param sub_class Should derive from -> Model32Subclass / Model48Subclass / AccessContractOfValue
+        /// @return VALID -> Packed Cell -> OR: UINT64_MAX
+        static  constexpr meta16_t MakeCellMetaForModel_32t(
+            StructureFamily32 cell_behavior = StructureFamily32::VALUE32,
             PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
             OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
             LocalityPolicy locality = LocalityPolicy::IDLE,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
-            tag8_t sub_class = static_cast<tag8_t>(Model32Subclass::SELF_CLASS),
+            Model32Subclass sub_class = Model32Subclass::SELF_CLASS,
             InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
         ) noexcept
         {
             return MakeInCellMeta_16t(
-                mode_of_cell,
+                static_cast<PackedMode>(cell_behavior),
                 locality,
                 ownership,
                 cell_data_type,
                 static_cast<tag8_t>(page_class),
-                sub_class,
+                static_cast<tag8_t>(sub_class),
                 static_cast<tag8_t>(priority)
             );
         }
 
+        static  constexpr meta16_t MakeInCellMetaForMode_48t(
+            StructureFamily48 cell_behavior = StructureFamily48::VALUE48,
+            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
+            OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+            LocalityPolicy locality = LocalityPolicy::IDLE,
+            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
+            Model48Subclass sub_class = Model48Subclass::SELF_CLASS,
+            InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
+        ) noexcept
+        {
+            return MakeInCellMeta_16t(
+                static_cast<PackedMode>(cell_behavior),
+                locality,
+                ownership,
+                cell_data_type,
+                static_cast<tag8_t>(page_class),
+                static_cast<tag8_t>(sub_class),
+                static_cast<tag8_t>(priority)
+            );
+        }
+
+        /// @brief Make meta for ANY: OwnershipPolicy of ModelFamily::MODEL32
+        /// @param page_class uint8_t :: For safer use Use like static_cast<uint8_t>(Param->enum::value)
+        /// @return 
+        static constexpr meta16_t MakeInCellMetaForAnyModel_32t(
+            OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+            tag8_t cell_class = static_cast<tag8_t>(APCPagedNodeSegmentClasses::FREE_SLOT),
+            Model32Subclass sub_class = Model32Subclass::SELF_CLASS,
+            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
+            LocalityPolicy locality = LocalityPolicy::IDLE,
+            InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
+        ) noexcept
+        {
+            return MakeInCellMeta_16t(
+                PackedMode::MODEL32,
+                locality,
+                ownership,
+                cell_data_type,
+                static_cast<tag8_t>(cell_class),
+                static_cast<tag8_t>(sub_class),
+                static_cast<tag8_t>(priority)
+            );
+        }
+
+private:
+
         /// @brief Make meta Using only HIGHEST_TRUTH: 
-        /// @param class_of_cell 
-        /// @param sub_class 
-        /// @param priority 
+        /// @param class_of_cell TYPE: uint8_t :: For safer use Use like static_cast<uint8_t>(Param->enum::value)
+        /// @param sub_class TYPE: uint8_t :: For safer use Use like static_cast<uint8_t>(Param->enum::value)
+        /// @param priority TYPE: uint8_t :: For safer use Use like static_cast<uint8_t>(Param->enum::value)
         /// @return 
         static constexpr meta16_t MakeInCellMeta_16t(
             PackedMode mode, 
