@@ -328,66 +328,6 @@ namespace PredictedAdaptedEncoding
             
         }
 
-        static constexpr  packed64_t SetCLK16InPacked(packed64_t packed_cell, clk16_t clk16)
-        {
-            constexpr packed64_t clk16_mask = (MaskLowNBits(CLK_B16) << VALBITS);
-            packed_cell &= ~clk16_mask;
-            packed_cell |= (packed64_t(clk16 & MaskLowNBits(CLK_B16)) << VALBITS);
-            return packed_cell;
-        }
-
-        /// @brief Make meta for ANY: OwnershipPolicy of ModelFamily::MODEL48
-        /// @param page_class uint8_t :: For safer use Use like static_cast<uint8_t>(Param->enum::value)
-        /// @return 
-        static constexpr meta16_t MakeMeta16ForAnyOwnerAndItsClassModel_48t(
-            OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
-            tag8_t cell_class = static_cast<tag8_t>(APCPagedNodeSegmentClasses::FREE_SLOT),
-            Model48Subclass sub_class = Model48Subclass::SELF_CLASS,
-            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
-            LocalityPolicy locality = LocalityPolicy::IDLE,
-            InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
-        ) noexcept
-        {
-            return MakeInCellMeta_16t(
-                PackedMode::MODEL48,
-                locality,
-                ownership,
-                cell_data_type,
-                static_cast<tag8_t>(cell_class),
-                static_cast<tag8_t>(sub_class),
-                static_cast<tag8_t>(priority)
-            );
-        }
-
-        /// @brief Make meta for ANY: OwnershipPolicy of ModelFamily::MODEL32
-        /// @param page_class uint8_t :: For safer use Use like static_cast<uint8_t>(Param->enum::value)
-        /// @return 
-        static constexpr meta16_t MakeMeta16ForAnyOwnerAndItsClassModel_32t(
-            OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
-            tag8_t cell_class = static_cast<tag8_t>(APCPagedNodeSegmentClasses::FREE_SLOT),
-            Model32Subclass sub_class = Model32Subclass::SELF_CLASS,
-            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
-            LocalityPolicy locality = LocalityPolicy::IDLE,
-            InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
-        ) noexcept
-        {
-            return MakeInCellMeta_16t(
-                PackedMode::MODEL32,
-                locality,
-                ownership,
-                cell_data_type,
-                static_cast<tag8_t>(cell_class),
-                static_cast<tag8_t>(sub_class),
-                static_cast<tag8_t>(priority)
-            );
-        }
-
-        static constexpr bool HasHigherPriorityBetweenCellA_B(packed64_t cell_A, packed64_t cell_B) noexcept
-        {
-            return ExtractPriorityFromPacked(cell_A) > ExtractPriorityFromPacked(cell_B);
-        }
-
-
         static constexpr AuthoritiveCellView GetAuthoritiveViewsForACell(packed64_t packed_cell) noexcept
         {
             AuthoritiveCellView out_packed_cell_view{};
@@ -493,43 +433,6 @@ namespace PredictedAdaptedEncoding
             }
         }
 
-private:
-
-        /// @brief Make meta Using only HIGHEST_TRUTH: 
-        /// @param class_of_cell TYPE: uint8_t :: For safer use Use like static_cast<uint8_t>(Param->enum::value)
-        /// @param sub_class TYPE: uint8_t :: For safer use Use like static_cast<uint8_t>(Param->enum::value)
-        /// @param priority TYPE: uint8_t :: For safer use Use like static_cast<uint8_t>(Param->enum::value)
-        /// @return 
-        static constexpr meta16_t MakeInCellMeta_16t(
-            PackedMode mode, 
-            LocalityPolicy locality, 
-            OwnershipPolicy cell_ownership,
-            InternalDataTypePolicy data_type,
-            tag8_t class_of_cell, 
-            tag8_t sub_class, 
-            tag8_t priority
-        ) noexcept
-        {
-
-            meta16_t cell_priority = static_cast<meta16_t>(static_cast<tag8_t>(priority) & PRIORITY_MASK);
-            meta16_t cell_authority = static_cast<meta16_t>(static_cast<tag8_t>(cell_ownership) & NODE_AUTH_MASK); 
-            meta16_t cell_locality = static_cast<meta16_t>(static_cast<tag8_t>(locality) & LOCALITY_MASK);
-            meta16_t cell_mode = static_cast<meta16_t>(static_cast<tag8_t>(mode) & CELL_MODE_MASK);
-            meta16_t cell_class = static_cast<meta16_t>(class_of_cell & CELL_CLASS_MASK);
-            meta16_t cell_sub_class = static_cast<meta16_t>(static_cast<tag8_t>(sub_class) & SUBCLASS_MASK);
-            meta16_t cell_data_type = static_cast<meta16_t>(static_cast<unsigned>(data_type) & CELL_INTERNAL_DATA_TYPE_MASK);
-
-            meta16_t cell_meta = static_cast<meta16_t>(
-                (cell_priority  << (PRIORITY_SHIFT))
-                | (cell_authority << (NODE_AUTH_SHIFT))
-                | (cell_locality << LOCALITY_SHIFT)
-                | (cell_mode << CELL_MODE_SHIFT)
-                | (cell_class << CELL_CLASS_SHIFT)
-                | (cell_sub_class << SUBCLASS_SHIFT)
-                | cell_data_type
-            );
-            return cell_meta;
-        }
 
     };
 
