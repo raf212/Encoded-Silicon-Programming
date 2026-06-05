@@ -6,10 +6,162 @@ namespace PredictedAdaptedEncoding
 
     // when user extracting a cell it can return UINT64_MAX as a symbole of invalid extraction method for that cell.
 
-    struct PackedCell64_t 
+    struct CoreExtractor
     {
         static constexpr uint16_t CLOCK_16_SENTINAL = UINT16_MAX;
         static constexpr uint64_t PACKED_CELL_SENTINAL = UINT64_MAX;
+
+        static constexpr meta16_t ExtractMeta16fromPackedCell(packed64_t packed_cell) noexcept
+        {
+            return static_cast<meta16_t>((packed_cell >> TOTAL_LOW) & MaskLowNBits(META16_B16));
+        }
+
+        static constexpr PackedMode ExtractModeOfPackedCellFromPacked(packed64_t packed_cell) noexcept
+        {
+            return static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
+        }
+
+        static constexpr  bool IsPackedCellFrom32BitFamily(packed64_t packed_cell) noexcept
+        {
+            const PackedMode packed_mode = ExtractModeOfPackedCellFromPacked(packed_cell);
+
+            if (packed_mode == PackedMode::MODEL32 || packed_mode == PackedMode::VALUE32)
+            {
+                return true;
+            }
+            
+            return false;
+        }
+
+        static constexpr val32_t ExtractValue32(packed64_t packed_cell) noexcept
+        {
+            if (!IsPackedCellFrom32BitFamily(packed_cell))
+            {
+                return IN_CELL_VALUE_MODE32_SENTINAL;
+            }
+            return static_cast<val32_t>(packed_cell & MaskLowNBits(VALBITS));
+        }
+
+        static constexpr clk16_t ExtractClk16(packed64_t packed_cell) noexcept
+        {
+            if (!IsPackedCellFrom32BitFamily(packed_cell))
+            {
+                return CLOCK_16_SENTINAL;
+            }
+            return static_cast<clk16_t>((packed_cell >> (VALBITS)) & MaskLowNBits(CLK_B16));
+        }
+
+        static constexpr uint64_t ExtractClk48(packed64_t packed_cell) noexcept
+        {
+            if (IsPackedCellFrom32BitFamily(packed_cell))
+            {
+                return PACKED_CELL_SENTINAL;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+            }
+            return static_cast<uint64_t>(packed_cell & MaskLowNBits(CLK_B48));
+        }
+
+        static constexpr PriorityPolicy ExtractPriorityFromPacked(packed64_t packed_cell) noexcept
+        {
+            return static_cast<PriorityPolicy>(ExtractPriorityFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
+        }
+
+        static constexpr LocalityPolicy ExtractLocalityFromPacked(packed64_t packed_cell) noexcept
+        {
+            return static_cast<LocalityPolicy>(ExtractLocalityFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
+        }
+
+        static constexpr OwnershipPolicy ExtractNodeAuthorityFromPacked(packed64_t packed_cell) noexcept
+        {
+            return static_cast<OwnershipPolicy>(ExtractCellLocalNodeAuthotityFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
+        }
+
+        static constexpr APCPagedNodeSegmentClasses ExtractRelMaskFromPacked(packed64_t packed_cell) noexcept
+        {
+            return static_cast<APCPagedNodeSegmentClasses>(ExtractRelMaskFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
+        }
+
+        static constexpr Model32Subclass ExtractRelOffset32FromPacked(packed64_t packed_cell) noexcept
+        {
+            return static_cast<Model32Subclass>(ExtractSubClassOrContractFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
+        }
+
+        static constexpr Model48Subclass ExtractRelOffset48FromPacked(packed64_t packed_cell) noexcept
+        {
+            return static_cast<Model48Subclass>(ExtractSubClassOrContractFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
+        }
+
+        static constexpr InternalDataTypePolicy ExtractPCellDataTypeFromPacked(packed64_t packed_cell) noexcept
+        {
+            return static_cast<InternalDataTypePolicy>(ExtractValueDataTypeFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
+        }
+
+        template <typename PCDT>
+        static constexpr std::optional<PCDT> ExtractAnyPackedValueX(packed64_t packed_cell)
+        {
+            constexpr InternalDataTypePolicy expected_dtype = BridgeOfPackedCellDataType_v<PCDT>;
+            if(ExtractPCellDataTypeFromPacked(packed_cell) != expected_dtype)
+            {
+                return std::nullopt;
+            }
+            if (IsPackedCellFrom32BitFamily(packed_cell))
+            {
+                if (sizeof(PCDT) > sizeof(val32_t))
+                {
+                    return std::nullopt;
+                }
+                const val32_t value_bits32 = ExtractValue32(packed_cell);
+                return BitCastMaybe<PCDT>(value_bits32);
+            }
+
+            if (sizeof(PCDT) > SIZE_OF_MODE_48)
+            {
+                return std::nullopt;
+            }
+            uint64_t value_bits_48 = ExtractClk48(packed_cell);
+            return BitCastMaybe<PCDT>(value_bits_48);
+        }
+
+protected:
+
+        static constexpr tag8_t ExtractPriorityFromMETA16_U_(meta16_t meta16) noexcept
+        {
+            return static_cast<tag8_t>((meta16 >> PRIORITY_SHIFT) & PRIORITY_MASK);
+        }
+
+        static constexpr tag8_t ExtractCellLocalNodeAuthotityFromMETA16_U_(meta16_t meta16) noexcept
+        {
+            return static_cast<tag8_t>((meta16 >> NODE_AUTH_SHIFT ) & NODE_AUTH_MASK);
+        }
+        
+        static constexpr tag8_t ExtractLocalityFromMETA16_U_(meta16_t meta16) noexcept
+        {
+            return static_cast<tag8_t>((meta16 >> LOCALITY_SHIFT) & LOCALITY_MASK);
+        }
+
+        static constexpr tag8_t ExtractCellModeFromMETA16_U_(meta16_t meta16) noexcept
+        {
+            return static_cast<tag8_t>((meta16 >> CELL_MODE_SHIFT) & CELL_MODE_MASK);
+        }
+
+        static constexpr tag8_t ExtractRelMaskFromMETA16_U_(meta16_t meta16) noexcept
+        {
+            return static_cast<tag8_t>((meta16 >> CELL_CLASS_SHIFT) & CELL_CLASS_MASK);
+        }
+
+        static constexpr tag8_t ExtractSubClassOrContractFromMETA16_U_(meta16_t meta16) noexcept
+        {
+            return static_cast<tag8_t>((meta16 >> SUBCLASS_SHIFT) & SUBCLASS_MASK);
+        }
+
+        static constexpr tag8_t ExtractValueDataTypeFromMETA16_U_(meta16_t meta16) noexcept
+        {
+            return static_cast<tag8_t>((meta16 >> PCELL_DETATYPE_SHIFT) & CELL_INTERNAL_DATA_TYPE_MASK);
+        }
+    };
+    
+
+    struct PackedCell64_t  : public CoreExtractor
+    {
         static constexpr uint64_t MODE_48_MAX_UNSIGNED_LIMIT = 0xFFFFFFFFFFFF;
 
         static constexpr bool IsThisCellValid(packed64_t packed_cell) noexcept
@@ -394,90 +546,6 @@ namespace PredictedAdaptedEncoding
             );
         }
 
-        static constexpr meta16_t ExtractMeta16fromPackedCell(packed64_t packed_cell) noexcept
-        {
-            return static_cast<meta16_t>((packed_cell >> TOTAL_LOW) & MaskLowNBits(META16_B16));
-        }
-
-        static constexpr PackedMode ExtractModeOfPackedCellFromPacked(packed64_t packed_cell) noexcept
-        {
-            return static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
-        }
-
-        static constexpr  bool IsPackedCellFrom32BitFamily(packed64_t packed_cell) noexcept
-        {
-            const PackedMode packed_mode = ExtractModeOfPackedCellFromPacked(packed_cell);
-
-            if (packed_mode == PackedMode::MODEL32 || packed_mode == PackedMode::VALUE32)
-            {
-                return true;
-            }
-            
-            return false;
-        }
-
-        static constexpr val32_t ExtractValue32(packed64_t packed_cell) noexcept
-        {
-            if (!IsPackedCellFrom32BitFamily(packed_cell))
-            {
-                return IN_CELL_VALUE_MODE32_SENTINAL;
-            }
-            return static_cast<val32_t>(packed_cell & MaskLowNBits(VALBITS));
-        }
-
-        static constexpr clk16_t ExtractClk16(packed64_t packed_cell) noexcept
-        {
-            if (!IsPackedCellFrom32BitFamily(packed_cell))
-            {
-                return CLOCK_16_SENTINAL;
-            }
-            return static_cast<clk16_t>((packed_cell >> (VALBITS)) & MaskLowNBits(CLK_B16));
-        }
-
-        static constexpr uint64_t ExtractClk48(packed64_t packed_cell) noexcept
-        {
-            if (IsPackedCellFrom32BitFamily(packed_cell))
-            {
-                return PACKED_CELL_SENTINAL;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
-            }
-            return static_cast<uint64_t>(packed_cell & MaskLowNBits(CLK_B48));
-        }
-
-        static constexpr PriorityPolicy ExtractPriorityFromPacked(packed64_t packed_cell) noexcept
-        {
-            return static_cast<PriorityPolicy>(ExtractPriorityFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
-        }
-
-        static constexpr LocalityPolicy ExtractLocalityFromPacked(packed64_t packed_cell) noexcept
-        {
-            return static_cast<LocalityPolicy>(ExtractLocalityFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
-        }
-
-        static constexpr OwnershipPolicy ExtractNodeAuthorityFromPacked(packed64_t packed_cell) noexcept
-        {
-            return static_cast<OwnershipPolicy>(ExtractCellLocalNodeAuthotityFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
-        }
-
-        static constexpr APCPagedNodeSegmentClasses ExtractRelMaskFromPacked(packed64_t packed_cell) noexcept
-        {
-            return static_cast<APCPagedNodeSegmentClasses>(ExtractRelMaskFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
-        }
-
-        static constexpr Model32Subclass ExtractRelOffset32FromPacked(packed64_t packed_cell) noexcept
-        {
-            return static_cast<Model32Subclass>(ExtractSubClassOrContractFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
-        }
-
-        static constexpr Model48Subclass ExtractRelOffset48FromPacked(packed64_t packed_cell) noexcept
-        {
-            return static_cast<Model48Subclass>(ExtractSubClassOrContractFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
-        }
-
-        static constexpr InternalDataTypePolicy ExtractPCellDataTypeFromPacked(packed64_t packed_cell) noexcept
-        {
-            return static_cast<InternalDataTypePolicy>(ExtractValueDataTypeFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
-        }
-
         static constexpr bool HasHigherPriorityBetweenCellA_B(packed64_t cell_A, packed64_t cell_B) noexcept
         {
             return ExtractPriorityFromPacked(cell_A) > ExtractPriorityFromPacked(cell_B);
@@ -682,31 +750,7 @@ namespace PredictedAdaptedEncoding
             return SetMETA16InPacked(packed_cell, new_desired_meta);
         }
 
-        template <typename PCDT>
-        static constexpr std::optional<PCDT> ExtractAnyPackedValueX(packed64_t packed_cell)
-        {
-            constexpr InternalDataTypePolicy expected_dtype = BridgeOfPackedCellDataType_v<PCDT>;
-            if(ExtractPCellDataTypeFromPacked(packed_cell) != expected_dtype)
-            {
-                return std::nullopt;
-            }
-            if (IsPackedCellFrom32BitFamily(packed_cell))
-            {
-                if (sizeof(PCDT) > sizeof(val32_t))
-                {
-                    return std::nullopt;
-                }
-                const val32_t value_bits32 = ExtractValue32(packed_cell);
-                return BitCastMaybe<PCDT>(value_bits32);
-            }
 
-            if (sizeof(PCDT) > SIZE_OF_MODE_48)
-            {
-                return std::nullopt;
-            }
-            uint64_t value_bits_48 = ExtractClk48(packed_cell);
-            return BitCastMaybe<PCDT>(value_bits_48);
-        }
         
     private:
 
@@ -812,41 +856,6 @@ private:
                 | cell_data_type
             );
             return cell_meta;
-        }
-
-        static constexpr tag8_t ExtractPriorityFromMETA16_U_(meta16_t meta16) noexcept
-        {
-            return static_cast<tag8_t>((meta16 >> PRIORITY_SHIFT) & PRIORITY_MASK);
-        }
-
-        static constexpr tag8_t ExtractCellLocalNodeAuthotityFromMETA16_U_(meta16_t meta16) noexcept
-        {
-            return static_cast<tag8_t>((meta16 >> NODE_AUTH_SHIFT ) & NODE_AUTH_MASK);
-        }
-        
-        static constexpr tag8_t ExtractLocalityFromMETA16_U_(meta16_t meta16) noexcept
-        {
-            return static_cast<tag8_t>((meta16 >> LOCALITY_SHIFT) & LOCALITY_MASK);
-        }
-
-        static constexpr tag8_t ExtractCellModeFromMETA16_U_(meta16_t meta16) noexcept
-        {
-            return static_cast<tag8_t>((meta16 >> CELL_MODE_SHIFT) & CELL_MODE_MASK);
-        }
-
-        static constexpr tag8_t ExtractRelMaskFromMETA16_U_(meta16_t meta16) noexcept
-        {
-            return static_cast<tag8_t>((meta16 >> CELL_CLASS_SHIFT) & CELL_CLASS_MASK);
-        }
-
-        static constexpr tag8_t ExtractSubClassOrContractFromMETA16_U_(meta16_t meta16) noexcept
-        {
-            return static_cast<tag8_t>((meta16 >> SUBCLASS_SHIFT) & SUBCLASS_MASK);
-        }
-
-        static constexpr tag8_t ExtractValueDataTypeFromMETA16_U_(meta16_t meta16) noexcept
-        {
-            return static_cast<tag8_t>((meta16 >> PCELL_DETATYPE_SHIFT) & CELL_INTERNAL_DATA_TYPE_MASK);
         }
 
     };
