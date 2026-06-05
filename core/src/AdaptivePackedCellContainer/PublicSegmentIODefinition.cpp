@@ -42,29 +42,30 @@ namespace PredictedAdaptedEncoding
         std::optional<uint64_t> clock48,
         PriorityPolicy priority,
         LocalityPolicy locality,
-        APCPagedNodeSegmentClasses page_class,
-        Model48Subclass reloffset,
-        InternalDataTypePolicy dtype,
-        OwnershipPolicy node_authority
+        APCPagedNodeSegmentClasses page_class
     ) noexcept
     {
-        if ((reloffset != Model48Subclass::PURE_TIMER_48))
-        {
-            return PackedCell64_t::MakeFaultyCell();
-        }
         
         if (OwnedMasterClockConfPtr_)
         {
             return OwnedMasterClockConfPtr_->ComposePureClockCell48();
         }
         
-        meta16_t strl_clock48 = PackedCell64_t::MakeInCellMetaForMode_48t(StructureFamily48::MODEL48, priority, node_authority, locality, page_class, reloffset, dtype);
+        const meta16_t meta16 = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_48t(
+            OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+            static_cast<tag8_t>(page_class),
+            Model48Subclass::PURE_TIMER_48, 
+            priority, locality, 
+            InternalDataTypePolicy::UnsignedPCellDataType
+        );
+
         if (clock48)
         {
-            return PackedCell64_t::Compose48BitFamilyPackedCell(clock48.value(), strl_clock48);
+            return PackedCell64_t::Compose48BitFamilyPackedCell(clock48.value(), meta16);
         }
+        
         Timer48 now_timer;
-        return PackedCell64_t::Compose48BitFamilyPackedCell((now_timer.NowTicks() & MaskLowNBits(CLK_B48)), strl_clock48);
+        return PackedCell64_t::Compose48BitFamilyPackedCell((now_timer.NowTicks() & MaskLowNBits(CLK_B48)), meta16);
     }
 
     void SegmentIODefinition::WriteOrUpdateMetaClock48(PriorityPolicy priority, std::optional<uint64_t>meta_clock_48 ) noexcept

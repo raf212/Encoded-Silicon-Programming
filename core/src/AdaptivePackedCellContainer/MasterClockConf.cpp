@@ -47,16 +47,23 @@ namespace PredictedAdaptedEncoding
         }
         
 
-        // const Model48Subclass reloffset48_of_provided_cell = PackedCell64_t::ExtractRelOffset48FromPacked(provided_packed_cell);
+        const Model48Subclass reloffset48_of_provided_cell = PackedCell64_t::ExtractRelOffset48FromPacked(provided_packed_cell);
         
-        // if (reloffset48_of_provided_cell == Model48Subclass::PURE_TIMER_48)
-        // {
-        //     return PackedCell64_t::Compose48BitFamilyPackedCell(
-        //         now_ticks48,
-        //         //rename Strl to STRL(future)
-        //         PackedCell64_t::MakeInCellMetaForMode_48t(StructureFamily48::MODEL48, priority_of_provided_cell, node_authority, locality_of_provided_cell, rel_mask, reloffset48_of_provided_cell, dtype_of_provided_cell)
-        //     );
-        // }
+        if (reloffset48_of_provided_cell == Model48Subclass::PURE_TIMER_48)
+        {
+            return PackedCell64_t::Compose48BitFamilyPackedCell(
+                now_ticks48,
+                //rename Strl to STRL(future)
+                PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_48t(
+                    desired_authoretive_view.CellOwnership,
+                    desired_authoretive_view.CellOwnership == OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER ? static_cast<tag8_t>(desired_authoretive_view.PageClass) : static_cast<tag8_t>(desired_authoretive_view.FabricTableSegmentClass),
+                    desired_authoretive_view.SubClassOfModel48.value(),
+                    desired_authoretive_view.Priority,
+                    override_locality.has_value() ? override_locality.value() : desired_authoretive_view.LocalityOfCell,
+                    desired_authoretive_view.CellValueDataType
+                )            
+            );
+        }
         return provided_packed_cell;
     }
 
@@ -134,7 +141,7 @@ std::optional<uint64_t> MasterClockConf::ReconstructCellClock16toFull48BySegment
         {
             return false;
         }
-        packed64_t wanted_pure_clock48 = ComposePureClockCell48(PriorityPolicy::PRESSURE_FIRST);
+        packed64_t wanted_pure_clock48 = ComposePureClockCell48(OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER);
         APCPtr_->BackingPtr[static_cast<size_t>(MetaIndexOfAPCNode::LOCAL_CLOCK48)].store(wanted_pure_clock48, MoStoreSeq_);
         APCPtr_->BackingPtr[static_cast<size_t>(MetaIndexOfAPCNode::LOCAL_CLOCK48)].notify_all();
         return true;

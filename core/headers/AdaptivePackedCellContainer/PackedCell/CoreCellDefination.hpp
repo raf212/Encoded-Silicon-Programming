@@ -348,11 +348,56 @@ namespace PredictedAdaptedEncoding
             return packed_cell;
         }
 
+        /// @brief Make meta for ANY: OwnershipPolicy of ModelFamily::MODEL48
+        /// @param page_class uint8_t :: For safer use Use like static_cast<uint8_t>(Param->enum::value)
+        /// @return 
+        static constexpr meta16_t MakeMeta16ForAnyOwnerAndItsClassModel_48t(
+            OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+            tag8_t cell_class = static_cast<tag8_t>(APCPagedNodeSegmentClasses::FREE_SLOT),
+            Model48Subclass sub_class = Model48Subclass::SELF_CLASS,
+            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
+            LocalityPolicy locality = LocalityPolicy::IDLE,
+            InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
+        ) noexcept
+        {
+            return MakeInCellMeta_16t(
+                PackedMode::MODEL48,
+                locality,
+                ownership,
+                cell_data_type,
+                static_cast<tag8_t>(cell_class),
+                static_cast<tag8_t>(sub_class),
+                static_cast<tag8_t>(priority)
+            );
+        }
+
+        /// @brief Make meta for ANY: OwnershipPolicy of ModelFamily::MODEL32
+        /// @param page_class uint8_t :: For safer use Use like static_cast<uint8_t>(Param->enum::value)
+        /// @return 
+        static constexpr meta16_t MakeMeta16ForAnyOwnerAndItsClassModel_32t(
+            OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+            tag8_t cell_class = static_cast<tag8_t>(APCPagedNodeSegmentClasses::FREE_SLOT),
+            Model32Subclass sub_class = Model32Subclass::SELF_CLASS,
+            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
+            LocalityPolicy locality = LocalityPolicy::IDLE,
+            InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
+        ) noexcept
+        {
+            return MakeInCellMeta_16t(
+                PackedMode::MODEL32,
+                locality,
+                ownership,
+                cell_data_type,
+                static_cast<tag8_t>(cell_class),
+                static_cast<tag8_t>(sub_class),
+                static_cast<tag8_t>(priority)
+            );
+        }
+
         static constexpr meta16_t ExtractMeta16fromPackedCell(packed64_t packed_cell) noexcept
         {
             return static_cast<meta16_t>((packed_cell >> TOTAL_LOW) & MaskLowNBits(META16_B16));
         }
-
 
         static constexpr PackedMode ExtractModeOfPackedCellFromPacked(packed64_t packed_cell) noexcept
         {
@@ -729,74 +774,6 @@ namespace PredictedAdaptedEncoding
             {
                 return Compose48BitFamilyPackedCell(cell_value, desired_meta16);
             }
-        }
-public:
-        static  constexpr meta16_t MakeInCellMetaForMode_48t(
-            StructureFamily48 cell_behavior = StructureFamily48::VALUE48,
-            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
-            OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
-            LocalityPolicy locality = LocalityPolicy::IDLE,
-            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
-            Model48Subclass sub_class = Model48Subclass::SELF_CLASS,
-            InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
-        ) noexcept
-        {
-            return MakeInCellMeta_16t(
-                static_cast<PackedMode>(cell_behavior),
-                locality,
-                ownership,
-                cell_data_type,
-                static_cast<tag8_t>(page_class),
-                static_cast<tag8_t>(sub_class),
-                static_cast<tag8_t>(priority)
-            );
-        }
-
-        /// @brief Make meta for ANY: OwnershipPolicy of ModelFamily::MODEL48
-        /// @param page_class uint8_t :: For safer use Use like static_cast<uint8_t>(Param->enum::value)
-        /// @return 
-        static constexpr meta16_t MakeMeta16ForAnyOwnerAndItsClassModel_48t(
-            OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
-            tag8_t cell_class = static_cast<tag8_t>(APCPagedNodeSegmentClasses::FREE_SLOT),
-            Model48Subclass sub_class = Model48Subclass::SELF_CLASS,
-            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
-            LocalityPolicy locality = LocalityPolicy::IDLE,
-            InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
-        ) noexcept
-        {
-            return MakeInCellMeta_16t(
-                PackedMode::MODEL48,
-                locality,
-                ownership,
-                cell_data_type,
-                static_cast<tag8_t>(cell_class),
-                static_cast<tag8_t>(sub_class),
-                static_cast<tag8_t>(priority)
-            );
-        }
-
-
-        /// @brief Make meta for ANY: OwnershipPolicy of ModelFamily::MODEL32
-        /// @param page_class uint8_t :: For safer use Use like static_cast<uint8_t>(Param->enum::value)
-        /// @return 
-        static constexpr meta16_t MakeMeta16ForAnyOwnerAndItsClassModel_32t(
-            OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
-            tag8_t cell_class = static_cast<tag8_t>(APCPagedNodeSegmentClasses::FREE_SLOT),
-            Model32Subclass sub_class = Model32Subclass::SELF_CLASS,
-            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
-            LocalityPolicy locality = LocalityPolicy::IDLE,
-            InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
-        ) noexcept
-        {
-            return MakeInCellMeta_16t(
-                PackedMode::MODEL32,
-                locality,
-                ownership,
-                cell_data_type,
-                static_cast<tag8_t>(cell_class),
-                static_cast<tag8_t>(sub_class),
-                static_cast<tag8_t>(priority)
-            );
         }
 
 private:

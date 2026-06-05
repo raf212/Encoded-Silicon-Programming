@@ -193,10 +193,7 @@ public:
         std::optional<uint64_t> clock48 = std::nullopt,
         PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST,
         LocalityPolicy locality = LocalityPolicy::PUBLISHED,
-        APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
-        Model48Subclass reloffset = Model48Subclass::PURE_TIMER_48,
-        InternalDataTypePolicy dtype = InternalDataTypePolicy::UnsignedPCellDataType,
-        OwnershipPolicy node_authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
+        APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT
     ) noexcept;
 
     void WriteOrUpdateMetaClock48(PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, std::optional<uint64_t>meta_clock_48 = std::nullopt) noexcept;
