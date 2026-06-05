@@ -512,11 +512,11 @@ namespace PredictedAdaptedEncoding
         const PackedMode mode = PackedCell64_t::ExtractModeOfPackedCellFromPacked(out_going_cell);
         if (mode == PackedMode::MODEL32)
         {
-            out_going_cell = PackedCell64_t::SetRelOffsetForMode32InPacked(out_going_cell, Model32Subclass::SELF_CLASS);
+            out_going_cell = PackedCell64_t::SetSubClassForModel32InPacked(out_going_cell, Model32Subclass::SELF_CLASS);
         }
         else
         {
-            out_going_cell = PackedCell64_t::SetRelOffsetForMode48InPacked(out_going_cell, Model48Subclass::SELF_CLASS);
+            out_going_cell = PackedCell64_t::SetSubClassForModel48InPacked(out_going_cell, Model48Subclass::SELF_CLASS);
         }
         return out_going_cell;
     }

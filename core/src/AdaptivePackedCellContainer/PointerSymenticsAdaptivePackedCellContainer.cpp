@@ -51,7 +51,7 @@ namespace PredictedAdaptedEncoding
             packed64_t head_screenshot = BackingPtr[head_idx].load(MoLoad_);
             packed64_t tail_screenshot = BackingPtr[tail_idx].load(MoLoad_);
 
-            if (!PackedCell64_t::IsPackedCellVal32(head_screenshot) || !PackedCell64_t::IsPackedCellVal32(tail_screenshot))
+            if (!PackedCell64_t::IsPackedCellFrom32BitFamily(head_screenshot) || !PackedCell64_t::IsPackedCellFrom32BitFamily(tail_screenshot))
             {
                 return std::nullopt;
             }
@@ -248,12 +248,12 @@ namespace PredictedAdaptedEncoding
                     {
                         val32_t tail_ptr_val32 = high32_half;
                         meta16_t strl_tail = PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODEL32, PriorityPolicy::PRESSURE_FIRST, OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, LocalityPolicy::PUBLISHED, rel_mask_with_ptrflag, Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL);
-                        packed64_t tail_packed = PackedCell64_t::ComposeValue32u_64(tail_ptr_val32, 0u, strl_tail);
+                        packed64_t tail_packed = PackedCell64_t::Compose32BitFamilyPackedCell(tail_ptr_val32, 0u, strl_tail);
                         BackingPtr[tail].store(tail_packed, MoStoreSeq_);
 
                         val32_t head_ptr_value32 = low32_half;
                         meta16_t strl_head = PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODEL32, PriorityPolicy::PRESSURE_FIRST, OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, LocalityPolicy::PUBLISHED, rel_mask_with_ptrflag, Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL);
-                        packed64_t head_packed = PackedCell64_t::ComposeValue32u_64(head_ptr_value32, 0u, strl_head);
+                        packed64_t head_packed = PackedCell64_t::Compose32BitFamilyPackedCell(head_ptr_value32, 0u, strl_head);
                         BackingPtr[head].store(head_packed, MoStoreSeq_);
                         BackingPtr[tail].notify_all();
                         BackingPtr[head].notify_all();

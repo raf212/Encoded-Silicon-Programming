@@ -23,7 +23,7 @@ namespace PredictedAdaptedEncoding
         ) noexcept
         {
             const uint64_t raw48 = (PackUnsigned16x3ToMode48_(low16_bits, mid_16_bits, high_16_bits) & MaskLowNBits(CLK_B48));
-            return PackedCell64_t::ComposeCLK48u_64(raw48, meta16);
+            return PackedCell64_t::Compose48BitFamilyPackedCell(raw48, meta16);
         }
 
         static constexpr uint64_t PackUnsigned16x3ToMode48_(
@@ -97,7 +97,7 @@ namespace PredictedAdaptedEncoding
                     high_8bit_2, highest_8bit_3
                 ) & MaskLowNBits(CLK_B48)
             );
-            const packed64_t compressed_packed_cell = PackedCell64_t::ComposeCLK48u_64(raw48, meta16);
+            const packed64_t compressed_packed_cell = PackedCell64_t::Compose48BitFamilyPackedCell(raw48, meta16);
             if (!IsThisCellAFourSubdevision_48t(compressed_packed_cell))
             {
                 return PackedCell64_t::PACKED_CELL_SENTINAL;

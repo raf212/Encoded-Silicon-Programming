@@ -27,7 +27,7 @@ namespace PredictedAdaptedEncoding
         {
             const val32_t value32_of_provided_cell = PackedCell64_t::ExtractValue32(provided_packed_cell);
             const Model32Subclass reloffset32_of_provided_cell = PackedCell64_t::ExtractRelOffset32FromPacked(provided_packed_cell);
-            return PackedCell64_t::ComposeValue32u_64(
+            return PackedCell64_t::Compose32BitFamilyPackedCell(
                 value32_of_provided_cell,
                 now_clk16,
                 PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODEL32, priority_of_provided_cell, node_authority, locality_of_provided_cell, rel_mask, reloffset32_of_provided_cell, dtype_of_provided_cell)
@@ -38,7 +38,7 @@ namespace PredictedAdaptedEncoding
         
         if (reloffset48_of_provided_cell == Model48Subclass::PURE_TIMER_48)
         {
-            return PackedCell64_t::ComposeCLK48u_64(
+            return PackedCell64_t::Compose48BitFamilyPackedCell(
                 now_ticks48,
                 //rename Strl to STRL(future)
                 PackedCell64_t::MakeInCellMetaForMode_48t(BehaveOfMode48::MODEL48, priority_of_provided_cell, node_authority, locality_of_provided_cell, rel_mask, reloffset48_of_provided_cell, dtype_of_provided_cell)

@@ -22,7 +22,7 @@ namespace PredictedAdaptedEncoding
         )
         {
             const clk16_t combined_subdevision_value = Pack1x8Plus2x4InUnsigned16_(lowest_8_bit_of_clock16, mid_4_bit_of_clock16, highiest_4_bit_of_clock16);
-            const packed64_t compressed_packed_cell = PackedCell64_t::ComposeValue32u_64(value32, combined_subdevision_value, meta16);
+            const packed64_t compressed_packed_cell = PackedCell64_t::Compose32BitFamilyPackedCell(value32, combined_subdevision_value, meta16);
             if (!IsThisCellA32BitMetaNoClock16Mode32(compressed_packed_cell))
             {
                 return PackedCell64_t::PACKED_CELL_SENTINAL;

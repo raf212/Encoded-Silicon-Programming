@@ -90,7 +90,7 @@ class AdaptivePackedCellContainer;
         {
             const clk16_t now_clock16 = NowClock16();
             const meta16_t strlfor32 = PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODEL32, desired_priority, desired_node_authority, desired_locality, desired_page_class, desired_reloffset, desired_dtype);
-            return PackedCell64_t::ComposeValue32u_64(provided_cell_value32, now_clock16, strlfor32);
+            return PackedCell64_t::Compose32BitFamilyPackedCell(provided_cell_value32, now_clock16, strlfor32);
         }
 
          packed64_t ComposePureClockCell48(
@@ -108,7 +108,7 @@ class AdaptivePackedCellContainer;
                 Model48Subclass::PURE_TIMER_48,
                 InternalDataTypePolicy::UnsignedPCellDataType
             );
-            return PackedCell64_t::ComposeCLK48u_64(full_clock48, strl_for_pure48_clock);
+            return PackedCell64_t::Compose48BitFamilyPackedCell(full_clock48, strl_for_pure48_clock);
         }
 
          uint8_t SetAndGetTimerDownShift(unsigned down_shift_value = UNSIGNED_ZERO) noexcept

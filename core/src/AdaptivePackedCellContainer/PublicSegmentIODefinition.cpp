@@ -61,10 +61,10 @@ namespace PredictedAdaptedEncoding
         meta16_t strl_clock48 = PackedCell64_t::MakeInCellMetaForMode_48t(BehaveOfMode48::MODEL48, priority, node_authority, locality, page_class, reloffset, dtype);
         if (clock48)
         {
-            return PackedCell64_t::ComposeCLK48u_64(clock48.value(), strl_clock48);
+            return PackedCell64_t::Compose48BitFamilyPackedCell(clock48.value(), strl_clock48);
         }
         Timer48 now_timer;
-        return PackedCell64_t::ComposeCLK48u_64((now_timer.NowTicks() & MaskLowNBits(CLK_B48)), strl_clock48);
+        return PackedCell64_t::Compose48BitFamilyPackedCell((now_timer.NowTicks() & MaskLowNBits(CLK_B48)), strl_clock48);
     }
 
     void SegmentIODefinition::WriteOrUpdateMetaClock48(PriorityPolicy priority, std::optional<uint64_t>meta_clock_48 ) noexcept
@@ -102,7 +102,7 @@ namespace PredictedAdaptedEncoding
         {
             current_clock16 = OwnedMasterClockConfPtr_->NowClock16();
         }
-        const packed64_t desired_packed = PackedCell64_t::ComposeValue32u_64(desired_value, current_clock16, current_strl);
+        const packed64_t desired_packed = PackedCell64_t::Compose32BitFamilyPackedCell(desired_value, current_clock16, current_strl);
         return BackingPtr[index].compare_exchange_strong(
             expected_packed,
             desired_packed,
