@@ -53,14 +53,18 @@ namespace PredictedAdaptedEncoding
 
 
     constexpr bool NeuromorphicSpaceTimeFabricCoordinator::MakeAndStoreDirectlyAFabricOwnedCell_(
-        size_t idx, uint64_t value32_or_64, 
+        size_t idx, 
+        uint64_t value32_or_64, 
         FabricTableSegmentClasses fabric_segment_class,
-        PackedMode cell_mode, clk16_t extended_meta_value,
-        tag8_t mode_sub_class, InternalDataTypePolicy cell_data_type, 
+        ModelFamily cell_model, 
+        clk16_t extended_meta_value,
+        tag8_t mode_sub_class, 
+        InternalDataTypePolicy cell_data_type, 
         LocalityPolicy locality_of_cell, 
         PriorityPolicy priority
     ) noexcept
     {
+        const PackedMode cell_mode = static_cast<PackedMode>(cell_model);
         const packed64_t a_valid_fabric_meta_cell32 = PackedCell64_t::MakeInitialFabricValidPackedCellModel(
             cell_mode, locality_of_cell, 
             fabric_segment_class, cell_data_type, 
@@ -98,7 +102,7 @@ namespace PredictedAdaptedEncoding
             slab_index,
             value,
             FabricTableSegmentClasses::GENERIC_CONTROL,
-            PackedMode::MODEL48,
+            ModelFamily::MODEL48,
             UNSIGNED_ZERO,
             static_cast<tag8_t>(subclass48),
             InternalDataTypePolicy::UnsignedPCellDataType,
@@ -428,7 +432,7 @@ namespace PredictedAdaptedEncoding
         MakeAndStoreDirectlyAFabricOwnedCell_(
             slot_idx, value32,
             FabricTableSegmentClasses::SLOT_DIRECTORY,
-            PackedMode::MODEL32, extended_meta_value, static_cast<tag8_t>(Model32Subclass::SELF_CLASS),
+            ModelFamily::MODEL32, extended_meta_value, static_cast<tag8_t>(Model32Subclass::SELF_CLASS),
             InternalDataTypePolicy::UnsignedPCellDataType, locality_of_cell,
             PriorityPolicy::VERSIONED
         );

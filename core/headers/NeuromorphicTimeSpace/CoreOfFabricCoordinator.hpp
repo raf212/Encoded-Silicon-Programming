@@ -426,28 +426,6 @@ namespace PredictedAdaptedEncoding
             }
         }
 
-        static constexpr packed64_t MakeAValidFabricMode48UnsignedCell(
-            uint64_t value,
-            FabricTableSegmentClasses table_class,
-            LocalityPolicy cell_locality = LocalityPolicy::IDLE,
-            PriorityPolicy priority = PriorityPolicy::VERSIONED,
-            Model48Subclass subclass_of_mode48 = Model48Subclass::SELF_CLASS,
-            StructureFamily48 cell_behaviour = StructureFamily48::VALUE48
-        )
-        {
-            return PackedCell64_t::MakeInitialFabricValidPackedCellModel(
-                static_cast<PackedMode>(cell_behaviour),
-                cell_locality, 
-                table_class, 
-                InternalDataTypePolicy::UnsignedPCellDataType,
-                value, 
-                UNSIGNED_ZERO, 
-                priority, 
-                Model32Subclass::SELF_CLASS, 
-                subclass_of_mode48
-            );
-        }
-
         static constexpr packed64_t MakeADirectoryEntryCellForFabric(
             uint32_t value,
             TableEntryCellTypeOfFabric table_cell_type,
@@ -462,8 +440,7 @@ namespace PredictedAdaptedEncoding
 
             const packed64_t packed_cell = PackedCell64_t::MakeModeledFabricValidPackedCell(
                 ModelFamily::MODEL32,
-                Model32Subclass::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4,
-                std::nullopt,
+                static_cast<tag8_t>(Model32Subclass::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4),
                 FabricTableSegmentClasses::TABLE_DIRECTORY,
                 cell_locality,
                 InternalDataTypePolicy::UnsignedPCellDataType,
@@ -488,8 +465,7 @@ namespace PredictedAdaptedEncoding
 
             const packed64_t packed_cell = PackedCell64_t::MakeModeledFabricValidPackedCell(
                 ModelFamily::MODEL32,
-                Model32Subclass::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4,
-                std::nullopt,
+                static_cast<tag8_t>(Model32Subclass::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4),
                 table_class,
                 cell_locality,
                 InternalDataTypePolicy::UnsignedPCellDataType,
