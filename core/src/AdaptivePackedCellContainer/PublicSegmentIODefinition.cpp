@@ -1005,7 +1005,7 @@ namespace PredictedAdaptedEncoding
                 return false;
             }
 
-            const packed64_t desired_cell = ComposeAPCOccupancyModel_16x3_48t(
+            const packed64_t desired_cell = ComposeAPCOwned16x3Model_48t(
                 published_count, claimed_count, faulty_count, 
                 APCPagedNodeSegmentClasses::CONTROL_SLOT,
                 control_or_meta_cells_own_locality

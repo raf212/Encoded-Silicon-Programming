@@ -47,7 +47,7 @@ namespace PredictedAdaptedEncoding
             return static_cast<uint16_t>((raw48 >> PACK3XU16TOMODE48_SHIFT_MID) & MASK_LOW_16);
         }
 
-        static uint16_t ExtractHigh16FromUnsigned48_(uint64_t raw48) noexcept
+        static constexpr uint16_t ExtractHigh16FromUnsigned48_(uint64_t raw48) noexcept
         {
             return static_cast<uint16_t>((raw48 >> PACK3XU16TOMODE48_SHIFT_HIGH) & MASK_LOW_16);
         }

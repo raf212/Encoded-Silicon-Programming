@@ -134,26 +134,25 @@ namespace PredictedAdaptedEncoding
         static constexpr uint32_t FABRIC_META_EOF = 0x41474946u;
 
 
-
-        static packed64_t ComposeAPCOccupancyModel_16x3_48t(
+        /// @brief Only functions responsible for storing value or retriving value vhecks validity of Packed Cell
+        /// @return UNCHECKED: packed64_t -> Packed Cell
+        static constexpr packed64_t ComposeAPCOwned16x3Model_48t(
             uint16_t published_count,
             uint16_t claimed_count,
             uint16_t faulty_count,
             APCPagedNodeSegmentClasses page_class,
             LocalityPolicy locality = LocalityPolicy::PUBLISHED,
             PriorityPolicy priority = PriorityPolicy::VERSIONED,
-            OwnershipPolicy authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
+            InternalDataTypePolicy dtype = InternalDataTypePolicy::UnsignedPCellDataType
         ) noexcept
         {
-            const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(
-                StructureFamily48::MODEL48,
-                priority, 
-                authority,
-                locality,
-                page_class,
-                Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL,
-                InternalDataTypePolicy::UnsignedPCellDataType
+            const meta16_t meta16 = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_48t(
+                OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+                static_cast<tag8_t>(page_class),
+                Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL, 
+                priority, locality, dtype
             );
+
             return Subdevision16x3InternalMode48CellModel::Compose3Unsigned16bitIndependentInMode48(
                 published_count,
                 claimed_count,
@@ -162,7 +161,7 @@ namespace PredictedAdaptedEncoding
             );
         }
 
-        static std::optional<uint16_t>GetOccuupancyFromPackedCellMode48(
+        static constexpr std::optional<uint16_t> GetOccuupancyFromPackedCellMode48(
             packed64_t packed_cell,
             LocalityPolicy desired_occupancy_bucket,
             uint16_t physical_capacity
@@ -193,7 +192,7 @@ namespace PredictedAdaptedEncoding
             }
         }
 
-        static uint16_t GetTootalOccupancyFromPackedCell(packed64_t packed_cell) noexcept
+        static constexpr uint16_t GetTootalOccupancyFromPackedCell(packed64_t packed_cell) noexcept
         {
             if (!Subdevision16x3InternalMode48CellModel::IsThisCellASubdevision_3x16_48t(packed_cell))
             {
@@ -210,7 +209,7 @@ namespace PredictedAdaptedEncoding
             return published + claimed + faulty;
         }
 
-        static packed64_t ComposeLayoutModelof16x3(
+        static constexpr packed64_t ComposeLayoutModelof16x3(
             uint16_t begin_low,
             uint16_t end_mid,
             uint16_t version_high,
@@ -224,7 +223,7 @@ namespace PredictedAdaptedEncoding
             return Subdevision16x3InternalMode48CellModel::Compose3Unsigned16bitIndependentInMode48(begin_low, end_mid, version_high, meta16);
         }
 
-        static  bool ExtractLayoutModel_BegainL_EndM_VersionH(packed64_t packed_cell, uint16_t& begin_index, uint16_t& end_index, uint16_t& version_count) noexcept
+        static constexpr bool ExtractLayoutModel_BegainL_EndM_VersionH(packed64_t packed_cell, uint16_t& begin_index, uint16_t& end_index, uint16_t& version_count) noexcept
         {
             if (!Subdevision16x3InternalMode48CellModel::IsThisCellASubdevision_3x16_48t(packed_cell))
             {
@@ -236,7 +235,7 @@ namespace PredictedAdaptedEncoding
             return Subdevision16x3InternalMode48CellModel::ExtractLowMidHighFromMode48_(raw48, begin_index, end_index, version_count);
         }
 
-        static  bool IsCapacityOfAPCLegal(size_t total_capacity) noexcept
+        static constexpr bool IsCapacityOfAPCLegal(size_t total_capacity) noexcept
         {
             return total_capacity > METACELL_COUNT && total_capacity <= APC_MAX_LENGTH_OR_COUNTER;
         }
@@ -244,20 +243,20 @@ namespace PredictedAdaptedEncoding
 
     protected:
 
-        static uint32_t SumOf3PartOccupancyOf48Bit_(uint64_t raw48) noexcept
+        static constexpr uint32_t SumOf3PartOccupancyOf48Bit_(uint64_t raw48) noexcept
         {
             return Subdevision16x3InternalMode48CellModel::ExtractLow16FromUnsigned48_(raw48) + 
                 Subdevision16x3InternalMode48CellModel::ExtractMid16FromUnsigned48_(raw48) + 
                 Subdevision16x3InternalMode48CellModel::ExtractHigh16FromUnsigned48_(raw48);
         }
 
-        static uint16_t DeriveIdleCoundtFromRaw48General_(uint64_t raw48, uint16_t physical_capacity) noexcept
+        static constexpr uint16_t DeriveIdleCoundtFromRaw48General_(uint64_t raw48, uint16_t physical_capacity) noexcept
         {
             const  uint32_t in_use_potion = SumOf3PartOccupancyOf48Bit_(raw48);
             return in_use_potion > physical_capacity ? UNSIGNED_ZERO : static_cast<uint16_t>(physical_capacity - in_use_potion);
         }
 
-        static uint16_t DerivedIdleFromPackedCell48(packed64_t packed_cell, uint16_t physical_capacity) noexcept
+        static constexpr uint16_t DerivedIdleFromPackedCell48(packed64_t packed_cell, uint16_t physical_capacity) noexcept
         {
             const uint64_t raw48 = PackedCell64_t::ExtractClk48(packed_cell);
             if (raw48 == PackedCell64_t::PACKED_CELL_SENTINAL)
@@ -267,7 +266,7 @@ namespace PredictedAdaptedEncoding
             return DeriveIdleCoundtFromRaw48General_(raw48, physical_capacity);
         }
 
-        static bool DoseU32FitsInU16_(uint32_t value) noexcept
+        static constexpr bool DoseU32FitsInU16_(uint32_t value) noexcept
         {
             return value <= APC_MAX_LENGTH_OR_COUNTER;
         }
@@ -287,7 +286,7 @@ namespace PredictedAdaptedEncoding
             return cells_ptr;
         }
 
-        static void FreeAlignedAtomicCells_(
+        static constexpr void FreeAlignedAtomicCells_(
             std::atomic<packed64_t>* backing_ptr,
             size_t count
         ) noexcept
