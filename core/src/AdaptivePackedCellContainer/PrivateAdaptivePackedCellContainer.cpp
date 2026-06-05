@@ -206,8 +206,8 @@ namespace PredictedAdaptedEncoding
                 continue;
             }
             
-            const packed64_t graceful_idle_cell = PackedCell64_t::MakeInitialAPCValidPackedCell(
-                current_cell_view.CellMode,
+            const packed64_t graceful_idle_cell = PackedCell64_t::MakeModeledAPCValidPackedCell(
+                static_cast<ModelFamily>(current_cell_view.CellMode),
                 current_cell_view.SubClassOfModel32,
                 current_cell_view.SubClassOfModel48,
                 cell_class, 
@@ -216,7 +216,8 @@ namespace PredictedAdaptedEncoding
             );
 
             const packed64_t idle_cell = (graceful_idle_cell == PackedCell64_t::PACKED_CELL_SENTINAL)  ? 
-                    PackedCell64_t::MakeInitialAPCValidPackedCell(current_cell_view.CellMode) : graceful_idle_cell;
+                    PackedCell64_t::MakeModeledAPCValidPackedCell(static_cast<ModelFamily>(current_cell_view.CellMode)) : 
+                        graceful_idle_cell;
 
             packed64_t expected_cell = current_cell;
             if (!BackingPtr[idx].compare_exchange_strong(expected_cell, idle_cell, OnExchangeSuccess, OnExchangeFailure))

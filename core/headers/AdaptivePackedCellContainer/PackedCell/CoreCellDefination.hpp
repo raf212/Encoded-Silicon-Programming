@@ -199,9 +199,9 @@ namespace PredictedAdaptedEncoding
         /// @param in_cell_clk16 
         /// @param probable_mode_subclass_type_32 
         /// @param probable_mode_subclass_type_48 
-        /// @return 
-        static constexpr packed64_t MakeInitialAPCValidPackedCell(
-            PackedMode cell_mode,
+        /// @return VALID -> Packed Cell -> OR: UINT64_MAX
+        static constexpr packed64_t MakeModeledAPCValidPackedCell(
+            ModelFamily cell_model,
             std::optional<Model32Subclass> probable_mode_subclass_type_32 = std::nullopt,
             std::optional<Model48Subclass> probable_mode_subclass_type_48 = std::nullopt,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::UNDEFINED,
@@ -231,7 +231,8 @@ namespace PredictedAdaptedEncoding
             }
             
             return MakeInitialValidGeneralPackedCell(
-                cell_mode, cell_locality, 
+                static_cast<PackedMode>(cell_model), 
+                cell_locality, 
                 OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, 
                 static_cast<tag8_t>(page_class),
                 in_cell_value_data_type, in_cell_value, in_cell_clk16,
@@ -249,7 +250,7 @@ namespace PredictedAdaptedEncoding
         /// @param cell_priority 
         /// @param probable_mode_subclass_type_32 
         /// @param probable_mode_subclass_type_48 
-        /// @return 
+        /// @return VALID -> Packed Cell -> OR: UINT64_MAX
         static constexpr packed64_t MakeInitialFabricValidPackedCellModel(
             PackedMode cell_mode,
             LocalityPolicy cell_locality = LocalityPolicy::IDLE,
