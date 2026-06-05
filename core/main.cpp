@@ -196,7 +196,7 @@ namespace
     {
         const uint32_t bits = BitCastPortable<uint32_t>(value);
 
-        return clock.ComposeValue32WithCurrentThreadStamp16(
+        return clock.ComposeClockedModel32FroAPC(
             bits,
             region,
             priority,

@@ -66,7 +66,7 @@ namespace
         PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST
     )
     {
-        return clock.ComposeValue32WithCurrentThreadStamp16(
+        return clock.ComposeClockedModel32FroAPC(
             value,
             region,
             priority,
@@ -86,7 +86,7 @@ namespace
     {
         const uint32_t bits = BitCastMaybe<uint32_t>(value);
 
-        return clock.ComposeValue32WithCurrentThreadStamp16(
+        return clock.ComposeClockedModel32FroAPC(
             bits,
             region,
             priority,

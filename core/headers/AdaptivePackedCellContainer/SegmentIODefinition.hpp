@@ -124,9 +124,9 @@ protected:
     {
         if (OwnedMasterClockConfPtr_)
         {
-            return OwnedMasterClockConfPtr_->ComposeValue32WithCurrentThreadStamp16(value32, page_class, priority, locality, subclass32, dtype);
+            return OwnedMasterClockConfPtr_->ComposeClockedModel32FroAPC(value32, page_class, priority, locality, subclass32, dtype);
         }
-        meta16_t meta16_for_apc = PackedCell64_t::MakeInCellMetaForAnyModel_32t(
+        meta16_t meta16_for_apc = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_32t(
             OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, 
             static_cast<tag8_t>(page_class),
             subclass32,

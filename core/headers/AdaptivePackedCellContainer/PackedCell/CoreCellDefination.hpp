@@ -731,32 +731,6 @@ namespace PredictedAdaptedEncoding
             }
         }
 public:
-        /// @brief Can be used to create Packed Cell of ANY: PackedMode, CellClass, SubClass
-        ///-> FAMILY -> ModelFamily / TypeFamily && SUB-CLASS-> Model32Subclass / Model48Subclass / AccessContractOfValue
-        /// @param cell_class Should derive from -> APCPagedNodeSegmentClasses / FabricTableSegmentClasses
-        /// @param sub_class Should derive from -> Model32Subclass / Model48Subclass / AccessContractOfValue
-        /// @return VALID -> Packed Cell -> OR: UINT64_MAX
-        static  constexpr meta16_t MakeCellMetaForModel_32t(
-            StructureFamily32 cell_behavior = StructureFamily32::VALUE32,
-            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
-            OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
-            LocalityPolicy locality = LocalityPolicy::IDLE,
-            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
-            Model32Subclass sub_class = Model32Subclass::SELF_CLASS,
-            InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
-        ) noexcept
-        {
-            return MakeInCellMeta_16t(
-                static_cast<PackedMode>(cell_behavior),
-                locality,
-                ownership,
-                cell_data_type,
-                static_cast<tag8_t>(page_class),
-                static_cast<tag8_t>(sub_class),
-                static_cast<tag8_t>(priority)
-            );
-        }
-
         static  constexpr meta16_t MakeInCellMetaForMode_48t(
             StructureFamily48 cell_behavior = StructureFamily48::VALUE48,
             PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
@@ -781,7 +755,7 @@ public:
         /// @brief Make meta for ANY: OwnershipPolicy of ModelFamily::MODEL32
         /// @param page_class uint8_t :: For safer use Use like static_cast<uint8_t>(Param->enum::value)
         /// @return 
-        static constexpr meta16_t MakeInCellMetaForAnyModel_32t(
+        static constexpr meta16_t MakeMeta16ForAnyOwnerAndItsClassModel_32t(
             OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
             tag8_t cell_class = static_cast<tag8_t>(APCPagedNodeSegmentClasses::FREE_SLOT),
             Model32Subclass sub_class = Model32Subclass::SELF_CLASS,

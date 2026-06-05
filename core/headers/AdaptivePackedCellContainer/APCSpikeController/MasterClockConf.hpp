@@ -75,20 +75,25 @@ class AdaptivePackedCellContainer;
 
         std::optional<uint64_t> ReconstructCellClock16toFull48BySegmentLocalClock48(size_t index_of_packed_cell) noexcept;
 
-
-         packed64_t ComposeValue32WithCurrentThreadStamp16(
+         /// @brief Compose Packed Cell with CLOCK16 for -> ModelFamily::MODEL32 && OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
+         /// @return 
+         packed64_t ComposeClockedModel32FroAPC(
             val32_t provided_cell_value32,
-            APCPagedNodeSegmentClasses desired_page_class = APCPagedNodeSegmentClasses::NONE,
-            PriorityPolicy desired_priority = PriorityPolicy::PRESSURE_FIRST,
-            LocalityPolicy desired_locality = LocalityPolicy::PUBLISHED,
-            Model32Subclass desired_reloffset = Model32Subclass::SELF_CLASS,
-            InternalDataTypePolicy desired_dtype = InternalDataTypePolicy::UnsignedPCellDataType,
-            OwnershipPolicy desired_node_authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
+            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::NONE,
+            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST,
+            LocalityPolicy locality = LocalityPolicy::PUBLISHED,
+            Model32Subclass sub_class = Model32Subclass::SELF_CLASS,
+            InternalDataTypePolicy dtype = InternalDataTypePolicy::UnsignedPCellDataType,
+            OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
         )
         {
             const clk16_t now_clock16 = NowClock16();
-            const meta16_t strlfor32 = PackedCell64_t::MakeCellMetaForModel_32t(StructureFamily32::MODEL32, desired_priority, desired_node_authority, desired_locality, desired_page_class, desired_reloffset, desired_dtype);
-            return PackedCell64_t::Compose32BitFamilyPackedCell(provided_cell_value32, now_clock16, strlfor32);
+            const meta16_t desired_meta16 = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_32t(
+                ownership,
+                static_cast<tag8_t>(page_class),
+                sub_class, priority, locality, dtype
+            );
+            return PackedCell64_t::Compose32BitFamilyPackedCell(provided_cell_value32, now_clock16, desired_meta16);
         }
 
          packed64_t ComposePureClockCell48(

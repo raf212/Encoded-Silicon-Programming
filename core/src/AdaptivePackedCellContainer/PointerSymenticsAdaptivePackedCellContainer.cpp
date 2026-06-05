@@ -194,8 +194,9 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    PublishResult PointerSymenticsAdaptivePackedCellContainer::PublishHeapPtrPair_(void* object_ptr, APCPagedNodeSegmentClasses rel_mask_with_ptrflag, int max_probs) noexcept
+    PublishResult PointerSymenticsAdaptivePackedCellContainer::PublishHeapPtrPair_(void* object_ptr, APCPagedNodeSegmentClasses cell_class, int max_probs) noexcept
     {
+        (void) cell_class;
         if (!IfAPCBranchValid())
         {
             return { PublishStatus::INVALID, APCDataStructure::APC_SIZE_SENTINAL};
@@ -247,13 +248,23 @@ namespace PredictedAdaptedEncoding
                     else
                     {
                         val32_t tail_ptr_val32 = high32_half;
-                        meta16_t strl_tail = PackedCell64_t::MakeCellMetaForModel_32t(StructureFamily32::MODEL32, PriorityPolicy::PRESSURE_FIRST, OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, LocalityPolicy::PUBLISHED, rel_mask_with_ptrflag, Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL);
-                        packed64_t tail_packed = PackedCell64_t::Compose32BitFamilyPackedCell(tail_ptr_val32, 0u, strl_tail);
+                        meta16_t meta16_tail = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_32t(
+                            OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+                            static_cast<tag8_t>(APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY),
+                            Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL,
+                            PriorityPolicy::VERSIONED
+                        );
+                        packed64_t tail_packed = PackedCell64_t::Compose32BitFamilyPackedCell(tail_ptr_val32, 0u, meta16_tail);
                         BackingPtr[tail].store(tail_packed, MoStoreSeq_);
 
                         val32_t head_ptr_value32 = low32_half;
-                        meta16_t strl_head = PackedCell64_t::MakeCellMetaForModel_32t(StructureFamily32::MODEL32, PriorityPolicy::PRESSURE_FIRST, OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, LocalityPolicy::PUBLISHED, rel_mask_with_ptrflag, Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL);
-                        packed64_t head_packed = PackedCell64_t::Compose32BitFamilyPackedCell(head_ptr_value32, 0u, strl_head);
+                        meta16_t meta16_head = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_32t(
+                            OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+                            static_cast<tag8_t>(APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY),
+                            Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL,
+                            PriorityPolicy::VERSIONED
+                        );
+                        packed64_t head_packed = PackedCell64_t::Compose32BitFamilyPackedCell(head_ptr_value32, 0u, meta16_head);
                         BackingPtr[head].store(head_packed, MoStoreSeq_);
                         BackingPtr[tail].notify_all();
                         BackingPtr[head].notify_all();

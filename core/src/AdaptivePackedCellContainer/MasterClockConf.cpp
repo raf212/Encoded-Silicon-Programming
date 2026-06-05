@@ -35,7 +35,7 @@ namespace PredictedAdaptedEncoding
             return PackedCell64_t::Compose32BitFamilyPackedCell(
                 desired_authoretive_view.CellValue32.value_or(UNSIGNED_ZERO),
                 now_clk16,
-                PackedCell64_t::MakeInCellMetaForAnyModel_32t(
+                PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_32t(
                     desired_authoretive_view.CellOwnership,
                     desired_authoretive_view.CellOwnership == OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER ? static_cast<tag8_t>(desired_authoretive_view.PageClass) : static_cast<tag8_t>(desired_authoretive_view.FabricTableSegmentClass),
                     desired_authoretive_view.SubClassOfModel32.value(),
