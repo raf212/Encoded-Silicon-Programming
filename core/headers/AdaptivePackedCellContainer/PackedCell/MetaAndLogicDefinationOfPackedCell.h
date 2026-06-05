@@ -101,6 +101,7 @@ namespace PredictedAdaptedEncoding {
         RESERVED_3 = 3
     };
 
+    /// @brief HIGHEST_TRUTH of Packed Cell
     enum class InternalDataTypePolicy : tag8_t
     {
         CharPCellDataType = 0,
@@ -109,6 +110,7 @@ namespace PredictedAdaptedEncoding {
         UnsignedPCellDataType = 3
     };
 
+    /// @brief HIGHEST_TRUTH of Packed Cell
     /// @param MODEL32 -> Model32Subclass
     /// @param MODEL48 -> Model48Subclass
     /// @param VALUE32 -> AccessContractOfValue

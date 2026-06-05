@@ -616,42 +616,42 @@ namespace PredictedAdaptedEncoding
         static  constexpr meta16_t MakeCellMetaForModel_32t(
             StructureFamily32 cell_behavior = StructureFamily32::VALUE32,
             PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
-            OwnershipPolicy authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+            OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
             LocalityPolicy locality = LocalityPolicy::IDLE,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
-            Model32Subclass rel_offset_32 = Model32Subclass::SELF_CLASS,
+            Model32Subclass sub_class = Model32Subclass::SELF_CLASS,
             InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
         ) noexcept
         {
-            return MakeInCellMetaFromUnsigned_16t_(
-                static_cast<tag8_t>(priority),
-                static_cast<tag8_t>(authority),
-                static_cast<tag8_t>(locality),
+            return MakeInCellMeta_16t(
+                static_cast<PackedMode>(cell_behavior),
+                locality,
+                ownership,
+                cell_data_type,
                 static_cast<tag8_t>(page_class),
-                static_cast<tag8_t>(rel_offset_32),
-                static_cast<tag8_t>(cell_behavior),
-                static_cast<tag8_t>(cell_data_type)
+                static_cast<tag8_t>(sub_class),
+                static_cast<tag8_t>(priority)
             );
         }
 
         static  constexpr meta16_t MakeInCellMetaForMode_48t(
             StructureFamily48 cell_behavior = StructureFamily48::VALUE48,
             PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
-            OwnershipPolicy authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+            OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
             LocalityPolicy locality = LocalityPolicy::IDLE,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
-            Model48Subclass rel_offset_48 = Model48Subclass::SELF_CLASS,
+            Model48Subclass sub_class = Model48Subclass::SELF_CLASS,
             InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
         ) noexcept
         {
-            return MakeInCellMetaFromUnsigned_16t_(
-                static_cast<tag8_t>(priority),
-                static_cast<tag8_t>(authority),
-                static_cast<tag8_t>(locality),
+            return MakeInCellMeta_16t(
+                static_cast<PackedMode>(cell_behavior),
+                locality,
+                ownership,
+                cell_data_type,
                 static_cast<tag8_t>(page_class),
-                static_cast<tag8_t>(rel_offset_48),
-                static_cast<tag8_t>(cell_behavior),
-                static_cast<tag8_t>(cell_data_type)
+                static_cast<tag8_t>(sub_class),
+                static_cast<tag8_t>(priority)
             );
         }
 
@@ -725,14 +725,14 @@ namespace PredictedAdaptedEncoding
             InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
         ) noexcept
         {
-            const meta16_t desired_meta16 = MakeInCellMetaFromUnsigned_16t_(
-                static_cast<tag8_t>(cell_priority),
-                static_cast<tag8_t>(cell_ownership),
-                static_cast<tag8_t>(cell_locality),
-                static_cast<tag8_t>(cell_class),
-                static_cast<tag8_t>(sub_class),
-                static_cast<tag8_t>(cell_mode),
-                static_cast<tag8_t>(cell_data_type)
+            const meta16_t desired_meta16 =  MakeInCellMeta_16t(
+                cell_mode,
+                cell_locality,
+                cell_ownership,
+                cell_data_type,
+                cell_class,
+                sub_class,
+                static_cast<tag8_t>(cell_priority)
             );
 
             if (cell_mode == PackedMode::MODEL32 || cell_mode == PackedMode::VALUE32)
@@ -752,30 +752,37 @@ namespace PredictedAdaptedEncoding
         static constexpr meta16_t MakeInCellMetaForAny_(
             PackedMode mode_of_cell ,
             PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
-            OwnershipPolicy authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+            OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
             LocalityPolicy locality = LocalityPolicy::IDLE,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::FREE_SLOT,
-            tag8_t rel_offset_any = static_cast<tag8_t>(Model32Subclass::SELF_CLASS),
+            tag8_t sub_class = static_cast<tag8_t>(Model32Subclass::SELF_CLASS),
             InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
         ) noexcept
         {
-            return MakeInCellMetaFromUnsigned_16t_(
-                static_cast<tag8_t>(priority),
-                static_cast<tag8_t>(authority),
-                static_cast<tag8_t>(locality),
+            return MakeInCellMeta_16t(
+                mode_of_cell,
+                locality,
+                ownership,
+                cell_data_type,
                 static_cast<tag8_t>(page_class),
-                static_cast<tag8_t>(rel_offset_any),
-                static_cast<tag8_t>(mode_of_cell),
-                static_cast<tag8_t>(cell_data_type)
+                sub_class,
+                static_cast<tag8_t>(priority)
             );
         }
 
-
-        static constexpr meta16_t MakeInCellMetaFromUnsigned_16t_(
-            tag8_t priority, tag8_t cell_ownership,
-            tag8_t locality, tag8_t class_of_cell, 
-            tag8_t sub_class, tag8_t mode, 
-            tag8_t data_type
+        /// @brief Make meta Using only HIGHEST_TRUTH: 
+        /// @param class_of_cell 
+        /// @param sub_class 
+        /// @param priority 
+        /// @return 
+        static constexpr meta16_t MakeInCellMeta_16t(
+            PackedMode mode, 
+            LocalityPolicy locality, 
+            OwnershipPolicy cell_ownership,
+            InternalDataTypePolicy data_type,
+            tag8_t class_of_cell, 
+            tag8_t sub_class, 
+            tag8_t priority
         ) noexcept
         {
 
