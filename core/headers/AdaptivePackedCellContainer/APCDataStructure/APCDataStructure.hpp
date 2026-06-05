@@ -209,20 +209,6 @@ namespace PredictedAdaptedEncoding
             return published + claimed + faulty;
         }
 
-        static constexpr packed64_t ComposeLayoutModelof16x3(
-            uint16_t begin_low,
-            uint16_t end_mid,
-            uint16_t version_high,
-            APCPagedNodeSegmentClasses page_class,
-            LocalityPolicy locality = LocalityPolicy::PUBLISHED,
-            PriorityPolicy priority = PriorityPolicy::VERSIONED,
-            OwnershipPolicy authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
-        ) noexcept
-        {
-            const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(StructureFamily48::MODEL48, priority, authority, locality, page_class, Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL, InternalDataTypePolicy::UnsignedPCellDataType);
-            return Subdevision16x3InternalMode48CellModel::Compose3Unsigned16bitIndependentInMode48(begin_low, end_mid, version_high, meta16);
-        }
-
         static constexpr bool ExtractLayoutModel_BegainL_EndM_VersionH(packed64_t packed_cell, uint16_t& begin_index, uint16_t& end_index, uint16_t& version_count) noexcept
         {
             if (!Subdevision16x3InternalMode48CellModel::IsThisCellASubdevision_3x16_48t(packed_cell))
@@ -239,7 +225,6 @@ namespace PredictedAdaptedEncoding
         {
             return total_capacity > METACELL_COUNT && total_capacity <= APC_MAX_LENGTH_OR_COUNTER;
         }
-
 
     protected:
 

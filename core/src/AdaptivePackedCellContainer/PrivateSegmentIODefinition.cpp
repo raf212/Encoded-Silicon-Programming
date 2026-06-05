@@ -172,14 +172,13 @@ namespace PredictedAdaptedEncoding
         {
             resolved_version = static_cast<uint16_t>(BRANCH_VERSION);
         }
-
-        const packed64_t desired_layout =
-            ComposeLayoutModelof16x3(
-                static_cast<uint16_t>(layout_bound.BeginIndex),
-                static_cast<uint16_t>(layout_bound.EndIndex),
-                resolved_version,
-                layout_bound.PAGE_LAYOUT_CLASS
-            );
+        
+        const packed64_t desired_layout = ComposeAPCOwned16x3Model_48t(
+            static_cast<uint16_t>(layout_bound.BeginIndex),
+            static_cast<uint16_t>(layout_bound.EndIndex),
+            resolved_version,
+            layout_bound.PAGE_LAYOUT_CLASS
+        );
 
         BackingPtr[static_cast<size_t>(layout_idx)].store(
             desired_layout,

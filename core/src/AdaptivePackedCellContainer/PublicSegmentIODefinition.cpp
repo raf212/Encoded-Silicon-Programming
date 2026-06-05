@@ -548,7 +548,7 @@ namespace PredictedAdaptedEncoding
                 return false;
             }
             
-            packed64_t desired_layout = ComposeLayoutModelof16x3(begain_index, end_index, resolved_version, page_class);
+            packed64_t desired_layout = ComposeAPCOwned16x3Model_48t(begain_index, end_index, resolved_version, page_class);
             packed64_t expected_layout_cell = observed_layout;
 
             if (BackingPtr[static_cast<size_t>(layout_idx)].compare_exchange_strong(
