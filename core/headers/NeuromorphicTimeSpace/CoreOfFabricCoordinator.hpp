@@ -426,37 +426,6 @@ namespace PredictedAdaptedEncoding
             }
         }
 
-        /// @brief Creates an unsigned fabric-owned cell.
-        ///
-        /// Call flow:
-        ///   This->MakeInitialFabricValidPackedCellModel()
-        ///     -> MakeInitialValidGeneralPackedCell()
-        ///     -> MakeAnUncheckedCell_::MakeInCellMetaForMode + ComposeValue
-        ///
-        /// @return packed64_t or PACKED_CELL_SENTINAL
-        static constexpr packed64_t MakeAValidFabricMode32UnsignedCell(
-            uint32_t value,
-            clk16_t external_meta_or_prob_distance,
-            FabricTableSegmentClasses table_class,
-            LocalityPolicy cell_locality = LocalityPolicy::IDLE,
-            PriorityPolicy priority = PriorityPolicy::VERSIONED,
-            Model32Subclass subclass_of_mode32 = Model32Subclass::SELF_CLASS,
-            StructureFamily32 runtime_contract = StructureFamily32::VALUE32
-        )
-        {
-            return PackedCell64_t::MakeInitialFabricValidPackedCellModel(
-                static_cast<PackedMode>(runtime_contract),
-                cell_locality, 
-                table_class, 
-                InternalDataTypePolicy::UnsignedPCellDataType,
-                value, 
-                external_meta_or_prob_distance, 
-                priority, 
-                subclass_of_mode32,
-                Model48Subclass::SELF_CLASS
-            );
-        }
-
         static constexpr packed64_t MakeAValidFabricMode48UnsignedCell(
             uint64_t value,
             FabricTableSegmentClasses table_class,
@@ -491,12 +460,18 @@ namespace PredictedAdaptedEncoding
                 version, static_cast<tag8_t>(table_cell_type), static_cast<tag8_t>(identity_of_desired_directory)
             );
 
-            const packed64_t packed_cell = MakeAValidFabricMode32UnsignedCell(
-                value, external_handle, FabricTableSegmentClasses::TABLE_DIRECTORY,
-                cell_locality, PriorityPolicy::VERSIONED, 
+            const packed64_t packed_cell = PackedCell64_t::MakeModeledFabricValidPackedCell(
+                ModelFamily::MODEL32,
                 Model32Subclass::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4,
-                StructureFamily32::MODEL32
+                std::nullopt,
+                FabricTableSegmentClasses::TABLE_DIRECTORY,
+                cell_locality,
+                InternalDataTypePolicy::UnsignedPCellDataType,
+                PriorityPolicy::VERSIONED,
+                value,
+                external_handle
             );
+
             return packed_cell;
         }
 
@@ -505,18 +480,22 @@ namespace PredictedAdaptedEncoding
             uint32_t slot_index, 
             uint8_t slab_id, uint8_t generation, 
             HandleStateOfAPCFabric handle_state = HandleStateOfAPCFabric::APC_SEGMENT,
-            FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
-            LocalityPolicy locality_of_cell = LocalityPolicy::IDLE
+            FabricTableSegmentClasses table_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
+            LocalityPolicy cell_locality = LocalityPolicy::IDLE
         ) noexcept
         {
             const uint16_t external_handle = Clock16Subdivision1x8Plus2x4InMode32CellModel::Pack1x8Plus2x4InUnsigned16_(slab_id, generation, static_cast<uint8_t>(handle_state));
-            const packed64_t packed_cell = MakeAValidFabricMode32UnsignedCell(
-                static_cast<uint64_t>(slot_index), 
-                external_handle,
-                fabric_segment_class, 
-                locality_of_cell, 
+
+            const packed64_t packed_cell = PackedCell64_t::MakeModeledFabricValidPackedCell(
+                ModelFamily::MODEL32,
+                Model32Subclass::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4,
+                std::nullopt,
+                table_class,
+                cell_locality,
+                InternalDataTypePolicy::UnsignedPCellDataType,
                 PriorityPolicy::VERSIONED,
-                Model32Subclass::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4
+                static_cast<uint64_t>(slot_index), 
+                external_handle
             );
 
             return packed_cell;
