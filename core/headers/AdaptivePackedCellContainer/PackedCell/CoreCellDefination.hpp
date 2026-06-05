@@ -193,25 +193,47 @@ namespace PredictedAdaptedEncoding
             return packed_cell;
         }
 
-
+        /// @brief Can Be used to create a new valid Packed CEll ->FOR: OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
+        /// @param cell_mode If Passing PackedMode enum just Cast static_cast<ModelFamily>(PackedMode existing_mode)
+        /// @param in_cell_value 
+        /// @param in_cell_clk16 
+        /// @param probable_mode_subclass_type_32 
+        /// @param probable_mode_subclass_type_48 
+        /// @return 
         static constexpr packed64_t MakeInitialAPCValidPackedCell(
             PackedMode cell_mode,
-            LocalityPolicy cell_locality = LocalityPolicy::IDLE,
-            OwnershipPolicy cell_ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+            std::optional<Model32Subclass> probable_mode_subclass_type_32 = std::nullopt,
+            std::optional<Model48Subclass> probable_mode_subclass_type_48 = std::nullopt,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::UNDEFINED,
+            LocalityPolicy cell_locality = LocalityPolicy::IDLE,
             InternalDataTypePolicy in_cell_value_data_type = InternalDataTypePolicy::UnsignedPCellDataType,
-            uint64_t in_cell_value = UNSIGNED_ZERO,
-            clk16_t in_cell_clk16 = UNSIGNED_ZERO,
             PriorityPolicy cell_priority = PriorityPolicy::PRESSURE_FIRST,
-            Model32Subclass probable_mode_subclass_type_32 = Model32Subclass::SELF_CLASS,
-            Model48Subclass probable_mode_subclass_type_48 = Model48Subclass::SELF_CLASS
+            uint64_t in_cell_value = UNSIGNED_ZERO,
+            clk16_t in_cell_clk16 = UNSIGNED_ZERO
+
         ) noexcept
         {
-            const tag8_t sub_class = (cell_mode == PackedMode::MODEL32) ? 
-                static_cast<tag8_t>(probable_mode_subclass_type_32) : static_cast<tag8_t>(probable_mode_subclass_type_48);
+            tag8_t sub_class = UNSIGNED_ZERO;
+
+            if (probable_mode_subclass_type_32.has_value())
+            {
+                sub_class = static_cast<tag8_t>(*probable_mode_subclass_type_32);
+            }
+            
+            if (probable_mode_subclass_type_48.has_value())
+            {
+                sub_class = static_cast<tag8_t>(*probable_mode_subclass_type_48);
+            }
+
+            if (probable_mode_subclass_type_32.has_value() && probable_mode_subclass_type_48.has_value())
+            {
+                return PACKED_CELL_SENTINAL;
+            }
             
             return MakeInitialValidGeneralPackedCell(
-                cell_mode, cell_locality, cell_ownership, static_cast<tag8_t>(page_class),
+                cell_mode, cell_locality, 
+                OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, 
+                static_cast<tag8_t>(page_class),
                 in_cell_value_data_type, in_cell_value, in_cell_clk16,
                 cell_priority, sub_class
             );

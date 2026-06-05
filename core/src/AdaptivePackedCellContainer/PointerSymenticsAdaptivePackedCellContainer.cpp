@@ -157,7 +157,8 @@ namespace PredictedAdaptedEncoding
         {
             return;
         }
-        packed64_t idle32 = PackedCell64_t::MakeInitialAPCValidPackedCell(PackedMode::MODEL32);
+
+        packed64_t idle32 = PackedCell64_t::MakeInitialAPCValidPackedCell(PackedMode::MODEL32, Model32Subclass::SELF_CLASS);
         BackingPtr[acquired_paired_pointer_struct.HeadIdx].store(idle32, MoStoreSeq_);
         BackingPtr[acquired_paired_pointer_struct.TailIdx].store(idle32, MoStoreSeq_);
         BackingPtr[acquired_paired_pointer_struct.HeadIdx].notify_all();
