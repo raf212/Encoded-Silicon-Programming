@@ -247,12 +247,12 @@ namespace PredictedAdaptedEncoding
                     else
                     {
                         val32_t tail_ptr_val32 = high32_half;
-                        meta16_t strl_tail = PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODEL32, PriorityPolicy::PRESSURE_FIRST, OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, LocalityPolicy::PUBLISHED, rel_mask_with_ptrflag, Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL);
+                        meta16_t strl_tail = PackedCell64_t::MakeCellMetaForModel_32t(StructureFamily32::MODEL32, PriorityPolicy::PRESSURE_FIRST, OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, LocalityPolicy::PUBLISHED, rel_mask_with_ptrflag, Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL);
                         packed64_t tail_packed = PackedCell64_t::Compose32BitFamilyPackedCell(tail_ptr_val32, 0u, strl_tail);
                         BackingPtr[tail].store(tail_packed, MoStoreSeq_);
 
                         val32_t head_ptr_value32 = low32_half;
-                        meta16_t strl_head = PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODEL32, PriorityPolicy::PRESSURE_FIRST, OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, LocalityPolicy::PUBLISHED, rel_mask_with_ptrflag, Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL);
+                        meta16_t strl_head = PackedCell64_t::MakeCellMetaForModel_32t(StructureFamily32::MODEL32, PriorityPolicy::PRESSURE_FIRST, OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, LocalityPolicy::PUBLISHED, rel_mask_with_ptrflag, Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL);
                         packed64_t head_packed = PackedCell64_t::Compose32BitFamilyPackedCell(head_ptr_value32, 0u, strl_head);
                         BackingPtr[head].store(head_packed, MoStoreSeq_);
                         BackingPtr[tail].notify_all();

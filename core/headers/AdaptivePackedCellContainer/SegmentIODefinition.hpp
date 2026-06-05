@@ -127,7 +127,7 @@ protected:
         {
             return OwnedMasterClockConfPtr_->ComposeValue32WithCurrentThreadStamp16(value32, page_class, priority, locality, reloffset_mode32, dtype);
         }
-        meta16_t strl_moded32 = PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODEL32, priority, node_authority, locality, page_class, reloffset_mode32, dtype);
+        meta16_t strl_moded32 = PackedCell64_t::MakeCellMetaForModel_32t(StructureFamily32::MODEL32, priority, node_authority, locality, page_class, reloffset_mode32, dtype);
         return PackedCell64_t::Compose32BitFamilyPackedCell(value32, UNSIGNED_ZERO, strl_moded32);
     }
 
@@ -160,7 +160,7 @@ protected:
         {
             return;
         }
-        const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(BehaveOfMode48::MODEL48, priority, OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, LocalityPolicy::PUBLISHED, page_class, rel_offset);
+        const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(StructureFamily48::MODEL48, priority, OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, LocalityPolicy::PUBLISHED, page_class, rel_offset);
         const packed64_t packed_cell = PackedCell64_t::Compose48BitFamilyPackedCell(raw48_value & MaskLowNBits(CLK_B48), meta16);
         BackingPtr[index].store(packed_cell, MoStoreSeq_);
         BackingPtr[index].notify_all();

@@ -429,9 +429,9 @@ namespace PredictedAdaptedEncoding
         /// @brief Creates an unsigned fabric-owned cell.
         ///
         /// Call flow:
-        ///   This->MakeInitialFabricValidPackedCell()
-        ///     -> MakeInitialValidBlindPackedCell()
-        ///     -> MakeAnUncheckedCellBasedOnMode_::MakeInCellMetaForMode + ComposeValue
+        ///   This->MakeInitialFabricValidPackedCellModel()
+        ///     -> MakeInitialValidGeneralPackedCell()
+        ///     -> MakeAnUncheckedCell_::MakeInCellMetaForMode + ComposeValue
         ///
         /// @return packed64_t or PACKED_CELL_SENTINAL
         static constexpr packed64_t MakeAValidFabricMode32UnsignedCell(
@@ -441,10 +441,10 @@ namespace PredictedAdaptedEncoding
             LocalityPolicy cell_locality = LocalityPolicy::IDLE,
             PriorityPolicy priority = PriorityPolicy::VERSIONED,
             Model32Subclass subclass_of_mode32 = Model32Subclass::SELF_CLASS,
-            BehaveOfMode32 runtime_contract = BehaveOfMode32::VALUE32
+            StructureFamily32 runtime_contract = StructureFamily32::VALUE32
         )
         {
-            return PackedCell64_t::MakeInitialFabricValidPackedCell(
+            return PackedCell64_t::MakeInitialFabricValidPackedCellModel(
                 static_cast<PackedMode>(runtime_contract),
                 cell_locality, 
                 table_class, 
@@ -463,10 +463,10 @@ namespace PredictedAdaptedEncoding
             LocalityPolicy cell_locality = LocalityPolicy::IDLE,
             PriorityPolicy priority = PriorityPolicy::VERSIONED,
             Model48Subclass subclass_of_mode48 = Model48Subclass::SELF_CLASS,
-            BehaveOfMode48 cell_behaviour = BehaveOfMode48::VALUE48
+            StructureFamily48 cell_behaviour = StructureFamily48::VALUE48
         )
         {
-            return PackedCell64_t::MakeInitialFabricValidPackedCell(
+            return PackedCell64_t::MakeInitialFabricValidPackedCellModel(
                 static_cast<PackedMode>(cell_behaviour),
                 cell_locality, 
                 table_class, 
@@ -495,7 +495,7 @@ namespace PredictedAdaptedEncoding
                 value, external_handle, FabricTableSegmentClasses::TABLE_DIRECTORY,
                 cell_locality, PriorityPolicy::VERSIONED, 
                 Model32Subclass::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4,
-                BehaveOfMode32::MODEL32
+                StructureFamily32::MODEL32
             );
             return packed_cell;
         }

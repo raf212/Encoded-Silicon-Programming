@@ -89,7 +89,7 @@ class AdaptivePackedCellContainer;
         )
         {
             const clk16_t now_clock16 = NowClock16();
-            const meta16_t strlfor32 = PackedCell64_t::MakeInCellMetaForMode_32t(BehaveOfMode32::MODEL32, desired_priority, desired_node_authority, desired_locality, desired_page_class, desired_reloffset, desired_dtype);
+            const meta16_t strlfor32 = PackedCell64_t::MakeCellMetaForModel_32t(StructureFamily32::MODEL32, desired_priority, desired_node_authority, desired_locality, desired_page_class, desired_reloffset, desired_dtype);
             return PackedCell64_t::Compose32BitFamilyPackedCell(provided_cell_value32, now_clock16, strlfor32);
         }
 
@@ -100,7 +100,7 @@ class AdaptivePackedCellContainer;
         {
             const uint64_t full_clock48 = NowTicks48();
             const meta16_t strl_for_pure48_clock = PackedCell64_t::MakeInCellMetaForMode_48t(
-                BehaveOfMode48::MODEL48,
+                StructureFamily48::MODEL48,
                 desired_priority, 
                 OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
                 desired_locality, 

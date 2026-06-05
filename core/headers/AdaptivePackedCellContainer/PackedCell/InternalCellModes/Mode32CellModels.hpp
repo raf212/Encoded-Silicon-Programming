@@ -164,14 +164,14 @@ private:
             const uint32_t low_half32 = static_cast<uint32_t>(value & MaskLowNBits(VALBITS));
             const uint32_t high_half32 = static_cast<uint32_t>((value >> VALBITS) & MaskLowNBits(VALBITS));
 
-            const packed64_t low_half_packed_cell = PackedCell64_t::MakeInitialValidBlindPackedCell(
+            const packed64_t low_half_packed_cell = PackedCell64_t::MakeInitialValidGeneralPackedCell(
                 PackedMode::MODEL32, locality, ownership, page_class,
                 InternalDataTypePolicy::UnsignedPCellDataType, low_half32, version,
                 PriorityPolicy::VERSIONED, 
                 static_cast<tag8_t>(Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL)
             );
     
-            const packed64_t high_half_packed_cell = PackedCell64_t::MakeInitialValidBlindPackedCell(
+            const packed64_t high_half_packed_cell = PackedCell64_t::MakeInitialValidGeneralPackedCell(
                 PackedMode::MODEL32, locality, ownership, page_class,
                 InternalDataTypePolicy::UnsignedPCellDataType, high_half32, version,
                 PriorityPolicy::VERSIONED, 

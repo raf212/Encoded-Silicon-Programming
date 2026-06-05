@@ -61,7 +61,7 @@ namespace PredictedAdaptedEncoding
         PriorityPolicy priority
     ) noexcept
     {
-        const packed64_t a_valid_fabric_meta_cell32 = PackedCell64_t::MakeInitialFabricValidPackedCell(
+        const packed64_t a_valid_fabric_meta_cell32 = PackedCell64_t::MakeInitialFabricValidPackedCellModel(
             cell_mode, locality_of_cell, 
             fabric_segment_class, cell_data_type, 
             value32_or_64, extended_meta_value,
@@ -75,7 +75,7 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-        //MakeInitialFabricValidPackedCell::already checks validity
+        //MakeInitialFabricValidPackedCellModel::already checks validity
         StorePackedCellUncheckedDirectly(idx, a_valid_fabric_meta_cell32);
         return true;
     }

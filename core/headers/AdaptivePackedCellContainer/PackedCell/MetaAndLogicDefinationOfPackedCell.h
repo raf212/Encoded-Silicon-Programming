@@ -83,6 +83,7 @@ namespace PredictedAdaptedEncoding {
     
     static constexpr uint8_t MAX_PRIORITY   = static_cast<tag8_t>(PRIORITY_MASK);
 
+    /// @brief HIGHEST_TRUTH of Packed Cell
     enum class LocalityPolicy : tag8_t
     {
         IDLE = 0,
@@ -91,6 +92,7 @@ namespace PredictedAdaptedEncoding {
         FAULTY = 3
     };
 
+    /// @brief HIGHEST_TRUTH of Packed Cell
     enum class OwnershipPolicy : tag8_t
     {
         ADAPTIVE_PACKED_CELL_CONTAINER = 0,
@@ -119,13 +121,25 @@ namespace PredictedAdaptedEncoding {
         VALUE48 = 3
     };
 
-    enum class BehaveOfMode32 : tag8_t
+    enum class ModelFamily : tag8_t
+    {
+        MODEL32 = PackedMode::MODEL32,
+        MODEL48 = PackedMode::MODEL48
+    };
+
+    enum class TypeFamily : tag8_t
+    {
+        VALUE32 = PackedMode::VALUE32,
+        VALUE48 = PackedMode::VALUE48
+    };
+
+    enum class StructureFamily32 : tag8_t
     {
         MODEL32 = PackedMode::MODEL32,
         VALUE32 = PackedMode::VALUE32
     };
 
-    enum class BehaveOfMode48 : tag8_t
+    enum class StructureFamily48 : tag8_t
     {
         MODEL48 = PackedMode::MODEL48,
         VALUE48 = PackedMode::VALUE48

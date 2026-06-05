@@ -146,7 +146,7 @@ namespace PredictedAdaptedEncoding
         ) noexcept
         {
             const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(
-                BehaveOfMode48::MODEL48,
+                StructureFamily48::MODEL48,
                 priority, 
                 authority,
                 locality,
@@ -220,7 +220,7 @@ namespace PredictedAdaptedEncoding
             OwnershipPolicy authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
         ) noexcept
         {
-            const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(BehaveOfMode48::MODEL48, priority, authority, locality, page_class, Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL, InternalDataTypePolicy::UnsignedPCellDataType);
+            const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(StructureFamily48::MODEL48, priority, authority, locality, page_class, Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL, InternalDataTypePolicy::UnsignedPCellDataType);
             return Subdevision16x3InternalMode48CellModel::Compose3Unsigned16bitIndependentInMode48(begin_low, end_mid, version_high, meta16);
         }
 

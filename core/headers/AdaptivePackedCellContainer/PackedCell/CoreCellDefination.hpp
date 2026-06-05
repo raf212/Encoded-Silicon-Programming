@@ -142,7 +142,7 @@ namespace PredictedAdaptedEncoding
         /// @brief Should be improved
         static constexpr packed64_t MakeFaultyCell() noexcept
         {
-            return MakeAnUncheckedCellBasedOnMode_(
+            return MakeAnUncheckedCell_(
                 PackedMode::MODEL32,
                 IN_CELL_VALUE_MODE32_SENTINAL,
                 UINT16_MAX,
@@ -203,14 +203,25 @@ namespace PredictedAdaptedEncoding
             const tag8_t sub_class = (cell_mode == PackedMode::MODEL32) ? 
                 static_cast<tag8_t>(probable_mode_subclass_type_32) : static_cast<tag8_t>(probable_mode_subclass_type_48);
             
-            return MakeInitialValidBlindPackedCell(
+            return MakeInitialValidGeneralPackedCell(
                 cell_mode, cell_locality, cell_ownership, static_cast<tag8_t>(page_class),
                 in_cell_value_data_type, in_cell_value, in_cell_clk16,
                 cell_priority, sub_class
             );
         }
 
-        static constexpr packed64_t MakeInitialFabricValidPackedCell(
+        /// @brief Can be used to create Packed Cell for any MODEL family OF: HIGHEST_TRUTH -> OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC
+        /// @param cell_mode 
+        /// @param cell_locality 
+        /// @param fabric_table_class 
+        /// @param in_cell_value_data_type 
+        /// @param in_cell_value 
+        /// @param in_cell_clk16 
+        /// @param cell_priority 
+        /// @param probable_mode_subclass_type_32 
+        /// @param probable_mode_subclass_type_48 
+        /// @return 
+        static constexpr packed64_t MakeInitialFabricValidPackedCellModel(
             PackedMode cell_mode,
             LocalityPolicy cell_locality = LocalityPolicy::IDLE,
             FabricTableSegmentClasses fabric_table_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
@@ -225,7 +236,7 @@ namespace PredictedAdaptedEncoding
             const tag8_t sub_class = (cell_mode == PackedMode::MODEL32) ? 
                 static_cast<tag8_t>(probable_mode_subclass_type_32) : static_cast<tag8_t>(probable_mode_subclass_type_48);
             
-            return MakeInitialValidBlindPackedCell(
+            return MakeInitialValidGeneralPackedCell(
                 cell_mode, cell_locality, 
                 OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC, 
                 static_cast<tag8_t>(fabric_table_class),
@@ -234,22 +245,26 @@ namespace PredictedAdaptedEncoding
             );
         }
 
-        static constexpr packed64_t MakeInitialValidBlindPackedCell(
+        /// @brief Can be used to create Packed Cell of ANY: CLASS-> APCPagedNodeSegmentClasses / FabricTableSegmentClasses && SUB-CLASS-> Model32Subclass / Model48Subclass / AccessContractOfValue
+        /// @param cell_class Should derive from -> APCPagedNodeSegmentClasses / FabricTableSegmentClasses
+        /// @param sub_class Should derive from -> Model32Subclass / Model48Subclass / AccessContractOfValue
+        /// @return VALID -> Packed Cell -> OR: UINT64_MAX
+        static constexpr packed64_t MakeInitialValidGeneralPackedCell(
             PackedMode cell_mode,
             LocalityPolicy cell_locality,
             OwnershipPolicy cell_ownership,
-            tag8_t page_class,
+            tag8_t cell_class,
             InternalDataTypePolicy in_cell_value_data_type,
             uint64_t in_cell_value,
             clk16_t in_cell_clk16,
             PriorityPolicy cell_priority,
-            tag8_t probable_mode_subclass
+            tag8_t sub_class
         ) noexcept
         {
-            const packed64_t requested_cell = MakeAnUncheckedCellBasedOnMode_(
+            const packed64_t requested_cell = MakeAnUncheckedCell_(
                 cell_mode, in_cell_value, in_cell_clk16,
                 cell_priority, cell_ownership, cell_locality,
-                page_class, probable_mode_subclass,
+                cell_class, sub_class,
                 in_cell_value_data_type
             );
 
@@ -473,14 +488,14 @@ namespace PredictedAdaptedEncoding
 
         static  constexpr meta16_t SetNodeAuthorityInMETA16(
             meta16_t meta16,
-            OwnershipPolicy node_authority
+            OwnershipPolicy cell_ownership
         ) noexcept
         {
             return SetIndicatedMetaInMeta16(
                 meta16,
                 NODE_AUTH_SHIFT,
                 NODE_AUTH_MASK,
-                static_cast<tag8_t>(node_authority)
+                static_cast<tag8_t>(cell_ownership)
             );
         }
 
@@ -593,8 +608,13 @@ namespace PredictedAdaptedEncoding
             return SetMETA16InPacked(packed_cell, new_desired_meta);
         }
 
-        static  constexpr meta16_t MakeInCellMetaForMode_32t(
-            BehaveOfMode32 cell_behavior = BehaveOfMode32::VALUE32,
+        /// @brief Can be used to create Packed Cell of ANY: PackedMode, CellClass, SubClass
+        ///-> FAMILY -> ModelFamily / TypeFamily && SUB-CLASS-> Model32Subclass / Model48Subclass / AccessContractOfValue
+        /// @param cell_class Should derive from -> APCPagedNodeSegmentClasses / FabricTableSegmentClasses
+        /// @param sub_class Should derive from -> Model32Subclass / Model48Subclass / AccessContractOfValue
+        /// @return VALID -> Packed Cell -> OR: UINT64_MAX
+        static  constexpr meta16_t MakeCellMetaForModel_32t(
+            StructureFamily32 cell_behavior = StructureFamily32::VALUE32,
             PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
             OwnershipPolicy authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
             LocalityPolicy locality = LocalityPolicy::IDLE,
@@ -615,7 +635,7 @@ namespace PredictedAdaptedEncoding
         }
 
         static  constexpr meta16_t MakeInCellMetaForMode_48t(
-            BehaveOfMode48 cell_behavior = BehaveOfMode48::VALUE48,
+            StructureFamily48 cell_behavior = StructureFamily48::VALUE48,
             PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
             OwnershipPolicy authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
             LocalityPolicy locality = LocalityPolicy::IDLE,
@@ -692,49 +712,40 @@ namespace PredictedAdaptedEncoding
             return static_cast<meta16_t>(cleared_indicated | only_inserted_meta16);
         }
 
-        static constexpr  packed64_t MakeAnUncheckedCellBasedOnMode_(
+        /// @brief Can be used to create every type of Packed Cell
+        static constexpr packed64_t MakeAnUncheckedCell_(
             PackedMode cell_mode,
             uint64_t cell_value = UNSIGNED_ZERO,
             clk16_t clock16 = UNSIGNED_ZERO,
             PriorityPolicy cell_priority = PriorityPolicy::PRESSURE_FIRST,
-            OwnershipPolicy node_authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+            OwnershipPolicy cell_ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
             LocalityPolicy cell_locality = LocalityPolicy::IDLE, 
-            tag8_t page_class = static_cast<tag8_t>(APCPagedNodeSegmentClasses::UNDEFINED),
-            tag8_t sub_class = static_cast<tag8_t>(Model32Subclass::SELF_CLASS),
+            tag8_t cell_class = UNSIGNED_ZERO,
+            tag8_t sub_class = UNSIGNED_ZERO,
             InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
         ) noexcept
         {
+            const meta16_t desired_meta16 = MakeInCellMetaFromUnsigned_16t_(
+                static_cast<tag8_t>(cell_priority),
+                static_cast<tag8_t>(cell_ownership),
+                static_cast<tag8_t>(cell_locality),
+                static_cast<tag8_t>(cell_class),
+                static_cast<tag8_t>(sub_class),
+                static_cast<tag8_t>(cell_mode),
+                static_cast<tag8_t>(cell_data_type)
+            );
+
             if (cell_mode == PackedMode::MODEL32 || cell_mode == PackedMode::VALUE32)
             {
-                const meta16_t meta16_for_mode32 = MakeInCellMetaForMode_32t(
-                    static_cast<BehaveOfMode32>(cell_mode),
-                    cell_priority,
-                    node_authority,
-                    cell_locality,
-                    static_cast<APCPagedNodeSegmentClasses>(page_class),
-                    static_cast<Model32Subclass>(sub_class),
-                    cell_data_type
-                );
-
                 return Compose32BitFamilyPackedCell(
                     static_cast<val32_t>(cell_value),
                     clock16,
-                    meta16_for_mode32
+                    desired_meta16
                 );
             }
             else
             {
-                const meta16_t meta16_for_mode48 = MakeInCellMetaForMode_48t(
-                    static_cast<BehaveOfMode48>(cell_mode),
-                    cell_priority,
-                    node_authority,
-                    cell_locality,
-                    static_cast<APCPagedNodeSegmentClasses>(page_class),
-                    static_cast<Model48Subclass>(sub_class),
-                    cell_data_type
-                );
-
-                return Compose48BitFamilyPackedCell(cell_value, meta16_for_mode48);
+                return Compose48BitFamilyPackedCell(cell_value, desired_meta16);
             }
         }
 
@@ -761,28 +772,28 @@ namespace PredictedAdaptedEncoding
 
 
         static constexpr meta16_t MakeInCellMetaFromUnsigned_16t_(
-            tag8_t priority, tag8_t node_authority,
-            tag8_t locality, tag8_t rel_mask, 
-            tag8_t sub_class, tag8_t pc_type, 
-            tag8_t pc_datatype
+            tag8_t priority, tag8_t cell_ownership,
+            tag8_t locality, tag8_t class_of_cell, 
+            tag8_t sub_class, tag8_t mode, 
+            tag8_t data_type
         ) noexcept
         {
 
             meta16_t cell_priority = static_cast<meta16_t>(static_cast<tag8_t>(priority) & PRIORITY_MASK);
-            meta16_t cell_authority = static_cast<meta16_t>(static_cast<tag8_t>(node_authority) & NODE_AUTH_MASK); 
+            meta16_t cell_authority = static_cast<meta16_t>(static_cast<tag8_t>(cell_ownership) & NODE_AUTH_MASK); 
             meta16_t cell_locality = static_cast<meta16_t>(static_cast<tag8_t>(locality) & LOCALITY_MASK);
-            meta16_t cell_mode = static_cast<meta16_t>(static_cast<tag8_t>(pc_type) & CELL_MODE_MASK);
-            meta16_t relation_mask = static_cast<meta16_t>(rel_mask & CELL_CLASS_MASK);
-            meta16_t relation_offset = static_cast<meta16_t>(static_cast<tag8_t>(sub_class) & SUBCLASS_MASK);
-            meta16_t cell_data_type = static_cast<meta16_t>(static_cast<unsigned>(pc_datatype) & CELL_INTERNAL_DATA_TYPE_MASK);
+            meta16_t cell_mode = static_cast<meta16_t>(static_cast<tag8_t>(mode) & CELL_MODE_MASK);
+            meta16_t cell_class = static_cast<meta16_t>(class_of_cell & CELL_CLASS_MASK);
+            meta16_t cell_sub_class = static_cast<meta16_t>(static_cast<tag8_t>(sub_class) & SUBCLASS_MASK);
+            meta16_t cell_data_type = static_cast<meta16_t>(static_cast<unsigned>(data_type) & CELL_INTERNAL_DATA_TYPE_MASK);
 
             meta16_t cell_meta = static_cast<meta16_t>(
                 (cell_priority  << (PRIORITY_SHIFT))
                 | (cell_authority << (NODE_AUTH_SHIFT))
                 | (cell_locality << LOCALITY_SHIFT)
                 | (cell_mode << CELL_MODE_SHIFT)
-                | (relation_mask << CELL_CLASS_SHIFT)
-                | (relation_offset << SUBCLASS_SHIFT)
+                | (cell_class << CELL_CLASS_SHIFT)
+                | (cell_sub_class << SUBCLASS_SHIFT)
                 | cell_data_type
             );
             return cell_meta;
