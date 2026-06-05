@@ -80,6 +80,13 @@ namespace PredictedAdaptedEncoding
                     return false;
                 }
 
+                if ((CellMode == PackedMode::VALUE32 || CellMode == PackedMode::VALUE48) && !AccessContractOfValue.has_value())
+                {
+                    IsCellValid = false;
+                    return false;
+                }
+                
+
                 if (
                     CellOwnership == OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC && 
                     (FabricTableSegmentClass == FabricTableSegmentClasses::NONE || PageClass != APCPagedNodeSegmentClasses::NONE)
