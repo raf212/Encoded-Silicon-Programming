@@ -33,7 +33,7 @@ namespace PredictedAdaptedEncoding
         static constexpr uint8_t HIGH_ALL_EIGHT_NIBBLE = 0xFFu;
         static constexpr size_t SIZE_OF_APCPagedNodeRelMaskClasses = 16u;
 
-        static  bool INewerClock16(clk16_t candidate, clk16_t baseline) noexcept
+        static constexpr bool INewerClock16(clk16_t candidate, clk16_t baseline) noexcept
         {
             if (candidate == baseline)
             {
@@ -42,7 +42,7 @@ namespace PredictedAdaptedEncoding
             return static_cast<uint16_t>(candidate - baseline) < HALF16Bit_THRESHOLD_WRAP;
             
         }
-        static APCPagedNodeSegmentClasses ExtractPagedRelMaskFromPacked (packed64_t packed_cell) noexcept
+        static constexpr APCPagedNodeSegmentClasses ExtractPagedRelMaskFromPacked (packed64_t packed_cell) noexcept
         {
             return static_cast<APCPagedNodeSegmentClasses>(PackedCell64_t::ExtractRelMaskFromPacked(packed_cell));
         }
@@ -59,7 +59,7 @@ namespace PredictedAdaptedEncoding
         }
 
 
-        static bool CanCellBeConsumedForThisRegion(packed64_t packed_cell, APCPagedNodeSegmentClasses region_kind) noexcept
+        static constexpr bool CanCellBeConsumedForThisRegion(packed64_t packed_cell, APCPagedNodeSegmentClasses region_kind) noexcept
         {
             return PackedCell64_t::ExtractLocalityFromPacked(packed_cell) == LocalityPolicy::PUBLISHED &&
                 ExtractPagedRelMaskFromPacked(packed_cell) == region_kind &&
@@ -76,7 +76,7 @@ namespace PredictedAdaptedEncoding
                 );
         }
 
-        static  bool IsEmbededControlCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        static constexpr bool IsEmbededControlCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
             if (a_cell_view.PageClass == APCPagedNodeSegmentClasses::CONTROL_SLOT)
             {
@@ -86,14 +86,14 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-        static  bool IsEmbededTimerCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        static constexpr bool IsEmbededTimerCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
             return a_cell_view.CellMode == PackedMode::MODEL48 && 
                 a_cell_view.SubClassOfModel48.has_value() &&
                 *a_cell_view.SubClassOfModel48 == Model48Subclass::PURE_TIMER_48;
         }
 
-        static  bool IsThisCellAppropriateAndGenericToConsume(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        static constexpr bool IsThisCellAppropriateAndGenericToConsume(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
 
 
@@ -120,7 +120,7 @@ namespace PredictedAdaptedEncoding
             return true;
         }
 
-        static  bool IsCellAppropriatelyPagedAndPublishedAsGeneric(
+        static constexpr bool IsCellAppropriatelyPagedAndPublishedAsGeneric(
             const PackedCell64_t::AuthoritiveCellView& view,
             APCPagedNodeSegmentClasses region_kind
         ) noexcept
@@ -129,7 +129,7 @@ namespace PredictedAdaptedEncoding
                 view.PageClass == region_kind;
         }    
 
-        static  bool IsTrackedOccupancyPageClass(APCPagedNodeSegmentClasses page_class) noexcept
+        static constexpr bool IsTrackedOccupancyPageClass(APCPagedNodeSegmentClasses page_class) noexcept
         {
             /*
                 Occupancy-tracked means:
@@ -145,7 +145,7 @@ namespace PredictedAdaptedEncoding
                 page_class != APCPagedNodeSegmentClasses::NULLNAN;
         }
 
-        static  bool IsDataConsumablePageClass(APCPagedNodeSegmentClasses page_class) noexcept
+        static constexpr bool IsDataConsumablePageClass(APCPagedNodeSegmentClasses page_class) noexcept
         {
             /*
                 These regions may contain normal user/runtime data.
@@ -159,11 +159,16 @@ namespace PredictedAdaptedEncoding
                 page_class != APCPagedNodeSegmentClasses::FREE_SLOT;
         }
 
-        static  bool IsGenericPayloadOffset(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        static constexpr bool IsGenericPayloadOffset(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
             if (!a_cell_view.IsCellValid)
             {
                 return false;
+            }
+
+            if (a_cell_view.CellMode == PackedMode::VALUE32 || a_cell_view.CellMode == PackedMode::VALUE48)
+            {
+                return true;
             }
             
             if (a_cell_view.CellMode == PackedMode::MODEL32)
@@ -177,7 +182,7 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-        static  bool DoseThisCellUpdateableAsOccupancy16x3(
+        static constexpr bool DoseThisCellUpdateableAsOccupancy16x3(
             const PackedCell64_t::AuthoritiveCellView& occupancy_cell_view,
             LocalityPolicy desired_cell_locality = LocalityPolicy::PUBLISHED
         ) noexcept
@@ -205,7 +210,7 @@ namespace PredictedAdaptedEncoding
         float InitialOrCurrentPercentage = 0u;
         uint16_t VersionNumber = 0u;
 
-        static  MetaIndexOfAPCNode GetLayoutCellMetaIndexForPageClass(
+        static constexpr MetaIndexOfAPCNode GetLayoutCellMetaIndexForPageClass(
             APCPagedNodeSegmentClasses page_class
         ) noexcept
         {
@@ -266,12 +271,12 @@ namespace PredictedAdaptedEncoding
             return BeginIndex >= payload_begain && EndIndex >= BeginIndex && EndIndex <= payload_end && PAGE_LAYOUT_CLASS!= APCPagedNodeSegmentClasses::NULLNAN;
         }
 
-        bool IsEmpty() const noexcept
+        constexpr bool IsEmpty() const noexcept
         {
             return EndIndex <= BeginIndex || PAGE_LAYOUT_CLASS == APCPagedNodeSegmentClasses::NULLNAN;
         }
 
-        uint32_t GetPayloadSpan() const noexcept
+        constexpr uint32_t GetPayloadSpan() const noexcept
         {
             return (EndIndex > BeginIndex) ? (EndIndex - BeginIndex) : 0u;
         }
@@ -286,7 +291,7 @@ namespace PredictedAdaptedEncoding
             return BeginIndex == left.EndIndex && left.GetPayloadSpan() > 0u && left.PAGE_LAYOUT_CLASS != APCPagedNodeSegmentClasses::NULLNAN;
         }
 
-        bool TryGrowRight(uint32_t amount, LayoutBoundsOfSingleRelNodeClass& right) noexcept
+        constexpr bool TryGrowRight(uint32_t amount, LayoutBoundsOfSingleRelNodeClass& right) noexcept
         {
             if (!CanBorrowRightFrom(right) || amount == 0u || right.GetPayloadSpan() < amount)
             {
@@ -297,7 +302,7 @@ namespace PredictedAdaptedEncoding
             return true;            
         }
 
-        bool TryGrowLeft(uint32_t amount, LayoutBoundsOfSingleRelNodeClass& left) noexcept
+        constexpr bool TryGrowLeft(uint32_t amount, LayoutBoundsOfSingleRelNodeClass& left) noexcept
         {
             if (!CanBorrowLeftFrom(left) || amount == 0u || left.GetPayloadSpan() < amount)
             {
@@ -308,7 +313,7 @@ namespace PredictedAdaptedEncoding
             return true;
         }
 
-        uint32_t ClampOrNormalize(uint32_t idx) const noexcept
+        constexpr uint32_t ClampOrNormalize(uint32_t idx) const noexcept
         {
             if (IsEmpty())
             {
@@ -405,7 +410,7 @@ namespace PredictedAdaptedEncoding
                     FreeLayout.InitialOrCurrentPercentage;
         }
 
-        bool DoseAllPhysicalLayoutCarrySameVersionNumberAsGlobal(
+        constexpr bool DoseAllPhysicalLayoutCarrySameVersionNumberAsGlobal(
             uint16_t global_version_number
         ) noexcept
         {
@@ -431,7 +436,7 @@ namespace PredictedAdaptedEncoding
                 FreeLayout.VersionNumber == global_version_number;
         }
         
-        bool NormalizePercentagesIfNeeded() noexcept
+        constexpr bool NormalizePercentagesIfNeeded() noexcept
         {
             const float sum_of_default = SumOfPercentage();
             if (sum_of_default == 100.00)
@@ -470,7 +475,7 @@ namespace PredictedAdaptedEncoding
             return true;
         }
 
-        LayoutBoundsOfSingleRelNodeClass* GetALayoutByRelMask(APCPagedNodeSegmentClasses desired_rel_mask) noexcept
+        constexpr LayoutBoundsOfSingleRelNodeClass* GetALayoutByRelMask(APCPagedNodeSegmentClasses desired_rel_mask) noexcept
         {
             switch (desired_rel_mask)
             {
