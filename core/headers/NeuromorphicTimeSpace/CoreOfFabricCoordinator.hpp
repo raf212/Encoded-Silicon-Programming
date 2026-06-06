@@ -203,7 +203,7 @@ namespace PredictedAdaptedEncoding
         TABLE_DIRECTORY_COUNT = 38,
         TABLE_DIRECTORY_VERSION = 39,
 
-        //4 pairs of LocalityPolicy + PriorityPolicy::VERSIONED based occupancy
+        //4 pairs of LocalityPolicy + PriorityPolicy::INFLUENCED based occupancy
         FABRIC_OCCUPANCY_APPROXIMATION_IDLE_LOW32 = 40,
         FABRIC_OCCUPANCY_APPROXIMATION_IDLE_HIGH32 = 41,
         FABRIC_OCCUPANCY_APPROXIMATION_PUBLISHED_LOW32 = 42,
@@ -426,6 +426,8 @@ namespace PredictedAdaptedEncoding
             }
         }
 
+        /// @brief Model32Subclass::UNCLOCKED_1x8_PLUS_2x4-> Value + Version + TableEntryCellTypeOfFabric + IDENTITY(Though used FabricTableSegmentClasses::but means identity of directory no cell) + Meta16
+        /// @return VALID -> Packed Cell -> OR: UINT64_MAX
         static constexpr packed64_t MakeADirectoryEntryCellForFabric(
             uint32_t value,
             TableEntryCellTypeOfFabric table_cell_type,
@@ -438,43 +440,70 @@ namespace PredictedAdaptedEncoding
                 version, static_cast<tag8_t>(table_cell_type), static_cast<tag8_t>(identity_of_desired_directory)
             );
 
-            const packed64_t packed_cell = PackedCell64_t::MakeModeledFabricValidPackedCell(
+            return PackedCell64_t::MakeModeledFabricValidPackedCell(
                 ModelFamily::MODEL32,
-                static_cast<tag8_t>(Model32Subclass::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4),
+                static_cast<tag8_t>(Model32Subclass::UNCLOCKED_1x8_PLUS_2x4),
                 FabricTableSegmentClasses::TABLE_DIRECTORY,
                 cell_locality,
                 InternalDataTypePolicy::UnsignedPCellDataType,
-                PriorityPolicy::VERSIONED,
+                PriorityPolicy::INFLUENCED,
                 value,
                 external_handle
             );
 
-            return packed_cell;
         }
 
-
+        /// @brief Model32Subclass::UNCLOCKED_1x8_PLUS_2x4-> Value + Version(8bit) + HandleStateOfAPCFabric(4bit) + SlabId_(4bit) + Meta16
+        /// @return VALID -> Packed Cell -> OR: UINT64_MAX
         static constexpr packed64_t MakeANEncodedHandlerCellForFabric(
             uint32_t slot_index, 
-            uint8_t slab_id, uint8_t generation, 
+            uint8_t slab_id, uint8_t version, 
             HandleStateOfAPCFabric handle_state = HandleStateOfAPCFabric::APC_SEGMENT,
             FabricTableSegmentClasses table_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
             LocalityPolicy cell_locality = LocalityPolicy::IDLE
         ) noexcept
         {
-            const uint16_t external_handle = Clock16Subdivision1x8Plus2x4InMode32CellModel::Pack1x8Plus2x4InUnsigned16_(slab_id, generation, static_cast<uint8_t>(handle_state));
+            const uint16_t external_handle = Clock16Subdivision1x8Plus2x4InMode32CellModel::Pack1x8Plus2x4InUnsigned16_(version, static_cast<uint8_t>(handle_state), slab_id);
 
-            const packed64_t packed_cell = PackedCell64_t::MakeModeledFabricValidPackedCell(
+            return PackedCell64_t::MakeModeledFabricValidPackedCell(
                 ModelFamily::MODEL32,
-                static_cast<tag8_t>(Model32Subclass::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4),
+                static_cast<tag8_t>(Model32Subclass::UNCLOCKED_1x8_PLUS_2x4),
                 table_class,
                 cell_locality,
                 InternalDataTypePolicy::UnsignedPCellDataType,
-                PriorityPolicy::VERSIONED,
+                PriorityPolicy::INFLUENCED,
                 static_cast<uint64_t>(slot_index), 
                 external_handle
             );
+        }
 
-            return packed_cell;
+        /// @brief Model32Subclass::UNCLOCKED_1x8_PLUS_2x4-> Value + Version(8bit) + 16 Bit Prob Distance-> + Meta16
+        /// @return VALID -> Packed Cell -> OR: UINT64_MAX
+        static constexpr packed64_t MakeHashKeyCell(
+            uint32_t hash_key, uint16_t prob_distance, 
+            FabricTableSegmentClasses hash_table_class, 
+            LocalityPolicy locality = LocalityPolicy::PUBLISHED
+        ) noexcept
+        {
+            if (
+                hash_table_class != FabricTableSegmentClasses::BRANCH_HASH || 
+                hash_table_class != FabricTableSegmentClasses::SHARED_HASH ||
+                hash_table_class != FabricTableSegmentClasses::LOGICAL_HASH
+            )
+            {
+                return PackedCell64_t::PACKED_CELL_SENTINAL;
+            }
+
+            return PackedCell64_t::MakeModeledFabricValidPackedCell(
+                ModelFamily::MODEL32,
+                static_cast<tag8_t>(Model32Subclass::SELF_CLASS),
+                hash_table_class,
+                locality, 
+                InternalDataTypePolicy::UnsignedPCellDataType,
+                PriorityPolicy::INFLUENCED,
+                hash_key,
+                prob_distance
+            );
         }
 
 

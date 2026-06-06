@@ -386,12 +386,12 @@ namespace PredictedAdaptedEncoding
     //         MakeAndStoreDirectlyAFabricOwnedCell_(
     //             i + 0u, UNSIGNED_ZERO, table_class, PackedMode::MODEL32, 
     //             desired_cache_entry.VersionCount, UNSIGNED_ZERO, InternalDataTypePolicy::UnsignedPCellDataType,
-    //             LocalityPolicy::IDLE, PriorityPolicy::VERSIONED
+    //             LocalityPolicy::IDLE, PriorityPolicy::INFLUENCED
     //         );
     //         MakeAndStoreDirectlyAFabricOwnedCell_(
     //             i + 1u, IN_CELL_VALUE_MODE32_SENTINAL, table_class, PackedMode::MODEL32, 
     //             desired_cache_entry.VersionCount, UNSIGNED_ZERO, InternalDataTypePolicy::UnsignedPCellDataType,
-    //             LocalityPolicy::IDLE, PriorityPolicy::VERSIONED
+    //             LocalityPolicy::IDLE, PriorityPolicy::INFLUENCED
     //         );
     //     }
         
@@ -429,7 +429,7 @@ namespace PredictedAdaptedEncoding
             FabricTableSegmentClasses::SLOT_DIRECTORY,
             ModelFamily::MODEL32, extended_meta_value, static_cast<tag8_t>(Model32Subclass::SELF_CLASS),
             InternalDataTypePolicy::UnsignedPCellDataType, locality_of_cell,
-            PriorityPolicy::VERSIONED
+            PriorityPolicy::INFLUENCED
         );
     }
 

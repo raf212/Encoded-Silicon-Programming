@@ -61,7 +61,7 @@ namespace PredictedAdaptedEncoding
             const PackedCell64_t::AuthoritiveCellView this_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
             return this_cell_auth_view.CellMode == PackedMode::MODEL32 &&
                 this_cell_auth_view.SubClassOfModel32.has_value() &&
-                this_cell_auth_view.SubClassOfModel32.value() == Model32Subclass::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 &&
+                this_cell_auth_view.SubClassOfModel32.value() == Model32Subclass::UNCLOCKED_1x8_PLUS_2x4 &&
                 this_cell_auth_view.CellValueDataType == InternalDataTypePolicy::UnsignedPCellDataType &&
                 this_cell_auth_view.LocalityOfCell != LocalityPolicy::FAULTY;
         }
@@ -167,14 +167,14 @@ private:
             const packed64_t low_half_packed_cell = PackedCell64_t::MakeInitialValidGeneralPackedCell(
                 PackedMode::MODEL32, locality, ownership, page_class,
                 InternalDataTypePolicy::UnsignedPCellDataType, low_half32, version,
-                PriorityPolicy::VERSIONED, 
+                PriorityPolicy::INFLUENCED, 
                 static_cast<tag8_t>(Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL)
             );
     
             const packed64_t high_half_packed_cell = PackedCell64_t::MakeInitialValidGeneralPackedCell(
                 PackedMode::MODEL32, locality, ownership, page_class,
                 InternalDataTypePolicy::UnsignedPCellDataType, high_half32, version,
-                PriorityPolicy::VERSIONED, 
+                PriorityPolicy::INFLUENCED, 
                 static_cast<tag8_t>(Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL)
             );
 

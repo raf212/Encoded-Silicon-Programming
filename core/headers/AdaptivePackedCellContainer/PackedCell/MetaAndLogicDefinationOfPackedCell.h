@@ -136,13 +136,13 @@ namespace PredictedAdaptedEncoding {
     };
 
     /// @param RAW_PRIVATE Caller owns range/cell; init/shutdown/private APC segment. 
-    /// @param ATOMIC_SLAMSHOT Atomic load/store whole 64-bit cell. Multiple writers are allowed only if last-writer-wins is acceptable.
+    /// @param ATOMIC_SLNAPSHOT Atomic load/store whole 64-bit cell. Multiple writers are allowed only if last-writer-wins is acceptable.
     /// @param CLAIMED_GURDED Exclusive mutation. After claim, writer may raw-store companion cells, then publish with release store.
     /// @param CAS_RMW For counters, cursors, epochs, clocks, version increments, occupancy deltas. No `CLAIMED` state needed.
     enum class AccessContractOfValue
     {
         RAW_PRIVATE = 0,
-        ATOMIC_SLAMSHOT = 1,
+        ATOMIC_SLNAPSHOT = 1,
         CLAIMED_GURDED = 2,
         CAS_RMW = 3
     };
@@ -152,7 +152,7 @@ namespace PredictedAdaptedEncoding {
         SELF_CLASS = 0,
         LOW_OF_PAIRED_VERSIONED_CELL = 1,
         HIGH_OF_PAIRED_VERSIONED_CELL = 2,
-        SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 = 3
+        UNCLOCKED_1x8_PLUS_2x4 = 3
     };
 
     enum class Model48Subclass : tag8_t
@@ -165,7 +165,7 @@ namespace PredictedAdaptedEncoding {
 
     enum class PriorityPolicy : tag8_t
     {
-        VERSIONED = 0,
+        INFLUENCED = 0, // extended
         PRESSURE_FIRST = 1,
         IN_CLOCKED_GENERIC_SPIKE = 2,
         ERROR_FIRST = 3

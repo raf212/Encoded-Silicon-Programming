@@ -142,7 +142,7 @@ namespace PredictedAdaptedEncoding
             uint16_t faulty_count,
             APCPagedNodeSegmentClasses page_class,
             LocalityPolicy locality = LocalityPolicy::PUBLISHED,
-            PriorityPolicy priority = PriorityPolicy::VERSIONED,
+            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST,
             InternalDataTypePolicy dtype = InternalDataTypePolicy::UnsignedPCellDataType
         ) noexcept
         {

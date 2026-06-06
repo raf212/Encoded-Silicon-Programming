@@ -114,7 +114,7 @@ namespace PredictedAdaptedEncoding
                                 PageClass != APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY || 
                                 PageClass != APCPagedNodeSegmentClasses::CONTROL_SLOT
                             ) &&
-                            Priority != PriorityPolicy::VERSIONED
+                            Priority != PriorityPolicy::INFLUENCED
                         )
                         {
                             IsCellValid = false;
@@ -123,7 +123,7 @@ namespace PredictedAdaptedEncoding
                     }
 
                     if(
-                        SubClassOfModel32 == Model32Subclass::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 &&
+                        SubClassOfModel32 == Model32Subclass::UNCLOCKED_1x8_PLUS_2x4 &&
                         CellOwnership == OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER &&
                         PageClass != APCPagedNodeSegmentClasses::CONTROL_SLOT
                     )
@@ -184,7 +184,8 @@ namespace PredictedAdaptedEncoding
 
         static constexpr packed64_t Compose48BitFamilyPackedCell(uint64_t clockor_value48, meta16_t meta16) noexcept
         {
-            if(static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16)) != PackedMode::MODEL48)
+            const PackedMode packed_mode = static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16));
+            if(packed_mode != PackedMode::MODEL48 || packed_mode != PackedMode::VALUE48)
             {
                 return MakeFaultyCell();
             }
@@ -272,6 +273,56 @@ namespace PredictedAdaptedEncoding
 
             return requested_cells_view.IsCellValid ? requested_cell : PACKED_CELL_SENTINAL;
         }
+
+
+        /// @brief Can Be used to create a new valid Packed CEll ->FOR: OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC
+        /// @return VALID -> Packed Cell -> OR: UINT64_MAX
+        static constexpr packed64_t MakeTypedFabricValidPackedCell(
+            TypeFamily cell_model,
+            AccessContractOfValue sub_class = AccessContractOfValue::ATOMIC_SLNAPSHOT,
+            FabricTableSegmentClasses table_class = FabricTableSegmentClasses::GENERIC_CONTROL,
+            LocalityPolicy cell_locality = LocalityPolicy::IDLE,
+            InternalDataTypePolicy in_cell_value_data_type = InternalDataTypePolicy::UnsignedPCellDataType,
+            PriorityPolicy cell_priority = PriorityPolicy::PRESSURE_FIRST,
+            uint64_t in_cell_value = UNSIGNED_ZERO,
+            clk16_t in_cell_clk16 = UNSIGNED_ZERO
+        ) noexcept
+        {
+            return MakeInitialValidGeneralPackedCell(
+                static_cast<PackedMode>(cell_model), 
+                cell_locality, 
+                OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC, 
+                static_cast<tag8_t>(table_class),
+                in_cell_value_data_type, in_cell_value, 
+                in_cell_clk16, cell_priority, 
+                static_cast<tag8_t>(sub_class)
+            );
+        }
+
+        /// @brief Can Be used to create a new valid Packed CEll ->FOR: OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC
+        /// @return VALID -> Packed Cell -> OR: UINT64_MAX
+        static constexpr packed64_t MakeTypedAPCValidPackedCell(
+            TypeFamily cell_model,
+            AccessContractOfValue sub_class = AccessContractOfValue::ATOMIC_SLNAPSHOT,
+            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::UNDEFINED,
+            LocalityPolicy cell_locality = LocalityPolicy::IDLE,
+            InternalDataTypePolicy in_cell_value_data_type = InternalDataTypePolicy::UnsignedPCellDataType,
+            PriorityPolicy cell_priority = PriorityPolicy::PRESSURE_FIRST,
+            uint64_t in_cell_value = UNSIGNED_ZERO,
+            clk16_t in_cell_clk16 = UNSIGNED_ZERO
+        ) noexcept
+        {
+            return MakeInitialValidGeneralPackedCell(
+                static_cast<PackedMode>(cell_model), 
+                cell_locality, 
+                OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC, 
+                static_cast<tag8_t>(page_class),
+                in_cell_value_data_type, in_cell_value, 
+                in_cell_clk16, cell_priority, 
+                static_cast<tag8_t>(sub_class)
+            );
+        }
+
 
         /// @brief Should i type restrict just for VALUE32
         template <typename PCDT>

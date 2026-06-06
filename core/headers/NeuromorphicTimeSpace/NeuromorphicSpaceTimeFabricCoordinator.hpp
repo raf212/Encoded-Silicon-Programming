@@ -58,7 +58,7 @@ namespace PredictedAdaptedEncoding
             FabricMetaIndicies fabric_meta_idx, uint64_t value, 
             LocalityPolicy cell_locality = LocalityPolicy::PUBLISHED,
             Model48Subclass sub_class48 = Model48Subclass::SELF_CLASS,
-            PriorityPolicy priority = PriorityPolicy::VERSIONED
+            PriorityPolicy priority = PriorityPolicy::INFLUENCED
         )noexcept;
 
         constexpr bool UpdateValidPairedOccupancyApproxAtomically_(
