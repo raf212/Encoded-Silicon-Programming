@@ -195,15 +195,11 @@ namespace PredictedAdaptedEncoding
 
         /// @brief Can Be used to create a new valid Packed CEll ->FOR: OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
         /// @param cell_mode If Passing PackedMode enum just Cast static_cast<ModelFamily>(PackedMode existing_mode)
-        /// @param in_cell_value 
-        /// @param in_cell_clk16 
-        /// @param probable_mode_subclass_type_32 
-        /// @param probable_mode_subclass_type_48 
+        /// @param sub_class If Passing PackedMode enum just Cast static_cast<tag8_t>(Model32Subclass/Model48Subclass desired SUB CLASS)
         /// @return VALID -> Packed Cell -> OR: UINT64_MAX
         static constexpr packed64_t MakeModeledAPCValidPackedCell(
             ModelFamily cell_model,
-            std::optional<Model32Subclass> probable_mode_subclass_type_32 = std::nullopt,
-            std::optional<Model48Subclass> probable_mode_subclass_type_48 = std::nullopt,
+            tag8_t sub_class = static_cast<tag8_t>(Model32Subclass::SELF_CLASS),
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::UNDEFINED,
             LocalityPolicy cell_locality = LocalityPolicy::IDLE,
             InternalDataTypePolicy in_cell_value_data_type = InternalDataTypePolicy::UnsignedPCellDataType,
@@ -213,23 +209,6 @@ namespace PredictedAdaptedEncoding
 
         ) noexcept
         {
-            tag8_t sub_class = UNSIGNED_ZERO;
-
-            if (probable_mode_subclass_type_32.has_value())
-            {
-                sub_class = static_cast<tag8_t>(*probable_mode_subclass_type_32);
-            }
-            
-            if (probable_mode_subclass_type_48.has_value())
-            {
-                sub_class = static_cast<tag8_t>(*probable_mode_subclass_type_48);
-            }
-
-            if (probable_mode_subclass_type_32.has_value() && probable_mode_subclass_type_48.has_value())
-            {
-                return PACKED_CELL_SENTINAL;
-            }
-            
             return MakeInitialValidGeneralPackedCell(
                 static_cast<PackedMode>(cell_model), 
                 cell_locality, 

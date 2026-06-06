@@ -208,8 +208,12 @@ namespace PredictedAdaptedEncoding
             
             const packed64_t graceful_idle_cell = PackedCell64_t::MakeModeledAPCValidPackedCell(
                 static_cast<ModelFamily>(current_cell_view.CellMode),
-                current_cell_view.SubClassOfModel32,
-                current_cell_view.SubClassOfModel48,
+                (current_cell_view.SubClassOfModel32.has_value() ? 
+                    static_cast<tag8_t>(current_cell_view.SubClassOfModel32.value()) :
+                        current_cell_view.SubClassOfModel48.has_value() ? 
+                            static_cast<tag8_t>(current_cell_view.SubClassOfModel48.value()) : 
+                                UNSIGNED_ZERO
+                ),
                 cell_class, 
                 LocalityPolicy::IDLE, 
                 current_cell_view.CellValueDataType
