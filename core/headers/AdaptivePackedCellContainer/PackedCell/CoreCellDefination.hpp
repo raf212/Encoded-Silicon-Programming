@@ -219,41 +219,6 @@ namespace PredictedAdaptedEncoding
             );
         }
 
-        /// @brief Can be used to create Packed Cell for any MODEL family OF: HIGHEST_TRUTH -> OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC
-        /// @param cell_mode 
-        /// @param cell_locality 
-        /// @param fabric_table_class 
-        /// @param in_cell_value_data_type 
-        /// @param in_cell_value 
-        /// @param in_cell_clk16 
-        /// @param cell_priority 
-        /// @param probable_mode_subclass_type_32 
-        /// @param probable_mode_subclass_type_48 
-        /// @return VALID -> Packed Cell -> OR: UINT64_MAX
-        static constexpr packed64_t MakeInitialFabricValidPackedCellModel(
-            PackedMode cell_mode,
-            LocalityPolicy cell_locality = LocalityPolicy::IDLE,
-            FabricTableSegmentClasses fabric_table_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
-            InternalDataTypePolicy in_cell_value_data_type = InternalDataTypePolicy::UnsignedPCellDataType,
-            uint64_t in_cell_value = UNSIGNED_ZERO,
-            clk16_t in_cell_clk16 = UNSIGNED_ZERO,
-            PriorityPolicy cell_priority = PriorityPolicy::PRESSURE_FIRST,
-            Model32Subclass probable_mode_subclass_type_32 = Model32Subclass::SELF_CLASS,
-            Model48Subclass probable_mode_subclass_type_48 = Model48Subclass::SELF_CLASS
-        ) noexcept
-        {
-            const tag8_t sub_class = (cell_mode == PackedMode::MODEL32) ? 
-                static_cast<tag8_t>(probable_mode_subclass_type_32) : static_cast<tag8_t>(probable_mode_subclass_type_48);
-            
-            return MakeInitialValidGeneralPackedCell(
-                cell_mode, cell_locality, 
-                OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC, 
-                static_cast<tag8_t>(fabric_table_class),
-                in_cell_value_data_type, in_cell_value, in_cell_clk16,
-                cell_priority, sub_class
-            );
-        }
-
         /// @brief Can Be used to create a new valid Packed CEll ->FOR: OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC
         /// @param cell_mode If Passing PackedMode enum just Cast static_cast<ModelFamily>(PackedMode desired ModelFamily)
         /// @param sub_class If Passing PackedMode enum just Cast static_cast<tag8_t>(Model32Subclass/Model48Subclass desired SUB CLASS)

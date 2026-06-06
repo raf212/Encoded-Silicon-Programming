@@ -135,18 +135,6 @@ namespace PredictedAdaptedEncoding {
         VALUE48 = PackedMode::VALUE48
     };
 
-    enum class StructureFamily32 : tag8_t
-    {
-        MODEL32 = PackedMode::MODEL32,
-        VALUE32 = PackedMode::VALUE32
-    };
-
-    enum class StructureFamily48 : tag8_t
-    {
-        MODEL48 = PackedMode::MODEL48,
-        VALUE48 = PackedMode::VALUE48
-    };
-
     /// @param RAW_PRIVATE Caller owns range/cell; init/shutdown/private APC segment. 
     /// @param ATOMIC_SLAMSHOT Atomic load/store whole 64-bit cell. Multiple writers are allowed only if last-writer-wins is acceptable.
     /// @param CLAIMED_GURDED Exclusive mutation. After claim, writer may raw-store companion cells, then publish with release store.

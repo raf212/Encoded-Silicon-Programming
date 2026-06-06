@@ -64,23 +64,18 @@ namespace PredictedAdaptedEncoding
         PriorityPolicy priority
     ) noexcept
     {
-        const PackedMode cell_mode = static_cast<PackedMode>(cell_model);
-        const packed64_t a_valid_fabric_meta_cell32 = PackedCell64_t::MakeInitialFabricValidPackedCellModel(
-            cell_mode, locality_of_cell, 
-            fabric_segment_class, cell_data_type, 
-            value32_or_64, extended_meta_value,
-            priority,
-            (cell_mode == PackedMode::MODEL32 || cell_mode == PackedMode::VALUE32) ? static_cast<Model32Subclass>(mode_sub_class) : Model32Subclass::SELF_CLASS,
-            (cell_mode == PackedMode::MODEL48 || cell_mode == PackedMode::VALUE48) ? static_cast<Model48Subclass>(mode_sub_class) : Model48Subclass::SELF_CLASS
+        const packed64_t packed_cell_for_fabric = PackedCell64_t::MakeModeledFabricValidPackedCell(
+            cell_model, mode_sub_class, fabric_segment_class,
+            locality_of_cell, cell_data_type, 
+            priority, value32_or_64, extended_meta_value
         );
 
-        if (a_valid_fabric_meta_cell32 == PackedCell64_t::PACKED_CELL_SENTINAL)
+        if (packed_cell_for_fabric == PackedCell64_t::PACKED_CELL_SENTINAL)
         {
             return false;
         }
 
-        //MakeInitialFabricValidPackedCellModel::already checks validity
-        StorePackedCellUncheckedDirectly(idx, a_valid_fabric_meta_cell32);
+        StorePackedCellUncheckedDirectly(idx, packed_cell_for_fabric);
         return true;
     }
 
