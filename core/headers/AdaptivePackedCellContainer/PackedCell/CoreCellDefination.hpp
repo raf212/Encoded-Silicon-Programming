@@ -185,7 +185,7 @@ namespace PredictedAdaptedEncoding
         static constexpr packed64_t Compose48BitFamilyPackedCell(uint64_t clockor_value48, meta16_t meta16) noexcept
         {
             const PackedMode packed_mode = static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16));
-            if(packed_mode != PackedMode::MODEL48 || packed_mode != PackedMode::VALUE48)
+            if(packed_mode != PackedMode::MODEL48 && packed_mode != PackedMode::VALUE48)
             {
                 return MakeFaultyCell();
             }
