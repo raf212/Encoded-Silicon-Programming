@@ -84,13 +84,10 @@ namespace PredictedAdaptedEncoding
     
         constexpr void WriteFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept;
 
-        /// @brief Do not change default parameter unless confident
-        /// @param invalid_cell_locality If the cell locality matches with invalid_cell_locality then SIZE_MAX
         /// @return 
         constexpr size_t GetTableDirectoryCellSlabIndex_(
             FabricTableSegmentClasses desired_table, 
-            TableEntryCellTypeOfFabric entry_type, 
-            std::optional<LocalityPolicy> invalid_cell_locality = LocalityPolicy::CLAIMED
+            TableEntryCellTypeOfFabric entry_type
         ) noexcept;
     
 
@@ -137,7 +134,7 @@ namespace PredictedAdaptedEncoding
 
         void ShutDownFabric() noexcept;
         
-        constexpr packed64_t ReadCompletePackedCellDirectly(size_t slab_index, std::optional<LocalityPolicy> invalid_cell_locality = LocalityPolicy::CLAIMED) noexcept;
+        constexpr packed64_t ReadCompletePackedCellDirectly(size_t slab_index) noexcept;
 
         constexpr packed64_t AtomicallyLoadReadCompletePackedCell(size_t slab_index) noexcept;
 

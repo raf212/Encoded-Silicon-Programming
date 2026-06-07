@@ -23,19 +23,14 @@ namespace PredictedAdaptedEncoding
         ResetScalarsofTheFabric_();
     }
 
-    constexpr packed64_t NeuromorphicSpaceTimeFabricCoordinator::ReadCompletePackedCellDirectly(
-        size_t slab_index, std::optional<LocalityPolicy> invalid_cell_locality
-    ) noexcept
+    constexpr packed64_t NeuromorphicSpaceTimeFabricCoordinator::ReadCompletePackedCellDirectly(size_t slab_index) noexcept
     {
         if (!SlabBasePtr_ || slab_index >= SlabCellCount_)
         {
             return PackedCell64_t::PACKED_CELL_SENTINAL;
         }
         const packed64_t desired_cell_raw = SlabBasePtr_[slab_index];
-        if (invalid_cell_locality.has_value() && PackedCell64_t::ExtractLocalityFromPacked(desired_cell_raw) != *invalid_cell_locality)
-        {
-            return APCDataStructure::APC_SIZE_SENTINAL;
-        }
+
         return desired_cell_raw;
     } 
 

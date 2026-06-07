@@ -300,8 +300,7 @@ namespace PredictedAdaptedEncoding
 
     constexpr size_t NeuromorphicSpaceTimeFabricCoordinator::GetTableDirectoryCellSlabIndex_(
         FabricTableSegmentClasses table_class, 
-        TableEntryCellTypeOfFabric entry_type, 
-        std::optional<LocalityPolicy> invalid_cell_locality
+        TableEntryCellTypeOfFabric entry_type
     ) noexcept
     {
         const size_t table_meta_index = static_cast<size_t>(table_class);
@@ -309,7 +308,7 @@ namespace PredictedAdaptedEncoding
         {
             return APCDataStructure::APC_SIZE_SENTINAL;
         }
-        const packed64_t directory_begin_cell = ReadCompletePackedCellDirectly(table_meta_index, invalid_cell_locality);
+        const packed64_t directory_begin_cell = ReadCompletePackedCellDirectly(table_meta_index);
         
         const size_t base_idx = static_cast<size_t>(PackedCell64_t::ExtractClk48(directory_begin_cell));
         return base_idx + (table_meta_index * TABLE_ENTRY_WIDTH_OF_FABRIC) + static_cast<size_t>(entry_type);
@@ -336,7 +335,7 @@ namespace PredictedAdaptedEncoding
             return false;
         }
         
-        const size_t base = GetTableDirectoryCellSlabIndex_(table_class, TableEntryCellTypeOfFabric::BEGIN48, LocalityPolicy::CLAIMED);
+        const size_t base = GetTableDirectoryCellSlabIndex_(table_class, TableEntryCellTypeOfFabric::BEGIN48);
 
         if (base + TABLE_ENTRY_WIDTH_OF_FABRIC > SlabCellCount_)
         {
@@ -353,7 +352,7 @@ namespace PredictedAdaptedEncoding
         );
 
         AtomicallyStorePackedCellUnchecked(
-            base + static_cast<size_t>(TableEntryCellTypeOfFabric::BEGIN48), 
+            base + static_cast<size_t>(TableEntryCellTypeOfFabric::END48), 
                 CoreOfFabricCoordinator::MakeADirectoryEntryCellForFabric(
                 static_cast<uint32_t>(end), TableEntryCellTypeOfFabric::END48,
                 table_class, version,
