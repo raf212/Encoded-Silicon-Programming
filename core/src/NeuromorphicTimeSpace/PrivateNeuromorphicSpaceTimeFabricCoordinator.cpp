@@ -163,7 +163,7 @@ namespace PredictedAdaptedEncoding
                 const packed64_t desired = low32_and_probable_high32.first;
                 for (size_t i = 0; i < DEFAULT_MAX_TRIES; i++)
                 {
-                    if (AtomicallyCompareAndExchangeStrongPackedCell(low_idx, expected, desired))
+                    if (CompareExchangeStrongFromFabric(low_idx, expected, desired))
                     {
                         AtomicallyStorePackedCellUnchecked(high_idx, low32_and_probable_high32.second);
                         return true;
@@ -193,13 +193,13 @@ namespace PredictedAdaptedEncoding
 
                 for (size_t i = 0; i < DEFAULT_MAX_TRIES; i++)
                 {
-                    if (AtomicallyCompareAndExchangeStrongPackedCell(low_idx, expected_low, desired_claimed_low))
+                    if (CompareExchangeStrongFromFabric(low_idx, expected_low, desired_claimed_low))
                     {
                         packed64_t expected_high = high32_half_view.RawCell;
 
                         for (size_t j = 0; j < DEFAULT_MAX_TRIES; j++)
                         {
-                            if (AtomicallyCompareAndExchangeStrongPackedCell(high_idx, expected_high, low32_and_probable_high32.second))
+                            if (CompareExchangeStrongFromFabric(high_idx, expected_high, low32_and_probable_high32.second))
                             {
                                 AtomicallyStorePackedCellUnchecked(low_idx, low32_and_probable_high32.first);
                                 return true;

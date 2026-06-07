@@ -4,6 +4,19 @@
 namespace PredictedAdaptedEncoding
 {
 
+    enum class JustifyClaimCas
+    {
+        SUCCESS = 0,
+        OUT_OF_BOUND = 1,
+        INVALID_CELL = 2,
+        CELL_SENTINAL_STATE = 3,
+        CELL_INVALID = 4,
+        CAS_LOOP_RANOUT = 5,
+        UNDEFINED_CAS_FAILURE = 6,
+        INVALID_USE_OF_METHOD = 7
+
+    };
+
     class NeuromorphicSpaceTimeFabricCoordinator
     {
     private:
@@ -126,7 +139,7 @@ namespace PredictedAdaptedEncoding
         
         constexpr packed64_t ReadCompletePackedCellDirectly(size_t slab_index, std::optional<LocalityPolicy> invalid_cell_locality = LocalityPolicy::CLAIMED) noexcept;
 
-        constexpr packed64_t AtomicallyLoadReadCompletePackedCell(size_t slab_index, std::optional<LocalityPolicy> invalid_cell_locality = LocalityPolicy::CLAIMED) noexcept;
+        constexpr packed64_t AtomicallyLoadReadCompletePackedCell(size_t slab_index) noexcept;
 
         constexpr void StorePackedCellUncheckedDirectly(size_t slab_index, packed64_t packed_cell) noexcept;
 
@@ -135,13 +148,28 @@ namespace PredictedAdaptedEncoding
         /// @brief Do not change default memory order unless have total idea
         /// @param expected_packed_cell ->ADDRESS
         /// @return bool
-        constexpr bool AtomicallyCompareAndExchangeStrongPackedCell(
+        constexpr bool CompareExchangeStrongFromFabric(
             size_t slab_index, 
             packed64_t& expected_packed_cell, 
             packed64_t desired_packed_cell,
             std::memory_order mem_order_success = MoClaimSuccess,
             std::memory_order mem_order_failure = MoClaimFailure
         ) noexcept;
+
+        /// @brief Do not change default memory order unless have total idea
+        /// @param expected_packed_cell ->ADDRESS
+        /// @return bool
+        constexpr bool CompareExchangeWeakInSlab(
+            size_t slab_index, 
+            packed64_t& expected_packed_cell, 
+            packed64_t desired_packed_cell,
+            std::memory_order mem_order_success = MoClaimSuccess,
+            std::memory_order mem_order_failure = MoLoad_
+        ) noexcept;
+
+        JustifyClaimCas TryClaimACellInSlab(PackedCell64_t::AuthoritiveCellView& expected_cell_auth_view, packed64_t* desired_packed_cell = nullptr) noexcept;
+
+
 
 /// checked--------------------------------------------------------
         bool GetMetaCellView(MetaIndexOfAPCNode fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept;

@@ -53,6 +53,8 @@ namespace PredictedAdaptedEncoding
             bool IsCellValid{false};
             bool ValidatedView{false};
 
+            std::optional<size_t> SlabIndexOfPackeCell{std::nullopt};
+
             bool constexpr IsThisPackedCellValidInRuntime() noexcept
             {
                 ValidatedView = true;

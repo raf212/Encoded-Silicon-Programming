@@ -39,9 +39,7 @@ namespace PredictedAdaptedEncoding
         return desired_cell_raw;
     } 
 
-    constexpr packed64_t NeuromorphicSpaceTimeFabricCoordinator::AtomicallyLoadReadCompletePackedCell(
-        size_t slab_index, std::optional<LocalityPolicy> invalid_cell_locality
-    ) noexcept
+    constexpr packed64_t NeuromorphicSpaceTimeFabricCoordinator::AtomicallyLoadReadCompletePackedCell(size_t slab_index) noexcept
     {
         if (!SlabBasePtr_ || slab_index >= SlabCellCount_)
         {
@@ -49,10 +47,7 @@ namespace PredictedAdaptedEncoding
         }
         std::atomic_ref<const packed64_t> packed_cell_ref(SlabBasePtr_[slab_index]);
         const packed64_t desired_cell_raw = packed_cell_ref.load(MoLoad_);
-        if (invalid_cell_locality.has_value() && PackedCell64_t::ExtractLocalityFromPacked(desired_cell_raw) != *invalid_cell_locality)
-        {
-            return APCDataStructure::APC_SIZE_SENTINAL;
-        }
+
         return desired_cell_raw;
     }
 
@@ -79,7 +74,7 @@ namespace PredictedAdaptedEncoding
         packed_cell_ref.notify_all();
     }
 
-    constexpr bool NeuromorphicSpaceTimeFabricCoordinator::AtomicallyCompareAndExchangeStrongPackedCell(
+    constexpr bool NeuromorphicSpaceTimeFabricCoordinator::CompareExchangeStrongFromFabric(
         size_t slab_index, 
         packed64_t& expected_packed_cell, 
         packed64_t desired_packed_cell,
@@ -94,6 +89,70 @@ namespace PredictedAdaptedEncoding
         std::atomic_ref<packed64_t> packed_cell_ref(SlabBasePtr_[slab_index]);
         return packed_cell_ref.compare_exchange_strong(expected_packed_cell, desired_packed_cell, mem_order_success, mem_order_failure);
     }
+
+    constexpr bool NeuromorphicSpaceTimeFabricCoordinator::CompareExchangeWeakInSlab(
+        size_t slab_index, 
+        packed64_t& expected_packed_cell, 
+        packed64_t desired_packed_cell,
+        std::memory_order mem_order_success,
+        std::memory_order mem_order_failure
+    ) noexcept
+    {
+        if (!SlabBasePtr_ || slab_index >= SlabCellCount_)
+        {
+            return false;
+        }
+        std::atomic_ref<packed64_t> packed_cell_ref(SlabBasePtr_[slab_index]);
+        return packed_cell_ref.compare_exchange_weak(expected_packed_cell, desired_packed_cell, mem_order_success, mem_order_failure);
+    }
+
+    /// @brief An Invalid Cell Is not Claimable - Reinitate as valid cell
+    /// @param slab_index 
+    /// @param expected_cell 
+    /// @return 
+
+    JustifyClaimCas NeuromorphicSpaceTimeFabricCoordinator::TryClaimACellInSlab(PackedCell64_t::AuthoritiveCellView& expected_cell_auth_view, packed64_t* desired_packed_cell) noexcept
+    {
+        if (!expected_cell_auth_view.IsCellValid)
+        {
+            return JustifyClaimCas::INVALID_CELL;
+        }
+
+        if (!expected_cell_auth_view.SlabIndexOfPackeCell.has_value())
+        {
+            return JustifyClaimCas::OUT_OF_BOUND;
+        }
+        
+        for (size_t i = 0; i < DEFAULT_MAX_TRIES; i++)
+        {
+            packed64_t currennt_expected_cell = AtomicallyLoadReadCompletePackedCell(*expected_cell_auth_view.SlabIndexOfPackeCell);
+            if (currennt_expected_cell == PackedCell64_t::PACKED_CELL_SENTINAL)
+            {
+                return JustifyClaimCas::CELL_SENTINAL_STATE;
+            }
+            if (currennt_expected_cell != expected_cell_auth_view.RawCell)
+            {
+                return JustifyClaimCas::INVALID_USE_OF_METHOD;
+            }
+            
+            const packed64_t desired_cell = PackedCell64_t::SetLocalityInPacked(expected_cell_auth_view.RawCell, LocalityPolicy::CLAIMED);
+            if (CompareExchangeWeakInSlab(*expected_cell_auth_view.SlabIndexOfPackeCell, currennt_expected_cell, desired_cell))
+            {
+                if (desired_packed_cell)
+                {
+                    *desired_packed_cell = desired_cell;
+                }
+
+                return JustifyClaimCas::SUCCESS;
+            }
+            AdaptiveBackoffCentral_.AdaptiveBackOffPacked(currennt_expected_cell);
+        }
+
+        return JustifyClaimCas::CAS_LOOP_RANOUT;
+        
+    }
+
+
 
 /// checked--------------------------------------------------------
 
