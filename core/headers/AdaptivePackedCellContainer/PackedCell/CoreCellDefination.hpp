@@ -416,7 +416,7 @@ namespace PredictedAdaptedEncoding
                     out_packed_cell_view.AccessContractOfValue = static_cast<AccessContractOfValue>(ExtractSubClassOrContractFromMETA16_U_(meta16));
                 }
                 out_packed_cell_view.InCellClock16 = ExtractClk16(packed_cell);
-                out_packed_cell_view.CellValue32 = ExtractValue32(packed_cell);
+                out_packed_cell_view.CellValue32 = ExtractModel32(packed_cell);
             }
             else
             {

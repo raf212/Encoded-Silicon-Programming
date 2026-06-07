@@ -79,7 +79,19 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-        static constexpr val32_t ExtractValue32(packed64_t packed_cell) noexcept
+
+        /// @return uint32_t or UINT32_MAX::In wrong function call && Packed Cell == UINT64_MAX
+        static constexpr val32_t ExtractModel32(packed64_t packed_cell) noexcept
+        {
+            if (ExtractModeOfPackedCellFromPacked(packed_cell) != PackedMode::MODEL32)
+            {
+                return IN_CELL_VALUE_MODE32_SENTINAL;
+            }
+            
+            return static_cast<val32_t>(packed_cell & MaskLowNBits(VALBITS));
+        }
+
+        static constexpr val32_t Extract32BitPackedCellFamily(packed64_t packed_cell) noexcept
         {
             if (!IsPackedCellFrom32BitFamily(packed_cell))
             {
@@ -155,7 +167,7 @@ namespace PredictedAdaptedEncoding
                 {
                     return std::nullopt;
                 }
-                const val32_t value_bits32 = ExtractValue32(packed_cell);
+                const val32_t value_bits32 = ExtractModel32(packed_cell);
                 return BitCastMaybe<PCDT>(value_bits32);
             }
 

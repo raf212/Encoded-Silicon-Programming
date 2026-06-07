@@ -26,7 +26,7 @@ namespace PredictedAdaptedEncoding
             return UNSIGNED_ZERO;
         }
         size_t index = static_cast<size_t>(idx);
-        return PackedCell64_t::ExtractValue32(BackingPtr[index].load(MoLoad_));
+        return PackedCell64_t::ExtractModel32(BackingPtr[index].load(MoLoad_));
     }
 
     void SegmentIODefinition::TouchLocalMetaClock48() noexcept
@@ -89,7 +89,7 @@ namespace PredictedAdaptedEncoding
         }
         const size_t index = static_cast<size_t>(idx);
         packed64_t expected_packed = BackingPtr[index].load(MoLoad_);
-        if (PackedCell64_t::ExtractValue32(expected_packed) != expected_value)
+        if (PackedCell64_t::ExtractModel32(expected_packed) != expected_value)
         {
             return false;
         }
