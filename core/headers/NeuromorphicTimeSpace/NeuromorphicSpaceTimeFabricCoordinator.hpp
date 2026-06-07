@@ -84,24 +84,22 @@ namespace PredictedAdaptedEncoding
     
         constexpr void WriteFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept;
 
-        /// @return 
-        constexpr size_t GetTableDirectoryCellSlabIndex_(
+        /// @return VALID-> INDEX < UINT
+        constexpr size_t ReadTableDirectoryBeginIdxOfATableClass_(
             FabricTableSegmentClasses desired_table, 
             TableEntryCellTypeOfFabric entry_type
         ) noexcept;
     
 
-        bool WriteDirectoryEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end, uint8_t version) noexcept;
+        constexpr bool WriteDirectoryEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end, uint8_t version) noexcept;
+
+        // constexpr std::optional<std::pair<packed64_t, packed64_t>> GetPairedDirectoryLocationCellIfValid_(FabricTableSegmentClasses table_class) noexcept
+        // {
+        //     const
+        // }
         
 //checked-----------------------------------------------
-        // bool GetSlabIdxOfTableDirectoryCell_(FabricTableSegmentClasses table_class, size_t& begin, size_t& end, uint16_t& version) noexcept
-        // {
-        //     if (!CoreOfFabricCoordinator::IsValidFabricTable(table_class))
-        //     {
 
-        //     }
-            
-        // }
 
         void InitializeLinearTable_(FabricTableSegmentClasses table_class, uint32_t record_width) noexcept;
 

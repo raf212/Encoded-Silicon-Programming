@@ -298,7 +298,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    constexpr size_t NeuromorphicSpaceTimeFabricCoordinator::GetTableDirectoryCellSlabIndex_(
+    constexpr size_t NeuromorphicSpaceTimeFabricCoordinator::ReadTableDirectoryBeginIdxOfATableClass_(
         FabricTableSegmentClasses table_class, 
         TableEntryCellTypeOfFabric entry_type
     ) noexcept
@@ -315,7 +315,7 @@ namespace PredictedAdaptedEncoding
 
     }
 
-    bool NeuromorphicSpaceTimeFabricCoordinator::WriteDirectoryEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end, uint8_t version) noexcept
+    constexpr bool NeuromorphicSpaceTimeFabricCoordinator::WriteDirectoryEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end, uint8_t version) noexcept
     {
 
         if (!CoreOfFabricCoordinator::IsValidFabricTable(table_class))
@@ -335,29 +335,32 @@ namespace PredictedAdaptedEncoding
             return false;
         }
         
-        const size_t base = GetTableDirectoryCellSlabIndex_(table_class, TableEntryCellTypeOfFabric::BEGIN48);
+        const size_t base = ReadTableDirectoryBeginIdxOfATableClass_(table_class, TableEntryCellTypeOfFabric::BEGIN48);
 
         if (base + TABLE_ENTRY_WIDTH_OF_FABRIC > SlabCellCount_)
         {
             return false;
         }
 
-        AtomicallyStorePackedCellUnchecked(
-            base + static_cast<size_t>(TableEntryCellTypeOfFabric::BEGIN48), 
-                CoreOfFabricCoordinator::MakeADirectoryEntryCellForFabric(
-                static_cast<uint32_t>(begin), TableEntryCellTypeOfFabric::BEGIN48,
-                table_class, version,
-                LocalityPolicy::PUBLISHED
-            )
+        const packed64_t begin48_cell = CoreOfFabricCoordinator::MakeADirectoryEntryCellForFabric(
+            static_cast<uint32_t>(begin), TableEntryCellTypeOfFabric::BEGIN48,
+            table_class, version,
+            LocalityPolicy::PUBLISHED
+        );
+
+        const packed64_t end48_cell =  CoreOfFabricCoordinator::MakeADirectoryEntryCellForFabric(
+            static_cast<uint32_t>(end), TableEntryCellTypeOfFabric::END48,
+            table_class, version,
+            LocalityPolicy::PUBLISHED
         );
 
         AtomicallyStorePackedCellUnchecked(
+            base + static_cast<size_t>(TableEntryCellTypeOfFabric::BEGIN48), 
+            begin48_cell
+        );
+        AtomicallyStorePackedCellUnchecked(
             base + static_cast<size_t>(TableEntryCellTypeOfFabric::END48), 
-                CoreOfFabricCoordinator::MakeADirectoryEntryCellForFabric(
-                static_cast<uint32_t>(end), TableEntryCellTypeOfFabric::END48,
-                table_class, version,
-                LocalityPolicy::PUBLISHED
-            )
+            end48_cell
         );
 
         return true;
