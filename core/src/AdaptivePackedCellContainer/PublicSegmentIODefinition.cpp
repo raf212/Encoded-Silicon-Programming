@@ -65,7 +65,7 @@ namespace PredictedAdaptedEncoding
         }
         
         Timer48 now_timer;
-        return PackedCell64_t::Compose48BitFamilyPackedCell((now_timer.NowTicks() & MaskLowNBits(CLK_B48)), meta16);
+        return PackedCell64_t::Compose48BitFamilyPackedCell((now_timer.NowTicks() & MaskLowNBits(FAMILY_48_BIT_LEN)), meta16);
     }
 
     void SegmentIODefinition::WriteOrUpdateMetaClock48(PriorityPolicy priority, std::optional<uint64_t>meta_clock_48 ) noexcept
@@ -924,7 +924,7 @@ namespace PredictedAdaptedEncoding
             uint16_t faulty_count = UNSIGNED_ZERO;
             //
 
-            const uint64_t raw48 = PackedCell64_t::ExtractClk48(observed_cell);
+            const uint64_t raw48 = PackedCell64_t::ExtractModel48(observed_cell);
 
             if (!Subdevision16x3InternalMode48CellModel::ExtractLowMidHighFromMode48_(raw48, published_count, claimed_count, faulty_count))
             {

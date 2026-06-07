@@ -310,7 +310,7 @@ namespace PredictedAdaptedEncoding
         }
         const packed64_t directory_begin_cell = ReadCompletePackedCellDirectly(table_meta_index);
         
-        const size_t base_idx = static_cast<size_t>(PackedCell64_t::ExtractClk48(directory_begin_cell));
+        const size_t base_idx = static_cast<size_t>(PackedCell64_t::ExtractModel48(directory_begin_cell));
         return base_idx + (table_meta_index * TABLE_ENTRY_WIDTH_OF_FABRIC) + static_cast<size_t>(entry_type);
 
     }

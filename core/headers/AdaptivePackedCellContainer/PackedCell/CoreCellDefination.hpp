@@ -191,7 +191,7 @@ namespace PredictedAdaptedEncoding
             {
                 return MakeFaultyCell();
             }
-            packed64_t packed_cell = (packed64_t(clockor_value48) & MaskLowNBits(CLK_B48));
+            packed64_t packed_cell = (packed64_t(clockor_value48) & MaskLowNBits(FAMILY_48_BIT_LEN));
             packed_cell = SetMETA16InPacked(packed_cell, meta16);
             return packed_cell;
         }
@@ -370,7 +370,7 @@ namespace PredictedAdaptedEncoding
                 return MakeFaultyCell();
             }
             uint64_t value_casted_bit = BitCastMaybe<uint64_t>(value_clock48);
-            return Compose48BitFamilyPackedCell(value_casted_bit & MaskLowNBits(CLK_B48), meta16);
+            return Compose48BitFamilyPackedCell(value_casted_bit & MaskLowNBits(FAMILY_48_BIT_LEN), meta16);
             
         }
 
@@ -429,7 +429,7 @@ namespace PredictedAdaptedEncoding
                     out_packed_cell_view.AccessContractOfValue = static_cast<AccessContractOfValue>(ExtractSubClassOrContractFromMETA16_U_(meta16));
                 }
 
-                out_packed_cell_view.CellClock48 = ExtractClk48(packed_cell);
+                out_packed_cell_view.CellClock48 = ExtractModel48(packed_cell);
             }
 
             out_packed_cell_view.CellValueDataType = static_cast<InternalDataTypePolicy>(ExtractValueDataTypeFromMETA16_U_(meta16));

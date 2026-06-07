@@ -171,7 +171,7 @@ protected:
             static_cast<tag8_t>(APCPagedNodeSegmentClasses::CONTROL_SLOT),
             sub_class, priority, locality, dtype
         );
-        const packed64_t packed_cell = PackedCell64_t::Compose48BitFamilyPackedCell(raw48_value & MaskLowNBits(CLK_B48), meta16);
+        const packed64_t packed_cell = PackedCell64_t::Compose48BitFamilyPackedCell(raw48_value & MaskLowNBits(FAMILY_48_BIT_LEN), meta16);
         BackingPtr[index].store(packed_cell, MoStoreSeq_);
         BackingPtr[index].notify_all();
     }
@@ -401,7 +401,7 @@ public:
     )
     {
         const packed64_t central_occupancy_cell = ReadCentralAPCOccupancyCellForThisPagedNode();
-        const uint64_t raw48 = PackedCell64_t::ExtractClk48(central_occupancy_cell);
+        const uint64_t raw48 = PackedCell64_t::ExtractModel48(central_occupancy_cell);
         bool ok = Subdevision16x3InternalMode48CellModel::ExtractLowMidHighFromMode48_(raw48, published_occupancy, claimed_occupancy, faulty_occupancy);
         return ok;
     }

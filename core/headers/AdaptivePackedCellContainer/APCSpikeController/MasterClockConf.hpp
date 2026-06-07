@@ -18,7 +18,7 @@ class AdaptivePackedCellContainer;
             using  cns = std::chrono::nanoseconds;
             auto d = std::chrono::steady_clock::now().time_since_epoch();
             uint64_t ns_count = static_cast<uint64_t>(std::chrono::duration_cast<cns>(d).count());
-            return ns_count & MaskLowNBits(CLK_B48);
+            return ns_count & MaskLowNBits(FAMILY_48_BIT_LEN);
         }
     };
 

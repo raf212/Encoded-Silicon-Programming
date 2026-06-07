@@ -22,7 +22,7 @@ namespace PredictedAdaptedEncoding
             meta16_t meta16
         ) noexcept
         {
-            const uint64_t raw48 = (PackUnsigned16x3ToMode48_(low16_bits, mid_16_bits, high_16_bits) & MaskLowNBits(CLK_B48));
+            const uint64_t raw48 = (PackUnsigned16x3ToMode48_(low16_bits, mid_16_bits, high_16_bits) & MaskLowNBits(FAMILY_48_BIT_LEN));
             return PackedCell64_t::Compose48BitFamilyPackedCell(raw48, meta16);
         }
 
@@ -95,7 +95,7 @@ namespace PredictedAdaptedEncoding
                 Pack2x16Plus2x8UnsignedSubdivision_(
                     lowest_16bit_0, low_16bit_1,
                     high_8bit_2, highest_8bit_3
-                ) & MaskLowNBits(CLK_B48)
+                ) & MaskLowNBits(FAMILY_48_BIT_LEN)
             );
             const packed64_t compressed_packed_cell = PackedCell64_t::Compose48BitFamilyPackedCell(raw48, meta16);
             if (!IsThisCellAFourSubdevision_48t(compressed_packed_cell))

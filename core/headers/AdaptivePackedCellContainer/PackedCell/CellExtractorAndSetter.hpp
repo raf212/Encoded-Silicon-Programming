@@ -91,15 +91,6 @@ namespace PredictedAdaptedEncoding
             return static_cast<val32_t>(packed_cell & MaskLowNBits(VALBITS));
         }
 
-        static constexpr val32_t Extract32BitPackedCellFamily(packed64_t packed_cell) noexcept
-        {
-            if (!IsPackedCellFrom32BitFamily(packed_cell))
-            {
-                return IN_CELL_VALUE_MODE32_SENTINAL;
-            }
-            return static_cast<val32_t>(packed_cell & MaskLowNBits(VALBITS));
-        }
-
         static constexpr clk16_t ExtractClk16(packed64_t packed_cell) noexcept
         {
             if (!IsPackedCellFrom32BitFamily(packed_cell))
@@ -109,13 +100,13 @@ namespace PredictedAdaptedEncoding
             return static_cast<clk16_t>((packed_cell >> (VALBITS)) & MaskLowNBits(CLK_B16));
         }
 
-        static constexpr uint64_t ExtractClk48(packed64_t packed_cell) noexcept
+        static constexpr uint64_t ExtractModel48(packed64_t packed_cell) noexcept
         {
-            if (IsPackedCellFrom32BitFamily(packed_cell))
+            if (ExtractModeOfPackedCellFromPacked(packed_cell) != PackedMode::MODEL48)
             {
                 return PACKED_CELL_SENTINAL;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
             }
-            return static_cast<uint64_t>(packed_cell & MaskLowNBits(CLK_B48));
+            return static_cast<uint64_t>(packed_cell & MaskLowNBits(FAMILY_48_BIT_LEN));
         }
 
         static constexpr PriorityPolicy ExtractPriorityFromPacked(packed64_t packed_cell) noexcept
@@ -175,7 +166,7 @@ namespace PredictedAdaptedEncoding
             {
                 return std::nullopt;
             }
-            uint64_t value_bits_48 = ExtractClk48(packed_cell);
+            uint64_t value_bits_48 = ExtractModel48(packed_cell);
             return BitCastMaybe<PCDT>(value_bits_48);
         }
 

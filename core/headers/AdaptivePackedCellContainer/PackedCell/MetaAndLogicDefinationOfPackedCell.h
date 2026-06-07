@@ -48,7 +48,7 @@ namespace PredictedAdaptedEncoding {
     static constexpr ::std::memory_order OnExchangeFailure   = ::std::memory_order_relaxed;
     //--
 
-    static constexpr unsigned CLK_B48 = 48u;
+    static constexpr unsigned FAMILY_48_BIT_LEN = 48u;
     static constexpr unsigned VALBITS  = 32u;
     static constexpr unsigned CLK_B16  = 16u;
     static constexpr unsigned META16_B16  = 16u;
