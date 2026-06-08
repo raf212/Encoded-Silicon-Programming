@@ -38,15 +38,15 @@ class AdaptivePackedCellContainer;
         MasterClockConf& operator = (MasterClockConf&&) = delete;
         ~MasterClockConf() noexcept = default;
 
-        packed64_t RefreshPackedCellClockOnly(
-            packed64_t provided_packed_cell,
-            std::optional<LocalityPolicy> override_locality = std::nullopt
-        ) noexcept;
+        // packed64_t RefreshPackedCellClockOnly(
+        //     packed64_t provided_packed_cell,
+        //     std::optional<LocalityPolicy> override_locality = std::nullopt
+        // ) noexcept;
 
-        std::optional<packed64_t> TouchPackedCellClockAndGetCellWithNewClock(
-            size_t index_of_packed_cell,
-            std::optional<LocalityPolicy> override_locality = std::nullopt
-        ) noexcept;
+        // std::optional<packed64_t> TouchPackedCellClockAndGetCellWithNewClock(
+        //     size_t index_of_packed_cell,
+        //     std::optional<LocalityPolicy> override_locality = std::nullopt
+        // ) noexcept;
 
         bool TouchSegmentLocalClock48HighPriority() noexcept;
 
@@ -79,7 +79,7 @@ class AdaptivePackedCellContainer;
          /// @return 
          packed64_t ComposeClockedModel32FroAPC(
             val32_t provided_cell_value32,
-            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::NONE,
+            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::UNDEFINED,
             PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST,
             LocalityPolicy locality = LocalityPolicy::PUBLISHED,
             Model32Subclass sub_class = Model32Subclass::SELF_CLASS,

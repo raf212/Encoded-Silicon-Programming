@@ -19,7 +19,7 @@ namespace PredictedAdaptedEncoding
         return desired_occupancy ? *desired_occupancy : UNSIGNED_ZERO;
     }
 
-    val32_t SegmentIODefinition::ReadMetaCellValue32(MetaIndexOfAPCNode idx) noexcept
+    val32_t SegmentIODefinition::ReadMetaCellFamily32(MetaIndexOfAPCNode idx) noexcept
     {
         if (!ValidMetaIdx(idx) || idx == MetaIndexOfAPCNode::LOCAL_CLOCK48)
         {
@@ -252,7 +252,7 @@ namespace PredictedAdaptedEncoding
         
         while (true)
         {
-            uint32_t current_thread_count = ReadMetaCellValue32(MetaIndexOfAPCNode::CURRENT_ACTIVE_THREADS);
+            uint32_t current_thread_count = ReadMetaCellFamily32(MetaIndexOfAPCNode::CURRENT_ACTIVE_THREADS);
             if (current_thread_count == IN_CELL_VALUE_MODE32_SENTINAL)
             {
                 return false;
@@ -280,7 +280,7 @@ namespace PredictedAdaptedEncoding
         }
         while (true)
         {
-            const uint32_t current_meta_value = ReadMetaCellValue32(port_meta_idx);
+            const uint32_t current_meta_value = ReadMetaCellFamily32(port_meta_idx);
             if (current_meta_value == target_branch_id)
             {
                 return true;
@@ -298,9 +298,9 @@ namespace PredictedAdaptedEncoding
 
     bool SegmentIODefinition::ShouldSplitNow() noexcept
     {
-        const val32_t split_threshold = ReadMetaCellValue32(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE);
-        const val32_t max_depth = ReadMetaCellValue32(MetaIndexOfAPCNode::MAX_DEPTH);
-        const val32_t depth_of_current_branch = ReadMetaCellValue32(MetaIndexOfAPCNode::BRANCH_DEPTH);
+        const val32_t split_threshold = ReadMetaCellFamily32(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE);
+        const val32_t max_depth = ReadMetaCellFamily32(MetaIndexOfAPCNode::MAX_DEPTH);
+        const val32_t depth_of_current_branch = ReadMetaCellFamily32(MetaIndexOfAPCNode::BRANCH_DEPTH);
         if (depth_of_current_branch >= max_depth)
         {
             return false;
@@ -345,7 +345,7 @@ namespace PredictedAdaptedEncoding
         const uint32_t bit = static_cast<uint32_t>(ControlEnumOfAPCSegment::SPLIT_INFLIGHT);
         while (true)
         {
-            const uint32_t current_flags = ReadMetaCellValue32(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
+            const uint32_t current_flags = ReadMetaCellFamily32(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
             if ((current_flags & bit) != UNSIGNED_ZERO)
             {
                 return false;
@@ -376,7 +376,7 @@ namespace PredictedAdaptedEncoding
     {
         while (true)
         {
-            val32_t current_total_cas_failure = ReadMetaCellValue32(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH);
+            val32_t current_total_cas_failure = ReadMetaCellFamily32(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH);
             if (current_total_cas_failure == BRANCH_SENTINAL)
             {
                 return BRANCH_SENTINAL;
@@ -580,7 +580,7 @@ namespace PredictedAdaptedEncoding
 
         while (true)
         {
-            const uint32_t current_flags = ReadMetaCellValue32(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
+            const uint32_t current_flags = ReadMetaCellFamily32(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
             if (current_flags == BRANCH_SENTINAL)
             {
                 return false;
@@ -795,10 +795,10 @@ namespace PredictedAdaptedEncoding
         switch (region_kind)
         {
             case APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE :
-                return static_cast<clk16_t>(ReadMetaCellValue32(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_BACKWARD_CLOCK16));
+                return static_cast<clk16_t>(ReadMetaCellFamily32(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_BACKWARD_CLOCK16));
         
         default:
-            return static_cast<clk16_t>(ReadMetaCellValue32(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_FORWARD_CLOCK16));
+            return static_cast<clk16_t>(ReadMetaCellFamily32(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_FORWARD_CLOCK16));
         }
     }
 
@@ -807,10 +807,10 @@ namespace PredictedAdaptedEncoding
         switch (region_kind)
         {
             case APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE :
-                return static_cast<clk16_t>(ReadMetaCellValue32(MetaIndexOfAPCNode::LAST_EMITTED_FEED_BACKWARD_CLOCK16));
+                return static_cast<clk16_t>(ReadMetaCellFamily32(MetaIndexOfAPCNode::LAST_EMITTED_FEED_BACKWARD_CLOCK16));
         
         default:
-            return static_cast<clk16_t>(ReadMetaCellValue32(MetaIndexOfAPCNode::LAST_EMITTED_FEED_FORWARD_CLOCK16));
+            return static_cast<clk16_t>(ReadMetaCellFamily32(MetaIndexOfAPCNode::LAST_EMITTED_FEED_FORWARD_CLOCK16));
         }
     }
 
@@ -818,7 +818,7 @@ namespace PredictedAdaptedEncoding
     {
         while (true)
         {
-            const uint32_t current_value = ReadMetaCellValue32(idx);
+            const uint32_t current_value = ReadMetaCellFamily32(idx);
             if (current_value == value)
             {
                 return true;

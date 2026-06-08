@@ -193,7 +193,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         uint32_t GetProducerCursorPlacement() noexcept
         {
-            return ReadMetaCellValue32(MetaIndexOfAPCNode::PRODUCER_CURSOR_PLACEMENT);
+            return ReadMetaCellFamily32(MetaIndexOfAPCNode::PRODUCER_CURSOR_PLACEMENT);
         }
 
         bool UpdateProducerCursorPlacement(uint32_t new_cursor_placement_idx) noexcept
@@ -212,7 +212,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         uint32_t GetConsumerCursorPlacement() noexcept
         {
-            return ReadMetaCellValue32(MetaIndexOfAPCNode::CONSUMER_CURSORE_PLACEMENT);
+            return ReadMetaCellFamily32(MetaIndexOfAPCNode::CONSUMER_CURSORE_PLACEMENT);
         }
 
         bool UpdateConsumerCursorPlacement(uint32_t new_cursor_value) noexcept

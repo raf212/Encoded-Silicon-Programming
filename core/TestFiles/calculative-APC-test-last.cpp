@@ -234,13 +234,13 @@ namespace
         std::cout << "  branch=" << apc.GetBranchId()
                   << " logical=" << apc.GetLogicalId()
                   << " shared=" << apc.GetSharedId()
-                  << " group=" << apc.ReadMetaCellValue32(MetaIndexOfAPCNode::NODE_GROUP_SIZE)
+                  << " group=" << apc.ReadMetaCellFamily32(MetaIndexOfAPCNode::NODE_GROUP_SIZE)
                   << "\n";
 
         std::cout << "  payload_capacity=" << payload
                   << " total_capacity=" << apc.GetTotalCapacityForThisAPC()
                   << " ready_bit=0x" << std::hex
-                  << apc.ReadMetaCellValue32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT)
+                  << apc.ReadMetaCellFamily32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT)
                   << std::dec
                   << "\n";
 

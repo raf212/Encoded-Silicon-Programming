@@ -42,7 +42,7 @@ namespace PredictedAdaptedEncoding
         }
         TouchLocalMetaClock48();
 
-        uint32_t current_group_size = ReadMetaCellValue32(MetaIndexOfAPCNode::NODE_GROUP_SIZE);
+        uint32_t current_group_size = ReadMetaCellFamily32(MetaIndexOfAPCNode::NODE_GROUP_SIZE);
         if (current_group_size == UNSIGNED_ZERO)
         {
             JustUpdateValueOfMeta32(
@@ -76,7 +76,7 @@ namespace PredictedAdaptedEncoding
         
         while (true)
         {
-            const uint32_t current_cursor_placement = ReadMetaCellValue32(cursors_meta_idx);
+            const uint32_t current_cursor_placement = ReadMetaCellFamily32(cursors_meta_idx);
             uint32_t desired_cursor_place = current_cursor_placement;
             if (cursor_placement.has_value())
             {
@@ -262,7 +262,7 @@ namespace PredictedAdaptedEncoding
         }
         while (true)
         {
-            const val32_t current_branch_rel_mask = ReadMetaCellValue32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
+            const val32_t current_branch_rel_mask = ReadMetaCellFamily32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
             const uint32_t next_mask = current_branch_rel_mask | ready_bit;
             if (next_mask == current_branch_rel_mask)
             {
@@ -444,7 +444,7 @@ namespace PredictedAdaptedEncoding
         {
             return false;
         }
-        const size_t region_size = static_cast<size_t>(ReadMetaCellValue32(MetaIndexOfAPCNode::REGION_SIZE));
+        const size_t region_size = static_cast<size_t>(ReadMetaCellFamily32(MetaIndexOfAPCNode::REGION_SIZE));
         if (region_size == 0)
         {
             RegionRelArray_.reset();
@@ -495,7 +495,7 @@ namespace PredictedAdaptedEncoding
             RegionRelArray_[region].store(static_cast<uint8_t>(region_ready_mask & APCAndPagedNodeHelpers::HIGH_ALL_EIGHT_NIBBLE), MoStoreSeq_);
             RegionEpochArray_[region].store(region_epoch, MoStoreSeq_);
         }
-        const uint32_t expected_mask = ReadMetaCellValue32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
+        const uint32_t expected_mask = ReadMetaCellFamily32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
 
         JustUpdateValueOfMeta32(
             MetaIndexOfAPCNode::PAGED_NODE_READY_BIT,
@@ -558,7 +558,7 @@ namespace PredictedAdaptedEncoding
                 : 100u;
 
         uint32_t split_threshold =
-            ReadMetaCellValue32(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE);
+            ReadMetaCellFamily32(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE);
 
         if (split_threshold == 0u ||
             split_threshold == BRANCH_SENTINAL ||
@@ -568,7 +568,7 @@ namespace PredictedAdaptedEncoding
         }
 
         const uint32_t cas_failure =
-            ReadMetaCellValue32(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH);
+            ReadMetaCellFamily32(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH);
 
         const bool high_contention =
             cas_failure != BRANCH_SENTINAL &&

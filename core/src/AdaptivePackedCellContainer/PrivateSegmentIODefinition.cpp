@@ -201,7 +201,7 @@ namespace PredictedAdaptedEncoding
         
         while (true)
         {
-            const uint32_t current_flags = ReadMetaCellValue32(desired_flag_idx);
+            const uint32_t current_flags = ReadMetaCellFamily32(desired_flag_idx);
             if (current_flags == BRANCH_SENTINAL)
             {
                 return false;
@@ -396,7 +396,7 @@ namespace PredictedAdaptedEncoding
         }
         while (true)
         {
-            const uint32_t compleate_current_paged_node_ready_bit = ReadMetaCellValue32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
+            const uint32_t compleate_current_paged_node_ready_bit = ReadMetaCellFamily32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
             const uint32_t updated_current_ready_bit = compleate_current_paged_node_ready_bit | anew_readybit;
             if (updated_current_ready_bit == compleate_current_paged_node_ready_bit)
             {
@@ -419,7 +419,7 @@ namespace PredictedAdaptedEncoding
         }
         while (true)
         {
-            const uint32_t compleate_current_paged_node_ready_bit = ReadMetaCellValue32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
+            const uint32_t compleate_current_paged_node_ready_bit = ReadMetaCellFamily32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
             const uint32_t updated_current_ready_bit = compleate_current_paged_node_ready_bit & ~anew_readybit;
             if (updated_current_ready_bit == compleate_current_paged_node_ready_bit)
             {
@@ -512,7 +512,7 @@ namespace PredictedAdaptedEncoding
 
     std::optional<uint16_t> SegmentIODefinition::ReadGlobalLayoutVersion_() noexcept
     {
-        const uint32_t raw = ReadMetaCellValue32(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
+        const uint32_t raw = ReadMetaCellFamily32(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
         if (raw == BRANCH_SENTINAL || raw == UNSIGNED_ZERO)
         {
             return std::nullopt;
@@ -529,7 +529,7 @@ namespace PredictedAdaptedEncoding
 
         while (true)
         {
-            const uint32_t current_version = ReadMetaCellValue32(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
+            const uint32_t current_version = ReadMetaCellFamily32(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
             if ((current_version) == layout_version)
             {
                 return true;

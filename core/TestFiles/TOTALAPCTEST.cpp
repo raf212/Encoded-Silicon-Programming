@@ -424,11 +424,11 @@ namespace
             << "branch=" << seg.GetBranchId()
             << " logical=" << seg.GetLogicalId()
             << " shared=" << seg.GetSharedId()
-            << " group=" << seg.ReadMetaCellValue32(MetaIndexOfAPCNode::NODE_GROUP_SIZE)
+            << " group=" << seg.ReadMetaCellFamily32(MetaIndexOfAPCNode::NODE_GROUP_SIZE)
             << " cap=" << seg.GetTotalCapacityForThisAPC()
             << " payload=" << seg.PayloadCapacityFromHeader()
             << " ready=0x" << std::hex
-            << seg.ReadMetaCellValue32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT)
+            << seg.ReadMetaCellFamily32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT)
             << std::dec
             << " central(pub=" << central.Published
             << ",claim=" << central.Claimed

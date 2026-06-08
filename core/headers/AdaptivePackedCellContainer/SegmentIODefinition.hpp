@@ -130,15 +130,6 @@ protected:
             return;
         }
 
-        // meta16_t meta16_for_apc = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_32t(
-        //     OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, 
-        //     static_cast<tag8_t>(page_class),
-        //     Model32Subclass::SELF_CLASS,
-        //     priority, LocalityPolicy::PUBLISHED,
-        //     InternalDataTypePolicy::UnsignedPCellDataType
-        // );
-        // const packed64_t desired_packed_cell =  PackedCell64_t::Compose32BitFamilyPackedCell(value32, UNSIGNED_ZERO, meta16_for_apc);
-
         const packed64_t packed_cell = PackedCell64_t::MakeTypedAPCValidPackedCell(
             TypeFamily::VALUE32,
             AccessContractOfValue::CAS_RMW,
@@ -244,7 +235,7 @@ public:
 
     ) noexcept;
 
-    val32_t ReadMetaCellValue32(MetaIndexOfAPCNode idx) noexcept;
+    val32_t ReadMetaCellFamily32(MetaIndexOfAPCNode idx) noexcept;
 
     void TouchLocalMetaClock48() noexcept;
 
@@ -309,7 +300,7 @@ public:
 
     bool HasThisControlEnumFlag(ControlEnumOfAPCSegment flag) noexcept
     {
-        return (ReadMetaCellValue32(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS) & static_cast<uint32_t>(flag)) != 0u;
+        return (ReadMetaCellFamily32(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS) & static_cast<uint32_t>(flag)) != 0u;
     }
 
     bool ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment desired_control_flag) noexcept
@@ -329,7 +320,7 @@ public:
 
     bool HasThisManageControlFlag(ManagerControlFlagBits desired_manager_contgrol_flag) noexcept
     {
-        return (ReadMetaCellValue32(MetaIndexOfAPCNode::MANAGER_CONTROL_FLAGS) & static_cast<uint32_t>(desired_manager_contgrol_flag)) != UNSIGNED_ZERO;
+        return (ReadMetaCellFamily32(MetaIndexOfAPCNode::MANAGER_CONTROL_FLAGS) & static_cast<uint32_t>(desired_manager_contgrol_flag)) != UNSIGNED_ZERO;
     }
 
     bool IsLayoutMutationFlagActive() noexcept
@@ -344,17 +335,17 @@ public:
 
     uint32_t GetTotalCapacityForThisAPC() noexcept
     {
-        return ReadMetaCellValue32(MetaIndexOfAPCNode::TOTAL_CAPACITY_OF_THIS_SEGEMENT);
+        return ReadMetaCellFamily32(MetaIndexOfAPCNode::TOTAL_CAPACITY_OF_THIS_SEGEMENT);
     }
 
     uint32_t MaxDepthRead() noexcept
     {
-        return ReadMetaCellValue32(MetaIndexOfAPCNode::MAX_DEPTH);
+        return ReadMetaCellFamily32(MetaIndexOfAPCNode::MAX_DEPTH);
     }
 
     uint32_t CurrentBranchDepthRead() noexcept
     {
-        return ReadMetaCellValue32(MetaIndexOfAPCNode::BRANCH_DEPTH);
+        return ReadMetaCellFamily32(MetaIndexOfAPCNode::BRANCH_DEPTH);
     }
 
     void MakeAPCBranchOwned() noexcept
@@ -370,7 +361,7 @@ public:
 
     bool SetSegmentRegionKind(APCPagedNodeSegmentClasses region_kind) noexcept
     {
-        const uint32_t current_segment_kind = ReadMetaCellValue32(MetaIndexOfAPCNode::SEGMENT_KIND);
+        const uint32_t current_segment_kind = ReadMetaCellFamily32(MetaIndexOfAPCNode::SEGMENT_KIND);
         return JustUpdateValueOfMeta32(MetaIndexOfAPCNode::SEGMENT_KIND, current_segment_kind, static_cast<uint32_t>(region_kind));
     }
 
