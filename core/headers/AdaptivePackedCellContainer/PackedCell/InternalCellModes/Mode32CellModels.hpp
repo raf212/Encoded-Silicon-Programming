@@ -68,6 +68,18 @@ namespace PredictedAdaptedEncoding
 
     };
 
+    const size_t size_of_a_pair = 2 * sizeof(uint64_t);
+    struct alignas(size_of_a_pair) U64x2
+    {
+        uint64_t x0;
+        uint64_t x1;
+    };
+    static_assert(sizeof(U64x2) == size_of_a_pair);
+    static_assert(alignof(U64x2) == size_of_a_pair);
+    static_assert(std::is_trivially_copyable_v<U64x2>);
+    static_assert(std::is_standard_layout_v<U64x2>);
+
+
     struct PairedVersionedCellModelOfMode32
     {
         //In paired cell Ideology clk16 is a version count-> CLOCK is unnecessery because it will be mostly used for contron / paired pointers

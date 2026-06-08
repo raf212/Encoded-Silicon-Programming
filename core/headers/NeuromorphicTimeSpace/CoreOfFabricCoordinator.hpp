@@ -428,27 +428,20 @@ namespace PredictedAdaptedEncoding
 
         /// @brief Model32Subclass::UNCLOCKED_1x8_PLUS_2x4-> Value + Version + TableEntryCellTypeOfFabric + IDENTITY(Though used FabricTableSegmentClasses::but means identity of directory no cell) + Meta16
         /// @return VALID -> Packed Cell -> OR: UINT64_MAX
-        static constexpr packed64_t MakeADirectoryEntryCellForFabric(
-            uint32_t value,
-            TableEntryCellTypeOfFabric table_cell_type,
-            FabricTableSegmentClasses identity_of_desired_directory,
-            uint8_t version = static_cast<uint8_t>(APCDataStructure::BRANCH_VERSION),
+        static constexpr packed64_t MakeTableDirectoryCell(
+            uint64_t value,
+            AccessContractOfValue contract48 = AccessContractOfValue::RAW_PRIVATE,
             LocalityPolicy cell_locality = LocalityPolicy::PUBLISHED
         ) noexcept
         {
-            const uint16_t external_handle = Clock16Subdivision1x8Plus2x4InMode32CellModel::Pack1x8Plus2x4InUnsigned16_(
-                version, static_cast<tag8_t>(table_cell_type), static_cast<tag8_t>(identity_of_desired_directory)
-            );
-
-            return PackedCell64_t::MakeModeledFabricValidPackedCell(
-                ModelFamily::MODEL32,
-                static_cast<tag8_t>(Model32Subclass::UNCLOCKED_1x8_PLUS_2x4),
+            return PackedCell64_t::MakeTypedFabricValidPackedCell(
+                TypeFamily::VALUE48,
+                contract48,
                 FabricTableSegmentClasses::TABLE_DIRECTORY,
                 cell_locality,
                 InternalDataTypePolicy::UnsignedPCellDataType,
-                PriorityPolicy::INFLUENCED,
-                value,
-                external_handle
+                PriorityPolicy::ERROR_FIRST,
+                value 
             );
 
         }

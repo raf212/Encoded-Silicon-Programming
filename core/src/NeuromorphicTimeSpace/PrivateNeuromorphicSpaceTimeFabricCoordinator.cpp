@@ -303,19 +303,19 @@ namespace PredictedAdaptedEncoding
         TableEntryCellTypeOfFabric entry_type
     ) noexcept
     {
-        const size_t table_meta_index = static_cast<size_t>(table_class);
         if (!CoreOfFabricCoordinator::IsValidFabricTable(table_class))
         {
             return APCDataStructure::APC_SIZE_SENTINAL;
         }
-        const packed64_t directory_begin_cell = ReadCompletePackedCellDirectly(table_meta_index);
-        
+
+        const packed64_t directory_begin_cell = ReadCompletePackedCellDirectly(static_cast<size_t>(FabricMetaIndicies::TABLE_DIRECTORY_BEGIN));
         const size_t base_idx = static_cast<size_t>(PackedCell64_t::ExtractModel48(directory_begin_cell));
-        return base_idx + (table_meta_index * TABLE_ENTRY_WIDTH_OF_FABRIC) + static_cast<size_t>(entry_type);
+
+        return base_idx + (static_cast<size_t>(table_class) * TABLE_ENTRY_WIDTH_OF_FABRIC) + static_cast<size_t>(entry_type);
 
     }
 
-    constexpr bool NeuromorphicSpaceTimeFabricCoordinator::WriteDirectoryEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end, uint8_t version) noexcept
+    constexpr bool NeuromorphicSpaceTimeFabricCoordinator::WriteDirectoryEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end) noexcept
     {
 
         if (!CoreOfFabricCoordinator::IsValidFabricTable(table_class))
@@ -342,16 +342,12 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-        const packed64_t begin48_cell = CoreOfFabricCoordinator::MakeADirectoryEntryCellForFabric(
-            static_cast<uint32_t>(begin), TableEntryCellTypeOfFabric::BEGIN48,
-            table_class, version,
-            LocalityPolicy::PUBLISHED
+        const packed64_t begin48_cell = CoreOfFabricCoordinator::MakeTableDirectoryCell(
+            static_cast<uint64_t>(begin)
         );
 
-        const packed64_t end48_cell =  CoreOfFabricCoordinator::MakeADirectoryEntryCellForFabric(
-            static_cast<uint32_t>(end), TableEntryCellTypeOfFabric::END48,
-            table_class, version,
-            LocalityPolicy::PUBLISHED
+        const packed64_t end48_cell =  CoreOfFabricCoordinator::MakeTableDirectoryCell(
+            static_cast<uint64_t>(end)
         );
 
         AtomicallyStorePackedCellUnchecked(

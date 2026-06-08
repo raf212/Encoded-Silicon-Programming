@@ -91,7 +91,7 @@ namespace PredictedAdaptedEncoding
         ) noexcept;
     
 
-        constexpr bool WriteDirectoryEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end, uint8_t version) noexcept;
+        constexpr bool WriteDirectoryEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end) noexcept;
 
         // constexpr std::optional<std::pair<packed64_t, packed64_t>> GetPairedDirectoryLocationCellIfValid_(FabricTableSegmentClasses table_class) noexcept
         // {
