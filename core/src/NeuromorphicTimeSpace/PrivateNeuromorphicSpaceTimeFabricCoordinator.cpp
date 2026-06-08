@@ -299,8 +299,7 @@ namespace PredictedAdaptedEncoding
 
 
     constexpr size_t NeuromorphicSpaceTimeFabricCoordinator::ReadTableDirectoryBeginIdxOfATableClass_(
-        FabricTableSegmentClasses table_class, 
-        TableEntryCellTypeOfFabric entry_type
+        FabricTableSegmentClasses table_class
     ) noexcept
     {
         if (!CoreOfFabricCoordinator::IsValidFabricTable(table_class))
@@ -311,7 +310,7 @@ namespace PredictedAdaptedEncoding
         const packed64_t directory_begin_cell = ReadCompletePackedCellDirectly(static_cast<size_t>(FabricMetaIndicies::TABLE_DIRECTORY_BEGIN));
         const size_t base_idx = static_cast<size_t>(PackedCell64_t::ExtractModel48(directory_begin_cell));
 
-        return base_idx + (static_cast<size_t>(table_class) * TABLE_ENTRY_WIDTH_OF_FABRIC) + static_cast<size_t>(entry_type);
+        return base_idx + (static_cast<size_t>(table_class) * TABLE_ENTRY_WIDTH_OF_FABRIC);
 
     }
 
@@ -335,7 +334,7 @@ namespace PredictedAdaptedEncoding
             return false;
         }
         
-        const size_t base = ReadTableDirectoryBeginIdxOfATableClass_(table_class, TableEntryCellTypeOfFabric::BEGIN48);
+        const size_t base = ReadTableDirectoryBeginIdxOfATableClass_(table_class);
 
         if (base + TABLE_ENTRY_WIDTH_OF_FABRIC > SlabCellCount_)
         {

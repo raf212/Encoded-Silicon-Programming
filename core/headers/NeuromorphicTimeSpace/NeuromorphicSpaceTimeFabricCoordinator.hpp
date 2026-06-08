@@ -19,6 +19,12 @@ namespace PredictedAdaptedEncoding
 
     class NeuromorphicSpaceTimeFabricCoordinator
     {
+    public:
+        struct alignas(SIZE_OF_A_PAIR) FabricTableRange
+        {
+            packed64_t BeginIdxRawType48Cell;
+            packed64_t EndIdxRawType48Cell;
+        };
     private:
         packed64_t* SlabBasePtr_{nullptr};
 
@@ -85,18 +91,32 @@ namespace PredictedAdaptedEncoding
         constexpr void WriteFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept;
 
         /// @return VALID-> INDEX < UINT
-        constexpr size_t ReadTableDirectoryBeginIdxOfATableClass_(
-            FabricTableSegmentClasses desired_table, 
-            TableEntryCellTypeOfFabric entry_type
-        ) noexcept;
+        constexpr size_t ReadTableDirectoryBeginIdxOfATableClass_(FabricTableSegmentClasses desired_table) noexcept;
     
 
         constexpr bool WriteDirectoryEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end) noexcept;
 
-        // constexpr std::optional<std::pair<packed64_t, packed64_t>> GetPairedDirectoryLocationCellIfValid_(FabricTableSegmentClasses table_class) noexcept
-        // {
-        //     const
-        // }
+        constexpr std::optional<FabricTableRange> GetTableDirectoryRangeRaw_(FabricTableSegmentClasses table_class) noexcept
+        {
+            if (!CoreOfFabricCoordinator::IsValidFabricTable(table_class))
+            {
+                return std::nullopt;
+            }
+
+            const size_t begin_of_desired_table = ReadTableDirectoryBeginIdxOfATableClass_(table_class);
+            const size_t end_idx = begin_of_desired_table + 1;
+            if (end_idx >= SlabCellCount_ || begin_of_desired_table < APCDataStructure::METACELL_COUNT)
+            {
+                return std::nullopt;
+            }
+
+            FabricTableRange desired_table_range_cells{};
+
+            desired_table_range_cells.BeginIdxRawType48Cell = ReadCompletePackedCellDirectly(begin_of_desired_table);
+            desired_table_range_cells.EndIdxRawType48Cell = ReadCompletePackedCellDirectly(end_idx);
+
+            return desired_table_range_cells;
+        }
         
 //checked-----------------------------------------------
 

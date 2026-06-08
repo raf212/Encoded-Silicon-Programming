@@ -36,6 +36,7 @@ namespace PredictedAdaptedEncoding
     //manager
     #define BIT_PATTERN_THREAD_TOKEN_GENERATOR 0xA5A5A5A5u
 
+    static constexpr size_t SIZE_OF_A_PAIR =( 2 * sizeof(uint64_t));
     static constexpr size_t BIT_LENGTH_OF_A_PACKED_CELL = 64;
     static constexpr unsigned UNSIGNED_ZERO = 0u;
     static constexpr unsigned MINIMUM_BRANCH_CAPACITY = 256u;
