@@ -60,23 +60,11 @@ namespace PredictedAdaptedEncoding
             const uint8_t alignment_value_15 = 16 - 1;
             return (value + alignment_value_15) & ~static_cast<size_t>(alignment_value_15);
         }
-        
-        constexpr bool MakeAndStoreDirectlyAFabricOwnedCell_(
-            size_t index, 
-            uint64_t value32_or_64, 
-            FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
-            ModelFamily cell_model = ModelFamily::MODEL48, 
-            clk16_t extended_meta_value = UNSIGNED_ZERO,
-            tag8_t mode_sub_class = static_cast<tag8_t>(Model32Subclass::SELF_CLASS),
-            InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType,
-            LocalityPolicy locality_of_cell = LocalityPolicy::IDLE, 
-            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST
-        ) noexcept;
 
-        constexpr bool StoreFebricControlMeta48Directly_(
+        constexpr void MakeAndStoreFabricMetaValue48(
             FabricMetaIndicies fabric_meta_idx, uint64_t value, 
             LocalityPolicy cell_locality = LocalityPolicy::PUBLISHED,
-            Model48Subclass sub_class48 = Model48Subclass::SELF_CLASS,
+            AccessContractOfValue access_contract = AccessContractOfValue::CAS_RMW,
             PriorityPolicy priority = PriorityPolicy::INFLUENCED
         )noexcept;
 
@@ -93,19 +81,17 @@ namespace PredictedAdaptedEncoding
         /// @return VALID-> INDEX < UINT
         constexpr size_t ReadTableDirectoryBeginIdxOfATableClass_(FabricTableSegmentClasses desired_table) noexcept;
     
-
         constexpr bool WriteDirectoryEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end) noexcept;
 
         constexpr std::optional<FabricTableRange> GetTableDirectoryRangeRaw_(FabricTableSegmentClasses table_class) noexcept;
+
+        void IdleAFabricTableClassRanges_(FabricTableSegmentClasses table_class) noexcept;
+
         
 //checked-----------------------------------------------
 
 
-        // void InitializeFabricTableClassRangesInTableDirectoryOfFabricClass_(FabricTableSegmentClasses table_class) noexcept
-        // {
-
-        // }
-
+        
         void InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept;
     
         size_t GetSlotCellTypeIdxInFabric_(uint32_t slot, SlotCellTypeOfAPCFabric slot_type) noexcept;
