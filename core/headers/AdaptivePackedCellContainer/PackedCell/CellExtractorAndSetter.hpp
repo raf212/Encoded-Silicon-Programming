@@ -46,7 +46,7 @@ namespace PredictedAdaptedEncoding
             return static_cast<val32_t>(packed_cell & MaskLowNBits(VALBITS));
         }
 
-        static constexpr val32_t ExtractValue32FromFamily32(packed64_t packed_cell) noexcept
+        static constexpr val32_t ExtractValue32(packed64_t packed_cell) noexcept
         {
             if (ExtractModeOfPackedCellFromPacked(packed_cell) != PackedMode::VALUE32)
             {

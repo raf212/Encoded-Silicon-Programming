@@ -316,7 +316,7 @@ namespace PredictedAdaptedEncoding
             return MakeInitialValidGeneralPackedCell(
                 static_cast<PackedMode>(cell_model), 
                 cell_locality, 
-                OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC, 
+                OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, 
                 static_cast<tag8_t>(page_class),
                 in_cell_value_data_type, in_cell_value, 
                 in_cell_clk16, cell_priority, 
@@ -436,9 +436,6 @@ namespace PredictedAdaptedEncoding
             return out_packed_cell_view;      
         }
 
-
-
-        
     private:
 
         /// @brief Can be used to create every type of Packed Cell

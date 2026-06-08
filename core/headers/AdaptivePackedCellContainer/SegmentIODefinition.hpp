@@ -117,7 +117,7 @@ protected:
     /// @param value32 
     /// @param priority 
     /// @param page_class 
-    void WriteMetaCellMode32_(
+    void WriteTypedValue32MetaCEll_(
         MetaIndexOfAPCNode idx,
         uint32_t value32,
         PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST,
@@ -350,13 +350,13 @@ public:
 
     void MakeAPCBranchOwned() noexcept
     {
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::CURRENTLY_OWNED, 1u);
+        WriteTypedValue32MetaCEll_(MetaIndexOfAPCNode::CURRENTLY_OWNED, 1u);
     }
 
 
     void ResetTotalCASFailureForThisBranch(PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST) noexcept
     {
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH, UNSIGNED_ZERO, priority);
+        WriteTypedValue32MetaCEll_(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH, UNSIGNED_ZERO, priority);
     }
 
     bool SetSegmentRegionKind(APCPagedNodeSegmentClasses region_kind) noexcept
