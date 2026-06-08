@@ -7,8 +7,8 @@ namespace PredictedAdaptedEncoding
     class PackedCellContainerManager;
     uint64_t Assemble64BitFrom2Cell(packed64_t head_cell, packed64_t tail_cell) noexcept
     {
-        val32_t head_val32 = PackedCell64_t::ExtractModel32(head_cell);
-        val32_t tail_val32 = PackedCell64_t::ExtractModel32(tail_cell);
+        val32_t head_val32 = PackedCell64_t::ExtractModelFamily32(head_cell);
+        val32_t tail_val32 = PackedCell64_t::ExtractModelFamily32(tail_cell);
         uint64_t assembeled64 = (
             (static_cast<uint64_t>(tail_val32) << VALBITS) | static_cast<uint64_t>(head_val32)
         );

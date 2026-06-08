@@ -78,13 +78,6 @@ namespace PredictedAdaptedEncoding
                     return false;
                 }
 
-                if ((CellMode == PackedMode::VALUE32 || CellMode == PackedMode::VALUE48) && !AccessContractOfValue.has_value())
-                {
-                    IsCellValid = false;
-                    return false;
-                }
-                
-
                 if (
                     CellOwnership == OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC && 
                     (FabricTableSegmentClass == FabricTableSegmentClasses::NONE || PageClass != APCPagedNodeSegmentClasses::NONE)
@@ -92,6 +85,12 @@ namespace PredictedAdaptedEncoding
                 {
                     IsCellValid = false;
                     return false;
+                }
+
+                if ((CellMode == PackedMode::VALUE32 || CellMode == PackedMode::VALUE48) && AccessContractOfValue.has_value())
+                {
+                    IsCellValid = true;
+                    return true;
                 }
 
                 if (CellMode == PackedMode::MODEL32)
@@ -416,7 +415,7 @@ namespace PredictedAdaptedEncoding
                     out_packed_cell_view.AccessContractOfValue = static_cast<AccessContractOfValue>(ExtractSubClassOrContractFromMETA16_U_(meta16));
                 }
                 out_packed_cell_view.InCellClock16 = ExtractClk16(packed_cell);
-                out_packed_cell_view.CellValue32 = ExtractModel32(packed_cell);
+                out_packed_cell_view.CellValue32 = ExtractModelFamily32(packed_cell);
             }
             else
             {

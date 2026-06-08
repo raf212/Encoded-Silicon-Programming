@@ -130,15 +130,28 @@ protected:
             return;
         }
 
-        meta16_t meta16_for_apc = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_32t(
-            OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, 
-            static_cast<tag8_t>(page_class),
-            Model32Subclass::SELF_CLASS,
-            priority, LocalityPolicy::PUBLISHED,
-            InternalDataTypePolicy::UnsignedPCellDataType
+        // meta16_t meta16_for_apc = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_32t(
+        //     OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, 
+        //     static_cast<tag8_t>(page_class),
+        //     Model32Subclass::SELF_CLASS,
+        //     priority, LocalityPolicy::PUBLISHED,
+        //     InternalDataTypePolicy::UnsignedPCellDataType
+        // );
+        // const packed64_t desired_packed_cell =  PackedCell64_t::Compose32BitFamilyPackedCell(value32, UNSIGNED_ZERO, meta16_for_apc);
+
+        const packed64_t packed_cell = PackedCell64_t::MakeTypedAPCValidPackedCell(
+            TypeFamily::VALUE32,
+            AccessContractOfValue::CAS_RMW,
+            page_class,
+            LocalityPolicy::PUBLISHED,
+            InternalDataTypePolicy::UnsignedPCellDataType,
+            priority,
+            value32,
+            UNSIGNED_ZERO
         );
-        const packed64_t desired_packed_cell =  PackedCell64_t::Compose32BitFamilyPackedCell(value32, UNSIGNED_ZERO, meta16_for_apc);
-        BackingPtr[index].store(desired_packed_cell, MoStoreSeq_);
+
+
+        BackingPtr[index].store(packed_cell, MoStoreSeq_);
         BackingPtr[index].notify_all();
     }
 

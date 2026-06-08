@@ -62,9 +62,8 @@ namespace PredictedAdaptedEncoding
         static constexpr bool CanCellBeConsumedForThisRegion(packed64_t packed_cell, APCPagedNodeSegmentClasses region_kind) noexcept
         {
             return PackedCell64_t::ExtractLocalityFromPacked(packed_cell) == LocalityPolicy::PUBLISHED &&
-                ExtractPagedRelMaskFromPacked(packed_cell) == region_kind &&
-                PackedCell64_t::ExtractRelOffset32FromPacked(packed_cell) == Model32Subclass::SELF_CLASS;
-        }
+                ExtractPagedRelMaskFromPacked(packed_cell) == region_kind;        
+            }
 
         static constexpr MetaIndexOfAPCNode GetOccupancyMetIndexByRegionClass(
             APCPagedNodeSegmentClasses desired_region_class
