@@ -76,6 +76,7 @@ namespace PredictedAdaptedEncoding
 
         constexpr void ResetAll4TypesOfOccupancyMetaData_() noexcept;
     
+        /// @brief IN CPP FILE -> FIX:: MakeAndStoreFabricMetaValue48-> USE ensure proper AccessContractOfValue for each Metaindex
         constexpr void WriteFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept;
 
         /// @return VALID-> INDEX < UINT
