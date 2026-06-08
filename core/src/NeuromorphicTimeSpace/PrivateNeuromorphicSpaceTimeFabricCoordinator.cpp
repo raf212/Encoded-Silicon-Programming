@@ -362,11 +362,28 @@ namespace PredictedAdaptedEncoding
         
     }
 
-    // void NeuromorphicSpaceTimeFabricCoordinator::InitializeLinearTable_(FabricTableSegmentClasses table_class, uint32_t record_width) noexcept
-    // {
+    constexpr std::optional<FabricTableRange> NeuromorphicSpaceTimeFabricCoordinator::GetTableDirectoryRangeRaw_(FabricTableSegmentClasses table_class) noexcept
+    {
+        if (!CoreOfFabricCoordinator::IsValidFabricTable(table_class))
+        {
+            return std::nullopt;
+        }
 
-    // }
+        const size_t begin_of_desired_table = ReadTableDirectoryBeginIdxOfATableClass_(table_class) + static_cast<size_t>(TableEntryCellTypeOfFabric::BEGIN48);
+        const size_t end_idx = begin_of_desired_table + static_cast<size_t>(TableEntryCellTypeOfFabric::END48);
+        if (end_idx >= SlabCellCount_ || begin_of_desired_table < APCDataStructure::METACELL_COUNT)
+        {
+            return std::nullopt;
+        }
 
+        FabricTableRange desired_table_range_cells{};
+
+        desired_table_range_cells.BeginIdxRawType48Cell = ReadCompletePackedCellDirectly(begin_of_desired_table);
+        desired_table_range_cells.EndIdxRawType48Cell = ReadCompletePackedCellDirectly(end_idx);
+
+        return desired_table_range_cells;
+    }
+        
 
 
 

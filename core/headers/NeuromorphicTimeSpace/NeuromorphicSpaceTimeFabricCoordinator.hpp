@@ -16,15 +16,15 @@ namespace PredictedAdaptedEncoding
         INVALID_USE_OF_METHOD = 7
 
     };
-
-    class NeuromorphicSpaceTimeFabricCoordinator
-    {
-    public:
         struct alignas(SIZE_OF_A_PAIR) FabricTableRange
         {
             packed64_t BeginIdxRawType48Cell;
             packed64_t EndIdxRawType48Cell;
         };
+    class NeuromorphicSpaceTimeFabricCoordinator
+    {
+    public:
+
     private:
         packed64_t* SlabBasePtr_{nullptr};
 
@@ -96,32 +96,15 @@ namespace PredictedAdaptedEncoding
 
         constexpr bool WriteDirectoryEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end) noexcept;
 
-        constexpr std::optional<FabricTableRange> GetTableDirectoryRangeRaw_(FabricTableSegmentClasses table_class) noexcept
-        {
-            if (!CoreOfFabricCoordinator::IsValidFabricTable(table_class))
-            {
-                return std::nullopt;
-            }
-
-            const size_t begin_of_desired_table = ReadTableDirectoryBeginIdxOfATableClass_(table_class);
-            const size_t end_idx = begin_of_desired_table + 1;
-            if (end_idx >= SlabCellCount_ || begin_of_desired_table < APCDataStructure::METACELL_COUNT)
-            {
-                return std::nullopt;
-            }
-
-            FabricTableRange desired_table_range_cells{};
-
-            desired_table_range_cells.BeginIdxRawType48Cell = ReadCompletePackedCellDirectly(begin_of_desired_table);
-            desired_table_range_cells.EndIdxRawType48Cell = ReadCompletePackedCellDirectly(end_idx);
-
-            return desired_table_range_cells;
-        }
+        constexpr std::optional<FabricTableRange> GetTableDirectoryRangeRaw_(FabricTableSegmentClasses table_class) noexcept;
         
 //checked-----------------------------------------------
 
 
-        void InitializeLinearTable_(FabricTableSegmentClasses table_class, uint32_t record_width) noexcept;
+        // void InitializeFabricTableClassRangesInTableDirectoryOfFabricClass_(FabricTableSegmentClasses table_class) noexcept
+        // {
+
+        // }
 
         void InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept;
     
