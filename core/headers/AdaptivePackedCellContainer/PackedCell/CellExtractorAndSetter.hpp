@@ -36,7 +36,7 @@ namespace PredictedAdaptedEncoding
 
 
         /// @return PROHABITAD USE AND SHOLD BE REMOVED AFTER DETACHING EVERYTHING
-        static constexpr val32_t ExtractModelFamily32(packed64_t packed_cell) noexcept
+        static constexpr val32_t ExtractRaw32FamilyBits(packed64_t packed_cell) noexcept
         {
             if (!IsPackedCellFrom32BitFamily(packed_cell))
             {
@@ -123,7 +123,7 @@ namespace PredictedAdaptedEncoding
                 {
                     return std::nullopt;
                 }
-                const val32_t value_bits32 = ExtractModelFamily32(packed_cell);
+                const val32_t value_bits32 = ExtractRaw32FamilyBits(packed_cell);
                 return BitCastMaybe<PCDT>(value_bits32);
             }
 

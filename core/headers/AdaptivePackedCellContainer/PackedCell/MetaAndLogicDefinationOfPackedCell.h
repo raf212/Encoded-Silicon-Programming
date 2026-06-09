@@ -139,7 +139,7 @@ namespace PredictedAdaptedEncoding {
     /// @param ATOMIC_SLNAPSHOT Atomic load/store whole 64-bit cell. Multiple writers are allowed only if last-writer-wins is acceptable.
     /// @param CLAIMED_GURDED Exclusive mutation. After claim, writer may raw-store companion cells, then publish with release store.
     /// @param CAS_RMW For counters, cursors, epochs, clocks, version increments, occupancy deltas. No `CLAIMED` state needed.
-    enum class AccessContractOfValue
+    enum class AccessContractOfValue : tag8_t
     {
         RAW_PRIVATE = 0,
         ATOMIC_SLNAPSHOT = 1,

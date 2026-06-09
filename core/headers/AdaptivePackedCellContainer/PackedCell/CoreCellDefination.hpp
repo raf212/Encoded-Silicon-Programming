@@ -36,7 +36,7 @@ namespace PredictedAdaptedEncoding
 
             FabricTableSegmentClasses FabricTableSegmentClass{FabricTableSegmentClasses::NONE};
 
-            std::optional<AccessContractOfValue> AccessContractOfValue{std::nullopt};
+            std::optional<AccessContractOfValue> ContractOfValue{std::nullopt};
 
             std::optional<Model32Subclass> SubClassOfModel32{std::nullopt};
 
@@ -55,106 +55,201 @@ namespace PredictedAdaptedEncoding
 
             std::optional<size_t> SlabIndexOfPackeCell{std::nullopt};
 
-            bool constexpr IsThisPackedCellValidInRuntime() noexcept
+            constexpr bool IsThisPackedCellValidInRuntime() noexcept
             {
                 ValidatedView = true;
-
+                IsCellValid = false;
                 if (LocalityOfCell == LocalityPolicy::FAULTY)
                 {
-                    IsCellValid = false;
                     return false;
                 }
 
-                if (
-                    CellOwnership == OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER && 
-                    (
-                        PageClass == APCPagedNodeSegmentClasses::NONE || 
-                        PageClass == APCPagedNodeSegmentClasses::NULLNAN &&
+                auto IsKnownAPCClass  = [](APCPagedNodeSegmentClasses page_class) constexpr noexcept -> bool
+                {
+                    return page_class > APCPagedNodeSegmentClasses::NONE &&
+                        page_class <= APCPagedNodeSegmentClasses::NULLNAN;
+                };
+
+                auto IsKnownFabricTable = [](FabricTableSegmentClasses fabric_table) constexpr noexcept -> bool
+                {
+                    return fabric_table > FabricTableSegmentClasses::NONE && 
+                        fabric_table <= FabricTableSegmentClasses::GENERIC_CONTROL;
+                };
+                
+                auto IsKnownValueContract = [](AccessContractOfValue contract) constexpr noexcept -> bool
+                {
+                    switch (contract)
+                    {
+                    case AccessContractOfValue::RAW_PRIVATE:
+                    case AccessContractOfValue::ATOMIC_SLNAPSHOT:
+                    case AccessContractOfValue::CLAIMED_GURDED:
+                    case AccessContractOfValue::CAS_RMW:
+                        return true;
+                    default:
+                        return false;
+                    }
+                };
+
+                auto IsKnownModel32Subclass = [](Model32Subclass sub_class) constexpr noexcept -> bool
+                {
+                    switch (sub_class)
+                    {
+                    case Model32Subclass::SELF_CLASS:
+                    case Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL:
+                    case Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL:
+                    case Model32Subclass::UNCLOCKED_1x8_PLUS_2x4:
+                        return true;
+                    default:
+                        return false;
+                    }
+                };
+
+                auto IsKnownModel48Subclass = [](Model48Subclass sub_class) constexpr noexcept -> bool
+                {
+                    switch (sub_class)
+                    {
+                    case Model48Subclass::SELF_CLASS:
+                    case Model48Subclass::PURE_TIMER_48:
+                    case Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL:
+                    case Model48Subclass::FOUR_SUBDIVISION_2x16_AND_2x8:
+                        return true;
+                    default:
+                        return false;
+                    }
+                };
+
+
+                switch (CellOwnership)
+                {
+                case OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER:
+                    if (
+                        !IsKnownAPCClass(PageClass) ||
+                        PageClass == APCPagedNodeSegmentClasses::NONE ||
+                        PageClass == APCPagedNodeSegmentClasses::NULLNAN ||
                         FabricTableSegmentClass != FabricTableSegmentClasses::NONE
                     )
-                )
-                {
-                    IsCellValid = false;
-                    return false;
-                }
-
-                if (
-                    CellOwnership == OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC && 
-                    (FabricTableSegmentClass == FabricTableSegmentClasses::NONE || PageClass != APCPagedNodeSegmentClasses::NONE)
-                )
-                {
-                    IsCellValid = false;
-                    return false;
-                }
-
-
-                if (CellMode == PackedMode::MODEL32 || CellMode == PackedMode::VALUE32)
-                {
-                    if (!Raw32BitInCellData)
                     {
-                        IsCellValid = false;
                         return false;
                     }
-
-                    if (SubClassOfModel32 != Model32Subclass::SELF_CLASS && CellValueDataType != InternalDataTypePolicy::UnsignedPCellDataType)
-                    {
-                        IsCellValid = false;
-                        return false;
-                    }
-
-                    if (SubClassOfModel32 == Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL || SubClassOfModel32 == Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL)
-                    {
-                        if (
-                            FabricTableSegmentClass == FabricTableSegmentClasses::NONE  && 
-                            (   
-                                PageClass != APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY || 
-                                PageClass != APCPagedNodeSegmentClasses::CONTROL_SLOT
-                            )
-                        )
-                        {
-                            IsCellValid = false;
-                            return false;                            
-                        }
-                    }
-
-                    if(
-                        SubClassOfModel32 == Model32Subclass::UNCLOCKED_1x8_PLUS_2x4 &&
-                        CellOwnership == OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER &&
-                        PageClass != APCPagedNodeSegmentClasses::CONTROL_SLOT
+                    break;
+                
+                case OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC:
+                    if (
+                        !IsKnownFabricTable(FabricTableSegmentClass) ||
+                        FabricTableSegmentClass == FabricTableSegmentClasses::NONE ||
+                        PageClass != APCPagedNodeSegmentClasses::NONE
                     )
                     {
-                        IsCellValid = false;
                         return false;
                     }
-                    
-                }
-                else
-                {
-                    if (SubClassOfModel48 == Model48Subclass::PURE_TIMER_48 && CellValueDataType != InternalDataTypePolicy::UnsignedPCellDataType)
-                    {
-                        IsCellValid = false;
-                        return false;
-                    }
-
-                    if (!Raw48BitInCellData)
-                    {
-                        IsCellValid = false;
-                        return false;
-                    }
+                    break;
+                
+                default:
+                    return false;
                 }
 
-                if (CellMode == PackedMode::VALUE32 || CellMode == PackedMode::VALUE48)
+                switch (CellMode)
                 {
-                    if (!AccessContractOfValue.has_value())
+                    case PackedMode::MODEL32:
                     {
-                        IsCellValid = false;
-                        return false;                    
+                        if (!Raw32BitInCellData.has_value() || !InCellClock16.has_value())
+                        {
+                            return false;
+                        }
+
+                        if (!SubClassOfModel32.has_value() || ContractOfValue.has_value())
+                        {
+                            return false;
+                        }
+
+                        const Model32Subclass sub_class = *SubClassOfModel32;
+
+                        if (!IsKnownModel32Subclass(sub_class))
+                        {
+                            return false;
+                        }
+                        
+                        const bool paired = sub_class == Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL || 
+                                sub_class == Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL;
+                        if (paired && CellOwnership == OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER)
+                        {
+                            const bool valid_paired_class = PageClass == APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY ||
+                                    PageClass == APCPagedNodeSegmentClasses::CONTROL_SLOT;
+                            if (!valid_paired_class)
+                            {
+                                return false;
+                            }
+                            
+                        }
+                        
+                        break;
+                    }
+
+                    case PackedMode::VALUE32:
+                    {
+                        if (!Raw32BitInCellData.has_value() || !InCellClock16.has_value())
+                        {
+                            return false;
+                        }
+
+                        if (!ContractOfValue.has_value() || SubClassOfModel32.has_value())
+                        {
+                            return false;
+                        }
+                        
+                        if (!IsKnownValueContract(*ContractOfValue))
+                        {
+                            return false;
+                        }
+                        break;
+                    }
+
+                    case PackedMode::MODEL48:
+                    {
+                        if(!Raw48BitInCellData.has_value())
+                        {
+                            return false;
+                        }
+                        if (!SubClassOfModel48.has_value() || ContractOfValue.has_value())
+                        {
+                            return false;
+                        }
+                        const Model48Subclass sub_class = *SubClassOfModel48;
+                        if (!IsKnownModel48Subclass(sub_class))
+                        {
+                            return false;
+                        }
+                        if (sub_class != Model48Subclass::SELF_CLASS  && CellValueDataType != InternalDataTypePolicy::UnsignedPCellDataType)
+                        {
+                            return false;
+                        }
+                        break;
+                    }
+
+                    case PackedMode::VALUE48:
+                    {
+                        if (!Raw48BitInCellData.has_value())
+                        {
+                            return false;
+                        }
+                        if (!ContractOfValue.has_value() || SubClassOfModel48.has_value())
+                        {
+                            return false;
+                        }
+                        if (!IsKnownValueContract(*ContractOfValue))
+                        {
+                            return false;
+                        }
+                        break;
                     }
                     
+                    default:
+                        return false;
                 }
 
                 IsCellValid = true;
                 return true;
+                
             }
 
         };
@@ -416,10 +511,10 @@ namespace PredictedAdaptedEncoding
                 }
                 else
                 {
-                    out_packed_cell_view.AccessContractOfValue = static_cast<AccessContractOfValue>(ExtractSubClassOrContractFromMETA16_U_(meta16));
+                    out_packed_cell_view.ContractOfValue = static_cast<AccessContractOfValue>(ExtractSubClassOrContractFromMETA16_U_(meta16));
                 }
                 out_packed_cell_view.InCellClock16 = ExtractClk16(packed_cell);
-                out_packed_cell_view.Raw32BitInCellData = ExtractModelFamily32(packed_cell);
+                out_packed_cell_view.Raw32BitInCellData = ExtractRaw32FamilyBits(packed_cell);
             }
             else
             {
@@ -429,7 +524,7 @@ namespace PredictedAdaptedEncoding
                 }
                 else
                 {
-                    out_packed_cell_view.AccessContractOfValue = static_cast<AccessContractOfValue>(ExtractSubClassOrContractFromMETA16_U_(meta16));
+                    out_packed_cell_view.ContractOfValue = static_cast<AccessContractOfValue>(ExtractSubClassOrContractFromMETA16_U_(meta16));
                 }
 
                 out_packed_cell_view.Raw48BitInCellData = ExtractModel48(packed_cell);
