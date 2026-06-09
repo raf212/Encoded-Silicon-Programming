@@ -21,7 +21,7 @@ namespace PredictedAdaptedEncoding
             packed64_t BeginIdxRawType48Cell;
             packed64_t EndIdxRawType48Cell;
         };
-    class NeuromorphicSpaceTimeFabricCoordinator
+    class SlabToFabricConverterAndCordinator
     {
     public:
 
@@ -131,15 +131,15 @@ namespace PredictedAdaptedEncoding
         uint64_t IncrementOrDecrementDeltaFromFabricTrackerMetaIdx_(FabricMetaIndicies meta_idx) noexcept;
 
     public:
-        NeuromorphicSpaceTimeFabricCoordinator(/* args */) noexcept = default;
+        SlabToFabricConverterAndCordinator(/* args */) noexcept = default;
 
-        ~NeuromorphicSpaceTimeFabricCoordinator() noexcept
+        ~SlabToFabricConverterAndCordinator() noexcept
         {
             ShutDownFabric();
         }
 
-        NeuromorphicSpaceTimeFabricCoordinator(const NeuromorphicSpaceTimeFabricCoordinator&) = delete;
-        NeuromorphicSpaceTimeFabricCoordinator& operator = (const NeuromorphicSpaceTimeFabricCoordinator&) = delete;
+        SlabToFabricConverterAndCordinator(const SlabToFabricConverterAndCordinator&) = delete;
+        SlabToFabricConverterAndCordinator& operator = (const SlabToFabricConverterAndCordinator&) = delete;
 
         void ShutDownFabric() noexcept;
         

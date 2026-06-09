@@ -1,11 +1,11 @@
 #pragma once
 
-#include "NeuromorphicTimeSpace/NeuromorphicSpaceTimeFabricCoordinator.hpp"
+#include "NeuromorphicTimeSpace/SlabToFabricConverterAndCordinator.hpp"
 
 namespace PredictedAdaptedEncoding
 {
 
-    void NeuromorphicSpaceTimeFabricCoordinator::ShutDownFabric() noexcept
+    void SlabToFabricConverterAndCordinator::ShutDownFabric() noexcept
     {
         if (InitializationInProgress_.load(MoLoad_))
         {
@@ -23,7 +23,7 @@ namespace PredictedAdaptedEncoding
         ResetScalarsofTheFabric_();
     }
 
-    constexpr packed64_t NeuromorphicSpaceTimeFabricCoordinator::ReadCompletePackedCellDirectly(size_t slab_index) noexcept
+    constexpr packed64_t SlabToFabricConverterAndCordinator::ReadCompletePackedCellDirectly(size_t slab_index) noexcept
     {
         if (!SlabBasePtr_ || slab_index >= SlabCellCount_)
         {
@@ -34,7 +34,7 @@ namespace PredictedAdaptedEncoding
         return desired_cell_raw;
     } 
 
-    constexpr packed64_t NeuromorphicSpaceTimeFabricCoordinator::AtomicallyLoadReadCompletePackedCell(size_t slab_index) noexcept
+    constexpr packed64_t SlabToFabricConverterAndCordinator::AtomicallyLoadReadCompletePackedCell(size_t slab_index) noexcept
     {
         if (!SlabBasePtr_ || slab_index >= SlabCellCount_)
         {
@@ -46,7 +46,7 @@ namespace PredictedAdaptedEncoding
         return desired_cell_raw;
     }
 
-    constexpr void NeuromorphicSpaceTimeFabricCoordinator::StorePackedCellUncheckedDirectly(size_t slab_index, packed64_t packed_cell) noexcept
+    constexpr void SlabToFabricConverterAndCordinator::StorePackedCellUncheckedDirectly(size_t slab_index, packed64_t packed_cell) noexcept
     {
         if (!SlabBasePtr_ || slab_index >= SlabCellCount_)
         {
@@ -55,7 +55,7 @@ namespace PredictedAdaptedEncoding
         SlabBasePtr_[slab_index] = packed_cell;
     }
 
-    constexpr void NeuromorphicSpaceTimeFabricCoordinator::AtomicallyStorePackedCellUnchecked(
+    constexpr void SlabToFabricConverterAndCordinator::AtomicallyStorePackedCellUnchecked(
         size_t slab_index, packed64_t packed_cell,
         std::memory_order mem_order
     ) noexcept
@@ -69,7 +69,7 @@ namespace PredictedAdaptedEncoding
         packed_cell_ref.notify_all();
     }
 
-    constexpr bool NeuromorphicSpaceTimeFabricCoordinator::CompareExchangeStrongFromFabric(
+    constexpr bool SlabToFabricConverterAndCordinator::CompareExchangeStrongFromFabric(
         size_t slab_index, 
         packed64_t& expected_packed_cell, 
         packed64_t desired_packed_cell,
@@ -85,7 +85,7 @@ namespace PredictedAdaptedEncoding
         return packed_cell_ref.compare_exchange_strong(expected_packed_cell, desired_packed_cell, mem_order_success, mem_order_failure);
     }
 
-    constexpr bool NeuromorphicSpaceTimeFabricCoordinator::CompareExchangeWeakInSlab(
+    constexpr bool SlabToFabricConverterAndCordinator::CompareExchangeWeakInSlab(
         size_t slab_index, 
         packed64_t& expected_packed_cell, 
         packed64_t desired_packed_cell,
@@ -106,7 +106,7 @@ namespace PredictedAdaptedEncoding
     /// @param expected_cell 
     /// @return 
 
-    JustifyClaimCas NeuromorphicSpaceTimeFabricCoordinator::TryClaimACellInSlab(PackedCell64_t::AuthoritiveCellView& expected_cell_auth_view, packed64_t* desired_packed_cell) noexcept
+    JustifyClaimCas SlabToFabricConverterAndCordinator::TryClaimACellInSlab(PackedCell64_t::AuthoritiveCellView& expected_cell_auth_view, packed64_t* desired_packed_cell) noexcept
     {
         if (!expected_cell_auth_view.IsCellValid)
         {
@@ -154,7 +154,7 @@ namespace PredictedAdaptedEncoding
 
 
 
-    // bool NeuromorphicSpaceTimeFabricCoordinator::GetMetaCellView(MetaIndexOfAPCNode fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept
+    // bool SlabToFabricConverterAndCordinator::GetMetaCellView(MetaIndexOfAPCNode fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept
     // {
     //     if (static_cast<size_t>(fabric_meta_idx) >= APCDataStructure::METACELL_COUNT || !SlabBasePtr_)
     //     {
@@ -169,7 +169,7 @@ namespace PredictedAdaptedEncoding
 
 
 
-    std::optional<uint64_t> NeuromorphicSpaceTimeFabricCoordinator::ReadOccupancyApproxFromPairedIfValid(
+    std::optional<uint64_t> SlabToFabricConverterAndCordinator::ReadOccupancyApproxFromPairedIfValid(
         LocalityPolicy desired_occupancy_class,
         const PackedCell64_t::AuthoritiveCellView* low_half_view_ptr,
         const PackedCell64_t::AuthoritiveCellView* high_half_view_ptr
@@ -188,7 +188,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    // bool NeuromorphicSpaceTimeFabricCoordinator::InitializeFabric(
+    // bool SlabToFabricConverterAndCordinator::InitializeFabric(
     //     uint16_t slot_count,
     //     size_t slot_cell_count,
     //     uint8_t slab_id,

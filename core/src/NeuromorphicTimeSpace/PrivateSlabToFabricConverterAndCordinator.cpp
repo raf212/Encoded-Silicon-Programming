@@ -1,11 +1,11 @@
 #pragma once
 
-#include "NeuromorphicTimeSpace/NeuromorphicSpaceTimeFabricCoordinator.hpp"
+#include "NeuromorphicTimeSpace/SlabToFabricConverterAndCordinator.hpp"
 
 namespace PredictedAdaptedEncoding
 {
 
-    packed64_t* NeuromorphicSpaceTimeFabricCoordinator::AllocatePackedCellRaw_(size_t count_of_cells) noexcept
+    packed64_t* SlabToFabricConverterAndCordinator::AllocatePackedCellRaw_(size_t count_of_cells) noexcept
     {
         auto allocation_function = AllocatorOfFabric_.AllocatePackedCellStorage ? 
             AllocatorOfFabric_.AllocatePackedCellStorage : &RawPackedCellAllocator::DefaultAllocateAtomicCells;
@@ -19,7 +19,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    void NeuromorphicSpaceTimeFabricCoordinator::FreeRawPackedCells_(packed64_t* packed_cell_memory_ptr, size_t packed_cell_count) noexcept
+    void SlabToFabricConverterAndCordinator::FreeRawPackedCells_(packed64_t* packed_cell_memory_ptr, size_t packed_cell_count) noexcept
     {
         RawPackedCellAllocator::FreeFunction free_function = AllocatorOfFabric_.FreePackedCellStorage ?
                             AllocatorOfFabric_.FreePackedCellStorage : &RawPackedCellAllocator::DefaultFreeAtomicCells;
@@ -30,7 +30,7 @@ namespace PredictedAdaptedEncoding
         free_function(packed_cell_memory_ptr, packed_cell_count, alignment, AllocatorOfFabric_.User);
     }
 
-    void NeuromorphicSpaceTimeFabricCoordinator::ResetScalarsofTheFabric_() noexcept
+    void SlabToFabricConverterAndCordinator::ResetScalarsofTheFabric_() noexcept
     {
         SlabBasePtr_ = nullptr;
         SlabCellCount_ = UNSIGNED_ZERO;
@@ -51,7 +51,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    constexpr void NeuromorphicSpaceTimeFabricCoordinator::MakeAndStoreFabricMetaValue48(
+    constexpr void SlabToFabricConverterAndCordinator::MakeAndStoreFabricMetaValue48(
         FabricMetaIndicies fabric_meta_idx, 
         uint64_t value, 
         LocalityPolicy cell_locality,
@@ -80,7 +80,7 @@ namespace PredictedAdaptedEncoding
 
     //Integrate AtomicAdaptiveBackoff
     // add CAS_FAILURE_COUNT
-    constexpr bool NeuromorphicSpaceTimeFabricCoordinator::UpdateValidPairedOccupancyApproxAtomically_(
+    constexpr bool SlabToFabricConverterAndCordinator::UpdateValidPairedOccupancyApproxAtomically_(
         LocalityPolicy desired_occupancy_of_locality, uint64_t desired_occupancy_value,
         bool force_update, clk16_t pair_version
     ) noexcept
@@ -199,7 +199,7 @@ namespace PredictedAdaptedEncoding
         return ForceUpdate(); 
     }
 
-    constexpr void NeuromorphicSpaceTimeFabricCoordinator::ResetAll4TypesOfOccupancyMetaData_() noexcept
+    constexpr void SlabToFabricConverterAndCordinator::ResetAll4TypesOfOccupancyMetaData_() noexcept
     {
         UpdateValidPairedOccupancyApproxAtomically_(LocalityPolicy::IDLE, UNSIGNED_ZERO, true);
         UpdateValidPairedOccupancyApproxAtomically_(LocalityPolicy::PUBLISHED, UNSIGNED_ZERO, true);
@@ -208,7 +208,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    constexpr void NeuromorphicSpaceTimeFabricCoordinator::WriteFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept
+    constexpr void SlabToFabricConverterAndCordinator::WriteFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept
     {
         MakeAndStoreFabricMetaValue48(FabricMetaIndicies::MAGIC, APCDataStructure::FABRIC_MAGIC);
         MakeAndStoreFabricMetaValue48(FabricMetaIndicies::VERSION, APCDataStructure::BRANCH_VERSION);
@@ -270,7 +270,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    constexpr size_t NeuromorphicSpaceTimeFabricCoordinator::ReadTableDirectoryBeginIdxOfATableClass_(
+    constexpr size_t SlabToFabricConverterAndCordinator::ReadTableDirectoryBeginIdxOfATableClass_(
         FabricTableSegmentClasses table_class
     ) noexcept
     {
@@ -286,7 +286,7 @@ namespace PredictedAdaptedEncoding
 
     }
 
-    constexpr bool NeuromorphicSpaceTimeFabricCoordinator::WriteDirectoryEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end) noexcept
+    constexpr bool SlabToFabricConverterAndCordinator::WriteDirectoryEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end) noexcept
     {
 
         if (!CoreOfFabricCoordinator::IsValidFabricTable(table_class))
@@ -334,7 +334,7 @@ namespace PredictedAdaptedEncoding
         
     }
 
-    constexpr std::optional<FabricTableRange> NeuromorphicSpaceTimeFabricCoordinator::GetTableDirectoryRangeRaw_(FabricTableSegmentClasses table_class) noexcept
+    constexpr std::optional<FabricTableRange> SlabToFabricConverterAndCordinator::GetTableDirectoryRangeRaw_(FabricTableSegmentClasses table_class) noexcept
     {
         if (!CoreOfFabricCoordinator::IsValidFabricTable(table_class))
         {
@@ -357,7 +357,7 @@ namespace PredictedAdaptedEncoding
     }
         
 
-    constexpr void NeuromorphicSpaceTimeFabricCoordinator::IdleAFabricTableClassRanges_(FabricTableSegmentClasses table_class) noexcept
+    constexpr void SlabToFabricConverterAndCordinator::IdleAFabricTableClassRanges_(FabricTableSegmentClasses table_class) noexcept
     {
         const std::optional<FabricTableRange> table_range = GetTableDirectoryRangeRaw_(table_class);
         if (!table_range.has_value())
@@ -378,7 +378,7 @@ namespace PredictedAdaptedEncoding
         
     }
 
-    // void NeuromorphicSpaceTimeFabricCoordinator::InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept
+    // void SlabToFabricConverterAndCordinator::InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept
     // {
 
     //     const packed64_t desired_idle_hash_key_cell = CoreOfFabricCoordinator::MakeHashKeyCell(UNSIGNED_ZERO, UNSIGNED_ZERO, table_class, LocalityPolicy::IDLE);
@@ -400,7 +400,7 @@ namespace PredictedAdaptedEncoding
         
     // }
 
-    // size_t NeuromorphicSpaceTimeFabricCoordinator::GetSlotCellTypeIdxInFabric_(uint32_t slot, SlotCellTypeOfAPCFabric slot_type) noexcept
+    // size_t SlabToFabricConverterAndCordinator::GetSlotCellTypeIdxInFabric_(uint32_t slot, SlotCellTypeOfAPCFabric slot_type) noexcept
     // {
     //     CacheEntryOfFabricTable slot_directory_cache_entry;
     //     bool ok = GetFabricTableCache(FabricTableSegmentClasses::SLOT_DIRECTORY, slot_directory_cache_entry);
@@ -413,7 +413,7 @@ namespace PredictedAdaptedEncoding
     //         static_cast<size_t>(slot_type);
     // }
 
-    // void NeuromorphicSpaceTimeFabricCoordinator::MakeAndStoreASlotDirectoryCell_(
+    // void SlabToFabricConverterAndCordinator::MakeAndStoreASlotDirectoryCell_(
     //     uint32_t slot, 
     //     SlotCellTypeOfAPCFabric slote_state,
     //     uint32_t value32, 
@@ -436,7 +436,7 @@ namespace PredictedAdaptedEncoding
     //     );
     // }
 
-    // void NeuromorphicSpaceTimeFabricCoordinator::InitializeSlotDirectory_() noexcept
+    // void SlabToFabricConverterAndCordinator::InitializeSlotDirectory_() noexcept
     // {
     //     for (uint32_t slot = 0; slot < SlotCount_; slot++)
     //     {
