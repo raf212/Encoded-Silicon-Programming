@@ -199,6 +199,54 @@ namespace PredictedAdaptedEncoding
             return true;
         }
 
+    static constexpr packed64_t TryToSwitchPageClassRuntime(
+        packed64_t packed_cell,
+        APCPagedNodeSegmentClasses page_class
+    ) noexcept
+    {
+        const PackedCell64_t::AuthoritiveCellView desired_cell_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
+        if (!desired_cell_view.IsCellValid)
+        {
+            return PackedCell64_t::MakeFaultyCell();
+        }
+
+        if (desired_cell_view.CellOwnership != OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER)
+        {
+            return packed_cell;
+        }
+
+        if (desired_cell_view.ContractOfValue.has_value() && desired_cell_view.ContractOfValue == AccessContractOfValue::CAS_RMW)
+        {
+            return packed_cell;
+        }
+
+        if (desired_cell_view.ContractOfValue.has_value() && desired_cell_view.LocalityOfCell == LocalityPolicy::CLAIMED)
+        {
+            switch (desired_cell_view.ContractOfValue.value())
+            {
+
+            case AccessContractOfValue::ATOMIC_SLNAPSHOT:
+                return packed_cell;
+
+            case AccessContractOfValue::CLAIMED_GURDED:
+                return packed_cell;
+            
+            default:
+                break;
+            }
+        }
+        
+        if (desired_cell_view.PageClass == APCPagedNodeSegmentClasses::CONTROL_SLOT)
+        {
+            return packed_cell;
+        }
+
+        packed_cell = PackedCell64_t::SetPageClassInPacked(packed_cell, page_class);
+        
+        return packed_cell;
+        
+    }
+
 };
     
     struct LayoutBoundsOfSingleRelNodeClass

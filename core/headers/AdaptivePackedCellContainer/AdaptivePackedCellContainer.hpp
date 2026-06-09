@@ -70,13 +70,6 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         uint16_t ComputeAdaptivemaxTreies_(packed64_t packed_cell) noexcept;
 
-
-        packed64_t NormalizeDesiredPublishedCellForRegion_(
-            packed64_t out_going_cell,
-            APCPagedNodeSegmentClasses region_kind,
-            OwnershipPolicy node_authority
-        ) noexcept;
-
          bool IfValidPayloadIndex_(size_t idx) noexcept
         {
             return (BackingPtr && idx >= PayloadBegin() && idx < GetTotalCapacityForThisAPC());

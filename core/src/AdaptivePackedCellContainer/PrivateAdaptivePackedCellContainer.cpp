@@ -299,10 +299,9 @@ namespace PredictedAdaptedEncoding
         }
         
 
-        packed_cell_for_publish = NormalizeDesiredPublishedCellForRegion_(
+        packed_cell_for_publish = APCAndPagedNodeHelpers::TryToSwitchPageClassRuntime(
             packed_cell_for_publish,
-            cell_class,
-            node_authority
+            cell_class
         );
 
         const auto maybe_current_region_bounds = ReadLayoutBoundsAndVersion(cell_class);
@@ -506,27 +505,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    packed64_t AdaptivePackedCellContainer::NormalizeDesiredPublishedCellForRegion_(
-        packed64_t out_going_cell,
-        APCPagedNodeSegmentClasses cell_class,
-        OwnershipPolicy node_authority
-    ) noexcept
-    {
-        out_going_cell = PackedCell64_t::SetPageClassInPacked(out_going_cell, cell_class);
-        out_going_cell = PackedCell64_t::SetSegmentLayoutInPacked(out_going_cell, node_authority);
-        out_going_cell = PackedCell64_t::SetLocalityInPacked(out_going_cell, LocalityPolicy::PUBLISHED);
 
-        const PackedMode mode = PackedCell64_t::ExtractModeOfPackedCellFromPacked(out_going_cell);
-        if (mode == PackedMode::MODEL32)
-        {
-            out_going_cell = PackedCell64_t::SetSubClassForModel32InPacked(out_going_cell, Model32Subclass::SELF_CLASS);
-        }
-        else
-        {
-            out_going_cell = PackedCell64_t::SetSubClassForModel48InPacked(out_going_cell, Model48Subclass::SELF_CLASS);
-        }
-        return out_going_cell;
-    }
 
     uint16_t AdaptivePackedCellContainer::ComputeAdaptivemaxTreies_(packed64_t packed_cell) noexcept
     {
