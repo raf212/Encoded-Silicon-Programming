@@ -44,7 +44,7 @@ namespace PredictedAdaptedEncoding
         }
         static constexpr APCPagedNodeSegmentClasses ExtractPagedRelMaskFromPacked (packed64_t packed_cell) noexcept
         {
-            return static_cast<APCPagedNodeSegmentClasses>(PackedCell64_t::ExtractRelMaskFromPacked(packed_cell));
+            return static_cast<APCPagedNodeSegmentClasses>(PackedCell64_t::ExtractAPCPagedNodeSegmentClasse(packed_cell));
         }
 
 
@@ -61,7 +61,7 @@ namespace PredictedAdaptedEncoding
 
         static constexpr bool CanCellBeConsumedForThisRegion(packed64_t packed_cell, APCPagedNodeSegmentClasses region_kind) noexcept
         {
-            return PackedCell64_t::ExtractLocalityFromPacked(packed_cell) == LocalityPolicy::PUBLISHED &&
+            return PackedCell64_t::ExtractLocalityPolicy(packed_cell) == LocalityPolicy::PUBLISHED &&
                 ExtractPagedRelMaskFromPacked(packed_cell) == region_kind;        
             }
 

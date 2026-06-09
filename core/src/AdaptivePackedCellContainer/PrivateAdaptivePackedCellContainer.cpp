@@ -469,7 +469,7 @@ namespace PredictedAdaptedEncoding
             {
                 const size_t absolute_idx = PayloadBegin() + i;
                 const packed64_t absolute_packed_cell = BackingPtr[absolute_idx].load(MoLoad_);
-                if (PackedCell64_t::ExtractLocalityFromPacked(absolute_packed_cell) != LocalityPolicy::PUBLISHED)
+                if (PackedCell64_t::ExtractLocalityPolicy(absolute_packed_cell) != LocalityPolicy::PUBLISHED)
                 {
                     continue;
                 }
@@ -531,7 +531,7 @@ namespace PredictedAdaptedEncoding
     uint16_t AdaptivePackedCellContainer::ComputeAdaptivemaxTreies_(packed64_t packed_cell) noexcept
     {
         const APCPagedNodeSegmentClasses page_class =
-            PackedCell64_t::ExtractRelMaskFromPacked(packed_cell);
+            PackedCell64_t::ExtractAPCPagedNodeSegmentClasse(packed_cell);
 
         if (!APCAndPagedNodeHelpers::IsDataConsumablePageClass(page_class))
         {
@@ -539,7 +539,7 @@ namespace PredictedAdaptedEncoding
         }
 
         const PriorityPolicy priority =
-            PackedCell64_t::ExtractPriorityFromPacked(packed_cell);
+            PackedCell64_t::ExtractPriorityPolicy(packed_cell);
 
         std::optional<LayoutBoundsOfSingleRelNodeClass> layout_bounds =
             ReadLayoutBoundsAndVersion(page_class);

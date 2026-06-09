@@ -46,9 +46,9 @@ namespace PredictedAdaptedEncoding
 
             std::optional<clk16_t> InCellClock16{std::nullopt};
 
-            std::optional<uint64_t> CellClock48{std::nullopt};
+            std::optional<uint64_t> Raw48BitInCellData{std::nullopt};
 
-            std::optional<val32_t> CellValue32{std::nullopt};
+            std::optional<val32_t> Raw32BitInCellData{std::nullopt};
 
             bool IsCellValid{false};
             bool ValidatedView{false};
@@ -90,7 +90,7 @@ namespace PredictedAdaptedEncoding
 
                 if (CellMode == PackedMode::MODEL32 || CellMode == PackedMode::VALUE32)
                 {
-                    if (!CellValue32)
+                    if (!Raw32BitInCellData)
                     {
                         IsCellValid = false;
                         return false;
@@ -136,7 +136,7 @@ namespace PredictedAdaptedEncoding
                         return false;
                     }
 
-                    if (!CellClock48)
+                    if (!Raw48BitInCellData)
                     {
                         IsCellValid = false;
                         return false;
@@ -419,7 +419,7 @@ namespace PredictedAdaptedEncoding
                     out_packed_cell_view.AccessContractOfValue = static_cast<AccessContractOfValue>(ExtractSubClassOrContractFromMETA16_U_(meta16));
                 }
                 out_packed_cell_view.InCellClock16 = ExtractClk16(packed_cell);
-                out_packed_cell_view.CellValue32 = ExtractModelFamily32(packed_cell);
+                out_packed_cell_view.Raw32BitInCellData = ExtractModelFamily32(packed_cell);
             }
             else
             {
@@ -432,7 +432,7 @@ namespace PredictedAdaptedEncoding
                     out_packed_cell_view.AccessContractOfValue = static_cast<AccessContractOfValue>(ExtractSubClassOrContractFromMETA16_U_(meta16));
                 }
 
-                out_packed_cell_view.CellClock48 = ExtractModel48(packed_cell);
+                out_packed_cell_view.Raw48BitInCellData = ExtractModel48(packed_cell);
             }
 
             out_packed_cell_view.CellValueDataType = static_cast<InternalDataTypePolicy>(ExtractValueDataTypeFromMETA16_U_(meta16));

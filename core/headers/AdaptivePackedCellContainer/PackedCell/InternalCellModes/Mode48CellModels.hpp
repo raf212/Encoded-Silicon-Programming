@@ -55,8 +55,8 @@ namespace PredictedAdaptedEncoding
         static constexpr bool IsThisCellASubdevision_3x16_48t(packed64_t packed_cell) noexcept
         {
             return PackedCell64_t::ExtractModeOfPackedCellFromPacked(packed_cell) == PackedMode::MODEL48 &&
-                PackedCell64_t::ExtractRelOffset48FromPacked(packed_cell) == Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL &&
-                PackedCell64_t::ExtractLocalityFromPacked(packed_cell) != LocalityPolicy::FAULTY;
+                PackedCell64_t::ExtractModel48Subclass(packed_cell) == Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL &&
+                PackedCell64_t::ExtractLocalityPolicy(packed_cell) != LocalityPolicy::FAULTY;
         }
 
         static constexpr bool ExtractLowMidHighFromMode48_(uint64_t raw48, uint16_t& low, uint16_t& mid, uint16_t& high)

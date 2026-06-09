@@ -141,7 +141,7 @@ namespace PredictedAdaptedEncoding
                         return true;
                     }
 
-                    if (PackedCell64_t::ExtractLocalityFromPacked(expected) == LocalityPolicy::CLAIMED)
+                    if (PackedCell64_t::ExtractLocalityPolicy(expected) == LocalityPolicy::CLAIMED)
                     {
                         return false;
                     }
@@ -177,7 +177,7 @@ namespace PredictedAdaptedEncoding
                                 return true;
                             }
 
-                            if (PackedCell64_t::ExtractLocalityFromPacked(expected_high) == LocalityPolicy::CLAIMED)
+                            if (PackedCell64_t::ExtractLocalityPolicy(expected_high) == LocalityPolicy::CLAIMED)
                             {
                                 return RestoreLow();
                             }
@@ -186,7 +186,7 @@ namespace PredictedAdaptedEncoding
                         return RestoreLow();
                     }
 
-                    if (PackedCell64_t::ExtractLocalityFromPacked(expected_low) == LocalityPolicy::CLAIMED)
+                    if (PackedCell64_t::ExtractLocalityPolicy(expected_low) == LocalityPolicy::CLAIMED)
                     {
                         return false;
                     }

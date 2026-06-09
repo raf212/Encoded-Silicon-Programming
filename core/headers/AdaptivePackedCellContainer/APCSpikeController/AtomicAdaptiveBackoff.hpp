@@ -395,7 +395,7 @@ public:
         {
             now = now_ticks_opt.value_or(PublicTimer48.NowTicks());
         }
-        int8_t priority = static_cast<int8_t>(PackedCell64_t::ExtractPriorityFromPacked(slot_payload));
+        int8_t priority = static_cast<int8_t>(PackedCell64_t::ExtractPriorityPolicy(slot_payload));
         uint64_t pub_ticks = ReconstructPublishTicks_(now, slot_payload, master_clock_slot_id_opt);
         uint64_t age_ticks = (now - pub_ticks) & MaskLowNBits(TOTAL_LOW);
         uint64_t age_us = age_ticks / 1000u;

@@ -93,7 +93,7 @@ namespace PredictedAdaptedEncoding
         {
             return false;
         }
-        if (PackedCell64_t::ExtractLocalityFromPacked(expected_packed) == LocalityPolicy::CLAIMED)
+        if (PackedCell64_t::ExtractLocalityPolicy(expected_packed) == LocalityPolicy::CLAIMED)
         {
             return false;
         }
@@ -1040,8 +1040,8 @@ namespace PredictedAdaptedEncoding
         APCPagedNodeSegmentClasses physical_page_class
     ) noexcept
     {
-        const LocalityPolicy from_locality = PackedCell64_t::ExtractLocalityFromPacked(old_cell);
-        const LocalityPolicy to_locality = PackedCell64_t::ExtractLocalityFromPacked(new_cell);
+        const LocalityPolicy from_locality = PackedCell64_t::ExtractLocalityPolicy(old_cell);
+        const LocalityPolicy to_locality = PackedCell64_t::ExtractLocalityPolicy(new_cell);
         if (from_locality == to_locality)
         {
             return true;

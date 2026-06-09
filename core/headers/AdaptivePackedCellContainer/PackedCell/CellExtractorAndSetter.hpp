@@ -74,37 +74,37 @@ namespace PredictedAdaptedEncoding
             return static_cast<uint64_t>(packed_cell & MaskLowNBits(FAMILY_48_BIT_LEN));
         }
 
-        static constexpr PriorityPolicy ExtractPriorityFromPacked(packed64_t packed_cell) noexcept
+        static constexpr PriorityPolicy ExtractPriorityPolicy(packed64_t packed_cell) noexcept
         {
             return static_cast<PriorityPolicy>(ExtractPriorityFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
         }
 
-        static constexpr LocalityPolicy ExtractLocalityFromPacked(packed64_t packed_cell) noexcept
+        static constexpr LocalityPolicy ExtractLocalityPolicy(packed64_t packed_cell) noexcept
         {
             return static_cast<LocalityPolicy>(ExtractLocalityFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
         }
 
-        static constexpr OwnershipPolicy ExtractNodeAuthorityFromPacked(packed64_t packed_cell) noexcept
+        static constexpr OwnershipPolicy ExtractOwnershipPolicy(packed64_t packed_cell) noexcept
         {
             return static_cast<OwnershipPolicy>(ExtractCellLocalNodeAuthotityFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
         }
 
-        static constexpr APCPagedNodeSegmentClasses ExtractRelMaskFromPacked(packed64_t packed_cell) noexcept
+        static constexpr APCPagedNodeSegmentClasses ExtractAPCPagedNodeSegmentClasse(packed64_t packed_cell) noexcept
         {
             return static_cast<APCPagedNodeSegmentClasses>(ExtractRelMaskFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
         }
 
-        static constexpr Model32Subclass ExtractRelOffset32FromPacked(packed64_t packed_cell) noexcept
+        static constexpr Model32Subclass ExtractModel32Subclass(packed64_t packed_cell) noexcept
         {
             return static_cast<Model32Subclass>(ExtractSubClassOrContractFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
         }
 
-        static constexpr Model48Subclass ExtractRelOffset48FromPacked(packed64_t packed_cell) noexcept
+        static constexpr Model48Subclass ExtractModel48Subclass(packed64_t packed_cell) noexcept
         {
             return static_cast<Model48Subclass>(ExtractSubClassOrContractFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
         }
 
-        static constexpr InternalDataTypePolicy ExtractPCellDataTypeFromPacked(packed64_t packed_cell) noexcept
+        static constexpr InternalDataTypePolicy ExtractInternalDataTypePolicy(packed64_t packed_cell) noexcept
         {
             return static_cast<InternalDataTypePolicy>(ExtractValueDataTypeFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
         }
@@ -113,7 +113,7 @@ namespace PredictedAdaptedEncoding
         static constexpr std::optional<PCDT> ExtractAnyPackedValueX(packed64_t packed_cell)
         {
             constexpr InternalDataTypePolicy expected_dtype = BridgeOfPackedCellDataType_v<PCDT>;
-            if(ExtractPCellDataTypeFromPacked(packed_cell) != expected_dtype)
+            if(ExtractInternalDataTypePolicy(packed_cell) != expected_dtype)
             {
                 return std::nullopt;
             }

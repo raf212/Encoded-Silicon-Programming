@@ -447,25 +447,22 @@ namespace PredictedAdaptedEncoding
         }
 
 
-        // static constexpr bool IsTheCellConsumeableAsTableOfDirectoryCell(PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
-        // {
-        //     if (
-        //         !a_cell_view.IsCellValid || 
-        //         a_cell_view.CellMode != PackedMode::VALUE48 ||
-        //         a_cell_view.FabricTableSegmentClass != FabricTableSegmentClasses::TABLE_DIRECTORY ||
+        static constexpr bool IsTheCellConsumeableAsTableOfDirectoryCell(PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        {
+            if (
+                a_cell_view.IsCellValid &&
+                a_cell_view.CellMode == PackedMode::VALUE48 &&
+                a_cell_view.FabricTableSegmentClass == FabricTableSegmentClasses::TABLE_DIRECTORY &&
+                a_cell_view.CellValueDataType == InternalDataTypePolicy::UnsignedPCellDataType
 
-        //     )
-        //     {
-        //         return false;
-        //     }
-
-        //     if (a_cell_view.FabricTableSegmentClass != FabricTableSegmentClasses::TABLE_DIRECTORY)
-        //     {
-        //         /* code */
-        //     }
+            )
+            {
+                return true;
+            }
             
+            return false;
             
-        // }
+        }
 
         /// @brief Model32Subclass::UNCLOCKED_1x8_PLUS_2x4-> Value + Version(8bit) + HandleStateOfAPCFabric(4bit) + SlabId_(4bit) + Meta16
         /// @return VALID -> Packed Cell -> OR: UINT64_MAX

@@ -33,7 +33,7 @@ namespace PredictedAdaptedEncoding
     //     )
     //     {
     //         return PackedCell64_t::Compose32BitFamilyPackedCell(
-    //             desired_authoretive_view.CellValue32.value_or(UNSIGNED_ZERO),
+    //             desired_authoretive_view.Raw32BitInCellData.value_or(UNSIGNED_ZERO),
     //             now_clk16,
     //             PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_32t(
     //                 desired_authoretive_view.CellOwnership,
@@ -47,7 +47,7 @@ namespace PredictedAdaptedEncoding
     //     }
         
 
-    //     const Model48Subclass reloffset48_of_provided_cell = PackedCell64_t::ExtractRelOffset48FromPacked(provided_packed_cell);
+    //     const Model48Subclass reloffset48_of_provided_cell = PackedCell64_t::ExtractModel48Subclass(provided_packed_cell);
         
     //     if (reloffset48_of_provided_cell == Model48Subclass::PURE_TIMER_48)
     //     {

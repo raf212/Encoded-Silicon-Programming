@@ -30,7 +30,7 @@ namespace PredictedAdaptedEncoding
         while (curent_tries++ < max_claim_attempts)
         {
             packed64_t packed_cell_value64 = BackingPtr[probable_idx].load(MoLoad_);
-            Model32Subclass curent_ptr_position = PackedCell64_t::ExtractRelOffset32FromPacked(packed_cell_value64);
+            Model32Subclass curent_ptr_position = PackedCell64_t::ExtractModel32Subclass(packed_cell_value64);
             size_t head_idx = APCDataStructure::APC_SIZE_SENTINAL;
             size_t tail_idx = APCDataStructure::APC_SIZE_SENTINAL;
             if (curent_ptr_position == Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL)
@@ -56,8 +56,8 @@ namespace PredictedAdaptedEncoding
                 return std::nullopt;
             }
 
-            LocalityPolicy head_locality = PackedCell64_t::ExtractLocalityFromPacked(head_screenshot);
-            LocalityPolicy tail_locality = PackedCell64_t::ExtractLocalityFromPacked(tail_screenshot);
+            LocalityPolicy head_locality = PackedCell64_t::ExtractLocalityPolicy(head_screenshot);
+            LocalityPolicy tail_locality = PackedCell64_t::ExtractLocalityPolicy(tail_screenshot);
 
             if (!claim_ownership)
             {
@@ -226,8 +226,8 @@ namespace PredictedAdaptedEncoding
             size_t tail = (head + 1);
             packed64_t cur_head = BackingPtr[head].load(MoLoad_);
             packed64_t cur_tail = BackingPtr[tail].load(MoLoad_);
-            LocalityPolicy head_locality = PackedCell64_t::ExtractLocalityFromPacked(cur_head);
-            LocalityPolicy tail_locality = PackedCell64_t::ExtractLocalityFromPacked(cur_tail);
+            LocalityPolicy head_locality = PackedCell64_t::ExtractLocalityPolicy(cur_head);
+            LocalityPolicy tail_locality = PackedCell64_t::ExtractLocalityPolicy(cur_tail);
             if (head_locality == LocalityPolicy::IDLE && tail_locality == LocalityPolicy::IDLE)
             {
                 packed64_t claimed_cur_head = PackedCell64_t::SetLocalityInPacked(cur_head, LocalityPolicy::CLAIMED);
