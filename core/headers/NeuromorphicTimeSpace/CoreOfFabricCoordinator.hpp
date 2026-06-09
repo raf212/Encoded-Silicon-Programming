@@ -446,6 +446,27 @@ namespace PredictedAdaptedEncoding
 
         }
 
+
+        // static constexpr bool IsTheCellConsumeableAsTableOfDirectoryCell(PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        // {
+        //     if (
+        //         !a_cell_view.IsCellValid || 
+        //         a_cell_view.CellMode != PackedMode::VALUE48 ||
+        //         a_cell_view.FabricTableSegmentClass != FabricTableSegmentClasses::TABLE_DIRECTORY ||
+
+        //     )
+        //     {
+        //         return false;
+        //     }
+
+        //     if (a_cell_view.FabricTableSegmentClass != FabricTableSegmentClasses::TABLE_DIRECTORY)
+        //     {
+        //         /* code */
+        //     }
+            
+            
+        // }
+
         /// @brief Model32Subclass::UNCLOCKED_1x8_PLUS_2x4-> Value + Version(8bit) + HandleStateOfAPCFabric(4bit) + SlabId_(4bit) + Meta16
         /// @return VALID -> Packed Cell -> OR: UINT64_MAX
         static constexpr packed64_t MakeANEncodedHandlerCellForFabric(

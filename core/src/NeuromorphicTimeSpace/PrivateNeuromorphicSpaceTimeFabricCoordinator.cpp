@@ -357,7 +357,7 @@ namespace PredictedAdaptedEncoding
     }
         
 
-    void NeuromorphicSpaceTimeFabricCoordinator::IdleAFabricTableClassRanges_(FabricTableSegmentClasses table_class) noexcept
+    constexpr void NeuromorphicSpaceTimeFabricCoordinator::IdleAFabricTableClassRanges_(FabricTableSegmentClasses table_class) noexcept
     {
         const std::optional<FabricTableRange> table_range = GetTableDirectoryRangeRaw_(table_class);
         if (!table_range.has_value())
@@ -380,25 +380,23 @@ namespace PredictedAdaptedEncoding
 
     // void NeuromorphicSpaceTimeFabricCoordinator::InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept
     // {
-    //     CacheEntryOfFabricTable desired_cache_entry;
-    //     const bool ok = GetFabricTableCache(table_class, desired_cache_entry);
-    //     if (!ok)
+
+    //     const packed64_t desired_idle_hash_key_cell = CoreOfFabricCoordinator::MakeHashKeyCell(UNSIGNED_ZERO, UNSIGNED_ZERO, table_class, LocalityPolicy::IDLE);
+    //     if (desired_idle_hash_key_cell == PackedCell64_t::PACKED_CELL_SENTINAL)
     //     {
     //         return;
     //     }
-    //     for (size_t i = desired_cache_entry.BeginIdx; i < desired_cache_entry.EndIdx; i++)
+
+    //     std::optional<FabricTableRange> hash_table_range = GetTableDirectoryRangeRaw_(table_class);
+
+    //     if (!hash_table_range)
     //     {
-    //         MakeAndStoreDirectlyAFabricOwnedCell_(
-    //             i + 0u, UNSIGNED_ZERO, table_class, PackedMode::MODEL32, 
-    //             desired_cache_entry.VersionCount, UNSIGNED_ZERO, InternalDataTypePolicy::UnsignedPCellDataType,
-    //             LocalityPolicy::IDLE, PriorityPolicy::INFLUENCED
-    //         );
-    //         MakeAndStoreDirectlyAFabricOwnedCell_(
-    //             i + 1u, IN_CELL_VALUE_MODE32_SENTINAL, table_class, PackedMode::MODEL32, 
-    //             desired_cache_entry.VersionCount, UNSIGNED_ZERO, InternalDataTypePolicy::UnsignedPCellDataType,
-    //             LocalityPolicy::IDLE, PriorityPolicy::INFLUENCED
-    //         );
+    //         /* code */
     //     }
+        
+        
+
+
         
     // }
 

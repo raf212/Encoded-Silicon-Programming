@@ -87,13 +87,8 @@ namespace PredictedAdaptedEncoding
                     return false;
                 }
 
-                if ((CellMode == PackedMode::VALUE32 || CellMode == PackedMode::VALUE48) && AccessContractOfValue.has_value())
-                {
-                    IsCellValid = true;
-                    return true;
-                }
 
-                if (CellMode == PackedMode::MODEL32)
+                if (CellMode == PackedMode::MODEL32 || CellMode == PackedMode::VALUE32)
                 {
                     if (!CellValue32)
                     {
@@ -114,8 +109,7 @@ namespace PredictedAdaptedEncoding
                             (   
                                 PageClass != APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY || 
                                 PageClass != APCPagedNodeSegmentClasses::CONTROL_SLOT
-                            ) &&
-                            Priority != PriorityPolicy::INFLUENCED
+                            )
                         )
                         {
                             IsCellValid = false;
@@ -147,6 +141,16 @@ namespace PredictedAdaptedEncoding
                         IsCellValid = false;
                         return false;
                     }
+                }
+
+                if (CellMode == PackedMode::VALUE32 || CellMode == PackedMode::VALUE48)
+                {
+                    if (!AccessContractOfValue.has_value())
+                    {
+                        IsCellValid = false;
+                        return false;                    
+                    }
+                    
                 }
 
                 IsCellValid = true;

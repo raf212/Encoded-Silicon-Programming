@@ -86,7 +86,28 @@ namespace PredictedAdaptedEncoding
 
         constexpr std::optional<FabricTableRange> GetTableDirectoryRangeRaw_(FabricTableSegmentClasses table_class) noexcept;
 
-        void IdleAFabricTableClassRanges_(FabricTableSegmentClasses table_class) noexcept;
+        constexpr bool ValidateAFabricTableRangeStruct_(FabricTableRange& provided_range_pair) noexcept
+        {
+            const PackedCell64_t::AuthoritiveCellView auth_view_of_begin_idx = PackedCell64_t::GetAuthoritiveViewsForACell(provided_range_pair.BeginIdxRawType48Cell);
+            const PackedCell64_t::AuthoritiveCellView auth_view_of_end_idx = PackedCell64_t::GetAuthoritiveViewsForACell(provided_range_pair.EndIdxRawType48Cell);
+
+            if (!auth_view_of_begin_idx.IsCellValid || !auth_view_of_begin_idx.IsCellValid)
+            {
+                return false;
+            }
+
+            // if (auth_view_of_begin_idx)
+            // {
+            //     /* code */
+            // }
+            
+            
+
+
+            return true;
+        }
+
+        constexpr void IdleAFabricTableClassRanges_(FabricTableSegmentClasses table_class) noexcept;
 
         
 //checked-----------------------------------------------
