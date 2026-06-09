@@ -190,21 +190,39 @@ namespace
     packed64_t PackF32(
         MasterClockConf& clock,
         float value,
-        APCPagedNodeSegmentClasses region,
-        CellMapAndPriority priority = CellMapAndPriority::IDLE
+        APCPagedNodeSegmentClasses page_class,
+        PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST,
+        PackedMode mode = PackedMode::VALUE32
     )
     {
         const uint32_t bits = BitCastPortable<uint32_t>(value);
 
-        return clock.ComposeClockedModel32FroAPC(
-            bits,
-            region,
-            priority,
+        const clk16_t now_16 = clock.NowClock16();
+
+        if (mode == PackedMode::MODEL32 || mode == PackedMode::MODEL48)
+        {
+            return PackedCell64_t::MakeModeledAPCValidPackedCell(
+                static_cast<ModelFamily>(mode),
+                UNSIGNED_ZERO, page_class, LocalityPolicy::PUBLISHED,
+                InternalDataTypePolicy::FloatPCellDataType,
+                priority,
+                bits,
+                now_16
+            );
+        }
+
+
+        return PackedCell64_t::MakeTypedAPCValidPackedCell(
+            static_cast<TypeFamily>(mode),
+            AccessContractOfValue::CLAIMED_GURDED,
+            page_class,
             LocalityPolicy::PUBLISHED,
-            Model32Subclass::SELF_CLASS,
             InternalDataTypePolicy::FloatPCellDataType,
-            OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
+            priority,
+            bits,
+            now_16
         );
+
     }
 
     float UnpackF32(packed64_t cell, float fallback = 0.0f)
@@ -636,7 +654,7 @@ namespace
                         clock,
                         value,
                         APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                        CellMapAndPriority::OLDEST_CLOCK_FIRST
+                        PriorityPolicy::PRESSURE_FIRST
                     ),
                     manager,
                     growth_counter,
@@ -668,7 +686,7 @@ namespace
                         clock,
                         prediction,
                         APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
-                        CellMapAndPriority::COMPLEATE_ATOMICITY
+                        PriorityPolicy::PRESSURE_FIRST
                     ),
                     manager,
                     growth_counter,
@@ -701,7 +719,7 @@ int main()
     MasterClockConf clock(nullptr, timer);
 
     ContainerConf cfg;
-    cfg.InitialMode = PackedMode::MODE_32;
+    cfg.InitialMode = PackedMode::MODEL32;
     cfg.ProducerBlockSize = 4;
     cfg.RegionSize = 8;
     cfg.EnableBranching = true;
@@ -890,7 +908,7 @@ int main()
                 clock,
                 state,
                 APCPagedNodeSegmentClasses::STATE_SLOT,
-                CellMapAndPriority::COMPLEATE_ATOMICITY
+                PriorityPolicy::PRESSURE_FIRST
             ),
             manager,
             grow_integrator,
@@ -904,7 +922,7 @@ int main()
                 clock,
                 error,
                 APCPagedNodeSegmentClasses::ERROR_SLOT,
-                CellMapAndPriority::ERROR_FIRST
+                PriorityPolicy::PRESSURE_FIRST
             ),
             manager,
             grow_integrator,
@@ -964,7 +982,7 @@ int main()
                 clock,
                 motor,
                 APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                CellMapAndPriority::CLAIMED_CAS_DEPENDENT
+                PriorityPolicy::PRESSURE_FIRST
             ),
             manager,
             grow_motor,
@@ -978,7 +996,7 @@ int main()
                 clock,
                 feedback,
                 APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
-                CellMapAndPriority::ERROR_FIRST
+                PriorityPolicy::PRESSURE_FIRST
             ),
             manager,
             grow_predictor,
