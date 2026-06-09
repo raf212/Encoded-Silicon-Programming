@@ -294,6 +294,66 @@ namespace PredictedAdaptedEncoding
             return packed_cell;
         }
 
+        /// @brief DEFAULTS 
+        /// @param AccessContractOfValue::CLAIMED_GURDED
+        /// @param Model32_48Subclass::SELF_CLASS 
+        /// @return 
+        static constexpr packed64_t MakeDefaultAPCPayloadCellOnMode(
+            PackedMode mode,
+            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::UNDEFINED,
+            InternalDataTypePolicy dtype = InternalDataTypePolicy::UnsignedPCellDataType,
+            LocalityPolicy cell_locality = LocalityPolicy::IDLE,
+            uint64_t value = UNSIGNED_ZERO,
+            clk16_t cell_clock16 = UNSIGNED_ZERO
+        )
+        {
+            switch (mode)
+            {
+            case PackedMode::VALUE32:
+                return PackedCell64_t::MakeTypedAPCValidPackedCell(
+                    TypeFamily::VALUE32 ,
+                    AccessContractOfValue::CLAIMED_GURDED,
+                    page_class,
+                    cell_locality,
+                    dtype, PriorityPolicy::PRESSURE_FIRST,
+                    value, cell_clock16
+                );
+            
+            case PackedMode::VALUE48:
+                return PackedCell64_t::MakeTypedAPCValidPackedCell(
+                    TypeFamily::VALUE48 ,
+                    AccessContractOfValue::CLAIMED_GURDED,
+                    page_class,
+                    cell_locality,
+                    dtype, PriorityPolicy::PRESSURE_FIRST,
+                    value
+                );
+
+            case PackedMode::MODEL32:
+                return PackedCell64_t::MakeModeledAPCValidPackedCell(
+                    ModelFamily::MODEL32,
+                    static_cast<tag8_t>(Model32Subclass::SELF_CLASS),
+                    page_class,
+                    cell_locality,
+                    dtype, PriorityPolicy::PRESSURE_FIRST,
+                    value,
+                    cell_clock16
+                );
+
+            case PackedMode::MODEL48:
+                return PackedCell64_t::MakeModeledAPCValidPackedCell(
+                    ModelFamily::MODEL48,
+                    static_cast<tag8_t>(Model48Subclass::SELF_CLASS),
+                    page_class,
+                    cell_locality,
+                    dtype, PriorityPolicy::PRESSURE_FIRST,
+                    value
+                );
+            default:
+                return PackedCell64_t::PACKED_CELL_SENTINAL;
+            }
+        }
+
         /// @brief Can Be used to create a new valid Packed CEll ->FOR: OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
         /// @param cell_mode If Passing PackedMode enum just Cast static_cast<ModelFamily>(PackedMode existing_mode)
         /// @param sub_class If Passing PackedMode enum just Cast static_cast<tag8_t>(Model32Subclass/Model48Subclass desired SUB CLASS)

@@ -14,6 +14,7 @@
 #include "NeuromorphicTimeSpace/APCSegmentsCausalCordinator.hpp"
 #include "PackedCellContainerManager.hpp"
 
+
 using namespace PredictedAdaptedEncoding;
 
 namespace
@@ -701,7 +702,7 @@ namespace
     }
 }
 
-int main()
+void APCTest()
 {
     std::ios::sync_with_stdio(true);
     std::cout.setf(std::ios::unitbuf);
@@ -1138,6 +1139,5 @@ int main()
     std::cout << "overall    : " << PassFail(final_ok) << "\n";
 
     manager.StopAPCManager();
-
-    return final_ok ? 0 : 1;
+    
 }

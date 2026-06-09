@@ -92,20 +92,24 @@ namespace PredictedAdaptedEncoding
                 *a_cell_view.SubClassOfModel48 == Model48Subclass::PURE_TIMER_48;
         }
 
-        static constexpr bool IsThisCellAppropriateAndGenericToConsume(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        static constexpr bool IsThisCellAppropriateAndGenericToConsume(const PackedCell64_t::AuthoritiveCellView& a_cell_view, APCPagedNodeSegmentClasses page_class) noexcept
         {
 
-
-            if (!IsGenericPayloadOffset(a_cell_view))
+            if (!a_cell_view.IsCellValid)
             {
                 return false;
             }
-
+            
             if (a_cell_view.LocalityOfCell != LocalityPolicy::PUBLISHED)
             {
                 return false;
             }
 
+            if (page_class != a_cell_view.PageClass)
+            {
+                return false;
+            }
+            
             if (!IsDataConsumablePageClass(a_cell_view.PageClass))
             {
                 return false;
@@ -119,14 +123,6 @@ namespace PredictedAdaptedEncoding
             return true;
         }
 
-        static constexpr bool IsCellAppropriatelyPagedAndPublishedAsGeneric(
-            const PackedCell64_t::AuthoritiveCellView& view,
-            APCPagedNodeSegmentClasses region_kind
-        ) noexcept
-        {
-            return IsThisCellAppropriateAndGenericToConsume(view) &&
-                view.PageClass == region_kind;
-        }    
 
         static constexpr bool IsTrackedOccupancyPageClass(APCPagedNodeSegmentClasses page_class) noexcept
         {
@@ -409,8 +405,13 @@ namespace PredictedAdaptedEncoding
             {
                 return false;
             }
+
+            if (!APCAndPagedNodeHelpers::IsDataConsumablePageClass(a_cell_view.PageClass))
+            {
+                return false;
+            }
             
-            return APCAndPagedNodeHelpers::IsCellAppropriatelyPagedAndPublishedAsGeneric(a_cell_view, PAGE_LAYOUT_CLASS);
+            return true;
         }
 
     };

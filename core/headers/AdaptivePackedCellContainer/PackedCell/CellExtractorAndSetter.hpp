@@ -311,6 +311,12 @@ protected:
             return SetMETA16InPacked(packed_cell, new_desired_meta);
         }
 
+        static constexpr packed64_t SetAccessContractForValueInPacked(packed64_t packed_cell, AccessContractOfValue access_control) noexcept
+        {
+            const meta16_t new_desired_meta = SetSubClassOfModeInMETA16(ExtractMeta16fromPackedCell(packed_cell), static_cast<tag8_t>(access_control));
+            return SetMETA16InPacked(packed_cell, new_desired_meta);
+        }
+
     protected:
 
         static constexpr packed64_t SetMETA16InPacked(packed64_t packed_cell, meta16_t meta16) noexcept

@@ -201,7 +201,7 @@ namespace PredictedAdaptedEncoding
             const size_t idx = current_region_bounds.BeginIndex + ((scan_cursor - current_region_bounds.BeginIndex + prob) % region_capacity);
             packed64_t current_cell = BackingPtr[idx].load(MoLoad_);
             const PackedCell64_t::AuthoritiveCellView current_cell_view = PackedCell64_t::GetAuthoritiveViewsForACell(current_cell);
-            if (!APCAndPagedNodeHelpers::IsCellAppropriatelyPagedAndPublishedAsGeneric(current_cell_view, cell_class))
+            if (!APCAndPagedNodeHelpers::IsThisCellAppropriateAndGenericToConsume(current_cell_view, cell_class))
             {
                 continue;
             }
