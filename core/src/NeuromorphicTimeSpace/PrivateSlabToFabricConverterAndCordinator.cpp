@@ -330,6 +330,8 @@ namespace PredictedAdaptedEncoding
             end48_cell
         );
 
+        // ADD ONE MORE Safty Lock Cell
+
         return true;
         
     }
@@ -446,23 +448,6 @@ namespace PredictedAdaptedEncoding
 
     // void SlabToFabricConverterAndCordinator::InitializeSlotDirectory_() noexcept
     // {
-    //     for (uint32_t slot = 0; slot < SlotCount_; slot++)
-    //     {
-    //         const uint8_t generation = APCDataStructure::BRANCH_VERSION;
-    //         const packed64_t next_handle = (slot + 1u < SlotCount_) ? CoreOfFabricCoordinator::MakeANEncodedHandlerCellForFabric(
-    //             slot + 1u, generation, SlabId_, HandleStateOfAPCFabric::APC_SEGMENT, 
-    //             FabricTableSegmentClasses::SLOT_DIRECTORY
-    //         ) : PackedCell64_t::PACKED_CELL_SENTINAL;
-
-
-    //         MakeAndStoreASlotDirectoryCell_(slot, SlotCellTypeOfAPCFabric::STATE, static_cast<uint64_t>(LocalityPolicy::IDLE), generation);
-    //         MakeAndStoreASlotDirectoryCell_(slot, SlotCellTypeOfAPCFabric::OWNER_BRANCH, UNSIGNED_ZERO, generation);
-    //         MakeAndStoreASlotDirectoryCell_(slot, SlotCellTypeOfAPCFabric::GENERATION, generation, generation);
-    //         MakeAndStoreASlotDirectoryCell_(slot, SlotCellTypeOfAPCFabric::STATE, static_cast<uint64_t>(LocalityPolicy::IDLE), generation);
-    //         MakeAndStoreASlotDirectoryCell_(slot, SlotCellTypeOfAPCFabric::STATE, static_cast<uint64_t>(LocalityPolicy::IDLE), generation);
-    //         MakeAndStoreASlotDirectoryCell_(slot, SlotCellTypeOfAPCFabric::STATE, static_cast<uint64_t>(LocalityPolicy::IDLE), generation);
-
-    //     }
         
     // }
 

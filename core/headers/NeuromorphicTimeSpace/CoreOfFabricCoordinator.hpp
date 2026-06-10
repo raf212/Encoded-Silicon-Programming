@@ -12,8 +12,13 @@ namespace PredictedAdaptedEncoding
     static constexpr uint32_t DEFAULT_HAS_CONST_2 = 0x846ca68bu;
 
     static constexpr size_t DEFAULT_FABRIC_CONTROLIO_LENGTH = 1024u;
+
+    /// @brief should be 3
     static constexpr size_t RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC = 2u;
+
+    /// @brief should be 3
     static constexpr size_t HASH_BUCKED_WIDTH_OF_FABRIC = 2u;
+
     static constexpr size_t SLOT_RECORD_WIDTH_OF_FABRIC = 12u;
     static constexpr size_t RELATION_WIDTH_OF_FABRIC = 8u;
     static constexpr size_t QUEUE_RECORD_WIDTH_OF_FABRIC = 2u;
@@ -501,29 +506,30 @@ namespace PredictedAdaptedEncoding
 
         /// @brief Model32Subclass::UNCLOCKED_1x8_PLUS_2x4-> Value + Version(8bit) + HandleStateOfAPCFabric(4bit) + SlabId_(4bit) + Meta16
         /// @return VALID -> Packed Cell -> OR: UINT64_MAX
-        static constexpr packed64_t MakeANEncodedHandlerCellForFabric(
-            uint32_t slot_index, 
-            uint8_t slab_id, uint8_t version, 
-            HandleStateOfAPCFabric handle_state = HandleStateOfAPCFabric::APC_SEGMENT,
-            FabricTableSegmentClasses table_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
-            LocalityPolicy cell_locality = LocalityPolicy::IDLE
-        ) noexcept
-        {
-            const uint16_t external_handle = Clock16Subdivision1x8Plus2x4InMode32CellModel::Pack1x8Plus2x4InUnsigned16_(version, static_cast<uint8_t>(handle_state), slab_id);
+        // static constexpr packed64_t MakeANEncodedHandlerCellForFabric(
+        //     uint32_t slot_index, 
+        //     uint8_t slab_id, uint8_t version, 
+        //     HandleStateOfAPCFabric handle_state = HandleStateOfAPCFabric::APC_SEGMENT,
+        //     FabricTableSegmentClasses table_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
+        //     LocalityPolicy cell_locality = LocalityPolicy::IDLE
+        // ) noexcept
+        // {
+        //     const uint16_t external_handle = Clock16Subdivision1x8Plus2x4InMode32CellModel::Pack1x8Plus2x4InUnsigned16_(version, static_cast<uint8_t>(handle_state), slab_id);
 
-            return PackedCell64_t::MakeModeledFabricValidPackedCell(
-                ModelFamily::MODEL32,
-                static_cast<tag8_t>(Model32Subclass::UNCLOCKED_1x8_PLUS_2x4),
-                table_class,
-                cell_locality,
-                InternalDataTypePolicy::UnsignedPCellDataType,
-                PriorityPolicy::INFLUENCED,
-                static_cast<uint64_t>(slot_index), 
-                external_handle
-            );
-        }
+        //     return PackedCell64_t::MakeModeledFabricValidPackedCell(
+        //         ModelFamily::MODEL32,
+        //         static_cast<tag8_t>(Model32Subclass::UNCLOCKED_1x8_PLUS_2x4),
+        //         table_class,
+        //         cell_locality,
+        //         InternalDataTypePolicy::UnsignedPCellDataType,
+        //         PriorityPolicy::INFLUENCED,
+        //         static_cast<uint64_t>(slot_index), 
+        //         external_handle
+        //     );
+        // }
 
-        /// @brief 
+        /// @brief Uses PackedMode/ModeFamily::MODEL32, Model32Subclass::SELF_CLASS && InternalDataTypePolicy::UnsignedPCellDataType
+        /// @param prob_distance Uses clk16_t-> In cell 16 bit clock memory to STORE:prob_distance
         /// @return VALID -> Packed Cell -> OR: UINT64_MAX:: if FabricTableSegmentClasses dosent belong  BRANCH_HASH, SHARED_HASH, LOGICAL_HASH
         static constexpr packed64_t MakeHashKeyCell(
             uint32_t hash_key, uint16_t prob_distance, 
@@ -552,10 +558,17 @@ namespace PredictedAdaptedEncoding
             );
         }
 
-        // static constexpr packed64_t CreateADesiredTableViewForTableOfDirectory(
-        //     FabricTableSegmentClasses table_class,
-        //     uint8_t 
-        // )
+        // using OriginOfRecord = FabricTableSegmentClasses;
+
+        // static constexpr packed64_t CreateADesiredTabeSegmentClassSaftyLockCellForRecordBookOfTSC(
+        //     FabricTableRange table_range,
+        //     uint32_t record_width_in_slab,
+        //     uint8_t version, 
+        //     OriginOfRecord origin_table_segment_class
+        // ) noexcept
+        // {
+
+        // }
 
 
         //kept for safty

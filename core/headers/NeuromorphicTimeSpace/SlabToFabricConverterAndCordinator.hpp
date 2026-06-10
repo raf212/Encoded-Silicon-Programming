@@ -77,17 +77,13 @@ namespace PredictedAdaptedEncoding
 
         /// @return VALID-> INDEX < UINT
         constexpr size_t ReadBeginSlabIdxOfATableSegmentClassFromRecordBookOfTSC_(FabricTableSegmentClasses desired_table) noexcept;
-    
-        constexpr bool WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end) noexcept;
-
+        
+//checked-----------------------------------------------
         constexpr std::optional<FabricTableRange> GetATableSegmentClassRangePairedCellFromRecordBookOfTSC_(FabricTableSegmentClasses table_class) noexcept;
 
         constexpr void IdleAFabricTableClassRangesMemory_(FabricTableSegmentClasses table_class) noexcept;
 
-        
-//checked-----------------------------------------------
-
-
+        constexpr bool WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end) noexcept;
         
         void InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept;
     
