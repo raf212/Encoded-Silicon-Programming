@@ -54,7 +54,7 @@ namespace PredictedAdaptedEncoding
         RELATION_RECORD = 0x3u,
         DEVICE_VIEW = 0x4u,
         RETIRED_SLOT = 0x5u,
-        HASH_VALUE = 0x6u,
+        HASH_VALUE_SECOND_INDEX = 0x6u,
         FABRIC_TABLE = 0x7u
     };
 
@@ -459,7 +459,8 @@ namespace PredictedAdaptedEncoding
                 a_cell_view.IsCellValid &&
                 a_cell_view.CellMode == PackedMode::VALUE48 &&
                 a_cell_view.FabricTableSegmentClass == FabricTableSegmentClasses::TABLE_DIRECTORY &&
-                a_cell_view.CellValueDataType == InternalDataTypePolicy::UnsignedPCellDataType
+                a_cell_view.CellValueDataType == InternalDataTypePolicy::UnsignedPCellDataType &&
+                a_cell_view.Raw48BitInCellData.has_value()
 
             )
             {
@@ -470,14 +471,14 @@ namespace PredictedAdaptedEncoding
             
         }
 
-        constexpr bool ValidateAFabricTableRangeStruct(FabricTableRange& provided_range_pair) noexcept
+        static constexpr std::optional<uint64_t> ValidateAFabricTableRangeStruct(FabricTableRange& provided_range_pair) noexcept
         {
             const PackedCell64_t::AuthoritiveCellView auth_view_of_begin_idx = PackedCell64_t::GetAuthoritiveViewsForACell(provided_range_pair.BeginIdxRawType48Cell);
             const PackedCell64_t::AuthoritiveCellView auth_view_of_end_idx = PackedCell64_t::GetAuthoritiveViewsForACell(provided_range_pair.EndIdxRawType48Cell);
 
             if (!auth_view_of_begin_idx.IsCellValid || !auth_view_of_begin_idx.IsCellValid)
             {
-                return false;
+                return std::nullopt;
             }
 
             if (
@@ -485,10 +486,17 @@ namespace PredictedAdaptedEncoding
                 !CoreOfFabricCoordinator::IsTheCellConsumeableAsTableOfDirectoryCell(auth_view_of_end_idx)
             )
             {
-                return false;
+                return std::nullopt;
             }
 
-            return true;
+            const uint64_t width = (*auth_view_of_end_idx.Raw48BitInCellData) - (*auth_view_of_begin_idx.Raw48BitInCellData);
+
+            if (width > UNSIGNED_ZERO)
+            {
+                return width;
+            }
+            
+            return std::nullopt;
         }
 
         /// @brief Model32Subclass::UNCLOCKED_1x8_PLUS_2x4-> Value + Version(8bit) + HandleStateOfAPCFabric(4bit) + SlabId_(4bit) + Meta16
@@ -515,8 +523,8 @@ namespace PredictedAdaptedEncoding
             );
         }
 
-        /// @brief Model32Subclass::UNCLOCKED_1x8_PLUS_2x4-> Value + Version(8bit) + 16 Bit Prob Distance-> + Meta16
-        /// @return VALID -> Packed Cell -> OR: UINT64_MAX
+        /// @brief 
+        /// @return VALID -> Packed Cell -> OR: UINT64_MAX:: if FabricTableSegmentClasses dosent belong  BRANCH_HASH, SHARED_HASH, LOGICAL_HASH
         static constexpr packed64_t MakeHashKeyCell(
             uint32_t hash_key, uint16_t prob_distance, 
             FabricTableSegmentClasses hash_table_class, 

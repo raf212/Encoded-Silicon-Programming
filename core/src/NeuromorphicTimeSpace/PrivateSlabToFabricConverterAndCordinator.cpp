@@ -389,11 +389,19 @@ namespace PredictedAdaptedEncoding
 
     //     std::optional<FabricTableRange> hash_table_range = GetTableDirectoryRangeRaw_(table_class);
 
-    //     if (!hash_table_range)
+    //     if (!hash_table_range.has_value())
     //     {
-    //         /* code */
+    //         return;
     //     }
         
+    //     const std::optional<uint64_t> width = CoreOfFabricCoordinator::ValidateAFabricTableRangeStruct(*hash_table_range);
+
+    //     if (width != HASH_BUCKED_WIDTH_OF_FABRIC)
+    //     {
+    //         return;
+    //     }
+        
+    //     const packed64_t desired
         
 
 
