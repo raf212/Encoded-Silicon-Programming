@@ -76,13 +76,13 @@ namespace PredictedAdaptedEncoding
         constexpr void WriteFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept;
 
         /// @return VALID-> INDEX < UINT
-        constexpr size_t ReadTableDirectoryBeginIdxOfATableClass_(FabricTableSegmentClasses desired_table) noexcept;
+        constexpr size_t ReadBeginSlabIdxOfATableSegmentClassFromRecordBookOfTSC_(FabricTableSegmentClasses desired_table) noexcept;
     
-        constexpr bool WriteDirectoryEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end) noexcept;
+        constexpr bool WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end) noexcept;
 
-        constexpr std::optional<FabricTableRange> GetTableDirectoryRangeRaw_(FabricTableSegmentClasses table_class) noexcept;
+        constexpr std::optional<FabricTableRange> GetATableSegmentClassRangePairedCellFromRecordBookOfTSC_(FabricTableSegmentClasses table_class) noexcept;
 
-        constexpr void IdleAFabricTableClassRanges_(FabricTableSegmentClasses table_class) noexcept;
+        constexpr void IdleAFabricTableClassRangesMemory_(FabricTableSegmentClasses table_class) noexcept;
 
         
 //checked-----------------------------------------------

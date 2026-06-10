@@ -12,7 +12,7 @@ namespace PredictedAdaptedEncoding
     static constexpr uint32_t DEFAULT_HAS_CONST_2 = 0x846ca68bu;
 
     static constexpr size_t DEFAULT_FABRIC_CONTROLIO_LENGTH = 1024u;
-    static constexpr size_t TABLE_ENTRY_WIDTH_OF_FABRIC = 2u;
+    static constexpr size_t RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC = 2u;
     static constexpr size_t HASH_BUCKED_WIDTH_OF_FABRIC = 2u;
     static constexpr size_t SLOT_RECORD_WIDTH_OF_FABRIC = 12u;
     static constexpr size_t RELATION_WIDTH_OF_FABRIC = 8u;
@@ -198,8 +198,8 @@ namespace PredictedAdaptedEncoding
         FABRIC_CLOCK16 = 35,
         ///end count
         
-        TABLE_DIRECTORY_BEGIN = 36,
-        TABLE_DIRECTORY_END = 37,
+        RECORD_BOOK_OF_TSC_BEGIN = 36,
+        RECORD_BOOK_OF_TSC_END = 37,
         TABLE_DIRECTORY_COUNT = 38,
         TABLE_DIRECTORY_VERSION = 39,
 
@@ -397,8 +397,8 @@ namespace PredictedAdaptedEncoding
         {
             switch (table_idintity)
             {
-            case FabricTableSegmentClasses::TABLE_DIRECTORY:
-                return static_cast<uint32_t>(TABLE_ENTRY_WIDTH_OF_FABRIC);
+            case FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES:
+                return static_cast<uint32_t>(RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC);
             
             case FabricTableSegmentClasses::SLOT_DIRECTORY:
                 return static_cast<uint32_t>(SLOT_RECORD_WIDTH_OF_FABRIC);
@@ -434,7 +434,7 @@ namespace PredictedAdaptedEncoding
 
         /// @brief Model32Subclass::UNCLOCKED_1x8_PLUS_2x4-> Value + Version + TableEntryCellTypeOfFabric + IDENTITY(Though used FabricTableSegmentClasses::but means identity of directory no cell) + Meta16
         /// @return VALID -> Packed Cell -> OR: UINT64_MAX
-        static constexpr packed64_t MakeTableDirectoryCell(
+        static constexpr packed64_t MakeRecordBookCellOfTSC(
             uint64_t value,
             AccessContractOfValue contract48 = AccessContractOfValue::RAW_PRIVATE,
             LocalityPolicy cell_locality = LocalityPolicy::PUBLISHED
@@ -443,7 +443,7 @@ namespace PredictedAdaptedEncoding
             return PackedCell64_t::MakeTypedFabricValidPackedCell(
                 TypeFamily::VALUE48,
                 contract48,
-                FabricTableSegmentClasses::TABLE_DIRECTORY,
+                FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES,
                 cell_locality,
                 InternalDataTypePolicy::UnsignedPCellDataType,
                 PriorityPolicy::ERROR_FIRST,
@@ -458,7 +458,7 @@ namespace PredictedAdaptedEncoding
             if (
                 a_cell_view.IsCellValid &&
                 a_cell_view.CellMode == PackedMode::VALUE48 &&
-                a_cell_view.FabricTableSegmentClass == FabricTableSegmentClasses::TABLE_DIRECTORY &&
+                a_cell_view.FabricTableSegmentClass == FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES &&
                 a_cell_view.CellValueDataType == InternalDataTypePolicy::UnsignedPCellDataType &&
                 a_cell_view.Raw48BitInCellData.has_value()
 
@@ -551,6 +551,11 @@ namespace PredictedAdaptedEncoding
                 prob_distance
             );
         }
+
+        // static constexpr packed64_t CreateADesiredTableViewForTableOfDirectory(
+        //     FabricTableSegmentClasses table_class,
+        //     uint8_t 
+        // )
 
 
         //kept for safty

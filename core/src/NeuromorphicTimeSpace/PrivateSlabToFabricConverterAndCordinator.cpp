@@ -238,8 +238,8 @@ namespace PredictedAdaptedEncoding
         MakeAndStoreFabricMetaValue48(FabricMetaIndicies::READY_WRITE_CURSOR, UNSIGNED_ZERO);
         MakeAndStoreFabricMetaValue48(FabricMetaIndicies::READY_READ_CURSOR, UNSIGNED_ZERO);
 
-        MakeAndStoreFabricMetaValue48(FabricMetaIndicies::TABLE_DIRECTORY_BEGIN, static_cast<uint64_t>(table_directory_begin));
-        MakeAndStoreFabricMetaValue48(FabricMetaIndicies::TABLE_DIRECTORY_END, static_cast<uint32_t>(table_directory_end));
+        MakeAndStoreFabricMetaValue48(FabricMetaIndicies::RECORD_BOOK_OF_TSC_BEGIN, static_cast<uint64_t>(table_directory_begin));
+        MakeAndStoreFabricMetaValue48(FabricMetaIndicies::RECORD_BOOK_OF_TSC_END, static_cast<uint32_t>(table_directory_end));
         MakeAndStoreFabricMetaValue48(FabricMetaIndicies::TABLE_DIRECTORY_COUNT, static_cast<uint64_t>(FabricTableSegmentClasses::COUNT));
         MakeAndStoreFabricMetaValue48(FabricMetaIndicies::TABLE_DIRECTORY_VERSION, APCDataStructure::BRANCH_VERSION);
 
@@ -270,7 +270,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    constexpr size_t SlabToFabricConverterAndCordinator::ReadTableDirectoryBeginIdxOfATableClass_(
+    constexpr size_t SlabToFabricConverterAndCordinator::ReadBeginSlabIdxOfATableSegmentClassFromRecordBookOfTSC_(
         FabricTableSegmentClasses table_class
     ) noexcept
     {
@@ -279,14 +279,14 @@ namespace PredictedAdaptedEncoding
             return APCDataStructure::APC_SIZE_SENTINAL;
         }
 
-        const packed64_t directory_begin_cell = ReadCompletePackedCellDirectly(static_cast<size_t>(FabricMetaIndicies::TABLE_DIRECTORY_BEGIN));
+        const packed64_t directory_begin_cell = ReadCompletePackedCellDirectly(static_cast<size_t>(FabricMetaIndicies::RECORD_BOOK_OF_TSC_BEGIN));
         const size_t base_idx = static_cast<size_t>(PackedCell64_t::ExtractModel48(directory_begin_cell));
 
-        return base_idx + (static_cast<size_t>(table_class) * TABLE_ENTRY_WIDTH_OF_FABRIC);
+        return base_idx + (static_cast<size_t>(table_class) * RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC);
 
     }
 
-    constexpr bool SlabToFabricConverterAndCordinator::WriteDirectoryEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end) noexcept
+    constexpr bool SlabToFabricConverterAndCordinator::WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end) noexcept
     {
 
         if (!CoreOfFabricCoordinator::IsValidFabricTable(table_class))
@@ -306,18 +306,18 @@ namespace PredictedAdaptedEncoding
             return false;
         }
         
-        const size_t base = ReadTableDirectoryBeginIdxOfATableClass_(table_class);
+        const size_t base = ReadBeginSlabIdxOfATableSegmentClassFromRecordBookOfTSC_(table_class);
 
-        if (base + TABLE_ENTRY_WIDTH_OF_FABRIC > SlabCellCount_)
+        if (base + RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC > SlabCellCount_)
         {
             return false;
         }
 
-        const packed64_t begin48_cell = CoreOfFabricCoordinator::MakeTableDirectoryCell(
+        const packed64_t begin48_cell = CoreOfFabricCoordinator::MakeRecordBookCellOfTSC(
             static_cast<uint64_t>(begin)
         );
 
-        const packed64_t end48_cell =  CoreOfFabricCoordinator::MakeTableDirectoryCell(
+        const packed64_t end48_cell =  CoreOfFabricCoordinator::MakeRecordBookCellOfTSC(
             static_cast<uint64_t>(end)
         );
 
@@ -334,14 +334,14 @@ namespace PredictedAdaptedEncoding
         
     }
 
-    constexpr std::optional<FabricTableRange> SlabToFabricConverterAndCordinator::GetTableDirectoryRangeRaw_(FabricTableSegmentClasses table_class) noexcept
+    constexpr std::optional<FabricTableRange> SlabToFabricConverterAndCordinator::GetATableSegmentClassRangePairedCellFromRecordBookOfTSC_(FabricTableSegmentClasses table_class) noexcept
     {
         if (!CoreOfFabricCoordinator::IsValidFabricTable(table_class))
         {
             return std::nullopt;
         }
 
-        const size_t begin_of_desired_table = ReadTableDirectoryBeginIdxOfATableClass_(table_class) + static_cast<size_t>(TableEntryCellTypeOfFabric::BEGIN48);
+        const size_t begin_of_desired_table = ReadBeginSlabIdxOfATableSegmentClassFromRecordBookOfTSC_(table_class) + static_cast<size_t>(TableEntryCellTypeOfFabric::BEGIN48);
         const size_t end_idx = begin_of_desired_table + static_cast<size_t>(TableEntryCellTypeOfFabric::END48);
         if (end_idx >= SlabCellCount_ || begin_of_desired_table < APCDataStructure::METACELL_COUNT)
         {
@@ -357,9 +357,9 @@ namespace PredictedAdaptedEncoding
     }
         
 
-    constexpr void SlabToFabricConverterAndCordinator::IdleAFabricTableClassRanges_(FabricTableSegmentClasses table_class) noexcept
+    constexpr void SlabToFabricConverterAndCordinator::IdleAFabricTableClassRangesMemory_(FabricTableSegmentClasses table_class) noexcept
     {
-        const std::optional<FabricTableRange> table_range = GetTableDirectoryRangeRaw_(table_class);
+        const std::optional<FabricTableRange> table_range = GetATableSegmentClassRangePairedCellFromRecordBookOfTSC_(table_class);
         if (!table_range.has_value())
         {
             return;
@@ -387,7 +387,7 @@ namespace PredictedAdaptedEncoding
     //         return;
     //     }
 
-    //     std::optional<FabricTableRange> hash_table_range = GetTableDirectoryRangeRaw_(table_class);
+    //     std::optional<FabricTableRange> hash_table_range = GetATableSegmentClassRangePairedCellFromRecordBookOfTSC_(table_class);
 
     //     if (!hash_table_range.has_value())
     //     {

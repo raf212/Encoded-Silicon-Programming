@@ -303,19 +303,19 @@ namespace PredictedAdaptedEncoding
 
     //     WriteFabricMetaHeader_(table_directory_begin, table_directory_end);
 
-    //     WriteDirectoryEntry_(FabricTableSegmentClasses::GLOBAL_AND_CONFIG, global_config_begin, global_config_end, APCDataStructure::BRANCH_VERSION);
-    //     WriteDirectoryEntry_(FabricTableSegmentClasses::TABLE_DIRECTORY, table_directory_begin, table_directory_end, APCDataStructure::BRANCH_VERSION);
-    //     WriteDirectoryEntry_(FabricTableSegmentClasses::SLOT_DIRECTORY, slot_directory_begin, slot_directory_end, APCDataStructure::BRANCH_VERSION);
-    //     WriteDirectoryEntry_(FabricTableSegmentClasses::BRANCH_HASH, branch_hash_begin, branch_hash_end, APCDataStructure::BRANCH_VERSION);
-    //     WriteDirectoryEntry_(FabricTableSegmentClasses::LOGICAL_HASH, logical_hash_begin, logical_hash_end, APCDataStructure::BRANCH_VERSION);
-    //     WriteDirectoryEntry_(FabricTableSegmentClasses::SHARED_HASH, shared_hash_begin, shared_hash_end, APCDataStructure::BRANCH_VERSION);
-    //     WriteDirectoryEntry_(FabricTableSegmentClasses::EDGE_TABLE, edge_of_fabric_table_begin, edge_of_fabric_table_end, APCDataStructure::BRANCH_VERSION);      
-    //     WriteDirectoryEntry_(FabricTableSegmentClasses::FREE_RETIRE_TABLE, free_retire_begin, free_retire_end, APCDataStructure::BRANCH_VERSION);
-    //     WriteDirectoryEntry_(FabricTableSegmentClasses::READY_QUEUE, ready_begin, ready_end, APCDataStructure::BRANCH_VERSION);
-    //     WriteDirectoryEntry_(FabricTableSegmentClasses::WORK_QUEUE, work_begin, work_end, APCDataStructure::BRANCH_VERSION);
-    //     WriteDirectoryEntry_(FabricTableSegmentClasses::DEVICE_VIEW_TABLE, device_view_begin, device_view_end, APCDataStructure::BRANCH_VERSION);
-    //     WriteDirectoryEntry_(FabricTableSegmentClasses::THREAD_TABLE, thread_table_begin, thread_table_end, APCDataStructure::BRANCH_VERSION);
-    //     WriteDirectoryEntry_(FabricTableSegmentClasses::SEGMENT_POOL, SegmentPoolBegin_, SegmentPoolEnd_, APCDataStructure::BRANCH_VERSION);
+    //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::GLOBAL_AND_CONFIG, global_config_begin, global_config_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES, table_directory_begin, table_directory_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::SLOT_DIRECTORY, slot_directory_begin, slot_directory_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::BRANCH_HASH, branch_hash_begin, branch_hash_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::LOGICAL_HASH, logical_hash_begin, logical_hash_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::SHARED_HASH, shared_hash_begin, shared_hash_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::EDGE_TABLE, edge_of_fabric_table_begin, edge_of_fabric_table_end, APCDataStructure::BRANCH_VERSION);      
+    //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::FREE_RETIRE_TABLE, free_retire_begin, free_retire_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::READY_QUEUE, ready_begin, ready_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::WORK_QUEUE, work_begin, work_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::DEVICE_VIEW_TABLE, device_view_begin, device_view_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::THREAD_TABLE, thread_table_begin, thread_table_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::SEGMENT_POOL, SegmentPoolBegin_, SegmentPoolEnd_, APCDataStructure::BRANCH_VERSION);
 
     //     //hash table init
     //     InitializeHashTable_(FabricTableSegmentClasses::BRANCH_HASH);
