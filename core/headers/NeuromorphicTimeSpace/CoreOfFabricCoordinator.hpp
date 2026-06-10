@@ -233,6 +233,12 @@ namespace PredictedAdaptedEncoding
 
     };
 
+    struct alignas(SIZE_OF_A_PAIR) FabricTableRange
+    {
+        packed64_t BeginIdxRawType48Cell;
+        packed64_t EndIdxRawType48Cell;
+    };
+
     struct ThreadHandleOfAPCFabric
     {
         uint32_t ThreadIndex{IN_CELL_VALUE_MODE32_SENTINAL};
@@ -447,7 +453,7 @@ namespace PredictedAdaptedEncoding
         }
 
 
-        static constexpr bool IsTheCellConsumeableAsTableOfDirectoryCell(PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        static constexpr bool IsTheCellConsumeableAsTableOfDirectoryCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
             if (
                 a_cell_view.IsCellValid &&
@@ -462,6 +468,27 @@ namespace PredictedAdaptedEncoding
             
             return false;
             
+        }
+
+        constexpr bool ValidateAFabricTableRangeStruct(FabricTableRange& provided_range_pair) noexcept
+        {
+            const PackedCell64_t::AuthoritiveCellView auth_view_of_begin_idx = PackedCell64_t::GetAuthoritiveViewsForACell(provided_range_pair.BeginIdxRawType48Cell);
+            const PackedCell64_t::AuthoritiveCellView auth_view_of_end_idx = PackedCell64_t::GetAuthoritiveViewsForACell(provided_range_pair.EndIdxRawType48Cell);
+
+            if (!auth_view_of_begin_idx.IsCellValid || !auth_view_of_begin_idx.IsCellValid)
+            {
+                return false;
+            }
+
+            if (
+                !CoreOfFabricCoordinator::IsTheCellConsumeableAsTableOfDirectoryCell(auth_view_of_begin_idx) || 
+                !CoreOfFabricCoordinator::IsTheCellConsumeableAsTableOfDirectoryCell(auth_view_of_end_idx)
+            )
+            {
+                return false;
+            }
+
+            return true;
         }
 
         /// @brief Model32Subclass::UNCLOCKED_1x8_PLUS_2x4-> Value + Version(8bit) + HandleStateOfAPCFabric(4bit) + SlabId_(4bit) + Meta16
@@ -497,8 +524,8 @@ namespace PredictedAdaptedEncoding
         ) noexcept
         {
             if (
-                hash_table_class != FabricTableSegmentClasses::BRANCH_HASH || 
-                hash_table_class != FabricTableSegmentClasses::SHARED_HASH ||
+                hash_table_class != FabricTableSegmentClasses::BRANCH_HASH &&
+                hash_table_class != FabricTableSegmentClasses::SHARED_HASH &&
                 hash_table_class != FabricTableSegmentClasses::LOGICAL_HASH
             )
             {
