@@ -286,6 +286,11 @@ namespace PredictedAdaptedEncoding
 
     }
 
+    /// @brief COMPLEATLY REWRITE TOMORROW
+    /// @param table_class 
+    /// @param begin 
+    /// @param end 
+    /// @return 
     constexpr bool SlabToFabricConverterAndCordinator::WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end) noexcept
     {
 
@@ -322,11 +327,11 @@ namespace PredictedAdaptedEncoding
         );
 
         AtomicallyStorePackedCellUnchecked(
-            base + static_cast<size_t>(TableEntryCellTypeOfFabric::BEGIN48), 
+            base + static_cast<size_t>(HandleFabricCellSequense::BEGIN48), 
             begin48_cell
         );
         AtomicallyStorePackedCellUnchecked(
-            base + static_cast<size_t>(TableEntryCellTypeOfFabric::END48), 
+            base + static_cast<size_t>(HandleFabricCellSequense::END48), 
             end48_cell
         );
 
@@ -336,36 +341,45 @@ namespace PredictedAdaptedEncoding
         
     }
 
-    constexpr std::optional<FabricTableRange> SlabToFabricConverterAndCordinator::GetATableSegmentClassRangePairedCellFromRecordBookOfTSC_(FabricTableSegmentClasses table_class) noexcept
+    constexpr std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> SlabToFabricConverterAndCordinator::GetATableSegmentClassRangePairedCellFromRecordBookOfTSC_(FabricTableSegmentClasses table_class) noexcept
     {
         if (!CoreOfFabricCoordinator::IsValidFabricTable(table_class))
         {
             return std::nullopt;
         }
 
-        const size_t begin_of_desired_table = ReadBeginSlabIdxOfATableSegmentClassFromRecordBookOfTSC_(table_class) + static_cast<size_t>(TableEntryCellTypeOfFabric::BEGIN48);
-        const size_t end_idx = begin_of_desired_table + static_cast<size_t>(TableEntryCellTypeOfFabric::END48);
+        const size_t begin_of_desired_table = ReadBeginSlabIdxOfATableSegmentClassFromRecordBookOfTSC_(table_class) + static_cast<size_t>(HandleFabricCellSequense::BEGIN48);
+        const size_t end_idx = begin_of_desired_table + static_cast<size_t>(HandleFabricCellSequense::END48);
+        const size_t safty_lock_meta_cell = begin_of_desired_table + static_cast<size_t>(HandleFabricCellSequense::META32);
         if (end_idx >= SlabCellCount_ || begin_of_desired_table < APCDataStructure::METACELL_COUNT)
         {
             return std::nullopt;
         }
 
-        FabricTableRange desired_table_range_cells{};
+        FTSC_SlabRangeTripletFrom_RecordBookOfFTSC triplet{};
 
-        desired_table_range_cells.BeginIdxRawType48Cell = ReadCompletePackedCellDirectly(begin_of_desired_table);
-        desired_table_range_cells.EndIdxRawType48Cell = ReadCompletePackedCellDirectly(end_idx);
+        triplet.BeginIdxRawType48Cell = ReadCompletePackedCellDirectly(begin_of_desired_table);
+        triplet.EndIdxRawType48Cell = ReadCompletePackedCellDirectly(end_idx);
+        triplet.WidthVersionOriginSafty = ReadCompletePackedCellDirectly(safty_lock_meta_cell);
 
-        return desired_table_range_cells;
+        return triplet;
     }
         
 
     constexpr void SlabToFabricConverterAndCordinator::IdleAFabricTableClassRangesMemory_(FabricTableSegmentClasses table_class) noexcept
     {
-        const std::optional<FabricTableRange> table_range = GetATableSegmentClassRangePairedCellFromRecordBookOfTSC_(table_class);
-        if (!table_range.has_value())
+        const std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> maybe_table_range_triplet = GetATableSegmentClassRangePairedCellFromRecordBookOfTSC_(table_class);
+        if (!maybe_table_range_triplet.has_value())
         {
             return;
         }
+        FTSC_SlabRangeTripletFrom_RecordBookOfFTSC table_range_triplet = *maybe_table_range_triplet;
+        const std::optional<packed64_t> maybe_width_masked = CoreOfFabricCoordinator::ValidateAFabricTableRangeStruct(table_range_triplet);
+        if (!maybe_width_masked.has_value() && maybe_width_masked.value() <= UNSIGNED_ZERO)
+        {
+            return;
+        }
+        
 
         const packed64_t idle_table_cell = PackedCell64_t::MakeTypedFabricValidPackedCell(
             TypeFamily::VALUE48, AccessContractOfValue::ATOMIC_SLNAPSHOT,
@@ -373,7 +387,7 @@ namespace PredictedAdaptedEncoding
             InternalDataTypePolicy::UnsignedPCellDataType
         );
 
-        for (size_t idx = table_range.value().BeginIdxRawType48Cell; idx < table_range.value().EndIdxRawType48Cell; idx++)
+        for (size_t idx = table_range_triplet.BeginIdxRawType48Cell; idx < table_range_triplet.EndIdxRawType48Cell; idx++)
         {
             StorePackedCellUncheckedDirectly(idx, idle_table_cell);
         }
