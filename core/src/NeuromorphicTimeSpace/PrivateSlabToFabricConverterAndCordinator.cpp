@@ -286,34 +286,24 @@ namespace PredictedAdaptedEncoding
 
     }
 
-    /// @brief COMPLEATLY REWRITE TOMORROW
-    /// @param table_class 
-    /// @param begin 
-    /// @param end 
-    /// @return 
-    constexpr bool SlabToFabricConverterAndCordinator::WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses table_class, size_t begin, size_t end) noexcept
+    constexpr bool SlabToFabricConverterAndCordinator::WriteARecordBookOfTSCEntry_(
+        FabricTableSegmentClasses table_class, 
+        size_t begin, size_t end, 
+        uint8_t slab_id
+    ) noexcept
     {
-
         if (!CoreOfFabricCoordinator::IsValidFabricTable(table_class))
         {
             return false;
         }
 
-        // Is  begin < APCDataStructure::METACELL_COUNT-> This check valid ??
-        if (!SlabBasePtr_ || begin > end || end > SlabCellCount_ || begin < APCDataStructure::METACELL_COUNT)
+        if (!SlabBasePtr_)
         {
             return false;
         }
-        
-        const size_t width = CoreOfFabricCoordinator::GetWidthOfValidFabricTable(table_class);
-        if (width == UNSIGNED_ZERO)
-        {
-            return false;
-        }
-        
-        const size_t base = ReadBeginSlabIdxOfATableSegmentClassFromRecordBookOfTSC_(table_class);
 
-        if (base + RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC > SlabCellCount_)
+        const size_t base_idx = ReadBeginSlabIdxOfATableSegmentClassFromRecordBookOfTSC_(table_class);
+        if (base_idx == APCDataStructure::APC_SIZE_SENTINAL || (base_idx + RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC > SlabCellCount_))
         {
             return false;
         }
@@ -326,20 +316,38 @@ namespace PredictedAdaptedEncoding
             static_cast<uint64_t>(end)
         );
 
-        AtomicallyStorePackedCellUnchecked(
-            base + static_cast<size_t>(HandleFabricCellSequense::BEGIN48), 
-            begin48_cell
-        );
-        AtomicallyStorePackedCellUnchecked(
-            base + static_cast<size_t>(HandleFabricCellSequense::END48), 
-            end48_cell
+        const packed64_t safty_lock_for_this = CoreOfFabricCoordinator::MakeRecordBookSaftyLock(
+            begin, end, table_class, 
+            LocalityPolicy::PUBLISHED, slab_id
         );
 
-        // ADD ONE MORE Safty Lock Cell
+        const FTSC_SlabRangeTripletFrom_RecordBookOfFTSC desired_record_triplet {begin48_cell, end48_cell, safty_lock_for_this};
 
-        return true;
+        std::optional<uint64_t> full_width_validated = CoreOfFabricCoordinator::ValidateAFabricTableRangeStruct(desired_record_triplet);
+        if (full_width_validated.has_value() && full_width_validated.value() > UNSIGNED_ZERO)
+        {
+            AtomicallyStorePackedCellUnchecked(
+                base_idx + static_cast<size_t>(HandleFabricCellSequense::BEGIN48), 
+                begin48_cell
+            );
+            
+            AtomicallyStorePackedCellUnchecked(
+                base_idx + static_cast<size_t>(HandleFabricCellSequense::END48), 
+                end48_cell
+            );                
+            
+            AtomicallyStorePackedCellUnchecked(
+                base_idx + static_cast<size_t>(HandleFabricCellSequense::META32), 
+                safty_lock_for_this
+            );
+
+            return true;
+        }
+        
+        return false;
         
     }
+
 
     constexpr std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> SlabToFabricConverterAndCordinator::GetATableSegmentClassRangePairedCellFromRecordBookOfTSC_(FabricTableSegmentClasses table_class) noexcept
     {
@@ -373,7 +381,7 @@ namespace PredictedAdaptedEncoding
         {
             return;
         }
-        FTSC_SlabRangeTripletFrom_RecordBookOfFTSC table_range_triplet = *maybe_table_range_triplet;
+        const FTSC_SlabRangeTripletFrom_RecordBookOfFTSC table_range_triplet = *maybe_table_range_triplet;
         const std::optional<packed64_t> maybe_width_masked = CoreOfFabricCoordinator::ValidateAFabricTableRangeStruct(table_range_triplet);
         if (!maybe_width_masked.has_value() && maybe_width_masked.value() <= UNSIGNED_ZERO)
         {
