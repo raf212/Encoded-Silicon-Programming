@@ -308,11 +308,11 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-        const packed64_t begin48_cell = CoreOfFabricCoordinator::MakeRecordBookCellOfTSC(
+        const packed64_t begin48_cell = FabricCellConf::MakeRecordBookCellOfTSC(
             static_cast<uint64_t>(begin)
         );
 
-        const packed64_t end48_cell =  CoreOfFabricCoordinator::MakeRecordBookCellOfTSC(
+        const packed64_t end48_cell =  FabricCellConf::MakeRecordBookCellOfTSC(
             static_cast<uint64_t>(end)
         );
 
@@ -411,7 +411,7 @@ namespace PredictedAdaptedEncoding
     void SlabToFabricConverterAndCordinator::InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept
     {
 
-        const packed64_t desired_idle_hash_key_value_cell = CoreOfFabricCoordinator::MakeHashKeyOrValueCell(UNSIGNED_ZERO, table_class, LocalityPolicy::IDLE);
+        const packed64_t desired_idle_hash_key_value_cell = FabricCellConf::MakeHashKeyOrValueCell(UNSIGNED_ZERO, table_class, LocalityPolicy::IDLE);
         if (desired_idle_hash_key_value_cell == PackedCell64_t::PACKED_CELL_SENTINAL)
         {
             return;
