@@ -213,6 +213,9 @@ namespace PredictedAdaptedEncoding {
         GENERIC_CONTROL = 15
     };
 
+    using OriginOfRecord = FabricTableSegmentClasses;
+
+
     static  constexpr packed64_t MaskLowNBits(unsigned n) noexcept
     {
         if (n == UNSIGNED_ZERO) return packed64_t(0);

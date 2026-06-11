@@ -316,7 +316,7 @@ namespace PredictedAdaptedEncoding
             static_cast<uint64_t>(end)
         );
 
-        const packed64_t safty_lock_for_this = CoreOfFabricCoordinator::MakeRecordBookSaftyLock(
+        const packed64_t safty_lock_for_this = FabricCellConf::MakeRecordBookSaftyLock(
             begin, end, table_class, 
             LocalityPolicy::PUBLISHED, slab_id
         );

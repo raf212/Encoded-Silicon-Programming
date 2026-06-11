@@ -1,30 +1,9 @@
 #pragma once 
-#include "../AdaptivePackedCellContainer/SegmentIODefinition.hpp"
+#include "CoreOfFabricCoordinator.hpp"
 
 namespace PredictedAdaptedEncoding
 {
 
-    /// @brief should be 3
-    static constexpr size_t RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC = 3u;
-
-    /// @brief should be 3
-    static constexpr size_t HASH_BUCKED_WIDTH_OF_FABRIC = 2u;
-
-    enum class HandleFabricCellSequense : size_t
-    {
-        BEGIN48 = 0,
-        END48 = 1,
-        META32 = 2
-    };
-
-    struct FTSC_SlabRangeTripletFrom_RecordBookOfFTSC
-    {
-        packed64_t BeginIdxRawType48Cell = UNSIGNED_ZERO;
-        packed64_t EndIdxRawType48Cell = UNSIGNED_ZERO;
-        packed64_t WidthVersionOriginSafty = UNSIGNED_ZERO;
-    };
-    static_assert(sizeof(FTSC_SlabRangeTripletFrom_RecordBookOfFTSC) == RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC * sizeof(packed64_t));
-    static_assert(alignof(FTSC_SlabRangeTripletFrom_RecordBookOfFTSC) == alignof(packed64_t));
 
 
 
@@ -59,15 +38,18 @@ struct FabricCellConf
         LocalityPolicy locality = LocalityPolicy::IDLE
     ) noexcept
     {
-        if (
-            hash_table_class != FabricTableSegmentClasses::BRANCH_HASH &&
-            hash_table_class != FabricTableSegmentClasses::SHARED_HASH &&
-            hash_table_class != FabricTableSegmentClasses::LOGICAL_HASH
-        )
+        if (!CoreOfFabricCoordinator::IsValidHashTable(hash_table_class))
         {
             return PackedCell64_t::PACKED_CELL_SENTINAL;
         }
 
+        if (locality == LocalityPolicy::PUBLISHED && 
+            (hash_key_or_value == UNSIGNED_ZERO || hash_key_or_value >= PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT)
+        )
+        {
+            return PackedCell64_t::PACKED_CELL_SENTINAL;
+        }
+        
         return PackedCell64_t::PackedCell64_t::MakeTypedFabricValidPackedCell(
             TypeFamily::VALUE48, 
             AccessContractOfValue::CLAIMED_GURDED, 
@@ -78,6 +60,48 @@ struct FabricCellConf
             hash_key_or_value
         );
     }
+
+    // static constexpr packed64_t MakeProbCellWithSaftyLock
+
+
+    /// @brief Creats a Decriptive cell for Record Book Table Class :: with external 16bit meta indicating 
+    ///[LOW8-> PER RECORD WIDTH OF ORIGIN(EXCEPT:SEGMENT_POOL) | MID4-> OriginOfRecord(ORIGIN:FabricTableSegmentClasses) | HIGH4-> VERSION(SlabId_)]
+    /// @param begin_idx 
+    /// @param end_idx 
+    /// @param origin_table_class 
+    /// @param locality 
+    /// @param version 
+    /// @return 
+    static constexpr packed64_t MakeRecordBookSaftyLock(
+        size_t begin_idx, size_t end_idx, 
+        OriginOfRecord origin_table_class,
+        LocalityPolicy locality = LocalityPolicy::PUBLISHED, 
+        uint8_t slab_id = UNSIGNED_ZERO
+    ) noexcept
+    {
+        const uint32_t masked_width = static_cast<uint32_t>(end_idx - begin_idx);
+
+        const uint8_t origin_per_record_width = CoreOfFabricCoordinator::GetWidthOfValidFabricTable(origin_table_class);
+
+        if (origin_per_record_width == CoreOfFabricCoordinator::EACH_TABLE_RECORD_SENTINAL)
+        {
+            return PackedCell64_t::PACKED_CELL_SENTINAL;
+        }
+        
+        const uint16_t version_origin_slabid = Clock16Subdivision1x8Plus2x4InMode32CellModel::Pack1x8Plus2x4InUnsigned16_(origin_per_record_width, static_cast<uint8_t>(origin_table_class), slab_id);
+
+        return PackedCell64_t::MakeModeledFabricValidPackedCell(ModelFamily::MODEL32,
+            static_cast<tag8_t>(Model32Subclass::UNCLOCKED_1x8_PLUS_2x4),
+            FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES,
+            locality, InternalDataTypePolicy::UnsignedPCellDataType,
+            PriorityPolicy::PRESSURE_FIRST,
+            masked_width,
+            version_origin_slabid
+        );
+            
+    }
+
+
 };
 
 
