@@ -519,7 +519,7 @@ namespace PredictedAdaptedEncoding
 
             const uint64_t full_width = (*auth_view_of_end_idx.Raw48BitInCellData) - (*auth_view_of_begin_idx.Raw48BitInCellData);
 
-            if (static_cast<uint32_t>(full_width) ==  auth_view_of_safty_meta.Raw32BitInCellData.value())
+            if ((static_cast<uint32_t>(full_width) ==  auth_view_of_safty_meta.Raw32BitInCellData.value()) && (full_width % HASH_BUCKED_WIDTH_OF_FABRIC) == UNSIGNED_ZERO)
             {
                 return full_width;
             }
@@ -527,37 +527,14 @@ namespace PredictedAdaptedEncoding
             return std::nullopt;
         }
 
-        /// @brief Model32Subclass::UNCLOCKED_1x8_PLUS_2x4-> Value + Version(8bit) + HandleStateOfAPCFabric(4bit) + SlabId_(4bit) + Meta16
-        /// @return VALID -> Packed Cell -> OR: UINT64_MAX
-        // static constexpr packed64_t MakeANEncodedHandlerCellForFabric(
-        //     uint32_t slot_index, 
-        //     uint8_t slab_id, uint8_t version, 
-        //     HandleStateOfAPCFabric handle_state = HandleStateOfAPCFabric::APC_SEGMENT,
-        //     FabricTableSegmentClasses table_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
-        //     LocalityPolicy cell_locality = LocalityPolicy::IDLE
-        // ) noexcept
-        // {
-        //     const uint16_t external_handle = Clock16Subdivision1x8Plus2x4InMode32CellModel::Pack1x8Plus2x4InUnsigned16_(version, static_cast<uint8_t>(handle_state), slab_id);
 
-        //     return PackedCell64_t::MakeModeledFabricValidPackedCell(
-        //         ModelFamily::MODEL32,
-        //         static_cast<tag8_t>(Model32Subclass::UNCLOCKED_1x8_PLUS_2x4),
-        //         table_class,
-        //         cell_locality,
-        //         InternalDataTypePolicy::UnsignedPCellDataType,
-        //         PriorityPolicy::INFLUENCED,
-        //         static_cast<uint64_t>(slot_index), 
-        //         external_handle
-        //     );
-        // }
-
-        /// @brief Uses PackedMode/ModeFamily::MODEL32, Model32Subclass::SELF_CLASS && InternalDataTypePolicy::UnsignedPCellDataType
-        /// @param prob_distance Uses clk16_t-> In cell 16 bit clock memory to STORE:prob_distance
+                
+        /// @brief Cell DEFAULTS: TypeFamily::VALUE48 + AccessContractOfValue::CLAIMED_GURDED + PriorityPolicy::INFLUENCED
         /// @return VALID -> Packed Cell -> OR: UINT64_MAX:: if FabricTableSegmentClasses dosent belong  BRANCH_HASH, SHARED_HASH, LOGICAL_HASH
-        static constexpr packed64_t MakeHashKeyCell(
-            uint32_t hash_key, uint16_t prob_distance, 
+        static constexpr packed64_t MakeHashKeyOrValueCell(
+            uint64_t hash_key_or_value,
             FabricTableSegmentClasses hash_table_class, 
-            LocalityPolicy locality = LocalityPolicy::PUBLISHED
+            LocalityPolicy locality = LocalityPolicy::IDLE
         ) noexcept
         {
             if (
@@ -569,15 +546,14 @@ namespace PredictedAdaptedEncoding
                 return PackedCell64_t::PACKED_CELL_SENTINAL;
             }
 
-            return PackedCell64_t::MakeModeledFabricValidPackedCell(
-                ModelFamily::MODEL32,
-                static_cast<tag8_t>(Model32Subclass::SELF_CLASS),
-                hash_table_class,
-                locality, 
-                InternalDataTypePolicy::UnsignedPCellDataType,
+            return PackedCell64_t::PackedCell64_t::MakeTypedFabricValidPackedCell(
+                TypeFamily::VALUE48, 
+                AccessContractOfValue::CLAIMED_GURDED, 
+                hash_table_class, 
+                locality,
+                InternalDataTypePolicy::UnsignedPCellDataType, 
                 PriorityPolicy::INFLUENCED,
-                hash_key,
-                prob_distance
+                hash_key_or_value
             );
         }
 

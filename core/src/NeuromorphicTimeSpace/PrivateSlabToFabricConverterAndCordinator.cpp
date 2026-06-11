@@ -401,7 +401,7 @@ namespace PredictedAdaptedEncoding
             InternalDataTypePolicy::UnsignedPCellDataType
         );
 
-        for (size_t idx = table_range_triplet.BeginIdxRawType48Cell; idx < table_range_triplet.EndIdxRawType48Cell; idx++)
+        for (size_t idx = PackedCell64_t::ExtractRaw48FamilyBits(table_range_triplet.BeginIdxRawType48Cell); idx < PackedCell64_t::ExtractRaw48FamilyBits(table_range_triplet.EndIdxRawType48Cell); idx++)
         {
             StorePackedCellUncheckedDirectly(idx, idle_table_cell);
         }
@@ -411,8 +411,8 @@ namespace PredictedAdaptedEncoding
     void SlabToFabricConverterAndCordinator::InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept
     {
 
-        const packed64_t desired_idle_hash_key_cell = CoreOfFabricCoordinator::MakeHashKeyCell(UNSIGNED_ZERO, UNSIGNED_ZERO, table_class, LocalityPolicy::IDLE);
-        if (desired_idle_hash_key_cell == PackedCell64_t::PACKED_CELL_SENTINAL)
+        const packed64_t desired_idle_hash_key_value_cell = CoreOfFabricCoordinator::MakeHashKeyOrValueCell(UNSIGNED_ZERO, table_class, LocalityPolicy::IDLE);
+        if (desired_idle_hash_key_value_cell == PackedCell64_t::PACKED_CELL_SENTINAL)
         {
             return;
         }
@@ -424,7 +424,11 @@ namespace PredictedAdaptedEncoding
             return;
         }
         
-        // const uint64_t width_of_has_entry_in_slab = desired_hash_table_triplet.value().EndIdxRawType48Cell - desired_hash_table_triplet.value().BeginIdxRawType48Cell;
+        // const size_t span = PackedCell64_t::ExtractRaw48FamilyBits(desired_hash_table_triplet.value().EndIdxRawType48Cell) - PackedCell64_t::ExtractRaw48FamilyBits(desired_hash_table_triplet.value().BeginIdxRawType48Cell);
+
+
+
+
 
 
     }
