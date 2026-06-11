@@ -18,7 +18,7 @@ namespace PredictedAdaptedEncoding
             return true;
         }
 
-        struct AuthoritiveCellView
+        struct alignas(16) AuthoritiveCellView
         {
             packed64_t RawCell{0};
 
@@ -36,24 +36,24 @@ namespace PredictedAdaptedEncoding
 
             FabricTableSegmentClasses FabricTableSegmentClass{FabricTableSegmentClasses::NONE};
 
-            std::optional<AccessContractOfValue> ContractOfValue{std::nullopt};
+            AccessContractOfValue ContractOfValue{AccessContractOfValue::UNASSIGNED_UNUSED_NANNULL};
 
-            std::optional<Model32Subclass> SubClassOfModel32{std::nullopt};
+            Model32Subclass SubClassOfModel32{Model32Subclass::UNASSIGNED_UNUSED_NANNULL};
 
-            std::optional<Model48Subclass> SubClassOfModel48{std::nullopt};
+            Model48Subclass SubClassOfModel48{Model48Subclass::UNASSIGNED_UNUSED_NANNULL};
 
             InternalDataTypePolicy CellValueDataType{InternalDataTypePolicy::UnsignedPCellDataType};
 
-            std::optional<clk16_t> InCellClock16{std::nullopt};
+            clk16_t InCellClock16{CLOCK_16_SENTINAL};
 
-            std::optional<uint64_t> Raw48BitInCellData{std::nullopt};
+            uint64_t Raw48BitInCellData{MODE_48_MAX_UNSIGNED_LIMIT};
 
-            std::optional<val32_t> Raw32BitInCellData{std::nullopt};
+            val32_t Raw32BitInCellData{IN_CELL_VALUE_MODE32_SENTINAL};
 
             bool IsCellValid{false};
             bool ValidatedView{false};
 
-            std::optional<size_t> SlabIndexOfPackeCell{std::nullopt};
+            size_t SlabIndexOfPackeCell{std::numeric_limits<size_t>::max()};
 
             constexpr bool IsThisPackedCellValidInRuntime() noexcept
             {
@@ -152,25 +152,23 @@ namespace PredictedAdaptedEncoding
                 {
                     case PackedMode::MODEL32:
                     {
-                        if (!Raw32BitInCellData.has_value() || !InCellClock16.has_value())
+                        // if (Raw32BitInCellData == IN_CELL_VALUE_MODE32_SENTINAL || InCellClock16 == CLOCK_16_SENTINAL)
+                        // {
+                        //     return false;
+                        // }
+
+                        if (ContractOfValue != AccessContractOfValue::UNASSIGNED_UNUSED_NANNULL || SubClassOfModel32 == Model32Subclass::UNASSIGNED_UNUSED_NANNULL)
                         {
                             return false;
                         }
 
-                        if (!SubClassOfModel32.has_value() || ContractOfValue.has_value())
-                        {
-                            return false;
-                        }
-
-                        const Model32Subclass sub_class = *SubClassOfModel32;
-
-                        if (!IsKnownModel32Subclass(sub_class))
+                        if (!IsKnownModel32Subclass(SubClassOfModel32))
                         {
                             return false;
                         }
                         
-                        const bool paired = sub_class == Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL || 
-                                sub_class == Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL;
+                        const bool paired = SubClassOfModel32 == Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL || 
+                                SubClassOfModel32 == Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL;
                         if (paired && CellOwnership == OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER)
                         {
                             const bool valid_paired_class = PageClass == APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY ||
@@ -187,17 +185,13 @@ namespace PredictedAdaptedEncoding
 
                     case PackedMode::VALUE32:
                     {
-                        if (!Raw32BitInCellData.has_value() || !InCellClock16.has_value())
-                        {
-                            return false;
-                        }
 
-                        if (!ContractOfValue.has_value() || SubClassOfModel32.has_value())
+                        if (ContractOfValue == AccessContractOfValue::UNASSIGNED_UNUSED_NANNULL || SubClassOfModel32 != Model32Subclass::UNASSIGNED_UNUSED_NANNULL)
                         {
                             return false;
                         }
                         
-                        if (!IsKnownValueContract(*ContractOfValue))
+                        if (!IsKnownValueContract(ContractOfValue))
                         {
                             return false;
                         }
@@ -206,20 +200,16 @@ namespace PredictedAdaptedEncoding
 
                     case PackedMode::MODEL48:
                     {
-                        if(!Raw48BitInCellData.has_value())
+                        if (SubClassOfModel48 == Model48Subclass::UNASSIGNED_UNUSED_NANNULL  || ContractOfValue != AccessContractOfValue::UNASSIGNED_UNUSED_NANNULL)
                         {
                             return false;
                         }
-                        if (!SubClassOfModel48.has_value() || ContractOfValue.has_value())
+
+                        if (!IsKnownModel48Subclass(SubClassOfModel48))
                         {
                             return false;
                         }
-                        const Model48Subclass sub_class = *SubClassOfModel48;
-                        if (!IsKnownModel48Subclass(sub_class))
-                        {
-                            return false;
-                        }
-                        if (sub_class != Model48Subclass::SELF_CLASS  && CellValueDataType != InternalDataTypePolicy::UnsignedPCellDataType)
+                        if (SubClassOfModel48 != Model48Subclass::SELF_CLASS  && CellValueDataType != InternalDataTypePolicy::UnsignedPCellDataType)
                         {
                             return false;
                         }
@@ -228,15 +218,12 @@ namespace PredictedAdaptedEncoding
 
                     case PackedMode::VALUE48:
                     {
-                        if (!Raw48BitInCellData.has_value())
+                        if (SubClassOfModel48 != Model48Subclass::UNASSIGNED_UNUSED_NANNULL  || ContractOfValue == AccessContractOfValue::UNASSIGNED_UNUSED_NANNULL)
                         {
                             return false;
                         }
-                        if (!ContractOfValue.has_value() || SubClassOfModel48.has_value())
-                        {
-                            return false;
-                        }
-                        if (!IsKnownValueContract(*ContractOfValue))
+
+                        if (!IsKnownValueContract(ContractOfValue))
                         {
                             return false;
                         }
@@ -253,6 +240,13 @@ namespace PredictedAdaptedEncoding
             }
 
         };
+
+        static_assert(sizeof(AuthoritiveCellView) < SIZE_OF_CACHELINE);
+        static_assert(alignof(AuthoritiveCellView) == CACHELINE_BOUNDRY);
+        static_assert(std::is_trivially_copyable_v<AuthoritiveCellView>);
+        static_assert(std::is_standard_layout_v<AuthoritiveCellView>);
+        static_assert(std::is_trivially_destructible_v<AuthoritiveCellView>);
+
 
         /// @brief Should be improved
         static constexpr packed64_t MakeFaultyCell() noexcept

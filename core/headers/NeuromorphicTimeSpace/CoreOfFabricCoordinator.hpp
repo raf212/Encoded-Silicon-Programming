@@ -64,7 +64,7 @@ namespace PredictedAdaptedEncoding
         RETIRE_EPOCH48 = 8,
         NEXT_HANDLE = 9,
         SLOT_FLAGS = 10,
-        NANNULL = 11
+        UNASSIGNED_UNUSED_NANNULL = 11
     };
 
     enum class RelationCellOfAPCFabric : size_t
@@ -390,15 +390,14 @@ namespace PredictedAdaptedEncoding
             switch (a_cell_view.CellMode)
             {
             case PackedMode::VALUE48:
-                if (a_cell_view.Raw48BitInCellData.has_value())
+                if (a_cell_view.Raw48BitInCellData != PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT)
                 {
                     return true;
                 }
             case PackedMode::MODEL32:
                 if (
-                    a_cell_view.SubClassOfModel32.has_value() &&
-                    a_cell_view.SubClassOfModel32.value() == Model32Subclass::UNCLOCKED_1x8_PLUS_2x4 &&
-                    a_cell_view.Raw32BitInCellData.has_value()
+                    a_cell_view.SubClassOfModel32 == Model32Subclass::UNCLOCKED_1x8_PLUS_2x4 &&
+                    a_cell_view.Raw32BitInCellData != IN_CELL_VALUE_MODE32_SENTINAL
                 )
                 {
                     return true;
@@ -429,16 +428,16 @@ namespace PredictedAdaptedEncoding
                 return std::nullopt;
             }
 
-            if (*auth_view_of_begin_idx.Raw48BitInCellData < APCDataStructure::METACELL_COUNT || 
-                *auth_view_of_begin_idx.Raw48BitInCellData >= *auth_view_of_end_idx.Raw48BitInCellData
+            if (auth_view_of_begin_idx.Raw48BitInCellData < APCDataStructure::METACELL_COUNT || 
+                auth_view_of_begin_idx.Raw48BitInCellData >= auth_view_of_end_idx.Raw48BitInCellData
             )
             {
                 return std::nullopt;
             }
 
-            const uint64_t full_width = (*auth_view_of_end_idx.Raw48BitInCellData) - (*auth_view_of_begin_idx.Raw48BitInCellData);
+            const uint64_t full_width = (auth_view_of_end_idx.Raw48BitInCellData) - (auth_view_of_begin_idx.Raw48BitInCellData);
 
-            if ((static_cast<uint32_t>(full_width) ==  auth_view_of_safty_meta.Raw32BitInCellData.value()) && (full_width % RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC) == UNSIGNED_ZERO)
+            if ((static_cast<uint32_t>(full_width) ==  auth_view_of_safty_meta.Raw32BitInCellData) && (full_width % RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC) == UNSIGNED_ZERO)
             {
                 return full_width;
             }

@@ -88,8 +88,7 @@ namespace PredictedAdaptedEncoding
         static constexpr bool IsEmbededTimerCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
             return a_cell_view.CellMode == PackedMode::MODEL48 && 
-                a_cell_view.SubClassOfModel48.has_value() &&
-                *a_cell_view.SubClassOfModel48 == Model48Subclass::PURE_TIMER_48;
+                a_cell_view.SubClassOfModel48 == Model48Subclass::PURE_TIMER_48;
         }
 
         static constexpr bool IsThisCellAppropriateAndGenericToConsume(const PackedCell64_t::AuthoritiveCellView& a_cell_view, APCPagedNodeSegmentClasses page_class) noexcept
@@ -154,29 +153,6 @@ namespace PredictedAdaptedEncoding
                 page_class != APCPagedNodeSegmentClasses::FREE_SLOT;
         }
 
-        static constexpr bool IsGenericPayloadOffset(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
-        {
-            if (!a_cell_view.IsCellValid)
-            {
-                return false;
-            }
-
-            if (a_cell_view.CellMode == PackedMode::VALUE32 || a_cell_view.CellMode == PackedMode::VALUE48)
-            {
-                return true;
-            }
-            
-            if (a_cell_view.CellMode == PackedMode::MODEL32)
-            {
-                return a_cell_view.SubClassOfModel32.has_value() && *a_cell_view.SubClassOfModel32 == Model32Subclass::SELF_CLASS;
-            }
-            if (a_cell_view.CellMode == PackedMode::MODEL48)
-            {
-                return a_cell_view.SubClassOfModel48.has_value() && *a_cell_view.SubClassOfModel48 == Model48Subclass::SELF_CLASS;
-            }
-            return false;
-        }
-
         static constexpr bool DoseThisCellUpdateableAsOccupancy16x3(
             const PackedCell64_t::AuthoritiveCellView& occupancy_cell_view,
             LocalityPolicy desired_cell_locality = LocalityPolicy::PUBLISHED
@@ -186,8 +162,7 @@ namespace PredictedAdaptedEncoding
                 !occupancy_cell_view.IsCellValid || occupancy_cell_view.PageClass != APCPagedNodeSegmentClasses::CONTROL_SLOT ||
                 occupancy_cell_view.CellMode != PackedMode::MODEL48 ||
                 occupancy_cell_view.LocalityOfCell != desired_cell_locality ||
-                !occupancy_cell_view.SubClassOfModel48.has_value() ||
-                *occupancy_cell_view.SubClassOfModel48 != Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL
+                occupancy_cell_view.SubClassOfModel48 != Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL
             )
             {
                 return false;
@@ -211,14 +186,14 @@ namespace PredictedAdaptedEncoding
             return packed_cell;
         }
 
-        if (desired_cell_view.ContractOfValue.has_value() && desired_cell_view.ContractOfValue == AccessContractOfValue::CAS_RMW)
+        if (desired_cell_view.ContractOfValue == AccessContractOfValue::CAS_RMW)
         {
             return packed_cell;
         }
 
-        if (desired_cell_view.ContractOfValue.has_value() && desired_cell_view.LocalityOfCell == LocalityPolicy::CLAIMED)
+        if (desired_cell_view.LocalityOfCell == LocalityPolicy::CLAIMED)
         {
-            switch (desired_cell_view.ContractOfValue.value())
+            switch (desired_cell_view.ContractOfValue)
             {
 
             case AccessContractOfValue::ATOMIC_SLNAPSHOT:

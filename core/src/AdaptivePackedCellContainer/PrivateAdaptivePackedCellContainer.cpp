@@ -205,17 +205,10 @@ namespace PredictedAdaptedEncoding
             {
                 continue;
             }
-            
-            const packed64_t graceful_idle_cell = PackedCell64_t::MakeModeledAPCValidPackedCell(
-                static_cast<ModelFamily>(current_cell_view.CellMode),
-                (current_cell_view.SubClassOfModel32.has_value() ? 
-                    static_cast<tag8_t>(current_cell_view.SubClassOfModel32.value()) :
-                        current_cell_view.SubClassOfModel48.has_value() ? 
-                            static_cast<tag8_t>(current_cell_view.SubClassOfModel48.value()) : 
-                                UNSIGNED_ZERO
-                ),
-                cell_class, 
-                LocalityPolicy::IDLE, 
+
+            const packed64_t graceful_idle_cell = PackedCell64_t::MakeDefaultAPCPayloadCellOnMode(
+                current_cell_view.CellMode,
+                APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(current_cell_view.PageClass) ? current_cell_view.PageClass : APCPagedNodeSegmentClasses::UNDEFINED,
                 current_cell_view.CellValueDataType
             );
 

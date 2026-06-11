@@ -113,14 +113,14 @@ namespace PredictedAdaptedEncoding
             return JustifyClaimCas::INVALID_CELL;
         }
 
-        if (!expected_cell_auth_view.SlabIndexOfPackeCell.has_value())
+        if (expected_cell_auth_view.SlabIndexOfPackeCell == APCDataStructure::APC_SIZE_SENTINAL)
         {
             return JustifyClaimCas::OUT_OF_BOUND;
         }
         
         for (size_t i = 0; i < DEFAULT_MAX_TRIES; i++)
         {
-            packed64_t currennt_expected_cell = AtomicallyLoadReadCompletePackedCell(*expected_cell_auth_view.SlabIndexOfPackeCell);
+            packed64_t currennt_expected_cell = AtomicallyLoadReadCompletePackedCell(expected_cell_auth_view.SlabIndexOfPackeCell);
             if (currennt_expected_cell == PackedCell64_t::PACKED_CELL_SENTINAL)
             {
                 return JustifyClaimCas::CELL_SENTINAL_STATE;
@@ -131,7 +131,7 @@ namespace PredictedAdaptedEncoding
             }
             
             const packed64_t desired_cell = PackedCell64_t::SetLocalityInPacked(expected_cell_auth_view.RawCell, LocalityPolicy::CLAIMED);
-            if (CompareExchangeWeakInSlab(*expected_cell_auth_view.SlabIndexOfPackeCell, currennt_expected_cell, desired_cell))
+            if (CompareExchangeWeakInSlab(expected_cell_auth_view.SlabIndexOfPackeCell, currennt_expected_cell, desired_cell))
             {
                 if (desired_packed_cell)
                 {

@@ -38,6 +38,8 @@ namespace PredictedAdaptedEncoding
 
     static constexpr size_t SIZE_OF_A_PAIR =( 2 * sizeof(uint64_t));
     static constexpr size_t BIT_LENGTH_OF_A_PACKED_CELL = 64;
+    static constexpr uint8_t SIZE_OF_CACHELINE = 64;
+    static constexpr uint8_t CACHELINE_BOUNDRY = 16;
     static constexpr unsigned UNSIGNED_ZERO = 0u;
     static constexpr unsigned MINIMUM_BRANCH_CAPACITY = 256u;
     static constexpr uint32_t IN_CELL_VALUE_MODE32_SENTINAL = UINT32_MAX;

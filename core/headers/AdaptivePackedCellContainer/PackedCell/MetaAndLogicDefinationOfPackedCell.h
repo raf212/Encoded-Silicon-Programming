@@ -107,7 +107,9 @@ namespace PredictedAdaptedEncoding {
         CharPCellDataType = 0,
         IntPCellDataType = 1,
         FloatPCellDataType = 2,
-        UnsignedPCellDataType = 3
+        UnsignedPCellDataType = 3,
+        UNASSIGNED_UNUSED_NANNULL = 4
+
     };
 
     /// @brief HIGHEST_TRUTH of Packed Cell
@@ -144,7 +146,8 @@ namespace PredictedAdaptedEncoding {
         RAW_PRIVATE = 0,
         ATOMIC_SLNAPSHOT = 1,
         CLAIMED_GURDED = 2,
-        CAS_RMW = 3
+        CAS_RMW = 3,
+        UNASSIGNED_UNUSED_NANNULL = 4
     };
 
     enum class Model32Subclass : tag8_t
@@ -152,7 +155,8 @@ namespace PredictedAdaptedEncoding {
         SELF_CLASS = 0,
         LOW_OF_PAIRED_VERSIONED_CELL = 1,
         HIGH_OF_PAIRED_VERSIONED_CELL = 2,
-        UNCLOCKED_1x8_PLUS_2x4 = 3
+        UNCLOCKED_1x8_PLUS_2x4 = 3,
+        UNASSIGNED_UNUSED_NANNULL = 4
     };
 
     enum class Model48Subclass : tag8_t
@@ -160,7 +164,8 @@ namespace PredictedAdaptedEncoding {
         SELF_CLASS = 0,
         PURE_TIMER_48 = 1,
         SUBDIVISION16x3_INTERNAL_CELL_MODEL  = 2,
-        FOUR_SUBDIVISION_2x16_AND_2x8 = 3
+        FOUR_SUBDIVISION_2x16_AND_2x8 = 3,
+        UNASSIGNED_UNUSED_NANNULL = 4
     };
 
     enum class PriorityPolicy : tag8_t
@@ -168,7 +173,9 @@ namespace PredictedAdaptedEncoding {
         INFLUENCED = 0, // extended
         PRESSURE_FIRST = 1,
         IN_CLOCKED_GENERIC_SPIKE = 2,
-        ERROR_FIRST = 3
+        ERROR_FIRST = 3,
+        UNASSIGNED_UNUSED_NANNULL = 4
+
     };
 
     enum class APCPagedNodeSegmentClasses : tag8_t

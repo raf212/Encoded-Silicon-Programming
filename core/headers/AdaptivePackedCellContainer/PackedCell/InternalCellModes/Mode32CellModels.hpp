@@ -60,8 +60,7 @@ namespace PredictedAdaptedEncoding
         {
             const PackedCell64_t::AuthoritiveCellView this_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
             return this_cell_auth_view.CellMode == PackedMode::MODEL32 &&
-                this_cell_auth_view.SubClassOfModel32.has_value() &&
-                this_cell_auth_view.SubClassOfModel32.value() == Model32Subclass::UNCLOCKED_1x8_PLUS_2x4 &&
+                this_cell_auth_view.SubClassOfModel32 == Model32Subclass::UNCLOCKED_1x8_PLUS_2x4 &&
                 this_cell_auth_view.CellValueDataType == InternalDataTypePolicy::UnsignedPCellDataType &&
                 this_cell_auth_view.LocalityOfCell != LocalityPolicy::FAULTY;
         }
@@ -126,7 +125,7 @@ namespace PredictedAdaptedEncoding
                 low_half_view.SubClassOfModel32 == Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL 
             )
             {
-                return static_cast<uint64_t>(*low_half_view.Raw32BitInCellData);
+                return static_cast<uint64_t>(low_half_view.Raw32BitInCellData);
             }
 
             if (
@@ -135,8 +134,8 @@ namespace PredictedAdaptedEncoding
                 high_half_view.SubClassOfModel32 == Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL
             )
             {
-                return static_cast<packed64_t>(*low_half_view.Raw32BitInCellData) | 
-                        (static_cast<packed64_t>(*high_half_view.Raw32BitInCellData ) << VALBITS);
+                return static_cast<packed64_t>(low_half_view.Raw32BitInCellData) | 
+                        (static_cast<packed64_t>(high_half_view.Raw32BitInCellData ) << VALBITS);
             }
 
             if (low_half_view_ptr)
