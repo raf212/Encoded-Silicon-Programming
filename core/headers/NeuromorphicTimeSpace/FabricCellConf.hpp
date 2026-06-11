@@ -90,7 +90,14 @@ struct FabricCellConf
     }
 
 
-    // static constexpr std::optional<KeyValueDistanceTriplet> ReadProbDstanceFromValid
+    // static constexpr std::optional<HashKeyValueDistanceTriplet> ReadProbDistanceFromValidPackedCell(
+    //     packed64_t key_cell,
+    //     packed64_t value_cell,
+    //     packed64_t prob_distance_safty
+    // ) noexcept
+    // {
+
+    // }
 
 
     /// @brief Creats a Decriptive cell for Record Book Table Class :: with external 16bit meta indicating 
