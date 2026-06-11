@@ -78,7 +78,7 @@ namespace PredictedAdaptedEncoding
         /// @return VALID-> INDEX < UINT
         constexpr size_t ReadBeginSlabIdxOfATableSegmentClassFromRecordBookOfTSC_(FabricTableSegmentClasses desired_table) noexcept;
         
-        constexpr std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> GetATableSegmentClassRangePairedCellFromRecordBookOfTSC_(FabricTableSegmentClasses table_class) noexcept;
+        constexpr std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> GetValidSlabRangeTripletFromRecordBookOfFTSC(FabricTableSegmentClasses table_class) noexcept;
 
         constexpr void IdleAFabricTableClassRangesMemory_(FabricTableSegmentClasses table_class) noexcept;
 

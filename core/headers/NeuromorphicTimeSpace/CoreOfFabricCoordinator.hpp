@@ -269,16 +269,8 @@ namespace PredictedAdaptedEncoding
 
 
 
-
-
-
-
-
-    struct CoreOfFabricCoordinator
+    struct HashHelpers
     {
-
-        static constexpr uint8_t EACH_TABLE_RECORD_SENTINAL = UINT8_MAX;
-
         static constexpr uint64_t NextPowerOf2Unsigned32_(uint64_t given_value) noexcept
         {
             if (given_value <= 2u)
@@ -305,6 +297,17 @@ namespace PredictedAdaptedEncoding
             given_value ^=  given_value >> CLK_B16;
             return given_value;
         }
+    };
+
+
+
+
+    struct CoreOfFabricCoordinator
+    {
+
+        static constexpr uint8_t EACH_TABLE_RECORD_SENTINAL = UINT8_MAX;
+
+
 
         static constexpr bool IsValidFabricTable(FabricTableSegmentClasses table_class) noexcept
         {
@@ -483,10 +486,7 @@ namespace PredictedAdaptedEncoding
                 }
             default:
                 return false;
-            }
-            
-            return false;
-            
+            }            
         }
 
         static constexpr std::optional<uint64_t> ValidateAFabricTableRangeStruct(const FTSC_SlabRangeTripletFrom_RecordBookOfFTSC& provided_range_triplet) noexcept

@@ -349,7 +349,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    constexpr std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> SlabToFabricConverterAndCordinator::GetATableSegmentClassRangePairedCellFromRecordBookOfTSC_(FabricTableSegmentClasses table_class) noexcept
+    constexpr std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> SlabToFabricConverterAndCordinator::GetValidSlabRangeTripletFromRecordBookOfFTSC(FabricTableSegmentClasses table_class) noexcept
     {
         if (!CoreOfFabricCoordinator::IsValidFabricTable(table_class))
         {
@@ -364,19 +364,25 @@ namespace PredictedAdaptedEncoding
             return std::nullopt;
         }
 
-        FTSC_SlabRangeTripletFrom_RecordBookOfFTSC triplet{};
+        const FTSC_SlabRangeTripletFrom_RecordBookOfFTSC triplet{ 
+            ReadCompletePackedCellDirectly(begin_of_desired_table),
+            ReadCompletePackedCellDirectly(end_idx),
+            ReadCompletePackedCellDirectly(safty_lock_meta_cell)
+        };
 
-        triplet.BeginIdxRawType48Cell = ReadCompletePackedCellDirectly(begin_of_desired_table);
-        triplet.EndIdxRawType48Cell = ReadCompletePackedCellDirectly(end_idx);
-        triplet.WidthVersionOriginSafty = ReadCompletePackedCellDirectly(safty_lock_meta_cell);
+        std::optional<uint64_t> full_width_validated = CoreOfFabricCoordinator::ValidateAFabricTableRangeStruct(triplet);
+        if (full_width_validated.has_value() && full_width_validated.value() > UNSIGNED_ZERO)
+        {
+            return triplet;
+        }
 
-        return triplet;
+        return std::nullopt;
     }
         
 
     constexpr void SlabToFabricConverterAndCordinator::IdleAFabricTableClassRangesMemory_(FabricTableSegmentClasses table_class) noexcept
     {
-        const std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> maybe_table_range_triplet = GetATableSegmentClassRangePairedCellFromRecordBookOfTSC_(table_class);
+        const std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> maybe_table_range_triplet = GetValidSlabRangeTripletFromRecordBookOfFTSC(table_class);
         if (!maybe_table_range_triplet.has_value())
         {
             return;
@@ -402,35 +408,26 @@ namespace PredictedAdaptedEncoding
         
     }
 
-    // void SlabToFabricConverterAndCordinator::InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept
-    // {
+    void SlabToFabricConverterAndCordinator::InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept
+    {
 
-    //     const packed64_t desired_idle_hash_key_cell = CoreOfFabricCoordinator::MakeHashKeyCell(UNSIGNED_ZERO, UNSIGNED_ZERO, table_class, LocalityPolicy::IDLE);
-    //     if (desired_idle_hash_key_cell == PackedCell64_t::PACKED_CELL_SENTINAL)
-    //     {
-    //         return;
-    //     }
+        const packed64_t desired_idle_hash_key_cell = CoreOfFabricCoordinator::MakeHashKeyCell(UNSIGNED_ZERO, UNSIGNED_ZERO, table_class, LocalityPolicy::IDLE);
+        if (desired_idle_hash_key_cell == PackedCell64_t::PACKED_CELL_SENTINAL)
+        {
+            return;
+        }
 
-    //     std::optional<FabricTableRange> hash_table_range = GetATableSegmentClassRangePairedCellFromRecordBookOfTSC_(table_class);
+        std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> desired_hash_table_triplet = GetValidSlabRangeTripletFromRecordBookOfFTSC(table_class);
 
-    //     if (!hash_table_range.has_value())
-    //     {
-    //         return;
-    //     }
+        if (!desired_hash_table_triplet.has_value())
+        {
+            return;
+        }
         
-    //     const std::optional<uint64_t> width = CoreOfFabricCoordinator::ValidateAFabricTableRangeStruct(*hash_table_range);
-
-    //     if (width != HASH_BUCKED_WIDTH_OF_FABRIC)
-    //     {
-    //         return;
-    //     }
-        
-    //     const packed64_t desired
-        
+        // const uint64_t width_of_has_entry_in_slab = desired_hash_table_triplet.value().EndIdxRawType48Cell - desired_hash_table_triplet.value().BeginIdxRawType48Cell;
 
 
-        
-    // }
+    }
 
     // size_t SlabToFabricConverterAndCordinator::GetSlotCellTypeIdxInFabric_(uint32_t slot, SlotCellTypeOfAPCFabric slot_type) noexcept
     // {
