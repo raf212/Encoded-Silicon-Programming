@@ -61,7 +61,36 @@ struct FabricCellConf
         );
     }
 
-    // static constexpr packed64_t MakeProbCellWithSaftyLock
+    static constexpr packed64_t MakeHashProbDistanceCellWithSaftyLock(
+        uint64_t key48, 
+        uint64_t hash_48,
+        uint16_t prob_distance,
+        FabricTableSegmentClasses table_class,
+        LocalityPolicy locality = LocalityPolicy::PUBLISHED
+    ) noexcept
+    {
+        const uint16_t mid_Lock_key_low16 = static_cast<uint16_t>(key48 & MaskLowNBits(LOW16_BIT_MASK));
+        const uint16_t high_lock_hash_low_16 = static_cast<uint16_t>(hash_48 & MaskLowNBits(LOW16_BIT_MASK));
+
+        const uint64_t desired_prob_distance_lock = Subdevision16x3InternalMode48CellModel::PackUnsigned16x3ToMode48_(
+            prob_distance,
+            mid_Lock_key_low16,
+            high_lock_hash_low_16
+        );
+
+        return PackedCell64_t::MakeModeledFabricValidPackedCell(
+            ModelFamily::MODEL48,
+            static_cast<tag8_t>(Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL),
+            table_class,
+            locality,
+            InternalDataTypePolicy::UnsignedPCellDataType,
+            PriorityPolicy::INFLUENCED,
+            desired_prob_distance_lock
+        );
+    }
+
+
+    // static constexpr std::optional<KeyValueDistanceTriplet> ReadProbDstanceFromValid
 
 
     /// @brief Creats a Decriptive cell for Record Book Table Class :: with external 16bit meta indicating 

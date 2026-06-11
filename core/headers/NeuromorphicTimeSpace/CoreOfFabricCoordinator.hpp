@@ -17,7 +17,7 @@ namespace PredictedAdaptedEncoding
     static constexpr size_t RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC = 3u;
 
     /// @brief should be 3
-    static constexpr size_t HASH_BUCKED_WIDTH_OF_FABRIC = 2u;
+    static constexpr size_t HASH_BUCKED_WIDTH_OF_FABRIC = 3u;
 
     static constexpr size_t SLOT_RECORD_WIDTH_OF_FABRIC = 12u;
     static constexpr size_t RELATION_WIDTH_OF_FABRIC = 8u;
@@ -235,11 +235,11 @@ namespace PredictedAdaptedEncoding
 
         static constexpr uint32_t HashUnsigned32_(uint32_t given_value) noexcept
         {
-            given_value ^= given_value >> CLK_B16;
+            given_value ^= given_value >> LOW16_BIT_MASK;
             given_value *= DEFAULT_HAS_CONST_1;
-            given_value ^= given_value >> (CLK_B16 - 1);
+            given_value ^= given_value >> (LOW16_BIT_MASK - 1);
             given_value *= DEFAULT_HAS_CONST_2;
-            given_value ^=  given_value >> CLK_B16;
+            given_value ^=  given_value >> LOW16_BIT_MASK;
             return given_value;
         }
     };
@@ -261,6 +261,15 @@ namespace PredictedAdaptedEncoding
     static_assert(sizeof(FTSC_SlabRangeTripletFrom_RecordBookOfFTSC) == RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC * sizeof(packed64_t));
     static_assert(alignof(FTSC_SlabRangeTripletFrom_RecordBookOfFTSC) == alignof(packed64_t));
 
+    struct HashKeyValueDistanceTriplet
+    {
+        uint64_t HashValue = UNSIGNED_ZERO;
+        uint64_t HashKey = UNSIGNED_ZERO;
+        uint16_t ProbDistance = UNSIGNED_ZERO;
+        bool IsValid = false;
+    };
+    static_assert(sizeof(HashKeyValueDistanceTriplet) == HASH_BUCKED_WIDTH_OF_FABRIC * sizeof(uint64_t));
+    static_assert(alignof(HashKeyValueDistanceTriplet) == alignof(uint64_t));
 
     struct CoreOfFabricCoordinator
     {
@@ -419,7 +428,7 @@ namespace PredictedAdaptedEncoding
 
             const uint64_t full_width = (*auth_view_of_end_idx.Raw48BitInCellData) - (*auth_view_of_begin_idx.Raw48BitInCellData);
 
-            if ((static_cast<uint32_t>(full_width) ==  auth_view_of_safty_meta.Raw32BitInCellData.value()) && (full_width % HASH_BUCKED_WIDTH_OF_FABRIC) == UNSIGNED_ZERO)
+            if ((static_cast<uint32_t>(full_width) ==  auth_view_of_safty_meta.Raw32BitInCellData.value()) && (full_width % RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC) == UNSIGNED_ZERO)
             {
                 return full_width;
             }

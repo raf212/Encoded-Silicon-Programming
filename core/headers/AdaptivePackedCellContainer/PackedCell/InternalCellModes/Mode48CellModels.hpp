@@ -26,15 +26,20 @@ namespace PredictedAdaptedEncoding
             return PackedCell64_t::Compose48BitFamilyPackedCell(raw48, meta16);
         }
 
+        /// @brief Just pack 3 Unsigned value
+        /// @param low16_bits LOWEST 16 bits
+        /// @param mid_16_bits MIDDLE 16 BITS
+        /// @param high_16_bits HIGHIEST 16 BITS
+        /// @return 48bit value -> uint64_t :: HIGH16:MASKED
         static constexpr uint64_t PackUnsigned16x3ToMode48_(
             uint16_t low16_bits,
             uint16_t mid_16_bits,
             uint16_t high_16_bits
         ) noexcept
         {
-            return (uint64_t{low16_bits} << PACK3XU16TOMODE48_SHIFT_LOW)    |
+            return ((uint64_t{low16_bits} << PACK3XU16TOMODE48_SHIFT_LOW)    |
                 (uint64_t{mid_16_bits} << PACK3XU16TOMODE48_SHIFT_MID)      |
-                (uint64_t(high_16_bits) << PACK3XU16TOMODE48_SHIFT_HIGH);
+                (uint64_t(high_16_bits) << PACK3XU16TOMODE48_SHIFT_HIGH)) & MaskLowNBits(FAMILY_48_BIT_LEN);
         }
 
         static constexpr uint16_t ExtractLow16FromUnsigned48_(uint64_t raw48) noexcept
