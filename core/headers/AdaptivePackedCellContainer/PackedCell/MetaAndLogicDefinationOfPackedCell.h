@@ -55,6 +55,8 @@ namespace PredictedAdaptedEncoding {
     static constexpr unsigned STBITS   = 8u;
     static constexpr unsigned TOTAL_LOW = 48u;
 
+    static constexpr uint8_t DEFAULT_META16_INDEXING_LIMIT_2BIT = 3;
+
     static constexpr unsigned PRIO_LEN = 2u;
     static constexpr unsigned NODE_AUTH_LEN = 2u;
     static constexpr unsigned LOCALITY_LEN = 2u;// will be 2u
@@ -89,7 +91,8 @@ namespace PredictedAdaptedEncoding {
         IDLE = 0,
         PUBLISHED = 1,
         CLAIMED = 2,
-        FAULTY = 3
+        FAULTY = 3,
+        UNASSIGNED_UNUSED_NANNULL = 4
     };
 
     /// @brief HIGHEST_TRUTH of Packed Cell
@@ -98,7 +101,8 @@ namespace PredictedAdaptedEncoding {
         ADAPTIVE_PACKED_CELL_CONTAINER = 0,
         NEUROMORPHIC_SPACE_TIME_FABRIC = 1,
         RESERVED_2 = 2,
-        RESERVED_3 = 3
+        RESERVED_3 = 3,
+        UNASSIGNED_UNUSED_NANNULL = 4
     };
 
     /// @brief HIGHEST_TRUTH of Packed Cell
@@ -122,7 +126,8 @@ namespace PredictedAdaptedEncoding {
         MODEL32 = 0,
         VALUE32 = 1,
         MODEL48 = 2,
-        VALUE48 = 3
+        VALUE48 = 3,
+        UNASSIGNED_UNUSED_NANNULL = 4
     };
 
     enum class ModelFamily : tag8_t

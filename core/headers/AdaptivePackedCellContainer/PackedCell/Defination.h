@@ -43,6 +43,7 @@ namespace PredictedAdaptedEncoding
     static constexpr unsigned UNSIGNED_ZERO = 0u;
     static constexpr unsigned MINIMUM_BRANCH_CAPACITY = 256u;
     static constexpr uint32_t IN_CELL_VALUE_MODE32_SENTINAL = UINT32_MAX;
+    static constexpr uint16_t META_16_SENTINAL = UINT16_MAX;
     
     
 }

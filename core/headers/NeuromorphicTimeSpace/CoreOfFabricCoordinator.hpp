@@ -261,14 +261,14 @@ namespace PredictedAdaptedEncoding
     static_assert(sizeof(FTSC_SlabRangeTripletFrom_RecordBookOfFTSC) == RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC * sizeof(packed64_t));
     static_assert(alignof(FTSC_SlabRangeTripletFrom_RecordBookOfFTSC) == alignof(packed64_t));
 
-    struct HashPackedCellTripletCarrier
-    {
-        packed64_t BeginIdxRawType48Cell = UNSIGNED_ZERO;
-        packed64_t EndIdxRawType48Cell = UNSIGNED_ZERO;
-        packed64_t WidthVersionOriginSafty = UNSIGNED_ZERO;
-    };
-    static_assert(sizeof(HashPackedCellTripletCarrier) == RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC * sizeof(packed64_t));
-    static_assert(alignof(HashPackedCellTripletCarrier) == alignof(packed64_t));
+    // struct HashPackedCellTripletCarrier
+    // {
+    //     packed64_t BeginIdxRawType48Cell = UNSIGNED_ZERO;
+    //     packed64_t EndIdxRawType48Cell = UNSIGNED_ZERO;
+    //     packed64_t WidthVersionOriginSafty = UNSIGNED_ZERO;
+    // };
+    // static_assert(sizeof(HashPackedCellTripletCarrier) == RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC * sizeof(packed64_t));
+    // static_assert(alignof(HashPackedCellTripletCarrier) == alignof(packed64_t));
 
 
     struct HashKeyValueDistanceTriplet

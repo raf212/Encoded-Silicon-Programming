@@ -28,9 +28,9 @@ namespace PredictedAdaptedEncoding
 
             OwnershipPolicy CellOwnership{OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER};
 
-            LocalityPolicy LocalityOfCell{LocalityPolicy::IDLE};
+            LocalityPolicy LocalityOfCell{LocalityPolicy::UNASSIGNED_UNUSED_NANNULL};
 
-            PackedMode CellMode{PackedMode::MODEL32};
+            PackedMode CellMode{PackedMode::UNASSIGNED_UNUSED_NANNULL};
 
             APCPagedNodeSegmentClasses PageClass{APCPagedNodeSegmentClasses::NONE};
 
@@ -152,10 +152,6 @@ namespace PredictedAdaptedEncoding
                 {
                     case PackedMode::MODEL32:
                     {
-                        // if (Raw32BitInCellData == IN_CELL_VALUE_MODE32_SENTINAL || InCellClock16 == CLOCK_16_SENTINAL)
-                        // {
-                        //     return false;
-                        // }
 
                         if (ContractOfValue != AccessContractOfValue::UNASSIGNED_UNUSED_NANNULL || SubClassOfModel32 == Model32Subclass::UNASSIGNED_UNUSED_NANNULL)
                         {
@@ -613,6 +609,12 @@ namespace PredictedAdaptedEncoding
                 sub_class,
                 static_cast<tag8_t>(cell_priority)
             );
+
+            if (desired_meta16 == META_16_SENTINAL)
+            {
+                return PACKED_CELL_SENTINAL;
+            }
+            
 
             if (cell_mode == PackedMode::MODEL32 || cell_mode == PackedMode::VALUE32)
             {

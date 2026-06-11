@@ -139,7 +139,7 @@ namespace PredictedAdaptedEncoding
         /// @param class_of_cell TYPE: uint8_t :: For safer use Use like static_cast<uint8_t>(Param->enum::value)
         /// @param sub_class TYPE: uint8_t :: For safer use Use like static_cast<uint8_t>(Param->enum::value)
         /// @param priority TYPE: uint8_t :: For safer use Use like static_cast<uint8_t>(Param->enum::value)
-        /// @return 
+        /// @return VALID: meta16 or UINT16_MAX if any one cross their indexing limit
         static constexpr meta16_t MakeInCellMeta_16t(
             PackedMode mode, 
             LocalityPolicy locality, 
@@ -158,6 +158,19 @@ namespace PredictedAdaptedEncoding
             meta16_t cell_class = static_cast<meta16_t>(class_of_cell & CELL_CLASS_MASK);
             meta16_t cell_sub_class = static_cast<meta16_t>(static_cast<tag8_t>(sub_class) & SUBCLASS_MASK);
             meta16_t cell_data_type = static_cast<meta16_t>(static_cast<unsigned>(data_type) & CELL_INTERNAL_DATA_TYPE_MASK);
+
+            if (
+                cell_priority > DEFAULT_META16_INDEXING_LIMIT_2BIT ||
+                cell_authority > DEFAULT_META16_INDEXING_LIMIT_2BIT ||
+                cell_locality > DEFAULT_META16_INDEXING_LIMIT_2BIT ||
+                cell_mode > DEFAULT_META16_INDEXING_LIMIT_2BIT ||
+                cell_sub_class > DEFAULT_META16_INDEXING_LIMIT_2BIT ||
+                cell_data_type > DEFAULT_META16_INDEXING_LIMIT_2BIT
+            )
+            {
+                return META_16_SENTINAL;
+            }
+            
 
             meta16_t cell_meta = static_cast<meta16_t>(
                 (cell_priority  << (PRIORITY_SHIFT))

@@ -90,12 +90,32 @@ struct FabricCellConf
     }
 
 
+    // static constexpr bool IsValidHashPackedCell(PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+    // {
+    //     if (
+    //         !a_cell_view.IsCellValid || 
+    //         a_cell_view.CellOwnership != OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC ||
+    //         a_cell_view.CellValueDataType != InternalDataTypePolicy::UNASSIGNED_UNUSED_NANNULL
+    //     )
+    //     {
+    //         return false;
+    //     }
+        
+        
+    // }
+
+
     // static constexpr std::optional<HashKeyValueDistanceTriplet> ReadProbDistanceFromValidPackedCell(
     //     packed64_t key_cell,
     //     packed64_t value_cell,
     //     packed64_t prob_distance_safty
     // ) noexcept
     // {
+    //     const PackedCell64_t::AuthoritiveCellView key_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(key_cell);
+    //     const PackedCell64_t::AuthoritiveCellView value_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(key_cell);
+    //     const PackedCell64_t::AuthoritiveCellView prob_lock_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(key_cell);
+
+
 
     // }
 
