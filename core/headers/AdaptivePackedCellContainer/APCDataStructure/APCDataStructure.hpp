@@ -171,7 +171,7 @@ namespace PredictedAdaptedEncoding
             {
                 return std::nullopt;
             }
-            const uint64_t raw48 = PackedCell64_t::ExtractModel48(packed_cell);
+            const uint64_t raw48 = PackedCell64_t::ExtractRaw48FamilyBits(packed_cell);
             if (raw48 == PackedCell64_t::PACKED_CELL_SENTINAL)
             {
                 return std::nullopt;
@@ -198,7 +198,7 @@ namespace PredictedAdaptedEncoding
             {
                 return UNSIGNED_ZERO;
             }
-            const uint64_t raw48 = PackedCell64_t::ExtractModel48(packed_cell);
+            const uint64_t raw48 = PackedCell64_t::ExtractRaw48FamilyBits(packed_cell);
             uint16_t published = UNSIGNED_ZERO;
             uint16_t claimed = UNSIGNED_ZERO;
             uint16_t faulty = UNSIGNED_ZERO;
@@ -216,7 +216,7 @@ namespace PredictedAdaptedEncoding
                 return false;
             }
 
-            const uint64_t raw48 = PackedCell64_t::ExtractModel48(packed_cell);
+            const uint64_t raw48 = PackedCell64_t::ExtractRaw48FamilyBits(packed_cell);
             
             return Subdevision16x3InternalMode48CellModel::ExtractLowMidHighFromMode48_(raw48, begin_index, end_index, version_count);
         }
@@ -243,7 +243,7 @@ namespace PredictedAdaptedEncoding
 
         static constexpr uint16_t DerivedIdleFromPackedCell48(packed64_t packed_cell, uint16_t physical_capacity) noexcept
         {
-            const uint64_t raw48 = PackedCell64_t::ExtractModel48(packed_cell);
+            const uint64_t raw48 = PackedCell64_t::ExtractRaw48FamilyBits(packed_cell);
             if (raw48 == PackedCell64_t::PACKED_CELL_SENTINAL)
             {
                 return UNSIGNED_ZERO;

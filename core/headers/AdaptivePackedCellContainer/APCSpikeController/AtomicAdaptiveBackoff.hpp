@@ -302,7 +302,7 @@ private:
     {
         if (PCMode_ == PackedMode::MODEL48)
         {
-            return (PackedCell64_t::ExtractModel48(packed) & MaskLowNBits(FAMILY_48_BIT_LEN));
+            return (PackedCell64_t::ExtractRaw48FamilyBits(packed) & MaskLowNBits(FAMILY_48_BIT_LEN));
         }
         else
         {

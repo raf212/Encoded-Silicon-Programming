@@ -280,7 +280,7 @@ namespace PredictedAdaptedEncoding
         }
 
         const packed64_t directory_begin_cell = ReadCompletePackedCellDirectly(static_cast<size_t>(FabricMetaIndicies::RECORD_BOOK_OF_TSC_BEGIN));
-        const size_t base_idx = static_cast<size_t>(PackedCell64_t::ExtractModel48(directory_begin_cell));
+        const size_t base_idx = static_cast<size_t>(PackedCell64_t::ExtractRaw48FamilyBits(directory_begin_cell));
 
         return base_idx + (static_cast<size_t>(table_class) * RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC);
 

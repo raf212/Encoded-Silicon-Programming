@@ -587,7 +587,7 @@ namespace PredictedAdaptedEncoding
                     out_packed_cell_view.ContractOfValue = static_cast<AccessContractOfValue>(ExtractSubClassOrContractFromMETA16_U_(meta16));
                 }
 
-                out_packed_cell_view.Raw48BitInCellData = ExtractModel48(packed_cell);
+                out_packed_cell_view.Raw48BitInCellData = ExtractRaw48FamilyBits(packed_cell);
             }
 
             out_packed_cell_view.CellValueDataType = static_cast<InternalDataTypePolicy>(ExtractValueDataTypeFromMETA16_U_(meta16));

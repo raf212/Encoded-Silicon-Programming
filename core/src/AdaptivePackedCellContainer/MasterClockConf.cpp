@@ -120,7 +120,7 @@ std::optional<uint64_t> MasterClockConf::ReconstructCellClock16toFull48BySegment
 
     const packed64_t local_clock_cell = APCPtr_->ReadFullMetaCell(MetaIndexOfAPCNode::LOCAL_CLOCK48);
 
-    const uint64_t local_clock48 = PackedCell64_t::ExtractModel48(local_clock_cell) & MaskLowNBits(FAMILY_48_BIT_LEN);
+    const uint64_t local_clock48 = PackedCell64_t::ExtractRaw48FamilyBits(local_clock_cell) & MaskLowNBits(FAMILY_48_BIT_LEN);
 
     const uint64_t local_down = (local_clock48 >> TimerDownShift_) & MaskLowNBits(FAMILY_48_BIT_LEN);
     uint64_t candidate_down = (local_down & ~uint64_t(0xFFFFu)) | static_cast<uint64_t>(stored_clk16);

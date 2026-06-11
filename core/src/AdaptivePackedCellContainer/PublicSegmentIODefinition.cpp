@@ -924,7 +924,7 @@ namespace PredictedAdaptedEncoding
             uint16_t faulty_count = UNSIGNED_ZERO;
             //
 
-            const uint64_t raw48 = PackedCell64_t::ExtractModel48(observed_cell);
+            const uint64_t raw48 = PackedCell64_t::ExtractRaw48FamilyBits(observed_cell);
 
             if (!Subdevision16x3InternalMode48CellModel::ExtractLowMidHighFromMode48_(raw48, published_count, claimed_count, faulty_count))
             {
