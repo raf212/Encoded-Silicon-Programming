@@ -369,6 +369,20 @@ namespace PredictedAdaptedEncoding
             }
         }
 
+        static constexpr bool IsThisValidRecordBookPackedCell(
+            packed64_t packed_cell,
+            PackedCell64_t::AuthoritiveCellView* return_cell_view = nullptr
+        ) noexcept
+        {
+            PackedCell64_t::AuthoritiveCellView desired_cell_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
+            const bool ok = IsTheCellConsumeableAsRecordBookCellOfTSC(desired_cell_view);
+            if (return_cell_view)
+            {
+                return_cell_view = &desired_cell_view;
+            }
+            return ok;
+        }
+
         static constexpr bool IsTheCellConsumeableAsRecordBookCellOfTSC(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
 

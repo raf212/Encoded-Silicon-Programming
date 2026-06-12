@@ -76,7 +76,7 @@ namespace PredictedAdaptedEncoding
         constexpr void WriteFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept;
 
         /// @return VALID-> INDEX < UINT
-        constexpr size_t ReadBeginSlabIdxOfATableSegmentClassFromRecordBookOfTSC_(FabricTableSegmentClasses desired_table) noexcept;
+        constexpr size_t ReadOriginIndexBeginOfRecordBookOfFabricTableSegmentClasses_(OriginOfRecord desired_table) noexcept;
         
         constexpr std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> GetValidSlabRangeTripletFromRecordBookOfFTSC(FabricTableSegmentClasses table_class) noexcept;
 
