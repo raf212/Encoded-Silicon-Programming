@@ -320,7 +320,7 @@ private:
             uint64_t candidate = (((now_down & ~uint64_t(0xFFFFu)) | (static_cast<uint64_t>(stored_clock16))));
             if (candidate > now_down)
             {
-                candidate -= (1ull << LOW16_BIT_MASK); //why?
+                candidate -= (1ull << LOW16_BIT_LEN); //why?
             }
             uint64_t pub_ticks = (candidate << ds) & MaskLowNBits(TOTAL_LOW);
             return pub_ticks;

@@ -50,7 +50,7 @@ namespace PredictedAdaptedEncoding {
 
     static constexpr unsigned FAMILY_48_BIT_LEN = 48u;
     static constexpr unsigned VALBITS  = 32u;
-    static constexpr unsigned LOW16_BIT_MASK  = 16u;
+    static constexpr unsigned LOW16_BIT_LEN  = 16u;
     static constexpr unsigned META16_B16  = 16u;
     static constexpr unsigned STBITS   = 8u;
     static constexpr unsigned TOTAL_LOW = 48u;

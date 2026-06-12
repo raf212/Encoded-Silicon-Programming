@@ -61,6 +61,10 @@ struct FabricCellConf
         );
     }
 
+
+    /// @brief PACKEDMODE:MODE48 -> Model48Subclass::FOUR_SUBDIVISION_2x16_AND_2x8[LOWEST16->Prob Distance | MID16 -> LOWEST:16 Bit From Hash Key | HIGHIEST16 -> LOWEST:16 Bit From Hash VAlue]
+    /// @param table_class FabricTableSegmentClasses -> BRANCH_HASH / LOGICAL_HASH / SHARED_HASH
+    /// @return 
     static constexpr packed64_t MakeHashProbDistanceCellWithSaftyLock(
         uint64_t key48, 
         uint64_t hash_48,
@@ -69,8 +73,8 @@ struct FabricCellConf
         LocalityPolicy locality = LocalityPolicy::PUBLISHED
     ) noexcept
     {
-        const uint16_t mid_Lock_key_low16 = static_cast<uint16_t>(key48 & MaskLowNBits(LOW16_BIT_MASK));
-        const uint16_t high_lock_hash_low_16 = static_cast<uint16_t>(hash_48 & MaskLowNBits(LOW16_BIT_MASK));
+        const uint16_t mid_Lock_key_low16 = static_cast<uint16_t>(key48 & MaskLowNBits(LOW16_BIT_LEN));
+        const uint16_t high_lock_hash_low_16 = static_cast<uint16_t>(hash_48 & MaskLowNBits(LOW16_BIT_LEN));
 
         const uint64_t desired_prob_distance_lock = Subdevision16x3InternalMode48CellModel::PackUnsigned16x3ToMode48_(
             prob_distance,
@@ -90,34 +94,67 @@ struct FabricCellConf
     }
 
 
-    // static constexpr bool IsValidHashPackedCell(PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
-    // {
-    //     if (
-    //         !a_cell_view.IsCellValid || 
-    //         a_cell_view.CellOwnership != OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC ||
-    //         a_cell_view.CellValueDataType != InternalDataTypePolicy::UNASSIGNED_UNUSED_NANNULL
-    //     )
-    //     {
-    //         return false;
-    //     }
+
+    /// @brief Takes HASH: KEY + VALUE + LOCK :: TRIPLET -> VALIDSTS 
+    /// @param key_cell 
+    /// @param value_cell 
+    /// @param prob_distance_safty MUST MATCH:Raw48BitInCellData -> [LOWEST16->Prob Distance | MID16 -> LOWEST:16 Bit From Hash Key | HIGHIEST16 -> LOWEST:16 Bit From Hash Value] AND Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL
+    /// @return CELL INVALID: std::nullopt / HashKeyValueDistanceTriplet with Validity flag
+    static constexpr std::optional<HashKeyValueDistanceTriplet> ReadProbDistanceFromValidPackedCell(
+        packed64_t key_cell,
+        packed64_t value_cell,
+        packed64_t prob_distance_safty
+    ) noexcept
+    {
+        const PackedCell64_t::AuthoritiveCellView key_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(key_cell);
+        const PackedCell64_t::AuthoritiveCellView value_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(value_cell);
+        const PackedCell64_t::AuthoritiveCellView prob_lock_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(prob_distance_safty);
+
+        if (
+            !CoreOfFabricCoordinator::IsHashPackedCellRuntimeAccessable(key_cell_auth_view) ||
+            !CoreOfFabricCoordinator::IsHashPackedCellRuntimeAccessable(value_cell_auth_view) ||
+            !CoreOfFabricCoordinator::IsHashPackedCellRuntimeAccessable(prob_lock_cell_auth_view)
+        )
+        {
+            return std::nullopt;
+        }
+
+        uint16_t lock_mid16_key = UNSIGNED_ZERO;
+        uint16_t lock_highiest16_value = UNSIGNED_ZERO;
+        uint16_t lowest_prob_distance = UNSIGNED_ZERO;
+
+        bool ok = Subdevision16x3InternalMode48CellModel::ExtractLowMidHighFromMode48_(prob_lock_cell_auth_view.Raw48BitInCellData, lowest_prob_distance, lock_mid16_key, lock_highiest16_value);
+
+        if (!ok)
+        {
+            return std::nullopt;
+        }
+
+        const uint16_t key_low16 = static_cast<uint16_t>(key_cell_auth_view.Raw48BitInCellData & MaskLowNBits(LOW16_BIT_LEN));
+        const uint16_t value_low16 = static_cast<uint16_t>(value_cell_auth_view.Raw48BitInCellData & MaskLowNBits(LOW16_BIT_LEN));
+
+        if (
+            lock_mid16_key == key_low16 &&
+            lock_highiest16_value == value_low16
+        )
+        {
+            return HashKeyValueDistanceTriplet{
+                value_cell_auth_view.Raw48BitInCellData,
+                key_cell_auth_view.Raw48BitInCellData,
+                lowest_prob_distance,
+                true
+            };
+        }
+
+        return HashKeyValueDistanceTriplet{
+            value_cell_auth_view.Raw48BitInCellData,
+            key_cell_auth_view.Raw48BitInCellData,
+            lowest_prob_distance,
+            false
+        };
         
-        
-    // }
 
-
-    // static constexpr std::optional<HashKeyValueDistanceTriplet> ReadProbDistanceFromValidPackedCell(
-    //     packed64_t key_cell,
-    //     packed64_t value_cell,
-    //     packed64_t prob_distance_safty
-    // ) noexcept
-    // {
-    //     const PackedCell64_t::AuthoritiveCellView key_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(key_cell);
-    //     const PackedCell64_t::AuthoritiveCellView value_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(key_cell);
-    //     const PackedCell64_t::AuthoritiveCellView prob_lock_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(key_cell);
-
-
-
-    // }
+    }
 
 
     /// @brief Creats a Decriptive cell for Record Book Table Class :: with external 16bit meta indicating 

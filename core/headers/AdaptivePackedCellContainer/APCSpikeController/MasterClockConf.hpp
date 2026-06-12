@@ -65,7 +65,7 @@ class AdaptivePackedCellContainer;
 
          clk16_t GetImmidiateDownShiftedClock16(uint64_t now_ticks48) const noexcept
         {
-            return static_cast<clk16_t>((now_ticks48 >> TimerDownShift_) & MaskLowNBits(LOW16_BIT_MASK));
+            return static_cast<clk16_t>((now_ticks48 >> TimerDownShift_) & MaskLowNBits(LOW16_BIT_LEN));
         }
 
          clk16_t NowClock16() const noexcept

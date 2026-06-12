@@ -62,7 +62,7 @@ namespace PredictedAdaptedEncoding
             {
                 return CLOCK_16_SENTINAL;
             }
-            return static_cast<clk16_t>((packed_cell >> (VALBITS)) & MaskLowNBits(LOW16_BIT_MASK));
+            return static_cast<clk16_t>((packed_cell >> (VALBITS)) & MaskLowNBits(LOW16_BIT_LEN));
         }
 
         static constexpr uint64_t ExtractRaw48FamilyBits(packed64_t packed_cell) noexcept
@@ -275,9 +275,9 @@ protected:
         
         static constexpr  packed64_t SetCLK16InPacked(packed64_t packed_cell, clk16_t clk16)
         {
-            constexpr packed64_t clk16_mask = (MaskLowNBits(LOW16_BIT_MASK) << VALBITS);
+            constexpr packed64_t clk16_mask = (MaskLowNBits(LOW16_BIT_LEN) << VALBITS);
             packed_cell &= ~clk16_mask;
-            packed_cell |= (packed64_t(clk16 & MaskLowNBits(LOW16_BIT_MASK)) << VALBITS);
+            packed_cell |= (packed64_t(clk16 & MaskLowNBits(LOW16_BIT_LEN)) << VALBITS);
             return packed_cell;
         }
 

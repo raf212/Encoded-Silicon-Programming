@@ -66,7 +66,7 @@ namespace PredictedAdaptedEncoding
 
         static constexpr bool ExtractLowMidHighFromMode48_(uint64_t raw48, uint16_t& low, uint16_t& mid, uint16_t& high)
         {
-            if (raw48 == PackedCell64_t::PACKED_CELL_SENTINAL)
+            if (raw48 >= PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT)
             {
                 return false;
             }

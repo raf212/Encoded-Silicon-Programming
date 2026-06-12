@@ -127,7 +127,7 @@ std::optional<uint64_t> MasterClockConf::ReconstructCellClock16toFull48BySegment
 
     if (candidate_down > local_down)
     {
-        candidate_down -= (1ull << LOW16_BIT_MASK);
+        candidate_down -= (1ull << LOW16_BIT_LEN);
     }
 
     const uint64_t reconstructed = (candidate_down << TimerDownShift_) & MaskLowNBits(FAMILY_48_BIT_LEN);

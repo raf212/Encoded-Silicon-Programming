@@ -235,11 +235,11 @@ namespace PredictedAdaptedEncoding
 
         static constexpr uint32_t HashUnsigned32_(uint32_t given_value) noexcept
         {
-            given_value ^= given_value >> LOW16_BIT_MASK;
+            given_value ^= given_value >> LOW16_BIT_LEN;
             given_value *= DEFAULT_HAS_CONST_1;
-            given_value ^= given_value >> (LOW16_BIT_MASK - 1);
+            given_value ^= given_value >> (LOW16_BIT_LEN - 1);
             given_value *= DEFAULT_HAS_CONST_2;
-            given_value ^=  given_value >> LOW16_BIT_MASK;
+            given_value ^=  given_value >> LOW16_BIT_LEN;
             return given_value;
         }
     };
@@ -445,6 +445,39 @@ namespace PredictedAdaptedEncoding
             return std::nullopt;
         }
 
+        static constexpr bool IsHashPackedCellRuntimeAccessable(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        {
+            if (
+                !a_cell_view.IsCellValid || 
+                a_cell_view.CellOwnership != OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC ||
+                a_cell_view.CellValueDataType != InternalDataTypePolicy::UnsignedPCellDataType
+            )
+            {
+                return false;
+            }
+
+            if (
+                !IsValidHashTable(a_cell_view.FabricTableSegmentClass) ||
+                a_cell_view.LocalityOfCell == LocalityPolicy::CLAIMED ||
+                a_cell_view.Raw48BitInCellData == PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT
+            )
+            {
+                return false;
+            }
+
+            switch (a_cell_view.CellMode)
+            {
+            case PackedMode::VALUE48:
+                return a_cell_view.ContractOfValue == AccessContractOfValue::CLAIMED_GURDED;
+
+            case PackedMode::MODEL48:
+                return a_cell_view.SubClassOfModel48 == Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL;
+                
+            default:
+                return false;
+            }
+            
+        }
 
 
         //kept for safty
