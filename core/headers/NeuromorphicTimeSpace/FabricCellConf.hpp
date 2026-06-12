@@ -9,7 +9,6 @@ namespace PredictedAdaptedEncoding
 
 struct FabricCellConf
 {
-    /// @brief Model32Subclass::UNCLOCKED_1x8_PLUS_2x4-> Value + Version + HandleFabricCellSequense + IDENTITY(Though used FabricTableSegmentClasses::but means identity of directory no cell) + Meta16
     /// @return VALID -> Packed Cell -> OR: UINT64_MAX
     static constexpr packed64_t MakeRecordBookCellOfTSC(
         uint64_t value,

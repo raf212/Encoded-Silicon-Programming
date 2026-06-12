@@ -334,17 +334,17 @@ namespace PredictedAdaptedEncoding
         if (full_width_validated.has_value() && full_width_validated.value() > UNSIGNED_ZERO)
         {
             AtomicallyStorePackedCellUnchecked(
-                base_idx + static_cast<size_t>(HandleFabricCellSequense::BEGIN48), 
+                base_idx + static_cast<size_t>(RecordBookInternalIndexing::BEGIN48), 
                 begin48_cell
             );
             
             AtomicallyStorePackedCellUnchecked(
-                base_idx + static_cast<size_t>(HandleFabricCellSequense::END48), 
+                base_idx + static_cast<size_t>(RecordBookInternalIndexing::END48), 
                 end48_cell
             );                
             
             AtomicallyStorePackedCellUnchecked(
-                base_idx + static_cast<size_t>(HandleFabricCellSequense::META32), 
+                base_idx + static_cast<size_t>(RecordBookInternalIndexing::META32), 
                 safty_lock_for_this
             );
 
@@ -363,9 +363,9 @@ namespace PredictedAdaptedEncoding
             return std::nullopt;
         }
 
-        const size_t begin_of_desired_table = ReadOriginIndexBeginOfRecordBookOfFabricTableSegmentClasses_(table_class) + static_cast<size_t>(HandleFabricCellSequense::BEGIN48);
-        const size_t end_idx = begin_of_desired_table + static_cast<size_t>(HandleFabricCellSequense::END48);
-        const size_t safty_lock_meta_cell = begin_of_desired_table + static_cast<size_t>(HandleFabricCellSequense::META32);
+        const size_t begin_of_desired_table = ReadOriginIndexBeginOfRecordBookOfFabricTableSegmentClasses_(table_class) + static_cast<size_t>(RecordBookInternalIndexing::BEGIN48);
+        const size_t end_idx = begin_of_desired_table + static_cast<size_t>(RecordBookInternalIndexing::END48);
+        const size_t safty_lock_meta_cell = begin_of_desired_table + static_cast<size_t>(RecordBookInternalIndexing::META32);
         if (end_idx >= SlabCellCount_ || begin_of_desired_table < APCDataStructure::METACELL_COUNT)
         {
             return std::nullopt;
@@ -415,30 +415,47 @@ namespace PredictedAdaptedEncoding
         
     }
 
-    void SlabToFabricConverterAndCordinator::InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept
-    {
+    // void SlabToFabricConverterAndCordinator::InitializeHashTable_(FabricTableSegmentClasses hash_table) noexcept
+    // {
 
-        const packed64_t desired_idle_hash_key_value_cell = FabricCellConf::MakeHashKeyOrValueCell(UNSIGNED_ZERO, table_class, LocalityPolicy::IDLE);
-        if (desired_idle_hash_key_value_cell == PackedCell64_t::PACKED_CELL_SENTINAL)
-        {
-            return;
-        }
+    //     const packed64_t desired_idle_hash_key_value_cell = FabricCellConf::MakeHashKeyOrValueCell(UNSIGNED_ZERO, hash_table, LocalityPolicy::IDLE);
+    //     if (desired_idle_hash_key_value_cell == PackedCell64_t::PACKED_CELL_SENTINAL)
+    //     {
+    //         return;
+    //     }
 
-        std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> desired_hash_table_triplet = GetValidSlabRangeTripletFromRecordBookOfFTSC(table_class);
+    //     std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> desired_hash_table_triplet = GetValidSlabRangeTripletFromRecordBookOfFTSC(hash_table);
 
-        if (!desired_hash_table_triplet.has_value())
-        {
-            return;
-        }
+    //     if (!desired_hash_table_triplet.has_value())
+    //     {
+    //         return;
+    //     }
         
-        // const size_t span = PackedCell64_t::ExtractRaw48FamilyBits(desired_hash_table_triplet.value().EndIdxRawType48Cell) - PackedCell64_t::ExtractRaw48FamilyBits(desired_hash_table_triplet.value().BeginIdxRawType48Cell);
+    //     const size_t span = PackedCell64_t::ExtractRaw48FamilyBits(desired_hash_table_triplet.value().EndIdxRawType48Cell) - PackedCell64_t::ExtractRaw48FamilyBits(desired_hash_table_triplet.value().BeginIdxRawType48Cell);
+
+    //     const packed64_t idle_key_value = FabricCellConf::MakeHashKeyOrValueCell(UNSIGNED_ZERO, hash_table, LocalityPolicy::IDLE);
+
+    //     const packed64_t prob_distance_lock_cell_idle = FabricCellConf::MakeHashProbDistanceCellWithSaftyLock(
+    //         UNSIGNED_ZERO, UNSIGNED_ZERO, UNSIGNED_ZERO,
+    //         hash_table
+    //     );
+
+    //     if (
+    //         idle_key_value == PackedCell64_t::PACKED_CELL_SENTINAL ||
+    //         prob_distance_lock_cell_idle == PackedCell64_t::PACKED_CELL_SENTINAL 
+    //     )
+    //     {
+    //         return;
+    //     }
+
+
+        
 
 
 
 
 
-
-    }
+    // }
 
     // size_t SlabToFabricConverterAndCordinator::GetSlotCellTypeIdxInFabric_(uint32_t slot, SlotCellTypeOfAPCFabric slot_type) noexcept
     // {
