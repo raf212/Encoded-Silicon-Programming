@@ -88,10 +88,10 @@ namespace PredictedAdaptedEncoding
             uint8_t slab_id = UNSIGNED_ZERO
         ) noexcept;
 
+        void InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept;
+
 //checked-----------------------------------------------
 
-        void InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept;
-    
         size_t GetSlotCellTypeIdxInFabric_(uint32_t slot, SlotCellTypeOfAPCFabric slot_type) noexcept;
 
         void InitializeSlotDirectory_() noexcept;

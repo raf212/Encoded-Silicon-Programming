@@ -28,11 +28,18 @@ namespace PredictedAdaptedEncoding
     static constexpr size_t DEFAULT_THREAD_SLOT_OF_FABRIC = 256u;
 
 
-    enum class RecordBookInternalIndexing : size_t
+    enum class RecordBookInternalIndexing : tag8_t
     {
         BEGIN48 = 0,
         END48 = 1,
         META32 = 2
+    };
+
+    enum class HashTableInternalIndexing : tag8_t
+    {
+        KEY_INDEX = 0,
+        VALUE_INDEX = 1,
+        PROB_DISTANCE_LOCK = 2
     };
 
     struct FTSC_SlabRangeTripletFrom_RecordBookOfFTSC
