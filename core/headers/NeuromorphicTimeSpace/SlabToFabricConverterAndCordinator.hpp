@@ -92,10 +92,10 @@ namespace PredictedAdaptedEncoding
 
 //checked-----------------------------------------------
 
-        size_t GetSlotCellTypeIdxInFabric_(uint32_t slot, SlotCellTypeOfAPCFabric slot_type) noexcept;
-
         void InitializeSlotDirectory_() noexcept;
 
+
+        size_t GetSlotCellTypeIdxInFabric_(uint32_t slot, SlotCellTypeOfAPCFabric slot_type) noexcept;
         void MakeAndStoreASlotDirectoryCell_(
             uint32_t slot, 
             SlotCellTypeOfAPCFabric slote_state,

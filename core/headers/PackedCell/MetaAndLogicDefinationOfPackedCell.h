@@ -210,7 +210,7 @@ namespace PredictedAdaptedEncoding {
         //GLOBAL_AND_CONFIG used for everything else where FabricTableSegmentClasses fails 
         GLOBAL_AND_CONFIG = 1,
         RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES = 2,
-        SLOT_DIRECTORY = 3,
+        APC_DESCRIPTOR = 3,
         BRANCH_HASH = 4,
         LOGICAL_HASH = 5,
         SHARED_HASH = 6,

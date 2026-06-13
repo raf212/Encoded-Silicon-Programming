@@ -460,7 +460,7 @@ namespace PredictedAdaptedEncoding
     // size_t SlabToFabricConverterAndCordinator::GetSlotCellTypeIdxInFabric_(uint32_t slot, SlotCellTypeOfAPCFabric slot_type) noexcept
     // {
     //     CacheEntryOfFabricTable slot_directory_cache_entry;
-    //     bool ok = GetFabricTableCache(FabricTableSegmentClasses::SLOT_DIRECTORY, slot_directory_cache_entry);
+    //     bool ok = GetFabricTableCache(FabricTableSegmentClasses::APC_DESCRIPTOR, slot_directory_cache_entry);
     //     if (!ok)
     //     {
     //         return APCDataStructure::APC_SIZE_SENTINAL;
@@ -486,7 +486,7 @@ namespace PredictedAdaptedEncoding
 
     //     MakeAndStoreDirectlyAFabricOwnedCell_(
     //         slot_idx, value32,
-    //         FabricTableSegmentClasses::SLOT_DIRECTORY,
+    //         FabricTableSegmentClasses::APC_DESCRIPTOR,
     //         ModelFamily::MODEL32, extended_meta_value, static_cast<tag8_t>(Model32Subclass::SELF_CLASS),
     //         InternalDataTypePolicy::UnsignedPCellDataType, locality_of_cell,
     //         PriorityPolicy::INFLUENCED

@@ -305,7 +305,7 @@ namespace PredictedAdaptedEncoding
 
     //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::GLOBAL_AND_CONFIG, global_config_begin, global_config_end, APCDataStructure::BRANCH_VERSION);
     //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES, table_directory_begin, table_directory_end, APCDataStructure::BRANCH_VERSION);
-    //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::SLOT_DIRECTORY, slot_directory_begin, slot_directory_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::APC_DESCRIPTOR, slot_directory_begin, slot_directory_end, APCDataStructure::BRANCH_VERSION);
     //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::BRANCH_HASH, branch_hash_begin, branch_hash_end, APCDataStructure::BRANCH_VERSION);
     //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::LOGICAL_HASH, logical_hash_begin, logical_hash_end, APCDataStructure::BRANCH_VERSION);
     //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::SHARED_HASH, shared_hash_begin, shared_hash_end, APCDataStructure::BRANCH_VERSION);
