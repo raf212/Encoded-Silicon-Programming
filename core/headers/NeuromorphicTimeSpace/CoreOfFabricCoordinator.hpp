@@ -86,7 +86,6 @@ namespace PredictedAdaptedEncoding
         size_t BeginIndex = UNSIGNED_ZERO;
         size_t EndIndex = UNSIGNED_ZERO;
         bool IsVAlid = false;
-        APCDescriptotCellType InternalDescriptorCellType = APCDescriptotCellType::UNASSIGNED_UNUSED_NANNULL;
     };
     static_assert(sizeof(APCDescriptorRange) == RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC * sizeof(packed64_t));
     static_assert(alignof(APCDescriptorRange) == alignof(packed64_t));

@@ -457,6 +457,27 @@ namespace PredictedAdaptedEncoding
         }
     }
 
+
+    APCDescriptorRange SlabToFabricConverterAndCordinator::ReadRangeForASingleAPCSlotFromAPCDescriptor_(uint64_t apc_slot_index) noexcept
+    {
+        const APCDescriptorRange probable_full_range_of_apc_descriptor = ReadAPCDescriptorTableBeginEndFromRecordBook();
+
+        APCDescriptorRange desired_slot_of_apc_descriptor{};
+
+        if (!probable_full_range_of_apc_descriptor.IsVAlid)
+        {
+            return desired_slot_of_apc_descriptor;
+        }
+
+        desired_slot_of_apc_descriptor.BeginIndex = probable_full_range_of_apc_descriptor.BeginIndex + static_cast<size_t>(apc_slot_index) * APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC;
+        desired_slot_of_apc_descriptor.EndIndex = desired_slot_of_apc_descriptor.BeginIndex + APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC - 1;
+        desired_slot_of_apc_descriptor.IsVAlid = true;
+        return desired_slot_of_apc_descriptor;
+    }
+
+
+
+
     // size_t SlabToFabricConverterAndCordinator::GetSlotCellTypeIdxInFabric_(uint32_t slot, APCDescriptotCellType slot_type) noexcept
     // {
     //     CacheEntryOfFabricTable slot_directory_cache_entry;

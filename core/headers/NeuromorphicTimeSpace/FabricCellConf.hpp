@@ -192,6 +192,36 @@ struct FabricCellConf
 
     }
 
+};
+
+
+struct SingleAPCDescriptionStruct
+{
+
+    using SingleAPCDescriptionCellBuffer = std::array<uint64_t, APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC + 1>;
+
+    /// @brief Assignes UINT64_MAX  UPTO:INDEX: APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC - 1 and Next 2 INDEX: UNSIGNED_ZERO
+    /// @param default_array 
+    static constexpr void BuildABlankAPCDescriptionBufferwith2CellIdentity(SingleAPCDescriptionCellBuffer& default_array)
+    {
+        for (size_t i = 0; i < default_array.size(); i++)
+        {
+            if (i < APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC)
+            {
+                default_array[i] = PackedCell64_t::PACKED_CELL_SENTINAL;
+            }
+            else
+            {
+                default_array[i] = UNSIGNED_ZERO;
+            }
+        }
+    }
+
+    // static constexpr void SetADescriptionInCellBuffer(APCDescriptotCellType cell_type, uint64_t cell_value) noexcept
+    // {
+
+    // }           
+
 
 };
 

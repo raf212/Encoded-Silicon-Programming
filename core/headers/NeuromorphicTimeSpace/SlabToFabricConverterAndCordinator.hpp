@@ -93,25 +93,17 @@ namespace PredictedAdaptedEncoding
 
         void InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept;
 
+        APCDescriptorRange ReadRangeForASingleAPCSlotFromAPCDescriptor_(uint64_t apc_slot_index) noexcept;
 
 //checked-----------------------------------------------
 
-        APCDescriptorRange ReadRangeForASingleAPCSlotFromAPCDescriptor_(uint64_t apc_slot_index) noexcept
+        void InitializeAPCDescriptorTable_() noexcept
         {
-            const APCDescriptorRange probable_full_range_of_apc_descriptor = ReadAPCDescriptorTableBeginEndFromRecordBook();
+            SingleAPCDescriptionStruct::SingleAPCDescriptionCellBuffer single_apc_description{};
+            SingleAPCDescriptionStruct::BuildABlankAPCDescriptionBufferwith2CellIdentity(single_apc_description);
 
-            APCDescriptorRange desired_slot_of_apc_descriptor{};
-
-            if (!probable_full_range_of_apc_descriptor.IsVAlid)
-            {
-                return desired_slot_of_apc_descriptor;
-            }
-
-            desired_slot_of_apc_descriptor.BeginIndex = probable_full_range_of_apc_descriptor.BeginIndex + static_cast<size_t>(apc_slot_index) * APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC;
-            // desired_slot_of_apc_descriptor.EndIndex = desired_slot_of_apc_descriptor.BeginIndex + 
             
         }
-
 
         void MakeAndStoreAPCDescriptorCellOfTSC_() noexcept;
 
