@@ -6,20 +6,8 @@ namespace PredictedAdaptedEncoding
 
     class AdaptivePackedCellContainer;
     static constexpr uint64_t APC_FABRIC_UINT48_MAX = PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT;
-    static constexpr uint32_t APC_FABRIC_HASH_EMPTY_KEY = 0u;
-    static constexpr uint32_t APC_FABRIC_HASH_TOMBSTONE_KEY = IN_CELL_VALUE_MODE32_SENTINAL;
-    static constexpr uint32_t DEFAULT_HAS_CONST_1 = 0x7feb352du;
-    static constexpr uint32_t DEFAULT_HAS_CONST_2 = 0x846ca68bu;
 
-    static constexpr size_t DEFAULT_FABRIC_CONTROLIO_LENGTH = 1024u;
-
-    /// @brief should be 3
-    static constexpr size_t RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC = 3u;
-
-    /// @brief should be 3
-    static constexpr size_t HASH_BUCKED_WIDTH_OF_FABRIC = 3u;
-
-    static constexpr size_t SLOT_RECORD_WIDTH_OF_FABRIC = 12u;
+    /// UNCHECKED
     static constexpr size_t RELATION_WIDTH_OF_FABRIC = 8u;
     static constexpr size_t QUEUE_RECORD_WIDTH_OF_FABRIC = 2u;
     static constexpr size_t WORK_RECORD_WIDTH_OF_FABRIC = 4u;
@@ -27,36 +15,51 @@ namespace PredictedAdaptedEncoding
     static constexpr size_t THREAD_TABLE_RECORD_WIDTH = 4u;
     static constexpr size_t DEFAULT_THREAD_SLOT_OF_FABRIC = 256u;
 
-    enum class APCDescriptotCellType : uint8_t
-    {
-        STATE = 0,
-        OWNER_BRANCH = 1,
-        GENERATION = 2,
-        BEGIN = 3,
-        END = 4,
-        LOGICAL_ID = 5,
-        SHARED_ID = 6,
-        RELATION_HEADS = 7,
-        RETIRE_EPOCH48 = 8,
-        NEXT_HANDLE = 9,
-        SLOT_FLAGS = 10,
-        UNASSIGNED_UNUSED_NANNULL = 11
-    };
 
+    static constexpr uint32_t APC_FABRIC_HASH_EMPTY_KEY = 0u;
+    static constexpr uint32_t APC_FABRIC_HASH_TOMBSTONE_KEY = IN_CELL_VALUE_MODE32_SENTINAL;
+    static constexpr uint32_t DEFAULT_HAS_CONST_1 = 0x7feb352du;
+    static constexpr uint32_t DEFAULT_HAS_CONST_2 = 0x846ca68bu;
+    static constexpr size_t DEFAULT_FABRIC_CONTROLIO_LENGTH = 1024u;
+    ///--------------------------
 
     enum class RecordBookInternalIndexing : tag8_t
     {
         BEGIN48 = 0,
         END48 = 1,
-        META32 = 2
+        META32 = 2,
+        UNASSIGNED_UNUSED_NANNULL = 3
     };
+    static constexpr size_t RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC = static_cast<size_t>(RecordBookInternalIndexing::UNASSIGNED_UNUSED_NANNULL);
 
     enum class HashTableInternalIndexing : tag8_t
     {
         KEY_INDEX = 0,
         VALUE_INDEX = 1,
-        PROB_DISTANCE_LOCK = 2
+        PROB_DISTANCE_LOCK = 2,
+        UNASSIGNED_UNUSED_NANNULL = 3
     };
+    static constexpr size_t HASH_BUCKED_WIDTH_OF_FABRIC = static_cast<size_t>(HashTableInternalIndexing::UNASSIGNED_UNUSED_NANNULL);
+
+    enum class APCDescriptotCellType : uint8_t
+    {
+        STATE = 0,
+        OWNER_BRANCH = 1,
+        GENERATION = 2,
+        BEGIN_INDEX_IN_SLAB = 3,
+        END_INDEX_IN_SLAB = 4,
+        LOGICAL_ID = 5,
+        SHARED_ID = 6,
+        RELATION_HEADS = 7,
+        RETIRE_EPOCH48 = 8,
+        NEXT_HANDLE = 9,
+        APC_FLAGS_FOR_THIS = 10,
+        OCCUPANCY_CELL16x3 = 11,
+        IDENTITY_OF_THE_APC_DESCRIPTOR = 12,
+        UNASSIGNED_UNUSED_NANNULL = 13
+    };
+    static constexpr size_t APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC = static_cast<size_t>(APCDescriptotCellType::UNASSIGNED_UNUSED_NANNULL);
+
 
     struct FTSC_SlabRangeTripletFrom_RecordBookOfFTSC
     {
@@ -80,8 +83,8 @@ namespace PredictedAdaptedEncoding
 
     struct APCDescriptorRange
     {
-        uint64_t BeginIndex = UNSIGNED_ZERO;
-        uint64_t EndIndex = UNSIGNED_ZERO;
+        size_t BeginIndex = UNSIGNED_ZERO;
+        size_t EndIndex = UNSIGNED_ZERO;
         bool IsVAlid = false;
         APCDescriptotCellType InternalDescriptorCellType = APCDescriptotCellType::UNASSIGNED_UNUSED_NANNULL;
     };
@@ -259,7 +262,7 @@ namespace PredictedAdaptedEncoding
                 return static_cast<uint8_t>(RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC);
             
             case FabricTableSegmentClasses::APC_DESCRIPTOR:
-                return static_cast<uint8_t>(SLOT_RECORD_WIDTH_OF_FABRIC);
+                return static_cast<uint8_t>(APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC);
             
             case FabricTableSegmentClasses::BRANCH_HASH:
             case FabricTableSegmentClasses::SHARED_HASH:
@@ -385,7 +388,7 @@ namespace PredictedAdaptedEncoding
             if (origin_table != FabricTableSegmentClasses::SEGMENT_POOL)
             {
                 if (
-                    record_width == UNSIGNED_ZERO ||
+                    record_width != GetWidthOfValidFabricTable(origin_table_segment_class) ||
                     (full_width % RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC) != UNSIGNED_ZERO
                 )
                 {

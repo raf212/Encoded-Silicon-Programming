@@ -466,7 +466,7 @@ namespace PredictedAdaptedEncoding
     //         return APCDataStructure::APC_SIZE_SENTINAL;
     //     }
     //     return slot_directory_cache_entry.BeginIdx + 
-    //         static_cast<size_t>(slot) * SLOT_RECORD_WIDTH_OF_FABRIC +
+    //         static_cast<size_t>(slot) * APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC +
     //         static_cast<size_t>(slot_type);
     // }
 

@@ -78,6 +78,9 @@ namespace PredictedAdaptedEncoding
         /// @return VALID-> INDEX < UINT
         constexpr size_t ReadOriginIndexBeginOfRecordBookOfFabricTableSegmentClasses_(OriginOfRecord desired_table) noexcept;
         
+        /// @brief Compleatly validates by width and origin -> FabricTableSegmentClasses
+        /// @param table_class desired origin table
+        /// @return VALID:: 3 -> Packed Cells:: i)Begin, ii)End iii)SaftyAndOriginMeta OR: std::nullopt
         std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> GetValidSlabRangeTripletFromRecordBookOfFTSC(FabricTableSegmentClasses table_class) noexcept;
 
         void IdleAFabricTableClassRangesMemory_(FabricTableSegmentClasses table_class) noexcept;
@@ -93,10 +96,21 @@ namespace PredictedAdaptedEncoding
 
 //checked-----------------------------------------------
 
-        // APCDescriptorRange ReadRangeForASingleAPCSlotFromAPCDescriptor_(uint64_t apc_slot_index) noexcept
-        // {
+        APCDescriptorRange ReadRangeForASingleAPCSlotFromAPCDescriptor_(uint64_t apc_slot_index) noexcept
+        {
+            const APCDescriptorRange probable_full_range_of_apc_descriptor = ReadAPCDescriptorTableBeginEndFromRecordBook();
 
-        // }
+            APCDescriptorRange desired_slot_of_apc_descriptor{};
+
+            if (!probable_full_range_of_apc_descriptor.IsVAlid)
+            {
+                return desired_slot_of_apc_descriptor;
+            }
+
+            desired_slot_of_apc_descriptor.BeginIndex = probable_full_range_of_apc_descriptor.BeginIndex + static_cast<size_t>(apc_slot_index) * APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC;
+            // desired_slot_of_apc_descriptor.EndIndex = desired_slot_of_apc_descriptor.BeginIndex + 
+            
+        }
 
 
         void MakeAndStoreAPCDescriptorCellOfTSC_() noexcept;
