@@ -105,7 +105,6 @@ namespace PredictedAdaptedEncoding
     /// @param slab_index 
     /// @param expected_cell 
     /// @return 
-
     JustifyClaimCas SlabToFabricConverterAndCordinator::TryClaimACellInSlab(PackedCell64_t::AuthoritiveCellView& expected_cell_auth_view, packed64_t* desired_packed_cell) noexcept
     {
         if (!expected_cell_auth_view.IsCellValid)
@@ -145,6 +144,27 @@ namespace PredictedAdaptedEncoding
 
         return JustifyClaimCas::CAS_LOOP_RANOUT;
         
+    }
+
+
+    APCDescriptorRange SlabToFabricConverterAndCordinator::ReadAPCDescriptorTableBeginEndFromRecordBook() noexcept
+    {
+        APCDescriptorRange return_descriptor{};
+
+        const std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> range_of_apc_descriptor_directory = GetValidSlabRangeTripletFromRecordBookOfFTSC(FabricTableSegmentClasses::APC_DESCRIPTOR);
+        if (!range_of_apc_descriptor_directory.has_value())
+        {
+            return return_descriptor;
+        }
+
+        const size_t begin_idx_of_apc_descriptor_in_slab = static_cast<size_t>(PackedCell64_t::ExtractRaw48FamilyBits(range_of_apc_descriptor_directory.value().BeginIdxRawType48Cell));
+        const size_t end_idx_of_apc_descriptor_in_slab = static_cast<size_t>(PackedCell64_t::ExtractRaw48FamilyBits(range_of_apc_descriptor_directory.value().EndIdxRawType48Cell));
+
+        return_descriptor.BeginIndex = begin_idx_of_apc_descriptor_in_slab;
+        return_descriptor.EndIndex = end_idx_of_apc_descriptor_in_slab;
+        return_descriptor.IsVAlid = true;
+
+        return return_descriptor;
     }
 
 

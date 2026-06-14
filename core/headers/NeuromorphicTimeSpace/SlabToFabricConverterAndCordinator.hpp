@@ -78,9 +78,9 @@ namespace PredictedAdaptedEncoding
         /// @return VALID-> INDEX < UINT
         constexpr size_t ReadOriginIndexBeginOfRecordBookOfFabricTableSegmentClasses_(OriginOfRecord desired_table) noexcept;
         
-        constexpr std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> GetValidSlabRangeTripletFromRecordBookOfFTSC(FabricTableSegmentClasses table_class) noexcept;
+        std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> GetValidSlabRangeTripletFromRecordBookOfFTSC(FabricTableSegmentClasses table_class) noexcept;
 
-        constexpr void IdleAFabricTableClassRangesMemory_(FabricTableSegmentClasses table_class) noexcept;
+        void IdleAFabricTableClassRangesMemory_(FabricTableSegmentClasses table_class) noexcept;
 
         constexpr bool WriteARecordBookOfTSCEntry_(
             FabricTableSegmentClasses table_class, 
@@ -93,20 +93,11 @@ namespace PredictedAdaptedEncoding
 
 //checked-----------------------------------------------
 
-        // size_t ReadAPCDescriptorCellIndexOfARecordOfAPC(
-        //     uint64_t record_index,
-        //     APCDescriptotCellType record_cell_type
-        // ) noexcept
+        // APCDescriptorRange ReadRangeForASingleAPCSlotFromAPCDescriptor_(uint64_t apc_slot_index) noexcept
         // {
-        //     const std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> range_of_apc_descriptor_directory = GetValidSlabRangeTripletFromRecordBookOfFTSC(FabricTableSegmentClasses::APC_DESCRIPTOR);
-        //     if (!range_of_apc_descriptor_directory.has_value())
-        //     {
-        //         return APCDataStructure::APC_SIZE_SENTINAL;
-        //     }
 
-
-            
         // }
+
 
         void MakeAndStoreAPCDescriptorCellOfTSC_() noexcept;
 
@@ -134,6 +125,13 @@ namespace PredictedAdaptedEncoding
 
         SlabToFabricConverterAndCordinator(const SlabToFabricConverterAndCordinator&) = delete;
         SlabToFabricConverterAndCordinator& operator = (const SlabToFabricConverterAndCordinator&) = delete;
+
+
+        /// @brief Uses -> GetValidSlabRangeTripletFromRecordBookOfFTSC to get record and packs into -> APCDescriptorRange
+        /// @return VALID::APCDescriptorRange.IsVAlid = true || INVALID:: APCDescriptorRange.IsVAlid = false
+        APCDescriptorRange ReadAPCDescriptorTableBeginEndFromRecordBook() noexcept;
+
+
 
         void ShutDownFabric() noexcept;
         
@@ -168,7 +166,6 @@ namespace PredictedAdaptedEncoding
         ) noexcept;
 
         JustifyClaimCas TryClaimACellInSlab(PackedCell64_t::AuthoritiveCellView& expected_cell_auth_view, packed64_t* desired_packed_cell = nullptr) noexcept;
-
 
 
 /// checked--------------------------------------------------------

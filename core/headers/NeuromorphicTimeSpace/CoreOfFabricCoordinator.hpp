@@ -27,6 +27,22 @@ namespace PredictedAdaptedEncoding
     static constexpr size_t THREAD_TABLE_RECORD_WIDTH = 4u;
     static constexpr size_t DEFAULT_THREAD_SLOT_OF_FABRIC = 256u;
 
+    enum class APCDescriptotCellType : uint8_t
+    {
+        STATE = 0,
+        OWNER_BRANCH = 1,
+        GENERATION = 2,
+        BEGIN = 3,
+        END = 4,
+        LOGICAL_ID = 5,
+        SHARED_ID = 6,
+        RELATION_HEADS = 7,
+        RETIRE_EPOCH48 = 8,
+        NEXT_HANDLE = 9,
+        SLOT_FLAGS = 10,
+        UNASSIGNED_UNUSED_NANNULL = 11
+    };
+
 
     enum class RecordBookInternalIndexing : tag8_t
     {
@@ -62,22 +78,18 @@ namespace PredictedAdaptedEncoding
     static_assert(sizeof(HashKeyValueDistanceTriplet) == HASH_BUCKED_WIDTH_OF_FABRIC * sizeof(uint64_t));
     static_assert(alignof(HashKeyValueDistanceTriplet) == alignof(uint64_t));
 
-
-    enum class APCDescriptotCellType : uint8_t
+    struct APCDescriptorRange
     {
-        STATE = 0,
-        OWNER_BRANCH = 1,
-        GENERATION = 2,
-        BEGIN = 3,
-        END = 4,
-        LOGICAL_ID = 5,
-        SHARED_ID = 6,
-        RELATION_HEADS = 7,
-        RETIRE_EPOCH48 = 8,
-        NEXT_HANDLE = 9,
-        SLOT_FLAGS = 10,
-        UNASSIGNED_UNUSED_NANNULL = 11
+        uint64_t BeginIndex = UNSIGNED_ZERO;
+        uint64_t EndIndex = UNSIGNED_ZERO;
+        bool IsVAlid = false;
+        APCDescriptotCellType InternalDescriptorCellType = APCDescriptotCellType::UNASSIGNED_UNUSED_NANNULL;
     };
+    static_assert(sizeof(APCDescriptorRange) == RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC * sizeof(packed64_t));
+    static_assert(alignof(APCDescriptorRange) == alignof(packed64_t));
+
+
+
 
 
     enum class FabricMetaIndicies : uint8_t
@@ -189,18 +201,6 @@ namespace PredictedAdaptedEncoding
             return given_value;
         }
     };
-
-
-
-    // struct HashPackedCellTripletCarrier
-    // {
-    //     packed64_t BeginIdxRawType48Cell = UNSIGNED_ZERO;
-    //     packed64_t EndIdxRawType48Cell = UNSIGNED_ZERO;
-    //     packed64_t WidthVersionOriginSafty = UNSIGNED_ZERO;
-    // };
-    // static_assert(sizeof(HashPackedCellTripletCarrier) == RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC * sizeof(packed64_t));
-    // static_assert(alignof(HashPackedCellTripletCarrier) == alignof(packed64_t));
-
 
     struct CoreOfFabricCoordinator
     {
@@ -337,7 +337,7 @@ namespace PredictedAdaptedEncoding
             }            
         }
 
-        static constexpr std::optional<uint64_t> ValidateAFabricTableRangeStruct(const FTSC_SlabRangeTripletFrom_RecordBookOfFTSC& provided_range_triplet) noexcept
+        static constexpr std::optional<uint64_t> ValidateAFabricTableRangeStruct(const FTSC_SlabRangeTripletFrom_RecordBookOfFTSC& provided_range_triplet, OriginOfRecord origin_table_segment_class) noexcept
         {
             const PackedCell64_t::AuthoritiveCellView auth_view_of_begin_idx = PackedCell64_t::GetAuthoritiveViewsForACell(provided_range_triplet.BeginIdxRawType48Cell);
             const PackedCell64_t::AuthoritiveCellView auth_view_of_end_idx = PackedCell64_t::GetAuthoritiveViewsForACell(provided_range_triplet.EndIdxRawType48Cell);
@@ -369,6 +369,12 @@ namespace PredictedAdaptedEncoding
 
             const uint8_t record_width = Clock16Subdivision1x8Plus2x4InMode32CellModel::ExtractLowest8Bit_(auth_view_of_safty_meta.InCellClock16);
             const OriginOfRecord origin_table = static_cast<OriginOfRecord>(Clock16Subdivision1x8Plus2x4InMode32CellModel::ExtractMid4Bit_(auth_view_of_safty_meta.InCellClock16));
+
+            if (origin_table != origin_table_segment_class)
+            {
+                return std::nullopt;
+            }
+            
 
             const uint64_t full_width = (auth_view_of_end_idx.Raw48BitInCellData) - (auth_view_of_begin_idx.Raw48BitInCellData);
             if ((static_cast<uint32_t>(full_width) !=  auth_view_of_safty_meta.Raw32BitInCellData))

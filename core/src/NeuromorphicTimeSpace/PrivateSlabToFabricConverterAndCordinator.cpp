@@ -330,7 +330,7 @@ namespace PredictedAdaptedEncoding
 
         const FTSC_SlabRangeTripletFrom_RecordBookOfFTSC desired_record_triplet {begin48_cell, end48_cell, safty_lock_for_this};
 
-        std::optional<uint64_t> full_width_validated = CoreOfFabricCoordinator::ValidateAFabricTableRangeStruct(desired_record_triplet);
+        std::optional<uint64_t> full_width_validated = CoreOfFabricCoordinator::ValidateAFabricTableRangeStruct(desired_record_triplet, table_class);
         if (full_width_validated.has_value() && full_width_validated.value() > UNSIGNED_ZERO)
         {
             AtomicallyStorePackedCellUnchecked(
@@ -356,7 +356,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    constexpr std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> SlabToFabricConverterAndCordinator::GetValidSlabRangeTripletFromRecordBookOfFTSC(FabricTableSegmentClasses table_class) noexcept
+    std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> SlabToFabricConverterAndCordinator::GetValidSlabRangeTripletFromRecordBookOfFTSC(FabricTableSegmentClasses table_class) noexcept
     {
         if (!CoreOfFabricCoordinator::IsValidFabricTable(table_class))
         {
@@ -377,7 +377,7 @@ namespace PredictedAdaptedEncoding
             ReadCompletePackedCellDirectly(safty_lock_meta_cell)
         };
 
-        std::optional<uint64_t> full_width_validated = CoreOfFabricCoordinator::ValidateAFabricTableRangeStruct(triplet);
+        std::optional<uint64_t> full_width_validated = CoreOfFabricCoordinator::ValidateAFabricTableRangeStruct(triplet, table_class);
         if (full_width_validated.has_value() && full_width_validated.value() > UNSIGNED_ZERO)
         {
             return triplet;
@@ -387,7 +387,7 @@ namespace PredictedAdaptedEncoding
     }
         
 
-    constexpr void SlabToFabricConverterAndCordinator::IdleAFabricTableClassRangesMemory_(FabricTableSegmentClasses table_class) noexcept
+    void SlabToFabricConverterAndCordinator::IdleAFabricTableClassRangesMemory_(FabricTableSegmentClasses table_class) noexcept
     {
         const std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> maybe_table_range_triplet = GetValidSlabRangeTripletFromRecordBookOfFTSC(table_class);
         if (!maybe_table_range_triplet.has_value())
@@ -395,7 +395,7 @@ namespace PredictedAdaptedEncoding
             return;
         }
         const FTSC_SlabRangeTripletFrom_RecordBookOfFTSC table_range_triplet = *maybe_table_range_triplet;
-        const std::optional<packed64_t> maybe_width_masked = CoreOfFabricCoordinator::ValidateAFabricTableRangeStruct(table_range_triplet);
+        const std::optional<packed64_t> maybe_width_masked = CoreOfFabricCoordinator::ValidateAFabricTableRangeStruct(table_range_triplet, table_class);
         if (!maybe_width_masked.has_value() && maybe_width_masked.value() <= UNSIGNED_ZERO)
         {
             return;

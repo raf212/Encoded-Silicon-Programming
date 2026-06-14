@@ -28,6 +28,43 @@ struct FabricCellConf
 
     }
 
+    /// @brief Creats a Decriptive cell for Record Book Table Class :: with external 16bit meta indicating 
+    ///[LOW8-> PER RECORD WIDTH OF ORIGIN(EXCEPT:SEGMENT_POOL) | MID4-> OriginOfRecord(ORIGIN:FabricTableSegmentClasses) | HIGH4-> VERSION(SlabId_)]
+    /// @param begin_idx 
+    /// @param end_idx 
+    /// @param origin_table_class 
+    /// @param locality 
+    /// @param version 
+    /// @return 
+    static constexpr packed64_t MakeRecordBookSaftyLock(
+        size_t begin_idx, size_t end_idx, 
+        OriginOfRecord origin_table_class,
+        LocalityPolicy locality = LocalityPolicy::PUBLISHED, 
+        uint8_t slab_id = UNSIGNED_ZERO
+    ) noexcept
+    {
+        const uint32_t masked_width = static_cast<uint32_t>(end_idx - begin_idx);
+
+        const uint8_t origin_per_record_width = CoreOfFabricCoordinator::GetWidthOfValidFabricTable(origin_table_class);
+
+        if (origin_per_record_width == CoreOfFabricCoordinator::EACH_TABLE_RECORD_SENTINAL)
+        {
+            return PackedCell64_t::PACKED_CELL_SENTINAL;
+        }
+        
+        const uint16_t version_origin_slabid = Clock16Subdivision1x8Plus2x4InMode32CellModel::Pack1x8Plus2x4InUnsigned16_(origin_per_record_width, static_cast<uint8_t>(origin_table_class), slab_id);
+
+        return PackedCell64_t::MakeModeledFabricValidPackedCell(ModelFamily::MODEL32,
+            static_cast<tag8_t>(Model32Subclass::UNCLOCKED_1x8_PLUS_2x4),
+            FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES,
+            locality, InternalDataTypePolicy::UnsignedPCellDataType,
+            PriorityPolicy::PRESSURE_FIRST,
+            masked_width,
+            version_origin_slabid
+        );
+            
+    }
+
 
     /// @brief Cell DEFAULTS: TypeFamily::VALUE48 + AccessContractOfValue::CLAIMED_GURDED + PriorityPolicy::INFLUENCED
     /// @return VALID -> Packed Cell -> OR: UINT64_MAX:: if FabricTableSegmentClasses dosent belong  BRANCH_HASH, SHARED_HASH, LOGICAL_HASH
@@ -153,44 +190,6 @@ struct FabricCellConf
         };
         
 
-    }
-
-
-    /// @brief Creats a Decriptive cell for Record Book Table Class :: with external 16bit meta indicating 
-    ///[LOW8-> PER RECORD WIDTH OF ORIGIN(EXCEPT:SEGMENT_POOL) | MID4-> OriginOfRecord(ORIGIN:FabricTableSegmentClasses) | HIGH4-> VERSION(SlabId_)]
-    /// @param begin_idx 
-    /// @param end_idx 
-    /// @param origin_table_class 
-    /// @param locality 
-    /// @param version 
-    /// @return 
-    static constexpr packed64_t MakeRecordBookSaftyLock(
-        size_t begin_idx, size_t end_idx, 
-        OriginOfRecord origin_table_class,
-        LocalityPolicy locality = LocalityPolicy::PUBLISHED, 
-        uint8_t slab_id = UNSIGNED_ZERO
-    ) noexcept
-    {
-        const uint32_t masked_width = static_cast<uint32_t>(end_idx - begin_idx);
-
-        const uint8_t origin_per_record_width = CoreOfFabricCoordinator::GetWidthOfValidFabricTable(origin_table_class);
-
-        if (origin_per_record_width == CoreOfFabricCoordinator::EACH_TABLE_RECORD_SENTINAL)
-        {
-            return PackedCell64_t::PACKED_CELL_SENTINAL;
-        }
-        
-        const uint16_t version_origin_slabid = Clock16Subdivision1x8Plus2x4InMode32CellModel::Pack1x8Plus2x4InUnsigned16_(origin_per_record_width, static_cast<uint8_t>(origin_table_class), slab_id);
-
-        return PackedCell64_t::MakeModeledFabricValidPackedCell(ModelFamily::MODEL32,
-            static_cast<tag8_t>(Model32Subclass::UNCLOCKED_1x8_PLUS_2x4),
-            FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES,
-            locality, InternalDataTypePolicy::UnsignedPCellDataType,
-            PriorityPolicy::PRESSURE_FIRST,
-            masked_width,
-            version_origin_slabid
-        );
-            
     }
 
 
