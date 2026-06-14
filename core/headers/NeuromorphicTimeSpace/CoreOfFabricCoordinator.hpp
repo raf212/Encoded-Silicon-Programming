@@ -41,23 +41,23 @@ namespace PredictedAdaptedEncoding
     };
     static constexpr size_t HASH_BUCKED_WIDTH_OF_FABRIC = static_cast<size_t>(HashTableInternalIndexing::UNASSIGNED_UNUSED_NANNULL);
 
-    enum class APCDescriptotCellType : uint8_t
+    enum class APCDescriptorCellType : uint8_t
     {
-        STATE_AND_SAFTY = 0,
-        OWNER_BRANCH = 1,
-        GENERATION = 2,
-        APC_SEGMENTPOOL_BEGAIN_SLAB = 3,
-        APC_SEGMENTPOOL_END_SLAB = 4,
-        NEXT_APC_SAGMANTPOOL_BEGAIN = 5,
-        LOGICAL_ID = 6,
-        SHARED_ID = 7,
-        RELATION_HEADS = 8,
-        RETIRE_EPOCH48 = 9,
-        APC_FLAGS_FOR_THIS = 10,
-        OCCUPANCY_CELL16x3 = 11,
+        OWNER_BRANCH = 0,
+        GENERATION = 1,
+        APC_SEGMENTPOOL_BEGAIN_SLAB = 2,
+        APC_SEGMENTPOOL_END_SLAB = 3,
+        NEXT_APC_SAGMANTPOOL_BEGAIN = 4,
+        LOGICAL_ID = 5,
+        SHARED_ID = 6,
+        RELATION_HEADS = 7,
+        RETIRE_EPOCH48 = 8,
+        APC_FLAGS_FOR_THIS = 9,
+        OCCUPANCY_CELL16x3 = 10,
+        STATE_AND_SAFTY = 11,
         UNASSIGNED_UNUSED_NANNULL = 12
     };
-    static constexpr size_t APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC = static_cast<size_t>(APCDescriptotCellType::UNASSIGNED_UNUSED_NANNULL);
+    static constexpr size_t APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC = static_cast<size_t>(APCDescriptorCellType::UNASSIGNED_UNUSED_NANNULL);
 
 
     struct FTSC_SlabRangeTripletFrom_RecordBookOfFTSC
@@ -305,19 +305,28 @@ namespace PredictedAdaptedEncoding
             return ok;
         }
 
+        static constexpr bool CommonValidityCheckOfFabricCellsTableSegmentClasses(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        {
+            if (
+                !a_cell_view.IsCellValid || 
+                a_cell_view.CellOwnership != OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC ||
+                a_cell_view.CellValueDataType != InternalDataTypePolicy::UnsignedPCellDataType
+            )
+            {
+                return false;
+            }
+            return true;
+        }
+
         static constexpr bool IsTheCellConsumeableAsRecordBookCellOfTSC(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
 
-            if (!a_cell_view.IsCellValid)
+            if (!CommonValidityCheckOfFabricCellsTableSegmentClasses(a_cell_view))
             {
                 return false;
             }
             
-            if (
-                a_cell_view.CellOwnership != OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC ||
-                a_cell_view.FabricTableSegmentClass != FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES ||
-                a_cell_view.CellValueDataType != InternalDataTypePolicy::UnsignedPCellDataType 
-            )
+            if (a_cell_view.FabricTableSegmentClass != FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES)
             {
                 return false;
             }
@@ -336,6 +345,38 @@ namespace PredictedAdaptedEncoding
             default:
                 return false;
             }            
+        }
+
+        static constexpr bool IsHashPackedCellRuntimeAccessable(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        {
+
+            if (!CommonValidityCheckOfFabricCellsTableSegmentClasses(a_cell_view))
+            {
+                return false;
+            }
+            
+
+            if (
+                !IsValidHashTable(a_cell_view.FabricTableSegmentClass) ||
+                a_cell_view.LocalityOfCell == LocalityPolicy::CLAIMED ||
+                a_cell_view.Raw48BitInCellData == PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT
+            )
+            {
+                return false;
+            }
+
+            switch (a_cell_view.CellMode)
+            {
+            case PackedMode::VALUE48:
+                return a_cell_view.ContractOfValue == AccessContractOfValue::CLAIMED_GURDED;
+
+            case PackedMode::MODEL48:
+                return a_cell_view.SubClassOfModel48 == Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL;
+                
+            default:
+                return false;
+            }
+            
         }
 
         static constexpr std::optional<uint64_t> ValidateAFabricTableRangeStruct(const FTSC_SlabRangeTripletFrom_RecordBookOfFTSC& provided_range_triplet, OriginOfRecord origin_table_segment_class) noexcept
@@ -398,39 +439,7 @@ namespace PredictedAdaptedEncoding
             return full_width;
         }
 
-        static constexpr bool IsHashPackedCellRuntimeAccessable(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
-        {
-            if (
-                !a_cell_view.IsCellValid || 
-                a_cell_view.CellOwnership != OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC ||
-                a_cell_view.CellValueDataType != InternalDataTypePolicy::UnsignedPCellDataType
-            )
-            {
-                return false;
-            }
 
-            if (
-                !IsValidHashTable(a_cell_view.FabricTableSegmentClass) ||
-                a_cell_view.LocalityOfCell == LocalityPolicy::CLAIMED ||
-                a_cell_view.Raw48BitInCellData == PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT
-            )
-            {
-                return false;
-            }
-
-            switch (a_cell_view.CellMode)
-            {
-            case PackedMode::VALUE48:
-                return a_cell_view.ContractOfValue == AccessContractOfValue::CLAIMED_GURDED;
-
-            case PackedMode::MODEL48:
-                return a_cell_view.SubClassOfModel48 == Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL;
-                
-            default:
-                return false;
-            }
-            
-        }
 
 
         //kept for safty

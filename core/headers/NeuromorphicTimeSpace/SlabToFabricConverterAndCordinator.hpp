@@ -110,10 +110,10 @@ namespace PredictedAdaptedEncoding
         void InitializeSlotDirectory_() noexcept;
 
 
-        size_t GetSlotCellTypeIdxInFabric_(uint32_t slot, APCDescriptotCellType slot_type) noexcept;
+        size_t GetSlotCellTypeIdxInFabric_(uint32_t slot, APCDescriptorCellType slot_type) noexcept;
         void MakeAndStoreASlotDirectoryCell_(
             uint32_t slot, 
-            APCDescriptotCellType slote_state,
+            APCDescriptorCellType slote_state,
             uint32_t value32, 
             clk16_t extended_meta_value,
             LocalityPolicy locality_of_cell = LocalityPolicy::IDLE

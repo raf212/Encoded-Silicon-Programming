@@ -134,30 +134,34 @@ namespace PredictedAdaptedEncoding
         static constexpr uint32_t FABRIC_META_EOF = 0x41474946u;
 
 
-        /// @brief Only functions responsible for storing value or retriving value vhecks validity of Packed Cell
-        /// @return UNCHECKED: packed64_t -> Packed Cell
+        /// @brief USES: Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL & CREATS: Occupancy cell OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER  [LocalityPolicy::PUBLISHED | LocalityPolicy::CLAIMED | LocalityPolicy::FAULTY]
+        /// @param published_count LOWEST: uint16_t in PackUnsigned16x3ToMode48_
+        /// @param claimed_count MID: uint16_t in PackUnsigned16x3ToMode48_
+        /// @param faulty_count HIGHIEST: uint16_t in PackUnsigned16x3ToMode48_
+        /// @return 
         static constexpr packed64_t ComposeAPCOwned16x3Model_48t(
             uint16_t published_count,
             uint16_t claimed_count,
             uint16_t faulty_count,
             APCPagedNodeSegmentClasses page_class,
-            LocalityPolicy locality = LocalityPolicy::PUBLISHED,
-            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST,
-            InternalDataTypePolicy dtype = InternalDataTypePolicy::UnsignedPCellDataType
+            LocalityPolicy locality = LocalityPolicy::PUBLISHED
         ) noexcept
-        {
-            const meta16_t meta16 = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_48t(
-                OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
-                static_cast<tag8_t>(page_class),
-                Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL, 
-                priority, locality, dtype
-            );
+        {   
 
-            return Subdevision16x3InternalMode48CellModel::Compose3Unsigned16bitIndependentInMode48(
+            const uint64_t raw_48 =  Subdevision16x3InternalMode48CellModel::PackUnsigned16x3ToMode48_(
                 published_count,
                 claimed_count,
-                faulty_count,
-                meta16
+                faulty_count
+            );
+
+            return PackedCell64_t::MakeModeledAPCValidPackedCell(
+                ModelFamily::MODEL48,
+                static_cast<tag8_t>(Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL),
+                page_class,
+                locality,
+                InternalDataTypePolicy ::UnsignedPCellDataType,
+                PriorityPolicy::INFLUENCED,
+                raw_48
             );
         }
 

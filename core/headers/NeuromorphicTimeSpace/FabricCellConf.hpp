@@ -193,15 +193,10 @@ struct FabricCellConf
 
 
     static constexpr packed64_t MakeAPCDescriptionValue48Cell(
-        APCDescriptotCellType cell_type, uint64_t cell_value, LocalityPolicy 
-        locality = LocalityPolicy::PUBLISHED
+        uint64_t cell_value, 
+        LocalityPolicy locality = LocalityPolicy::PUBLISHED
     ) noexcept
     {
-        if (cell_type < APCDescriptotCellType::OWNER_BRANCH || cell_type > APCDescriptotCellType::APC_FLAGS_FOR_THIS)
-        {
-            return PackedCell64_t::PACKED_CELL_SENTINAL;
-        }
-
         return PackedCell64_t::MakeTypedFabricValidPackedCell(
             TypeFamily::VALUE48,
             AccessContractOfValue::CLAIMED_GURDED,
@@ -214,8 +209,38 @@ struct FabricCellConf
         
     }
 
-};
 
+    /// @brief USES: Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL & CREATS: Occupancy cell OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC  [LocalityPolicy::PUBLISHED | LocalityPolicy::CLAIMED | LocalityPolicy::FAULTY]
+    /// @param published_count LOWEST: uint16_t in PackUnsigned16x3ToMode48_
+    /// @param claimed_count MID: uint16_t in PackUnsigned16x3ToMode48_
+    /// @param faulty_count HIGHIEST: uint16_t in PackUnsigned16x3ToMode48_
+    /// @return 
+    static constexpr packed64_t MakeOccupancyDescriptionForAPCDescriptionTable(
+        uint16_t published_count,
+        uint16_t claimed_count,
+        uint16_t faulty_count,
+        LocalityPolicy locality = LocalityPolicy::PUBLISHED
+    ) noexcept
+    {   
+        const uint64_t raw_48 =  Subdevision16x3InternalMode48CellModel::PackUnsigned16x3ToMode48_(
+            published_count,
+            claimed_count,
+            faulty_count
+        );
+
+        return PackedCell64_t::MakeModeledFabricValidPackedCell(
+            ModelFamily::MODEL48,
+            static_cast<tag8_t>(Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL),
+            FabricTableSegmentClasses::APC_DESCRIPTOR,
+            locality,
+            InternalDataTypePolicy ::UnsignedPCellDataType,
+            PriorityPolicy::INFLUENCED,
+            raw_48
+        );
+    }
+
+
+};
 
 struct SingleAPCDescriptionStruct
 {
@@ -239,7 +264,46 @@ struct SingleAPCDescriptionStruct
         }
     }
 
-    // static constexpr void SetADescriptionInCellBuffer(APCDescriptotCellType cell_type, uint64_t cell_value) noexcept
+    static constexpr bool IsValidValue48APCDescription(APCDescriptorCellType descriptor_cell_type) noexcept
+    {
+        if (descriptor_cell_type < APCDescriptorCellType::OCCUPANCY_CELL16x3)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    // static constexpr bool IsValidConsumeableAPCDescriptionCell(SingleAPCDescriptionCellBuffer& a_compleate_description_buffer) noexcept
+    // {
+
+    // }
+
+
+    // static constexpr packed64_t MakeSaftyLockForSingleComplete(SingleAPCDescriptionCellBuffer& compleate_description) noexcept
+    // {
+    //     const uint32_t masked_width = static_cast<uint32_t>(end_idx - begin_idx);
+
+    //     const uint8_t origin_per_record_width = CoreOfFabricCoordinator::GetWidthOfValidFabricTable(origin_table_class);
+
+    //     if (origin_per_record_width == CoreOfFabricCoordinator::EACH_TABLE_RECORD_SENTINAL)
+    //     {
+    //         return PackedCell64_t::PACKED_CELL_SENTINAL;
+    //     }
+        
+    //     const uint16_t version_origin_slabid = Clock16Subdivision1x8Plus2x4InMode32CellModel::Pack1x8Plus2x4InUnsigned16_(origin_per_record_width, static_cast<uint8_t>(origin_table_class), slab_id);
+
+    //     return PackedCell64_t::MakeModeledFabricValidPackedCell(ModelFamily::MODEL32,
+    //         static_cast<tag8_t>(Model32Subclass::UNCLOCKED_1x8_PLUS_2x4),
+    //         FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES,
+    //         locality, InternalDataTypePolicy::UnsignedPCellDataType,
+    //         PriorityPolicy::INFLUENCED,
+    //         masked_width,
+    //         version_origin_slabid
+    //     );
+            
+    // }
+
+    // static constexpr void SetADescriptionInCellBuffer(APCDescriptorCellType cell_type, uint64_t cell_value) noexcept
     // {
 
     // }           
