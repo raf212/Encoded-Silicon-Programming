@@ -43,20 +43,19 @@ namespace PredictedAdaptedEncoding
 
     enum class APCDescriptotCellType : uint8_t
     {
-        STATE = 0,
+        STATE_AND_SAFTY = 0,
         OWNER_BRANCH = 1,
         GENERATION = 2,
-        BEGIN_INDEX_IN_SLAB = 3,
-        END_INDEX_IN_SLAB = 4,
-        LOGICAL_ID = 5,
-        SHARED_ID = 6,
-        RELATION_HEADS = 7,
-        RETIRE_EPOCH48 = 8,
-        NEXT_HANDLE = 9,
+        APC_SEGMENTPOOL_BEGAIN_SLAB = 3,
+        APC_SEGMENTPOOL_END_SLAB = 4,
+        NEXT_APC_SAGMANTPOOL_BEGAIN = 5,
+        LOGICAL_ID = 6,
+        SHARED_ID = 7,
+        RELATION_HEADS = 8,
+        RETIRE_EPOCH48 = 9,
         APC_FLAGS_FOR_THIS = 10,
         OCCUPANCY_CELL16x3 = 11,
-        IDENTITY_OF_THE_APC_DESCRIPTOR = 12,
-        UNASSIGNED_UNUSED_NANNULL = 13
+        UNASSIGNED_UNUSED_NANNULL = 12
     };
     static constexpr size_t APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC = static_cast<size_t>(APCDescriptotCellType::UNASSIGNED_UNUSED_NANNULL);
 

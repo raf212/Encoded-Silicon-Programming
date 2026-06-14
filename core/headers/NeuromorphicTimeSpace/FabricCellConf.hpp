@@ -12,17 +12,16 @@ struct FabricCellConf
     /// @return VALID -> Packed Cell -> OR: UINT64_MAX
     static constexpr packed64_t MakeRecordBookCellOfTSC(
         uint64_t value,
-        AccessContractOfValue contract48 = AccessContractOfValue::RAW_PRIVATE,
         LocalityPolicy cell_locality = LocalityPolicy::PUBLISHED
     ) noexcept
     {
         return PackedCell64_t::MakeTypedFabricValidPackedCell(
             TypeFamily::VALUE48,
-            contract48,
+            AccessContractOfValue::RAW_PRIVATE,
             FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES,
             cell_locality,
             InternalDataTypePolicy::UnsignedPCellDataType,
-            PriorityPolicy::ERROR_FIRST,
+            PriorityPolicy::INFLUENCED,
             value 
         );
 
@@ -58,7 +57,7 @@ struct FabricCellConf
             static_cast<tag8_t>(Model32Subclass::UNCLOCKED_1x8_PLUS_2x4),
             FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES,
             locality, InternalDataTypePolicy::UnsignedPCellDataType,
-            PriorityPolicy::PRESSURE_FIRST,
+            PriorityPolicy::INFLUENCED,
             masked_width,
             version_origin_slabid
         );
@@ -190,6 +189,29 @@ struct FabricCellConf
         };
         
 
+    }
+
+
+    static constexpr packed64_t MakeAPCDescriptionValue48Cell(
+        APCDescriptotCellType cell_type, uint64_t cell_value, LocalityPolicy 
+        locality = LocalityPolicy::PUBLISHED
+    ) noexcept
+    {
+        if (cell_type < APCDescriptotCellType::OWNER_BRANCH || cell_type > APCDescriptotCellType::APC_FLAGS_FOR_THIS)
+        {
+            return PackedCell64_t::PACKED_CELL_SENTINAL;
+        }
+
+        return PackedCell64_t::MakeTypedFabricValidPackedCell(
+            TypeFamily::VALUE48,
+            AccessContractOfValue::CLAIMED_GURDED,
+            FabricTableSegmentClasses::APC_DESCRIPTOR,
+            locality,
+            InternalDataTypePolicy ::UnsignedPCellDataType,
+            PriorityPolicy::INFLUENCED,
+            cell_value
+        );
+        
     }
 
 };
