@@ -90,15 +90,33 @@ namespace PredictedAdaptedEncoding
 
         void InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept;
 
+
 //checked-----------------------------------------------
+
+        // size_t ReadAPCDescriptorCellIndexOfARecordOfAPC(
+        //     uint64_t record_index,
+        //     APCDescriptotCellType record_cell_type
+        // ) noexcept
+        // {
+        //     const std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> range_of_apc_descriptor_directory = GetValidSlabRangeTripletFromRecordBookOfFTSC(FabricTableSegmentClasses::APC_DESCRIPTOR);
+        //     if (!range_of_apc_descriptor_directory.has_value())
+        //     {
+        //         return APCDataStructure::APC_SIZE_SENTINAL;
+        //     }
+
+
+            
+        // }
+
+        void MakeAndStoreAPCDescriptorCellOfTSC_() noexcept;
 
         void InitializeSlotDirectory_() noexcept;
 
 
-        size_t GetSlotCellTypeIdxInFabric_(uint32_t slot, SlotCellTypeOfAPCFabric slot_type) noexcept;
+        size_t GetSlotCellTypeIdxInFabric_(uint32_t slot, APCDescriptotCellType slot_type) noexcept;
         void MakeAndStoreASlotDirectoryCell_(
             uint32_t slot, 
-            SlotCellTypeOfAPCFabric slote_state,
+            APCDescriptotCellType slote_state,
             uint32_t value32, 
             clk16_t extended_meta_value,
             LocalityPolicy locality_of_cell = LocalityPolicy::IDLE

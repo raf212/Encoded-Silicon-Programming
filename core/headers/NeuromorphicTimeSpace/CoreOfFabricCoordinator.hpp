@@ -63,7 +63,7 @@ namespace PredictedAdaptedEncoding
     static_assert(alignof(HashKeyValueDistanceTriplet) == alignof(uint64_t));
 
 
-    enum class SlotCellTypeOfAPCFabric : uint8_t
+    enum class APCDescriptotCellType : uint8_t
     {
         STATE = 0,
         OWNER_BRANCH = 1,

@@ -457,7 +457,7 @@ namespace PredictedAdaptedEncoding
         }
     }
 
-    // size_t SlabToFabricConverterAndCordinator::GetSlotCellTypeIdxInFabric_(uint32_t slot, SlotCellTypeOfAPCFabric slot_type) noexcept
+    // size_t SlabToFabricConverterAndCordinator::GetSlotCellTypeIdxInFabric_(uint32_t slot, APCDescriptotCellType slot_type) noexcept
     // {
     //     CacheEntryOfFabricTable slot_directory_cache_entry;
     //     bool ok = GetFabricTableCache(FabricTableSegmentClasses::APC_DESCRIPTOR, slot_directory_cache_entry);
@@ -472,7 +472,7 @@ namespace PredictedAdaptedEncoding
 
     // void SlabToFabricConverterAndCordinator::MakeAndStoreASlotDirectoryCell_(
     //     uint32_t slot, 
-    //     SlotCellTypeOfAPCFabric slote_state,
+    //     APCDescriptotCellType slote_state,
     //     uint32_t value32, 
     //     clk16_t extended_meta_value,
     //     LocalityPolicy locality_of_cell
