@@ -97,6 +97,8 @@ namespace PredictedAdaptedEncoding
 
 //checked-----------------------------------------------
 
+        void MemCopySingleAPCDescriptionIfValidFromBufferToSlabBasePtr_() noexcept;
+
         void InitializeAPCDescriptorTable_() noexcept
         {
             DescriptionOfAPC::SingleAPCDescriptionCellBuffer single_apc_description{};
@@ -105,21 +107,6 @@ namespace PredictedAdaptedEncoding
             
         }
 
-        void MakeAndStoreAPCDescriptorCellOfTSC_() noexcept;
-
-        void InitializeSlotDirectory_() noexcept;
-
-
-        size_t GetSlotCellTypeIdxInFabric_(uint32_t slot, APCDescriptorCellType slot_type) noexcept;
-        void MakeAndStoreASlotDirectoryCell_(
-            uint32_t slot, 
-            APCDescriptorCellType slote_state,
-            uint32_t value32, 
-            clk16_t extended_meta_value,
-            LocalityPolicy locality_of_cell = LocalityPolicy::IDLE
-        ) noexcept;
-
-        uint64_t IncrementOrDecrementDeltaFromFabricTrackerMetaIdx_(FabricMetaIndicies meta_idx) noexcept;
 
     public:
         SlabToFabricConverterAndCordinator(/* args */) noexcept = default;

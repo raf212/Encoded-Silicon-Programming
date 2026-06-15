@@ -6,6 +6,9 @@ namespace PredictedAdaptedEncoding
 
 struct DescriptionOfAPC
 {
+
+    static constexpr uint64_t VALID_BUFFER_MARK = 1111111111111;
+
     using SingleAPCDescriptionCellBuffer = std::array<uint64_t, APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC + 1>;
 
     /// @brief Assignes UINT64_MAX  UPTO:INDEX: APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC - 1 and Next 2 INDEX: UNSIGNED_ZERO
@@ -195,12 +198,14 @@ struct DescriptionOfAPC
         
         const PackedCell64_t::AuthoritiveCellView auth_view_of_state_version_ownership = PackedCell64_t::GetAuthoritiveViewsForACell(state_version_ownership_cell);
 
-        const uint32_t apc_width = static_cast<uint32_t>(
-            PackedCell64_t::ExtractRaw48FamilyBits(segment_pool_begin_cell) - PackedCell64_t::ExtractRaw48FamilyBits(segment_pool_end_cell)
-        );
+        const uint64_t segment_pool_begin = PackedCell64_t::ExtractRaw48FamilyBits(segment_pool_begin_cell);
+        const uint64_t segment_pool_end = PackedCell64_t::ExtractRaw48FamilyBits(segment_pool_end_cell);
 
 
-        if (auth_view_of_state_version_ownership.Raw32BitInCellData != apc_width)
+        const uint32_t apc_width = static_cast<uint32_t>(segment_pool_end - segment_pool_begin);
+
+
+        if (apc_width == UNSIGNED_ZERO || auth_view_of_state_version_ownership.Raw32BitInCellData != apc_width)
         {
             return false;
         }
@@ -245,6 +250,12 @@ struct DescriptionOfAPC
         single_apc_description_buffer[static_cast<size_t>(cell_type)] = desired_packed_cell;
     }  
     
+    /// @brief USES: Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL & CREATES: Occupancy cell OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC [LocalityPolicy::PUBLISHED | LocalityPolicy::CLAIMED | LocalityPolicy::FAULTY]
+    /// @param single_apc_description_buffer 
+    /// @param published_count 
+    /// @param claimed_count 
+    /// @param faulty_count 
+    /// @param locality 
     static constexpr void SetOccupancyInBuffer(
         SingleAPCDescriptionCellBuffer& single_apc_description_buffer,
         uint16_t published_count,
@@ -264,8 +275,8 @@ struct DescriptionOfAPC
     }
 
     /// @brief VALIDATES: INDEX 0 - APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC - 1 if valid sets 1 to index APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC == 12:: Means valid
-    /// @param single_apc_description_buffer 
-    /// @param check_consumeablity 
+    /// @param single_apc_description_buffer ADDRESS: OF: SingleAPCDescriptionCellBuffer to check
+    /// @param check_consumeablity MEANS: IF true -> LocalityPolicy::CLAIMED ->INVALID
     /// @param validate_observer Fabric can observe when ownership to APC but APC cant observe when ownership to fabric 
     /// @param desired_state  APC shouldnt observe StateOfSingleAPCDescription::EMPTY_RECORD / StateOfSingleAPCDescription::LOGICALY_RETIRED
     /// @param version_match VERSION:: Probably optional for now 
@@ -298,9 +309,44 @@ struct DescriptionOfAPC
             return false;
         }
 
-        single_apc_description_buffer[APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC] = 1ull;
+        single_apc_description_buffer[APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC] = VALID_BUFFER_MARK;
         
         return true;
+    }
+
+
+    /// @brief MAKES: VALIDATED DEFAULT: DESCRIPTION USING StateOfSingleAPCDescription::RECORD_WITH_SEGMENT_POOL & OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC
+    /// @return UNVALID: SingleAPCDescriptionCellBuffer -> LAST INDEX: 0 UNSIGNED_ZERO | Please use ValidateSingleAPCDescriptionBuffer ON: RETURN:SingleAPCDescriptionCellBuffer before storing
+    static constexpr SingleAPCDescriptionCellBuffer MakeADefaultAPCDescription(
+        uint64_t sequential_index_current_description,
+        uint64_t segment_pool_begin,
+        uint64_t segment_pool_end,
+        uint64_t segment_pool_begin_for_next_apc,
+        uint8_t version,
+        LocalityPolicy cell_locality = LocalityPolicy::PUBLISHED
+    ) noexcept
+    {
+        SingleAPCDescriptionCellBuffer apc_description_buffer{};
+
+        SetADescriptionInCellBuffer(apc_description_buffer, APCDescriptorCellType::CURRENT_DESCRIPTOR_INDEX, sequential_index_current_description, cell_locality);
+        SetADescriptionInCellBuffer(apc_description_buffer, APCDescriptorCellType::OWNER_BRANCH, UNSIGNED_ZERO, cell_locality);
+        SetADescriptionInCellBuffer(apc_description_buffer, APCDescriptorCellType::APC_SEGMENTPOOL_BEGAIN_SLAB, segment_pool_begin, cell_locality);
+        SetADescriptionInCellBuffer(apc_description_buffer, APCDescriptorCellType::APC_SEGMENTPOOL_END_SLAB, segment_pool_end, cell_locality);
+        SetADescriptionInCellBuffer(apc_description_buffer, APCDescriptorCellType::NEXT_APC_SAGMANTPOOL_BEGAIN, segment_pool_begin_for_next_apc, cell_locality);
+        SetADescriptionInCellBuffer(apc_description_buffer, APCDescriptorCellType::LOGICAL_ID, UNSIGNED_ZERO, cell_locality);
+        SetADescriptionInCellBuffer(apc_description_buffer, APCDescriptorCellType::SHARED_ID, UNSIGNED_ZERO, cell_locality);
+        SetADescriptionInCellBuffer(apc_description_buffer, APCDescriptorCellType::RELATION_HEADS, UNSIGNED_ZERO, cell_locality);
+        SetADescriptionInCellBuffer(apc_description_buffer, APCDescriptorCellType::RETIRE_EPOCH48, UNSIGNED_ZERO, cell_locality);
+        SetADescriptionInCellBuffer(apc_description_buffer, APCDescriptorCellType::APC_FLAGS_FOR_THIS, UNSIGNED_ZERO, cell_locality);
+        SetOccupancyInBuffer(apc_description_buffer, UNSIGNED_ZERO, UNSIGNED_ZERO, UNSIGNED_ZERO, cell_locality);
+        MakeStateandSaftyCellOfSingleAPCDescriptor(
+            segment_pool_begin, segment_pool_end, StateOfSingleAPCDescription::RECORD_WITH_SEGMENT_POOL, 
+            version, cell_locality, OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC
+        );
+
+        apc_description_buffer[apc_description_buffer.size() - 1] = UNSIGNED_ZERO;
+
+        return apc_description_buffer;
     }
 
 
