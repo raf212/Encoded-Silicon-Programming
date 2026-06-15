@@ -455,32 +455,45 @@ struct SingleAPCDescriptionStruct
         single_apc_description_buffer[static_cast<size_t>(APCDescriptorCellType::OCCUPANCY_CELL16x3)] = desired_occupancy_cell;
     }
 
+    /// @brief VALIDATES: INDEX 0 - APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC - 1 if valid sets 1 to index APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC == 12:: Means valid
+    /// @param single_apc_description_buffer 
+    /// @param check_consumeablity 
+    /// @param validate_observer Fabric can observe when ownership to APC but APC cant observe when ownership to fabric 
+    /// @param desired_state  APC shouldnt observe StateOfSingleAPCDescription::EMPTY_RECORD / StateOfSingleAPCDescription::LOGICALY_RETIRED
+    /// @param version_match VERSION:: Probably optional for now 
+    /// @return 
+    static constexpr bool ValidateSingleAPCDescriptionBuffer(
+        SingleAPCDescriptionCellBuffer& single_apc_description_buffer,
+        bool check_consumeablity = true,
+        std::optional<OwnershipPolicy> validate_observer = std::nullopt,
+        std::optional<StateOfSingleAPCDescription> desired_state = std::nullopt,
+        std::optional<uint8_t> version_match = std::nullopt
+    ) noexcept
+    {
+        for (size_t i = 0; i < static_cast<size_t>(APCDescriptorCellType::OCCUPANCY_CELL16x3); i++)
+        {
+            if (!IsValidAPCDescriptionCell(single_apc_description_buffer[i], PackedMode::VALUE48, check_consumeablity))
+            {
+                return false;
+            }            
+        }
 
+        if (
+            !IsValidAPCDescriptionCell(
+                single_apc_description_buffer[static_cast<size_t>(APCDescriptorCellType::OCCUPANCY_CELL16x3)], 
+                PackedMode::MODEL48, 
+                check_consumeablity
+            ) ||
+            !IsValidStateSaftyCell(single_apc_description_buffer, validate_observer, desired_state, version_match) 
+        )
+        {
+            return false;
+        }
 
-    // static constexpr bool ValidateSingleAPCDescriptionBuffer(
-    //     SingleAPCDescriptionCellBuffer& single_apc_description_buffer,
-    //     bool check_consumeablity = true
-    // ) noexcept
-    // {
-    //     bool is_valid = false;
-    //     for (size_t i = 0; i < static_cast<size_t>(APCDescriptorCellType::OCCUPANCY_CELL16x3); i++)
-    //     {
-    //         if (!IsValidAPCDescriptionCell(single_apc_description_buffer[i], PackedMode::VALUE48, check_consumeablity))
-    //         {
-    //             return false;
-    //         }            
-    //     }
-
-    //     if (
-    //         !IsValidAPCDescriptionCell(single_apc_description_buffer[static_cast<size_t>(APCDescriptorCellType::OCCUPANCY_CELL16x3), PackedMode::MODEL48, check_consumeablity]) ||
-    //         !IsValidAPCDescriptionCell(single_apc_description_buffer[static_cast<size_t>(APCDescriptorCellType::STATE_OWNERSHIP_VESION_SAFTY), PackedMode::MODEL32, check_consumeablity]) 
-    //     )
-    //     {
-    //         return false;
-    //     }
+        single_apc_description_buffer[APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC] = 1ull;
         
-        
-    // }
+        return true;
+    }
 
 
 };
