@@ -99,8 +99,8 @@ namespace PredictedAdaptedEncoding
 
         void InitializeAPCDescriptorTable_() noexcept
         {
-            SingleAPCDescriptionStruct::SingleAPCDescriptionCellBuffer single_apc_description{};
-            SingleAPCDescriptionStruct::BuildABlankAPCDescriptionBufferwith2CellIdentity(single_apc_description);
+            DescriptionOfAPC::SingleAPCDescriptionCellBuffer single_apc_description{};
+            DescriptionOfAPC::BuildABlankAPCDescriptionBufferwith2CellIdentity(single_apc_description);
 
             
         }

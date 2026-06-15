@@ -282,7 +282,7 @@ namespace PredictedAdaptedEncoding
         /// ALways same derives from -> FabricMetaIndicies
         const packed64_t directory_begin_cell = ReadCompletePackedCellDirectly(static_cast<size_t>(FabricMetaIndicies::RECORD_BOOK_OF_TSC_BEGIN));
 
-        if (CoreOfFabricCoordinator::IsThisValidRecordBookPackedCell(directory_begin_cell))
+        if (RecordBookConf::IsThisValidRecordBookPackedCell(directory_begin_cell))
         {
             const size_t base_origin_table_idx = static_cast<size_t>(PackedCell64_t::ExtractRaw48FamilyBits(directory_begin_cell));
 
@@ -315,22 +315,22 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-        const packed64_t begin48_cell = FabricCellConf::MakeRecordBookCellOfTSC(
+        const packed64_t begin48_cell = RecordBookConf::MakeRecordBookCellOfTSC(
             static_cast<uint64_t>(begin)
         );
 
-        const packed64_t end48_cell =  FabricCellConf::MakeRecordBookCellOfTSC(
+        const packed64_t end48_cell =  RecordBookConf::MakeRecordBookCellOfTSC(
             static_cast<uint64_t>(end)
         );
 
-        const packed64_t safty_lock_for_this = FabricCellConf::MakeRecordBookSaftyLock(
+        const packed64_t safty_lock_for_this = RecordBookConf::MakeRecordBookSaftyLock(
             begin, end, table_class, 
             LocalityPolicy::PUBLISHED, slab_id
         );
 
         const FTSC_SlabRangeTripletFrom_RecordBookOfFTSC desired_record_triplet {begin48_cell, end48_cell, safty_lock_for_this};
 
-        std::optional<uint64_t> full_width_validated = CoreOfFabricCoordinator::ValidateAFabricTableRangeStruct(desired_record_triplet, table_class);
+        std::optional<uint64_t> full_width_validated = RecordBookConf::ValidateAFabricTableRangeStruct(desired_record_triplet, table_class);
         if (full_width_validated.has_value() && full_width_validated.value() > UNSIGNED_ZERO)
         {
             AtomicallyStorePackedCellUnchecked(
@@ -377,7 +377,7 @@ namespace PredictedAdaptedEncoding
             ReadCompletePackedCellDirectly(safty_lock_meta_cell)
         };
 
-        std::optional<uint64_t> full_width_validated = CoreOfFabricCoordinator::ValidateAFabricTableRangeStruct(triplet, table_class);
+        std::optional<uint64_t> full_width_validated = RecordBookConf::ValidateAFabricTableRangeStruct(triplet, table_class);
         if (full_width_validated.has_value() && full_width_validated.value() > UNSIGNED_ZERO)
         {
             return triplet;
@@ -395,7 +395,7 @@ namespace PredictedAdaptedEncoding
             return;
         }
         const FTSC_SlabRangeTripletFrom_RecordBookOfFTSC table_range_triplet = *maybe_table_range_triplet;
-        const std::optional<packed64_t> maybe_width_masked = CoreOfFabricCoordinator::ValidateAFabricTableRangeStruct(table_range_triplet, table_class);
+        const std::optional<packed64_t> maybe_width_masked = RecordBookConf::ValidateAFabricTableRangeStruct(table_range_triplet, table_class);
         if (!maybe_width_masked.has_value() && maybe_width_masked.value() <= UNSIGNED_ZERO)
         {
             return;
@@ -418,7 +418,7 @@ namespace PredictedAdaptedEncoding
     void SlabToFabricConverterAndCordinator::InitializeHashTable_(FabricTableSegmentClasses hash_table) noexcept
     {
 
-        const packed64_t desired_idle_hash_key_value_cell = FabricCellConf::MakeHashKeyOrValueCell(UNSIGNED_ZERO, hash_table, LocalityPolicy::IDLE);
+        const packed64_t desired_idle_hash_key_value_cell = HashTableConf::MakeHashKeyOrValueCell(UNSIGNED_ZERO, hash_table, LocalityPolicy::IDLE);
         if (desired_idle_hash_key_value_cell == PackedCell64_t::PACKED_CELL_SENTINAL)
         {
             return;
@@ -434,9 +434,9 @@ namespace PredictedAdaptedEncoding
         const size_t begin_idx_of_the_hash_table = PackedCell64_t::ExtractRaw48FamilyBits(desired_hash_table_triplet.value().BeginIdxRawType48Cell);
         const size_t end_idx_of_the_hash_table = PackedCell64_t::ExtractRaw48FamilyBits(desired_hash_table_triplet.value().EndIdxRawType48Cell);
 
-        const packed64_t idle_key_value = FabricCellConf::MakeHashKeyOrValueCell(UNSIGNED_ZERO, hash_table, LocalityPolicy::IDLE);
+        const packed64_t idle_key_value = HashTableConf::MakeHashKeyOrValueCell(UNSIGNED_ZERO, hash_table, LocalityPolicy::IDLE);
 
-        const packed64_t prob_distance_lock_cell_idle = FabricCellConf::MakeHashProbDistanceCellWithSaftyLock(
+        const packed64_t prob_distance_lock_cell_idle = HashTableConf::MakeHashProbDistanceCellWithSaftyLock(
             UNSIGNED_ZERO, UNSIGNED_ZERO, UNSIGNED_ZERO,
             hash_table
         );

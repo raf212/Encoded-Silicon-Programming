@@ -1,5 +1,5 @@
 #pragma once 
-#include "../AdaptivePackedCellContainer/SegmentIODefinition.hpp"
+#include "../../AdaptivePackedCellContainer/SegmentIODefinition.hpp"
 
 namespace PredictedAdaptedEncoding
 {
@@ -291,19 +291,6 @@ namespace PredictedAdaptedEncoding
             }
         }
 
-        static constexpr bool IsThisValidRecordBookPackedCell(
-            packed64_t packed_cell,
-            PackedCell64_t::AuthoritiveCellView* return_cell_view = nullptr
-        ) noexcept
-        {
-            PackedCell64_t::AuthoritiveCellView desired_cell_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
-            const bool ok = IsTheCellConsumeableAsRecordBookCellOfTSC(desired_cell_view);
-            if (return_cell_view)
-            {
-                *return_cell_view = desired_cell_view;
-            }
-            return ok;
-        }
 
         static constexpr bool CommonValidityCheckOfFabricCellsTableSegmentClasses(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
@@ -317,128 +304,6 @@ namespace PredictedAdaptedEncoding
             }
             return true;
         }
-
-        static constexpr bool IsTheCellConsumeableAsRecordBookCellOfTSC(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
-        {
-
-            if (!CommonValidityCheckOfFabricCellsTableSegmentClasses(a_cell_view))
-            {
-                return false;
-            }
-            
-            if (a_cell_view.FabricTableSegmentClass != FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES)
-            {
-                return false;
-            }
-            
-            
-            switch (a_cell_view.CellMode)
-            {
-            case PackedMode::VALUE48:
-                return a_cell_view.ContractOfValue != AccessContractOfValue::UNASSIGNED_UNUSED_NANNULL &&
-                    a_cell_view.Raw48BitInCellData < PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT;
-            case PackedMode::MODEL32:
-
-                return a_cell_view.SubClassOfModel32 == Model32Subclass::UNCLOCKED_1x8_PLUS_2x4 &&
-                    a_cell_view.Raw32BitInCellData < IN_CELL_VALUE_MODE32_SENTINAL;
-
-            default:
-                return false;
-            }            
-        }
-
-        static constexpr bool IsHashPackedCellRuntimeAccessable(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
-        {
-
-            if (!CommonValidityCheckOfFabricCellsTableSegmentClasses(a_cell_view))
-            {
-                return false;
-            }
-            
-
-            if (
-                !IsValidHashTable(a_cell_view.FabricTableSegmentClass) ||
-                a_cell_view.LocalityOfCell == LocalityPolicy::CLAIMED ||
-                a_cell_view.Raw48BitInCellData == PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT
-            )
-            {
-                return false;
-            }
-
-            switch (a_cell_view.CellMode)
-            {
-            case PackedMode::VALUE48:
-                return a_cell_view.ContractOfValue == AccessContractOfValue::CLAIMED_GURDED;
-
-            case PackedMode::MODEL48:
-                return a_cell_view.SubClassOfModel48 == Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL;
-                
-            default:
-                return false;
-            }
-            
-        }
-
-        static constexpr std::optional<uint64_t> ValidateAFabricTableRangeStruct(const FTSC_SlabRangeTripletFrom_RecordBookOfFTSC& provided_range_triplet, OriginOfRecord origin_table_segment_class) noexcept
-        {
-            const PackedCell64_t::AuthoritiveCellView auth_view_of_begin_idx = PackedCell64_t::GetAuthoritiveViewsForACell(provided_range_triplet.BeginIdxRawType48Cell);
-            const PackedCell64_t::AuthoritiveCellView auth_view_of_end_idx = PackedCell64_t::GetAuthoritiveViewsForACell(provided_range_triplet.EndIdxRawType48Cell);
-            const PackedCell64_t::AuthoritiveCellView auth_view_of_safty_meta = PackedCell64_t::GetAuthoritiveViewsForACell(provided_range_triplet.WidthVersionOriginSafty);
-
-
-            if (!auth_view_of_begin_idx.IsCellValid || !auth_view_of_begin_idx.IsCellValid || !auth_view_of_safty_meta.IsCellValid)
-            {
-                return std::nullopt;
-            }
-
-            if (
-                !IsTheCellConsumeableAsRecordBookCellOfTSC(auth_view_of_begin_idx) || 
-                !IsTheCellConsumeableAsRecordBookCellOfTSC(auth_view_of_end_idx) ||
-                !IsTheCellConsumeableAsRecordBookCellOfTSC(auth_view_of_safty_meta)
-            )
-            {
-                return std::nullopt;
-            }
-
-            if (auth_view_of_begin_idx.Raw48BitInCellData < APCDataStructure::METACELL_COUNT || 
-                auth_view_of_begin_idx.Raw48BitInCellData >= auth_view_of_end_idx.Raw48BitInCellData ||
-                auth_view_of_begin_idx.CellMode != PackedMode::MODEL32 ||
-                auth_view_of_safty_meta.InCellClock16 == UNSIGNED_ZERO
-            )
-            {
-                return std::nullopt;
-            }
-
-            const uint8_t record_width = Clock16Subdivision1x8Plus2x4InMode32CellModel::ExtractLowest8Bit_(auth_view_of_safty_meta.InCellClock16);
-            const OriginOfRecord origin_table = static_cast<OriginOfRecord>(Clock16Subdivision1x8Plus2x4InMode32CellModel::ExtractMid4Bit_(auth_view_of_safty_meta.InCellClock16));
-
-            if (origin_table != origin_table_segment_class)
-            {
-                return std::nullopt;
-            }
-            
-
-            const uint64_t full_width = (auth_view_of_end_idx.Raw48BitInCellData) - (auth_view_of_begin_idx.Raw48BitInCellData);
-            if ((static_cast<uint32_t>(full_width) !=  auth_view_of_safty_meta.Raw32BitInCellData))
-            {
-                return std::nullopt;
-            }
-            
-            if (origin_table != FabricTableSegmentClasses::SEGMENT_POOL)
-            {
-                if (
-                    record_width != GetWidthOfValidFabricTable(origin_table_segment_class) ||
-                    (full_width % RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC) != UNSIGNED_ZERO
-                )
-                {
-                    return std::nullopt;
-                }
-            }
-            
-
-            return full_width;
-        }
-
 
 
 
