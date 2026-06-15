@@ -329,7 +329,9 @@ struct SingleAPCDescriptionStruct
         );
     }
 
-
+    /// @brief 
+    /// @param state_of_apc MUST PACKEDMODE:MODEL32 -> AND Model32Subclass::UNCLOCKED_1x8_PLUS_2x4 -> [LOWEST16-> VERSION | MID16 -> State Of APC | HIGHIEST16 -> Ownership Of APC] 
+    /// @return CELL INVALID: std::nullopt / HashKeyValueDistanceTriplet with Validity flag
     static constexpr packed64_t MakeStateandSaftyCellOfSingleAPCDescriptor(
         size_t segment_pool_begin, 
         size_t segment_pool_end,
@@ -359,6 +361,62 @@ struct SingleAPCDescriptionStruct
             apc_width,
             state_version_ownership
         );
+
+    }
+
+
+    static constexpr bool IsValidStateSaftyCell(
+        SingleAPCDescriptionCellBuffer& single_apc_description,
+        std::optional<OwnershipPolicy> validate_observer = std::nullopt,
+        std::optional<StateOfSingleAPCDescription> desired_state = std::nullopt,
+        std::optional<uint8_t> version_match = std::nullopt
+    ) noexcept
+    {
+        const packed64_t segment_pool_begin_cell =  single_apc_description[static_cast<size_t>(APCDescriptorCellType::APC_SEGMENTPOOL_BEGAIN_SLAB)];
+        const packed64_t segment_pool_end_cell = single_apc_description[static_cast<size_t>(APCDescriptorCellType::APC_SEGMENTPOOL_END_SLAB)];
+        const packed64_t state_version_ownership_cell = single_apc_description[static_cast<size_t>(APCDescriptorCellType::STATE_OWNERSHIP_VESION_SAFTY)];
+
+        if (
+            !IsValidAPCDescriptionCell(segment_pool_begin_cell, PackedMode::VALUE48, true) ||
+            !IsValidAPCDescriptionCell(segment_pool_end_cell, PackedMode::VALUE48, true) ||
+            !IsValidAPCDescriptionCell(state_version_ownership_cell, PackedMode::MODEL32, true)
+        )
+        {
+            return false;
+        }
+        
+        const PackedCell64_t::AuthoritiveCellView auth_view_of_state_version_ownership = PackedCell64_t::GetAuthoritiveViewsForACell(state_version_ownership_cell);
+
+        const uint32_t apc_width = static_cast<uint32_t>(
+            PackedCell64_t::ExtractRaw48FamilyBits(segment_pool_begin_cell) - PackedCell64_t::ExtractRaw48FamilyBits(segment_pool_end_cell)
+        );
+
+
+        if (auth_view_of_state_version_ownership.Raw32BitInCellData != apc_width)
+        {
+            return false;
+        }
+
+        const uint8_t version = Clock16Subdivision1x8Plus2x4InMode32CellModel::ExtractLowest8Bit_(auth_view_of_state_version_ownership.InCellClock16);
+        const StateOfSingleAPCDescription state_of_description = static_cast<StateOfSingleAPCDescription>(Clock16Subdivision1x8Plus2x4InMode32CellModel::ExtractMid4Bit_(auth_view_of_state_version_ownership.InCellClock16));
+        const OwnershipPolicy ownershipe_of_description = static_cast<OwnershipPolicy>(Clock16Subdivision1x8Plus2x4InMode32CellModel::ExtractHighiest4Bit_(auth_view_of_state_version_ownership.InCellClock16));
+        
+        if (validate_observer.has_value() && *validate_observer != ownershipe_of_description)
+        {
+            return false;
+        }
+
+        if (desired_state.has_value() && *desired_state != state_of_description)
+        {
+            return false;
+        }
+
+        if (version_match.has_value() && *version_match != version)
+        {
+            return false;
+        }
+        
+        return true;
 
     }
 
@@ -398,10 +456,6 @@ struct SingleAPCDescriptionStruct
     }
 
 
-    // static constexpr bool boolIsValidStateSaftyCell(SingleAPCDescriptionCellBuffer& single_apc_description) noexcept
-    // {
-
-    // }
 
     // static constexpr bool ValidateSingleAPCDescriptionBuffer(
     //     SingleAPCDescriptionCellBuffer& single_apc_description_buffer,
