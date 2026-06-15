@@ -192,6 +192,96 @@ struct FabricCellConf
     }
 
 
+};
+
+struct SingleAPCDescriptionStruct
+{
+
+
+    using SingleAPCDescriptionCellBuffer = std::array<uint64_t, APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC + 1>;
+
+    /// @brief Assignes UINT64_MAX  UPTO:INDEX: APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC - 1 and Next 2 INDEX: UNSIGNED_ZERO
+    /// @param default_array 
+    static constexpr void BuildABlankAPCDescriptionBufferwith2CellIdentity(SingleAPCDescriptionCellBuffer& default_array)
+    {
+        for (size_t i = 0; i < default_array.size(); i++)
+        {
+            if (i < APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC)
+            {
+                default_array[i] = PackedCell64_t::PACKED_CELL_SENTINAL;
+            }
+            else
+            {
+                default_array[i] = UNSIGNED_ZERO;
+            }
+        }
+    }
+
+    enum class StateOfSingleAPCDescription : uint8_t
+    {
+        EMPTY_RECORD = 0,
+        RECORD_WITH_SEGMENT_POOL = 1,
+        OWNED_BY_APC = 2,
+        RETIREMENT_REQUEST = 3,
+        LOGICALY_RETIRED = 4
+    };
+
+    static constexpr bool IsValidValue48APCDescription(APCDescriptorCellType descriptor_cell_type) noexcept
+    {
+        if (descriptor_cell_type < APCDescriptorCellType::OCCUPANCY_CELL16x3)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    static constexpr bool IsValidAPCDescriptionCell(
+        packed64_t packed_cell, 
+        std::optional<PackedMode> mode_check = std::nullopt,
+        bool check_consumeablity = true
+    ) noexcept
+    {
+        const PackedCell64_t::AuthoritiveCellView desired_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
+        if (!CoreOfFabricCoordinator::CommonValidityCheckOfFabricCellsTableSegmentClasses(desired_auth_view) ||
+            desired_auth_view.FabricTableSegmentClass != FabricTableSegmentClasses::APC_DESCRIPTOR
+        )
+        {
+            return false;
+        }
+
+        if ( 
+            check_consumeablity && 
+            desired_auth_view.LocalityOfCell == LocalityPolicy::CLAIMED
+        )
+        {
+            return false;
+        }
+
+        if (mode_check.has_value() && mode_check != desired_auth_view.CellMode)
+        {
+            return false;
+        }
+        
+
+        switch (desired_auth_view.CellMode)
+        {
+
+        case PackedMode::VALUE48:
+            return desired_auth_view.ContractOfValue == AccessContractOfValue::CLAIMED_GURDED;
+        
+        case PackedMode::MODEL48:
+            return desired_auth_view.SubClassOfModel48 == Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL;
+
+        case PackedMode::MODEL32:
+            return desired_auth_view.SubClassOfModel32 == Model32Subclass::UNCLOCKED_1x8_PLUS_2x4;
+        
+        default:
+            return false;
+        }
+        
+    }
+
+
     static constexpr packed64_t MakeAPCDescriptionValue48Cell(
         uint64_t cell_value, 
         LocalityPolicy locality = LocalityPolicy::PUBLISHED
@@ -240,73 +330,103 @@ struct FabricCellConf
     }
 
 
-};
-
-struct SingleAPCDescriptionStruct
-{
-
-    using SingleAPCDescriptionCellBuffer = std::array<uint64_t, APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC + 1>;
-
-    /// @brief Assignes UINT64_MAX  UPTO:INDEX: APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC - 1 and Next 2 INDEX: UNSIGNED_ZERO
-    /// @param default_array 
-    static constexpr void BuildABlankAPCDescriptionBufferwith2CellIdentity(SingleAPCDescriptionCellBuffer& default_array)
+    static constexpr packed64_t MakeStateandSaftyCellOfSingleAPCDescriptor(
+        size_t segment_pool_begin, 
+        size_t segment_pool_end,
+        StateOfSingleAPCDescription state_of_apc,
+        uint8_t version,
+        LocalityPolicy locality = LocalityPolicy::PUBLISHED,
+        OwnershipPolicy origin_ownership = OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC
+    )
     {
-        for (size_t i = 0; i < default_array.size(); i++)
+
+        const uint32_t apc_width = static_cast<uint32_t>(segment_pool_end - segment_pool_begin);
+
+        uint16_t state_version_ownership = UNSIGNED_ZERO;
+        if (apc_width == UNSIGNED_ZERO || apc_width > APCDataStructure::APC_MAX_LENGTH_OR_COUNTER)
         {
-            if (i < APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC)
-            {
-                default_array[i] = PackedCell64_t::PACKED_CELL_SENTINAL;
-            }
-            else
-            {
-                default_array[i] = UNSIGNED_ZERO;
-            }
+            return PackedCell64_t::PACKED_CELL_SENTINAL;
         }
+        
+        state_version_ownership = Clock16Subdivision1x8Plus2x4InMode32CellModel::Pack1x8Plus2x4InUnsigned16_(version, static_cast<uint8_t>(state_of_apc), static_cast<uint8_t>(origin_ownership));
+
+        return PackedCell64_t::MakeModeledFabricValidPackedCell(
+            ModelFamily::MODEL32,
+            static_cast<tag8_t>(Model32Subclass::UNCLOCKED_1x8_PLUS_2x4),
+            FabricTableSegmentClasses::APC_DESCRIPTOR,
+            locality, InternalDataTypePolicy::UnsignedPCellDataType,
+            PriorityPolicy::INFLUENCED,
+            apc_width,
+            state_version_ownership
+        );
+
     }
 
-    static constexpr bool IsValidValue48APCDescription(APCDescriptorCellType descriptor_cell_type) noexcept
+    static constexpr void SetADescriptionInCellBuffer(
+        SingleAPCDescriptionCellBuffer& single_apc_description_buffer,
+        APCDescriptorCellType cell_type, 
+        uint64_t cell_value,
+        LocalityPolicy cell_locality = LocalityPolicy::PUBLISHED
+    ) noexcept
     {
-        if (descriptor_cell_type < APCDescriptorCellType::OCCUPANCY_CELL16x3)
+        if (!IsValidValue48APCDescription(cell_type))
         {
-            return true;
+            return;
         }
-        return false;
+        
+        const packed64_t desired_packed_cell = MakeAPCDescriptionValue48Cell(cell_value, cell_locality);
+
+        single_apc_description_buffer[static_cast<size_t>(cell_type)] = desired_packed_cell;
+    }  
+    
+    static constexpr void SetOccupancyInBuffer(
+        SingleAPCDescriptionCellBuffer& single_apc_description_buffer,
+        uint16_t published_count,
+        uint16_t claimed_count,
+        uint16_t faulty_count,
+        LocalityPolicy locality = LocalityPolicy::PUBLISHED
+    )
+    {
+        const packed64_t desired_occupancy_cell = MakeOccupancyDescriptionForAPCDescriptionTable(
+            published_count,
+            claimed_count,
+            faulty_count,
+            locality
+        );
+
+        single_apc_description_buffer[static_cast<size_t>(APCDescriptorCellType::OCCUPANCY_CELL16x3)] = desired_occupancy_cell;
     }
 
-    // static constexpr bool IsValidConsumeableAPCDescriptionCell(SingleAPCDescriptionCellBuffer& a_compleate_description_buffer) noexcept
+
+    // static constexpr bool boolIsValidStateSaftyCell(SingleAPCDescriptionCellBuffer& single_apc_description) noexcept
     // {
 
     // }
 
-
-    // static constexpr packed64_t MakeSaftyLockForSingleComplete(SingleAPCDescriptionCellBuffer& compleate_description) noexcept
+    // static constexpr bool ValidateSingleAPCDescriptionBuffer(
+    //     SingleAPCDescriptionCellBuffer& single_apc_description_buffer,
+    //     bool check_consumeablity = true
+    // ) noexcept
     // {
-    //     const uint32_t masked_width = static_cast<uint32_t>(end_idx - begin_idx);
-
-    //     const uint8_t origin_per_record_width = CoreOfFabricCoordinator::GetWidthOfValidFabricTable(origin_table_class);
-
-    //     if (origin_per_record_width == CoreOfFabricCoordinator::EACH_TABLE_RECORD_SENTINAL)
+    //     bool is_valid = false;
+    //     for (size_t i = 0; i < static_cast<size_t>(APCDescriptorCellType::OCCUPANCY_CELL16x3); i++)
     //     {
-    //         return PackedCell64_t::PACKED_CELL_SENTINAL;
+    //         if (!IsValidAPCDescriptionCell(single_apc_description_buffer[i], PackedMode::VALUE48, check_consumeablity))
+    //         {
+    //             return false;
+    //         }            
+    //     }
+
+    //     if (
+    //         !IsValidAPCDescriptionCell(single_apc_description_buffer[static_cast<size_t>(APCDescriptorCellType::OCCUPANCY_CELL16x3), PackedMode::MODEL48, check_consumeablity]) ||
+    //         !IsValidAPCDescriptionCell(single_apc_description_buffer[static_cast<size_t>(APCDescriptorCellType::STATE_OWNERSHIP_VESION_SAFTY), PackedMode::MODEL32, check_consumeablity]) 
+    //     )
+    //     {
+    //         return false;
     //     }
         
-    //     const uint16_t version_origin_slabid = Clock16Subdivision1x8Plus2x4InMode32CellModel::Pack1x8Plus2x4InUnsigned16_(origin_per_record_width, static_cast<uint8_t>(origin_table_class), slab_id);
-
-    //     return PackedCell64_t::MakeModeledFabricValidPackedCell(ModelFamily::MODEL32,
-    //         static_cast<tag8_t>(Model32Subclass::UNCLOCKED_1x8_PLUS_2x4),
-    //         FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES,
-    //         locality, InternalDataTypePolicy::UnsignedPCellDataType,
-    //         PriorityPolicy::INFLUENCED,
-    //         masked_width,
-    //         version_origin_slabid
-    //     );
-            
+        
     // }
-
-    // static constexpr void SetADescriptionInCellBuffer(APCDescriptorCellType cell_type, uint64_t cell_value) noexcept
-    // {
-
-    // }           
 
 
 };

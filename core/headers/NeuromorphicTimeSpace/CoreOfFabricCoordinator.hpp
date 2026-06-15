@@ -43,8 +43,8 @@ namespace PredictedAdaptedEncoding
 
     enum class APCDescriptorCellType : uint8_t
     {
-        OWNER_BRANCH = 0,
-        GENERATION = 1,
+        CURRENT_DESCRIPTOR_INDEX = 0,
+        OWNER_BRANCH = 1,
         APC_SEGMENTPOOL_BEGAIN_SLAB = 2,
         APC_SEGMENTPOOL_END_SLAB = 3,
         NEXT_APC_SAGMANTPOOL_BEGAIN = 4,
@@ -54,7 +54,7 @@ namespace PredictedAdaptedEncoding
         RETIRE_EPOCH48 = 8,
         APC_FLAGS_FOR_THIS = 9,
         OCCUPANCY_CELL16x3 = 10,
-        STATE_AND_SAFTY = 11,
+        STATE_OWNERSHIP_VESION_SAFTY = 11,
         UNASSIGNED_UNUSED_NANNULL = 12
     };
     static constexpr size_t APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC = static_cast<size_t>(APCDescriptorCellType::UNASSIGNED_UNUSED_NANNULL);
