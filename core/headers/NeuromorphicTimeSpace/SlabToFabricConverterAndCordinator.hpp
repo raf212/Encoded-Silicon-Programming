@@ -97,8 +97,14 @@ namespace PredictedAdaptedEncoding
 
 //checked-----------------------------------------------
 
+        /// @brief UPDATES OR: Initializes PAIRED: Occupancy | Why PAIRED ? To Potentially Justify by Version OR: Internal CLOCK16 How Much Accumulatiom Diffarence Between Total and the DISTANCE: By Version or CLOCK16 
+        /// @param candidate_to_update DESIRED: LocalityPolicy -> Count Want TO Be Updated | GETS TRANSLETED: To -> FabricMetaIndicies BY: CoreOfFabricCoordinator::GetDesiredLowIdxOfOccupancyPairFromLocality
+        /// @param desired_occupancy_value IF: desired_occupancy_value 
+        /// @param force_update 
+        /// @param pair_version 
+        /// @return 
         constexpr bool UpdateValidPairedOccupancyApproxAtomically_(
-            LocalityPolicy desired_occupancy_of_locality, uint64_t desired_occupancy_value,
+            LocalityPolicy candidate_to_update, uint64_t desired_occupancy_value,
             bool force_update = false,
             clk16_t pair_version = APCDataStructure::BRANCH_VERSION
         ) noexcept;
@@ -134,8 +140,6 @@ namespace PredictedAdaptedEncoding
         /// @return VALID::APCDescriptorRange.IsVAlid = true || INVALID:: APCDescriptorRange.IsVAlid = false
         APCDescriptorRange ReadAPCDescriptorTableBeginEndFromRecordBook() noexcept;
 
-
-
         void ShutDownFabric() noexcept;
         
         constexpr packed64_t ReadCompletePackedCellDirectly(size_t slab_index) noexcept;
@@ -170,15 +174,14 @@ namespace PredictedAdaptedEncoding
 
         JustifyClaimCas TryClaimACellInSlab(PackedCell64_t::AuthoritiveCellView& expected_cell_auth_view, packed64_t* desired_packed_cell = nullptr) noexcept;
 
-
-/// checked--------------------------------------------------------
-        bool GetMetaCellView(MetaIndexOfAPCNode fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept;
-
         std::optional<uint64_t> ReadOccupancyApproxFromPairedIfValid(
             LocalityPolicy desired_occupancy_class,
             const PackedCell64_t::AuthoritiveCellView* low_half_view_ptr = nullptr,
             const PackedCell64_t::AuthoritiveCellView* high_half_view_ptr = nullptr
         ) noexcept;
+
+/// checked--------------------------------------------------------
+        bool GetMetaCellView(MetaIndexOfAPCNode fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept;
 
         bool InitializeFabric(
             uint16_t slot_count,
