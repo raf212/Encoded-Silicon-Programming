@@ -54,7 +54,7 @@ struct DescriptionOfAPC
     {
         const PackedCell64_t::AuthoritiveCellView desired_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
         if (!CoreOfFabricCoordinator::CommonValidityCheckOfFabricCellsTableSegmentClasses(desired_auth_view) ||
-            desired_auth_view.FabricTableSegmentClass != FabricTableSegmentClasses::APC_DESCRIPTOR
+            desired_auth_view.FabricTableSegmentClass != FabricTableSegmentClasses::APC_HANDLE_DESCRIPTOR
         )
         {
             return false;
@@ -101,7 +101,7 @@ struct DescriptionOfAPC
         return PackedCell64_t::MakeTypedFabricValidPackedCell(
             TypeFamily::VALUE48,
             AccessContractOfValue::CLAIMED_GURDED,
-            FabricTableSegmentClasses::APC_DESCRIPTOR,
+            FabricTableSegmentClasses::APC_HANDLE_DESCRIPTOR,
             locality,
             InternalDataTypePolicy ::UnsignedPCellDataType,
             PriorityPolicy::INFLUENCED,
@@ -132,7 +132,7 @@ struct DescriptionOfAPC
         return PackedCell64_t::MakeModeledFabricValidPackedCell(
             ModelFamily::MODEL48,
             static_cast<tag8_t>(Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL),
-            FabricTableSegmentClasses::APC_DESCRIPTOR,
+            FabricTableSegmentClasses::APC_HANDLE_DESCRIPTOR,
             locality,
             InternalDataTypePolicy ::UnsignedPCellDataType,
             PriorityPolicy::INFLUENCED,
@@ -166,7 +166,7 @@ struct DescriptionOfAPC
         return PackedCell64_t::MakeModeledFabricValidPackedCell(
             ModelFamily::MODEL32,
             static_cast<tag8_t>(Model32Subclass::UNCLOCKED_1x8_PLUS_2x4),
-            FabricTableSegmentClasses::APC_DESCRIPTOR,
+            FabricTableSegmentClasses::APC_HANDLE_DESCRIPTOR,
             locality, InternalDataTypePolicy::UnsignedPCellDataType,
             PriorityPolicy::INFLUENCED,
             apc_width,

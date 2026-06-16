@@ -41,6 +41,7 @@ namespace PredictedAdaptedEncoding
     };
     static constexpr size_t HASH_BUCKED_WIDTH_OF_FABRIC = static_cast<size_t>(HashTableInternalIndexing::UNASSIGNED_UNUSED_NANNULL);
 
+    /// @brief DESCRIBS: Initial Fundamental Meta for An APC When Created 
     enum class APCDescriptorCellType : uint8_t
     {
         CURRENT_DESCRIPTOR_INDEX = 0,
@@ -143,7 +144,7 @@ namespace PredictedAdaptedEncoding
         TABLE_DIRECTORY_COUNT = 38,
         TABLE_DIRECTORY_VERSION = 39,
 
-        //4 pairs of LocalityPolicy + PriorityPolicy::INFLUENCED based occupancy
+        //I'm dilullllllllu
         FABRIC_OCCUPANCY_APPROXIMATION_IDLE_LOW32 = 40,
         FABRIC_OCCUPANCY_APPROXIMATION_IDLE_HIGH32 = 41,
         FABRIC_OCCUPANCY_APPROXIMATION_PUBLISHED_LOW32 = 42,
@@ -259,7 +260,7 @@ namespace PredictedAdaptedEncoding
             case FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES:
                 return static_cast<uint8_t>(RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC);
             
-            case FabricTableSegmentClasses::APC_DESCRIPTOR:
+            case FabricTableSegmentClasses::APC_HANDLE_DESCRIPTOR:
                 return static_cast<uint8_t>(APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX);
             
             case FabricTableSegmentClasses::BRANCH_HASH:

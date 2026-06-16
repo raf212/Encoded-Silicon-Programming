@@ -57,25 +57,17 @@ namespace PredictedAdaptedEncoding
             return (value + alignment_value_15) & ~static_cast<size_t>(alignment_value_15);
         }
 
-        constexpr void MakeAndStoreFabricMetaValue48(
+        /// @brief ONLY: Use for Initialiazation ONLY
+        constexpr void MakeAndStoreFabricMetaValue48_(
             FabricMetaIndicies fabric_meta_idx, uint64_t value, 
             LocalityPolicy cell_locality = LocalityPolicy::PUBLISHED,
             AccessContractOfValue access_contract = AccessContractOfValue::CAS_RMW,
             PriorityPolicy priority = PriorityPolicy::INFLUENCED
         )noexcept;
-
-        constexpr bool UpdateValidPairedOccupancyApproxAtomically_(
-            LocalityPolicy desired_occupancy_of_locality, uint64_t desired_occupancy_value,
-            bool force_update = false,
-            clk16_t pair_version = APCDataStructure::BRANCH_VERSION
-        ) noexcept;
-
-        constexpr void ResetAll4TypesOfOccupancyMetaData_() noexcept;
     
-        /// @brief IN CPP FILE -> FIX:: MakeAndStoreFabricMetaValue48-> USE ensure proper AccessContractOfValue for each Metaindex
-        constexpr void WriteFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept;
-
-        /// @return VALID-> INDEX < UINT
+        /// @brief Only Reads Valid FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES -> Cells
+        /// @param desired_table OriginOfRecord == FabricTableSegmentClasses -> Used Rename fore Ease of Developement
+        /// @return VALID: Index / INVALID: SIZE_MAX
         constexpr size_t ReadOriginIndexBeginOfRecordBookOfFabricTableSegmentClasses_(OriginOfRecord desired_table) noexcept;
         
         /// @brief Compleatly validates by width and origin -> FabricTableSegmentClasses
@@ -95,8 +87,6 @@ namespace PredictedAdaptedEncoding
 
         APCDescriptorRange ReadRangeForASingleAPCSlotFromAPCDescriptor_(uint64_t apc_slot_index) noexcept;
 
-//checked-----------------------------------------------
-
         bool MemCopySingleAPCDescriptionIfValidFromBufferToSlabBasePtr_(
             DescriptionOfAPC::SingleAPCDescriptionCellBuffer& single_unvalidated_apc_description_buffer,
             DescriptionOfAPC::StateOfSingleAPCDescription updated_state,
@@ -105,7 +95,20 @@ namespace PredictedAdaptedEncoding
             std::optional<uint8_t> vesrion_match = std::nullopt
         ) noexcept;
 
-        
+//checked-----------------------------------------------
+
+        constexpr bool UpdateValidPairedOccupancyApproxAtomically_(
+            LocalityPolicy desired_occupancy_of_locality, uint64_t desired_occupancy_value,
+            bool force_update = false,
+            clk16_t pair_version = APCDataStructure::BRANCH_VERSION
+        ) noexcept;
+
+        constexpr void ResetAll4TypesOfOccupancyMetaData_() noexcept;
+
+        /// @brief IN CPP FILE -> FIX:: MakeAndStoreFabricMetaValue48_-> USE ensure proper AccessContractOfValue for each Metaindex
+        constexpr void WriteFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept;
+
+
         void InitializeAPCDescriptorTable_() noexcept
         {
             DescriptionOfAPC::SingleAPCDescriptionCellBuffer single_apc_description{};

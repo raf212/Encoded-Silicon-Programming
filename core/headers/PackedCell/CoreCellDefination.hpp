@@ -377,7 +377,7 @@ namespace PredictedAdaptedEncoding
         static constexpr packed64_t MakeModeledFabricValidPackedCell(
             ModelFamily cell_model,
             tag8_t sub_class = static_cast<tag8_t>(Model32Subclass::SELF_CLASS),
-            FabricTableSegmentClasses table_class = FabricTableSegmentClasses::GENERIC_CONTROL,
+            FabricTableSegmentClasses table_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
             LocalityPolicy cell_locality = LocalityPolicy::IDLE,
             InternalDataTypePolicy in_cell_value_data_type = InternalDataTypePolicy::UnsignedPCellDataType,
             PriorityPolicy cell_priority = PriorityPolicy::PRESSURE_FIRST,
@@ -430,7 +430,7 @@ namespace PredictedAdaptedEncoding
         static constexpr packed64_t MakeTypedFabricValidPackedCell(
             TypeFamily cell_model,
             AccessContractOfValue sub_class = AccessContractOfValue::ATOMIC_SLNAPSHOT,
-            FabricTableSegmentClasses table_class = FabricTableSegmentClasses::GENERIC_CONTROL,
+            FabricTableSegmentClasses table_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
             LocalityPolicy cell_locality = LocalityPolicy::IDLE,
             InternalDataTypePolicy in_cell_value_data_type = InternalDataTypePolicy::UnsignedPCellDataType,
             PriorityPolicy cell_priority = PriorityPolicy::PRESSURE_FIRST,

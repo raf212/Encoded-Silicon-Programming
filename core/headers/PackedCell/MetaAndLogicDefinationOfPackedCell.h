@@ -204,13 +204,20 @@ namespace PredictedAdaptedEncoding {
         NULLNAN     = 0xF
     };
 
-    enum class FabricTableSegmentClasses : tag8_t //14
-    {   //none should be invalid identifier
+    /// @brief Name Of Each Segment On Fabric
+    /// @param GLOBAL_AND_CONFIG USED:FOR: Everything else after @param THREAD_TABLE
+    /// @param RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES STORES:All Begin & End Pair of indicies for every class of FabricTableSegmentClasses
+    /// @param APC_HANDLE_DESCRIPTOR HOLDS:Each APC x RECORD:APCDescriptorCellType -> DESCRIBS: Initial Fundamental Meta for An APC When Created 
+    /// @param BRANCH_HASH
+    /// @param LOGICAL_HASH
+    /// @param SHARED_HASH
+    /// @param GENERIC_CONTROL USED:FOR: first 96 FabricMetaIndicies
+    enum class FabricTableSegmentClasses : tag8_t
+    {
         NONE = 0,
-        //GLOBAL_AND_CONFIG used for everything else where FabricTableSegmentClasses fails 
         GLOBAL_AND_CONFIG = 1,
         RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES = 2,
-        APC_DESCRIPTOR = 3,
+        APC_HANDLE_DESCRIPTOR = 3,
         BRANCH_HASH = 4,
         LOGICAL_HASH = 5,
         SHARED_HASH = 6,
