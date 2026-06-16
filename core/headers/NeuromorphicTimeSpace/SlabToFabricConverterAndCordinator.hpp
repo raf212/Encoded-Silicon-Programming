@@ -4,19 +4,7 @@
 namespace PredictedAdaptedEncoding
 {
 
-    enum class JustifyClaimCas
-    {
-        SUCCESS = 0,
-        OUT_OF_BOUND = 1,
-        INVALID_CELL = 2,
-        CELL_SENTINAL_STATE = 3,
-        CELL_INVALID = 4,
-        CAS_LOOP_RANOUT = 5,
-        UNDEFINED_CAS_FAILURE = 6,
-        INVALID_USE_OF_METHOD = 7
-
-    };
-
+    
     class SlabToFabricConverterAndCordinator
     {
     public:

@@ -5,7 +5,8 @@ namespace PredictedAdaptedEncoding
 {
 
     class AdaptivePackedCellContainer;
-    static constexpr uint64_t APC_FABRIC_UINT48_MAX = PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT;
+    static constexpr uint64_t APC_FABRIC_INDEX_SENTINAL = PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT;
+
 
     /// UNCHECKED
     static constexpr size_t RELATION_WIDTH_OF_FABRIC = 8u;
@@ -17,7 +18,6 @@ namespace PredictedAdaptedEncoding
 
 
     static constexpr uint32_t APC_FABRIC_HASH_EMPTY_KEY = 0u;
-    static constexpr uint32_t APC_FABRIC_HASH_TOMBSTONE_KEY = IN_CELL_VALUE_MODE32_SENTINAL;
     static constexpr uint32_t DEFAULT_HAS_CONST_1 = 0x7feb352du;
     static constexpr uint32_t DEFAULT_HAS_CONST_2 = 0x846ca68bu;
     static constexpr size_t DEFAULT_FABRIC_CONTROLIO_LENGTH = 1024u;
@@ -174,48 +174,24 @@ namespace PredictedAdaptedEncoding
 
     };
 
-    struct HashHelpers
+
+    enum class JustifyClaimCas
     {
-        static constexpr uint64_t NextPowerOf2Unsigned32_(uint64_t given_value) noexcept
-        {
-            if (given_value <= 2u)
-            {
-                return 2u;
-            }
-            --given_value;
-            given_value |= given_value >> 1u;
-            given_value |= given_value >> 2u;
-            given_value |= given_value >> 4u;
-            given_value |= given_value >> 8u;
-            given_value |= given_value >> 16u;
-            given_value |= given_value >> 32u;
+        SUCCESS = 0,
+        OUT_OF_BOUND = 1,
+        INVALID_CELL = 2,
+        CELL_SENTINAL_STATE = 3,
+        CELL_INVALID = 4,
+        CAS_LOOP_RANOUT = 5,
+        UNDEFINED_CAS_FAILURE = 6,
+        INVALID_USE_OF_METHOD = 7
 
-            return given_value + 1u;
-        }
-
-        static constexpr uint32_t HashUnsigned32_(uint32_t given_value) noexcept
-        {
-            given_value ^= given_value >> LOW16_BIT_LEN;
-            given_value *= DEFAULT_HAS_CONST_1;
-            given_value ^= given_value >> (LOW16_BIT_LEN - 1);
-            given_value *= DEFAULT_HAS_CONST_2;
-            given_value ^=  given_value >> LOW16_BIT_LEN;
-            return given_value;
-        }
     };
 
     struct CoreOfFabricCoordinator
     {
 
         static constexpr uint8_t EACH_TABLE_RECORD_SENTINAL = UINT8_MAX;
-
-
-
-        static constexpr bool IsValidFabricTable(FabricTableSegmentClasses table_class) noexcept
-        {
-            return table_class > FabricTableSegmentClasses::NONE &&
-                table_class < FabricTableSegmentClasses::COUNT;
-        }
 
         static constexpr bool IsValidHashTable(FabricTableSegmentClasses table_class) noexcept
         {

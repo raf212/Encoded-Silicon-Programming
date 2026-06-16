@@ -18,6 +18,12 @@ namespace PredictedAdaptedEncoding
             return true;
         }
 
+        static constexpr bool IsValidFabricTable(FabricTableSegmentClasses table_class) noexcept
+        {
+            return table_class > FabricTableSegmentClasses::NONE &&
+                table_class < FabricTableSegmentClasses::COUNT;
+        }
+
         struct alignas(16) AuthoritiveCellView
         {
             packed64_t RawCell{0};
@@ -70,12 +76,6 @@ namespace PredictedAdaptedEncoding
                         page_class <= APCPagedNodeSegmentClasses::NULLNAN;
                 };
 
-                auto IsKnownFabricTable = [](FabricTableSegmentClasses fabric_table) constexpr noexcept -> bool
-                {
-                    return fabric_table > FabricTableSegmentClasses::NONE && 
-                        fabric_table <= FabricTableSegmentClasses::GENERIC_CONTROL;
-                };
-                
                 auto IsKnownValueContract = [](AccessContractOfValue contract) constexpr noexcept -> bool
                 {
                     switch (contract)
@@ -135,7 +135,7 @@ namespace PredictedAdaptedEncoding
                 
                 case OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC:
                     if (
-                        !IsKnownFabricTable(FabricTableSegmentClass) ||
+                        !IsValidFabricTable(FabricTableSegmentClass) ||
                         FabricTableSegmentClass == FabricTableSegmentClasses::NONE ||
                         PageClass != APCPagedNodeSegmentClasses::NONE
                     )

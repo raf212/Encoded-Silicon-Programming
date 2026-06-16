@@ -273,7 +273,7 @@ namespace PredictedAdaptedEncoding
         OriginOfRecord table_class
     ) noexcept
     {
-        if (!CoreOfFabricCoordinator::IsValidFabricTable(table_class))
+        if (!PackedCell64_t::IsValidFabricTable(table_class))
         {
             return APCDataStructure::APC_SIZE_SENTINAL;
         }
@@ -298,7 +298,7 @@ namespace PredictedAdaptedEncoding
         uint8_t slab_id
     ) noexcept
     {
-        if (!CoreOfFabricCoordinator::IsValidFabricTable(table_class))
+        if (!PackedCell64_t::IsValidFabricTable(table_class))
         {
             return false;
         }
@@ -357,7 +357,7 @@ namespace PredictedAdaptedEncoding
 
     std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> SlabToFabricConverterAndCordinator::GetValidSlabRangeTripletFromRecordBookOfFTSC(FabricTableSegmentClasses table_class) noexcept
     {
-        if (!CoreOfFabricCoordinator::IsValidFabricTable(table_class))
+        if (!PackedCell64_t::IsValidFabricTable(table_class))
         {
             return std::nullopt;
         }

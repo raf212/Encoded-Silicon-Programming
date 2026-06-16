@@ -4,6 +4,38 @@
 namespace PredictedAdaptedEncoding
 {
 
+static constexpr uint64_t APC_FABRIC_HASH_TOMBSTONE_KEY_48 = APC_FABRIC_INDEX_SENTINAL;
+
+struct HashHelpers
+{
+    static constexpr uint64_t NextPowerOf2Unsigned32_(uint64_t given_value) noexcept
+    {
+        if (given_value <= 2u)
+        {
+            return 2u;
+        }
+        --given_value;
+        given_value |= given_value >> 1u;
+        given_value |= given_value >> 2u;
+        given_value |= given_value >> 4u;
+        given_value |= given_value >> 8u;
+        given_value |= given_value >> 16u;
+        given_value |= given_value >> 32u;
+
+        return given_value + 1u;
+    }
+
+    static constexpr uint32_t HashUnsigned32_(uint32_t given_value) noexcept
+    {
+        given_value ^= given_value >> LOW16_BIT_LEN;
+        given_value *= DEFAULT_HAS_CONST_1;
+        given_value ^= given_value >> (LOW16_BIT_LEN - 1);
+        given_value *= DEFAULT_HAS_CONST_2;
+        given_value ^=  given_value >> LOW16_BIT_LEN;
+        return given_value;
+    }
+};
+
 
 struct HashTableConf
 {

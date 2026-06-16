@@ -228,8 +228,8 @@ namespace PredictedAdaptedEncoding {
         DEVICE_VIEW_TABLE = 11,
         THREAD_TABLE  = 12,
         SEGMENT_POOL = 13,
-        COUNT = 14,
-        GENERIC_CONTROL = 15
+        GENERIC_CONTROL = 14,
+        COUNT = 15,
     };
 
     using OriginOfRecord = FabricTableSegmentClasses;
