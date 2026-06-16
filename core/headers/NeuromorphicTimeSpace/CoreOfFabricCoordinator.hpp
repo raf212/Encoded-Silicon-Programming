@@ -57,7 +57,7 @@ namespace PredictedAdaptedEncoding
         STATE_OWNERSHIP_VESION_SAFTY = 11,
         UNASSIGNED_UNUSED_NANNULL = 12
     };
-    static constexpr size_t APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC = static_cast<size_t>(APCDescriptorCellType::UNASSIGNED_UNUSED_NANNULL);
+    static constexpr size_t APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX = static_cast<size_t>(APCDescriptorCellType::UNASSIGNED_UNUSED_NANNULL);
 
 
     struct FTSC_SlabRangeTripletFrom_RecordBookOfFTSC
@@ -260,7 +260,7 @@ namespace PredictedAdaptedEncoding
                 return static_cast<uint8_t>(RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC);
             
             case FabricTableSegmentClasses::APC_DESCRIPTOR:
-                return static_cast<uint8_t>(APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC);
+                return static_cast<uint8_t>(APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX);
             
             case FabricTableSegmentClasses::BRANCH_HASH:
             case FabricTableSegmentClasses::SHARED_HASH:

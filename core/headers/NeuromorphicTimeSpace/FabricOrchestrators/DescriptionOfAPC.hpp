@@ -9,15 +9,15 @@ struct DescriptionOfAPC
 
     static constexpr uint64_t VALID_BUFFER_MARK = 1111111111111;
 
-    using SingleAPCDescriptionCellBuffer = std::array<uint64_t, APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC + 1>;
+    using SingleAPCDescriptionCellBuffer = std::array<uint64_t, APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX + 1>;
 
-    /// @brief Assignes UINT64_MAX  UPTO:INDEX: APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC - 1 and Next 2 INDEX: UNSIGNED_ZERO
+    /// @brief Assignes UINT64_MAX  UPTO:INDEX: APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX - 1 and Next 2 INDEX: UNSIGNED_ZERO
     /// @param default_array 
     static constexpr void BuildABlankAPCDescriptionBufferwith2CellIdentity(SingleAPCDescriptionCellBuffer& default_array)
     {
         for (size_t i = 0; i < default_array.size(); i++)
         {
-            if (i < APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC)
+            if (i < APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX)
             {
                 default_array[i] = PackedCell64_t::PACKED_CELL_SENTINAL;
             }
@@ -274,7 +274,7 @@ struct DescriptionOfAPC
         single_apc_description_buffer[static_cast<size_t>(APCDescriptorCellType::OCCUPANCY_CELL16x3)] = desired_occupancy_cell;
     }
 
-    /// @brief VALIDATES: INDEX 0 - APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC - 1 if valid sets 1 to index APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC == 12:: Means valid
+    /// @brief VALIDATES: INDEX 0 <-> (single_apc_description_buffer.size() - 2) if valid sets VALID_BUFFER_MARK to index (APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX):: Means valid
     /// @param single_apc_description_buffer ADDRESS: OF: SingleAPCDescriptionCellBuffer to check
     /// @param check_consumeablity MEANS: IF true -> LocalityPolicy::CLAIMED ->INVALID
     /// @param validate_observer Fabric can observe when ownership to APC but APC cant observe when ownership to fabric 
@@ -309,7 +309,7 @@ struct DescriptionOfAPC
             return false;
         }
 
-        single_apc_description_buffer[APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC] = VALID_BUFFER_MARK;
+        single_apc_description_buffer[APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX] = VALID_BUFFER_MARK;
         
         return true;
     }
@@ -344,7 +344,7 @@ struct DescriptionOfAPC
             version, cell_locality, OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC
         );
 
-        apc_description_buffer[apc_description_buffer.size() - 1] = UNSIGNED_ZERO;
+        apc_description_buffer[APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX] = UNSIGNED_ZERO;
 
         return apc_description_buffer;
     }

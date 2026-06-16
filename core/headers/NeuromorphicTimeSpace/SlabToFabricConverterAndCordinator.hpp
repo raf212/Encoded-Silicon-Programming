@@ -97,8 +97,15 @@ namespace PredictedAdaptedEncoding
 
 //checked-----------------------------------------------
 
-        void MemCopySingleAPCDescriptionIfValidFromBufferToSlabBasePtr_() noexcept;
+        bool MemCopySingleAPCDescriptionIfValidFromBufferToSlabBasePtr_(
+            DescriptionOfAPC::SingleAPCDescriptionCellBuffer& single_unvalidated_apc_description_buffer,
+            DescriptionOfAPC::StateOfSingleAPCDescription updated_state,
+            OwnershipPolicy updated_true_owner,
+            bool check_consumeablity = false,
+            std::optional<uint8_t> vesrion_match = std::nullopt
+        ) noexcept;
 
+        
         void InitializeAPCDescriptorTable_() noexcept
         {
             DescriptionOfAPC::SingleAPCDescriptionCellBuffer single_apc_description{};

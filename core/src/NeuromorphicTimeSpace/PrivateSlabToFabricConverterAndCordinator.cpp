@@ -469,55 +469,63 @@ namespace PredictedAdaptedEncoding
             return desired_slot_of_apc_descriptor;
         }
 
-        desired_slot_of_apc_descriptor.BeginIndex = probable_full_range_of_apc_descriptor.BeginIndex + static_cast<size_t>(apc_slot_index) * APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC;
-        desired_slot_of_apc_descriptor.EndIndex = desired_slot_of_apc_descriptor.BeginIndex + APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC - 1;
+        desired_slot_of_apc_descriptor.BeginIndex = probable_full_range_of_apc_descriptor.BeginIndex + static_cast<size_t>(apc_slot_index) * APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX;
+        desired_slot_of_apc_descriptor.EndIndex = desired_slot_of_apc_descriptor.BeginIndex + APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX - 1;
         desired_slot_of_apc_descriptor.IsVAlid = true;
         return desired_slot_of_apc_descriptor;
     }
 
+    bool SlabToFabricConverterAndCordinator::MemCopySingleAPCDescriptionIfValidFromBufferToSlabBasePtr_(
+        DescriptionOfAPC::SingleAPCDescriptionCellBuffer& single_unvalidated_apc_description_buffer,
+        DescriptionOfAPC::StateOfSingleAPCDescription updated_state,
+        OwnershipPolicy updated_true_owner,
+        bool check_consumeablity,
+        std::optional<uint8_t> vesrion_match
+    ) noexcept
+    {
+        bool buffer_ok = DescriptionOfAPC::ValidateSingleAPCDescriptionBuffer(
+            single_unvalidated_apc_description_buffer, check_consumeablity, 
+            updated_true_owner, updated_state, vesrion_match
+        );
 
-
-
-    // size_t SlabToFabricConverterAndCordinator::GetSlotCellTypeIdxInFabric_(uint32_t slot, APCDescriptorCellType slot_type) noexcept
-    // {
-    //     CacheEntryOfFabricTable slot_directory_cache_entry;
-    //     bool ok = GetFabricTableCache(FabricTableSegmentClasses::APC_DESCRIPTOR, slot_directory_cache_entry);
-    //     if (!ok)
-    //     {
-    //         return APCDataStructure::APC_SIZE_SENTINAL;
-    //     }
-    //     return slot_directory_cache_entry.BeginIdx + 
-    //         static_cast<size_t>(slot) * APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC +
-    //         static_cast<size_t>(slot_type);
-    // }
-
-    // void SlabToFabricConverterAndCordinator::MakeAndStoreASlotDirectoryCell_(
-    //     uint32_t slot, 
-    //     APCDescriptorCellType slote_state,
-    //     uint32_t value32, 
-    //     clk16_t extended_meta_value,
-    //     LocalityPolicy locality_of_cell
-    // ) noexcept
-    // {
-    //     const size_t slot_idx = GetSlotCellTypeIdxInFabric_(slot, slote_state);
-    //     if (slot_idx == APCDataStructure::PACKED_CELL_SENTENAL)
-    //     {
-    //         return;
-    //     }
-
-    //     MakeAndStoreDirectlyAFabricOwnedCell_(
-    //         slot_idx, value32,
-    //         FabricTableSegmentClasses::APC_DESCRIPTOR,
-    //         ModelFamily::MODEL32, extended_meta_value, static_cast<tag8_t>(Model32Subclass::SELF_CLASS),
-    //         InternalDataTypePolicy::UnsignedPCellDataType, locality_of_cell,
-    //         PriorityPolicy::INFLUENCED
-    //     );
-    // }
-
-    // void SlabToFabricConverterAndCordinator::InitializeSlotDirectory_() noexcept
-    // {
+        if (
+            !buffer_ok ||
+            single_unvalidated_apc_description_buffer[APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX] != DescriptionOfAPC::VALID_BUFFER_MARK ||
+            !SlabBasePtr_)
+        {
+            return false;
+        }
         
-    // }
+        const uint64_t apc_description_index = PackedCell64_t::ExtractRaw48FamilyBits(single_unvalidated_apc_description_buffer[
+            static_cast<size_t>(APCDescriptorCellType::CURRENT_DESCRIPTOR_INDEX)
+        ]);
+
+        const APCDescriptorRange desired_single_description_range =  ReadRangeForASingleAPCSlotFromAPCDescriptor_(apc_description_index);
+
+        if (
+            !desired_single_description_range.IsVAlid ||
+            desired_single_description_range.EndIndex >= SlabCellCount_
+        )
+        {
+            return false;
+        }
+
+        try
+        {
+            std::memcpy(
+                &SlabBasePtr_[desired_single_description_range.BeginIndex],
+                &SlabBasePtr_[desired_single_description_range.EndIndex],
+                HASH_BUCKED_WIDTH_OF_FABRIC * sizeof(packed64_t)
+            );
+        }
+        catch(...)
+        {
+            return false;
+        }
+
+        return true;
+
+    }
 
 
 }

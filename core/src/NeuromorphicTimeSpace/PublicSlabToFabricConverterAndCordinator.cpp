@@ -254,11 +254,11 @@ namespace PredictedAdaptedEncoding
 
     //     size_t cursor = DefaultFabricAlignment16Cell_(global_config_end);
     //     const size_t table_directory_begin = cursor;
-    //     const size_t table_directory_end = table_directory_begin + static_cast<size_t>(FabricTableSegmentClasses::COUNT) * APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC;
+    //     const size_t table_directory_end = table_directory_begin + static_cast<size_t>(FabricTableSegmentClasses::COUNT) * APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX;
 
     //     cursor = DefaultFabricAlignment16Cell_(table_directory_end);
     //     const size_t slot_directory_begin = cursor;
-    //     const size_t slot_directory_end =  slot_directory_begin + (static_cast<size_t>(slot_count) * APC_DESCRIPTOR_RECORD_WIDTH_IN_FABRIC);
+    //     const size_t slot_directory_end =  slot_directory_begin + (static_cast<size_t>(slot_count) * APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX);
 
     //     HashBucketCount_ = CoreOfFabricCoordinator::NextPowerOf2Unsigned32_(
     //         std::max<uint32_t>(BIT_LENGTH_OF_A_PACKED_CELL, static_cast<uint32_t>(slot_count) * HASH_BUCKED_WIDTH_OF_FABRIC)
