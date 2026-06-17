@@ -135,7 +135,7 @@ namespace PredictedAdaptedEncoding
         
     //     SlabId_ = static_cast<uint8_t>(slab_id & Clock16Subdivision1x8Plus2x4InMode32CellModel::MASK_LOW_4);
     //     SlotCount_ = slot_count,
-    //     SlotCellCount_ = slot_cell_count,
+    //     PerAPCRuntimeCellCount_ = slot_cell_count,
     //     ThreadTableCapacity_ = std::max<uint32_t>(1u, fabric_thread_capacity);
 
     //     const size_t global_config_begin = UNSIGNED_ZERO;

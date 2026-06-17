@@ -13,7 +13,7 @@ namespace PredictedAdaptedEncoding
         packed64_t* SlabBasePtr_{nullptr};
 
         size_t SlabCellCount_{UNSIGNED_ZERO};
-        uint64_t SlotCellCount_{UNSIGNED_ZERO};
+        uint64_t PerAPCRuntimeCellCount_{UNSIGNED_ZERO};
         uint64_t SlotCount_{UNSIGNED_ZERO};
         uint8_t SlabId_{UNSIGNED_ZERO};
 
@@ -83,6 +83,9 @@ namespace PredictedAdaptedEncoding
             std::optional<uint8_t> vesrion_match = std::nullopt
         ) noexcept;
 
+        /// @brief BUILD: & INITIALIZED: All The APC Handle Descriptor With Segment Pool <-  CONSISTING: Packed CEll -> PacvkedMode::VALUE32
+        void InitializeAPCDescriptorTable_() noexcept;
+
 //checked-----------------------------------------------
 
         /// @brief UPDATES OR: Initializes PAIRED: Occupancy | Why PAIRED ? To Potentially Justify by Version OR: Internal CLOCK16 How Much Accumulatiom Diffarence Between Total and the DISTANCE: By Version or CLOCK16 
@@ -101,15 +104,6 @@ namespace PredictedAdaptedEncoding
 
         /// @brief IN CPP FILE -> FIX:: MakeAndStoreFabricMetaValue48_-> USE ensure proper AccessContractOfValue for each Metaindex
         constexpr void WriteFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept;
-
-
-        void InitializeAPCDescriptorTable_() noexcept
-        {
-            DescriptionOfAPC::SingleAPCDescriptionCellBuffer single_apc_description{};
-            DescriptionOfAPC::BuildABlankAPCDescriptionBufferwith2CellIdentity(single_apc_description);
-
-            
-        }
 
 
     public:
@@ -167,6 +161,12 @@ namespace PredictedAdaptedEncoding
             const PackedCell64_t::AuthoritiveCellView* low_half_view_ptr = nullptr,
             const PackedCell64_t::AuthoritiveCellView* high_half_view_ptr = nullptr
         ) noexcept;
+
+        /// @brief Directly Gets Segment Pool Range For An APC by using INDEX: Of FabricTableSegmentClasses::APC_HANDLE_DESCRIPTOR | Dosent validate handle OR: Initialization 
+        /// @param single_description_index Sequential index of desired APC FabricTableSegmentClasses::APC_HANDLE_DESCRIPTOR
+        /// @return VALID: APCDescriptorRange::IsValid -> true || INVALID: APCDescriptorRange::IsValid -> true-> false
+        APCDescriptorRange GetSegmentPoolBegainEndForSingleAPCDescription_(uint64_t single_description_index) noexcept;
+
 
 /// checked--------------------------------------------------------
         bool GetMetaCellView(MetaIndexOfAPCNode fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept;

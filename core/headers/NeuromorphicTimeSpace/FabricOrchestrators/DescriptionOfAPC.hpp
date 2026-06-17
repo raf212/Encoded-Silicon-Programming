@@ -321,8 +321,8 @@ struct DescriptionOfAPC
         uint64_t sequential_index_current_description,
         uint64_t segment_pool_begin,
         uint64_t segment_pool_end,
-        uint64_t segment_pool_begin_for_next_apc,
-        uint8_t version,
+        uint64_t segment_pool_begin_for_next_apc = UNSIGNED_ZERO,
+        uint8_t version = UNSIGNED_ZERO,
         LocalityPolicy cell_locality = LocalityPolicy::PUBLISHED
     ) noexcept
     {

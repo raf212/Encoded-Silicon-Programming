@@ -168,6 +168,34 @@ namespace PredictedAdaptedEncoding
     }
 
 
+    APCDescriptorRange SlabToFabricConverterAndCordinator::GetSegmentPoolBegainEndForSingleAPCDescription_(uint64_t single_description_index) noexcept
+    {
+        
+        APCDescriptorRange desired_segment_pool_range{};
+
+        if (single_description_index >= SlotCount_)
+        {
+            return desired_segment_pool_range;
+        }
+
+        desired_segment_pool_range.BeginIndex = SegmentPoolBegin_ + static_cast<size_t>(single_description_index);
+        desired_segment_pool_range.EndIndex = desired_segment_pool_range.BeginIndex + static_cast<size_t>(PerAPCRuntimeCellCount_) - 1;
+        if (
+            desired_segment_pool_range.EndIndex > desired_segment_pool_range.BeginIndex &&
+            desired_segment_pool_range.BeginIndex > APCDataStructure::METACELL_COUNT &&
+            desired_segment_pool_range.EndIndex < SlabCellCount_
+        )
+        {
+            desired_segment_pool_range.IsVAlid = true;
+            return desired_segment_pool_range;
+        }
+
+        desired_segment_pool_range.IsVAlid = false;
+        return desired_segment_pool_range;
+        
+    }
+
+
 
 /// checked--------------------------------------------------------
 

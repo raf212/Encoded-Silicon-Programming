@@ -34,7 +34,7 @@ namespace PredictedAdaptedEncoding
     {
         SlabBasePtr_ = nullptr;
         SlabCellCount_ = UNSIGNED_ZERO;
-        SlotCellCount_ = UNSIGNED_ZERO;
+        PerAPCRuntimeCellCount_ = UNSIGNED_ZERO;
         SlotCount_ = UNSIGNED_ZERO;
         SlabId_ = APCDataStructure::BRANCH_VERSION;
 
@@ -216,11 +216,11 @@ namespace PredictedAdaptedEncoding
 
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::TOTAL_CELLS, static_cast<uint64_t>(SlabCellCount_));
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::CONTROL_CELLS_OF_FABRIC, static_cast<uint64_t>(SegmentPoolBegin_));
-        MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::SLOT_COUNT, static_cast<uint64_t>(SlotCount_));
-        MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::SLOT_CELL_COUNT, static_cast<uint64_t>(SlotCellCount_));
+        MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::APC_DESCRIPTION_COUNT, static_cast<uint64_t>(SlotCount_));
+        MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::PER_APC_RUNTIME_CELL_COUNT, static_cast<uint64_t>(PerAPCRuntimeCellCount_));
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::SEGMENT_POOL_BEGIN_IDX, static_cast<uint64_t>(SegmentPoolBegin_));
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::SEGMENT_POOL_END_IDX, static_cast<uint64_t>(SegmentPoolEnd_));
-        MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::FREE_SLOT_HEAD, UNSIGNED_ZERO);
+        MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::TOTAL_APC_IN_USE , UNSIGNED_ZERO);
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::RETIRE_SLOT_HEAD, PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT);
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::RELATION_FREE_HEAD, UNSIGNED_ZERO);
         
@@ -524,6 +524,61 @@ namespace PredictedAdaptedEncoding
 
         return true;
 
+    }
+
+    void SlabToFabricConverterAndCordinator::InitializeAPCDescriptorTable_() noexcept
+    {
+        const uint8_t version = APCDataStructure::BRANCH_VERSION;
+        const packed64_t idle_apc_cell = PackedCell64_t::MakeTypedAPCValidPackedCell(
+            TypeFamily::VALUE32,
+            AccessContractOfValue::CLAIMED_GURDED,
+            APCPagedNodeSegmentClasses::UNDEFINED,
+            LocalityPolicy::IDLE,
+            InternalDataTypePolicy::UnsignedPCellDataType,
+            PriorityPolicy::IN_CLOCKED_GENERIC_SPIKE,
+            UNSIGNED_ZERO,
+            UNSIGNED_ZERO
+        );
+
+        for (uint64_t desc_idx = 0; desc_idx < SlotCount_; desc_idx++)
+        {
+            const APCDescriptorRange segment_pool_range = GetSegmentPoolBegainEndForSingleAPCDescription_(desc_idx);
+            if (!segment_pool_range.IsVAlid)
+            {
+                continue;
+            }
+
+            const APCDescriptorRange next_segment_pool_range = GetSegmentPoolBegainEndForSingleAPCDescription_(desc_idx + 1);
+
+            DescriptionOfAPC::SingleAPCDescriptionCellBuffer desired_buffer = DescriptionOfAPC::MakeADefaultAPCDescription(
+                desc_idx,
+                static_cast<uint64_t>(segment_pool_range.BeginIndex),
+                static_cast<uint64_t>(segment_pool_range.EndIndex),
+                static_cast<uint64_t>(next_segment_pool_range.BeginIndex),
+                version,
+                LocalityPolicy::PUBLISHED
+            );
+
+            if (!MemCopySingleAPCDescriptionIfValidFromBufferToSlabBasePtr_(
+                desired_buffer,
+                DescriptionOfAPC::StateOfSingleAPCDescription::RECORD_WITH_SEGMENT_POOL,
+                OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC,
+                false,
+                version
+            ))
+            {
+                continue;
+            }
+            
+            for (size_t seg_idx = segment_pool_range.BeginIndex; seg_idx <= segment_pool_range.EndIndex; seg_idx++)
+            {
+                StorePackedCellUncheckedDirectly(seg_idx, idle_apc_cell);
+            }
+            
+        }
+        
+        MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::TOTAL_APC_IN_USE, UNSIGNED_ZERO);
+        
     }
 
 
