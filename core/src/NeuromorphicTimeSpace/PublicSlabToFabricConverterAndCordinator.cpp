@@ -195,25 +195,20 @@ namespace PredictedAdaptedEncoding
         
     }
 
+    bool SlabToFabricConverterAndCordinator::ReadFabricMetaCellViewAtomically(MetaIndexOfAPCNode fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept
+    {
+        const size_t meta_index_in_slab = static_cast<size_t>(fabric_meta_idx);
+        if (meta_index_in_slab >= APCDataStructure::METACELL_COUNT || !SlabBasePtr_)
+        {
+            return false;
+        }
 
+        std::atomic_ref<const packed64_t> packed_cell_ref(SlabBasePtr_[meta_index_in_slab]);
+        const packed64_t packed_meta_cell = packed_cell_ref.load(MoLoad_);
+        meta_cell_view_address = PackedCell64_t::GetAuthoritiveViewsForACell(packed_meta_cell);
 
-/// checked--------------------------------------------------------
-
-
-
-
-    // bool SlabToFabricConverterAndCordinator::GetMetaCellView(MetaIndexOfAPCNode fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept
-    // {
-    //     if (static_cast<size_t>(fabric_meta_idx) >= APCDataStructure::METACELL_COUNT || !SlabBasePtr_)
-    //     {
-    //         return false;
-    //     }
-
-    //     const packed64_t packed_meta_cell = SlabBasePtr_[static_cast<size_t>(fabric_meta_idx)].load(MoLoad_);
-    //     meta_cell_view_address = PackedCell64_t::GetAuthoritiveViewsForACell(packed_meta_cell);
-
-    //     return true;        
-    // }
+        return true;        
+    }
 
 
 
@@ -235,5 +230,25 @@ namespace PredictedAdaptedEncoding
         return PairedVersionedCellModelOfMode32::GetFullUnsigned64FromPairedVersionedCell(raw_occ_low, raw_occ_high, low_half_view_ptr, high_half_view_ptr);
     }
 
+
+
+    HashKeyValueDistanceTriplet SlabToFabricConverterAndCordinator::ReadValidHashBucketTriplet(size_t bucked_base_index) noexcept
+    {
+        if (!SlabBasePtr_ || bucked_base_index + HASH_BUCKED_WIDTH_OF_FABRIC >= SlabCellCount_)
+        {
+            const HashKeyValueDistanceTriplet invalid_value{};
+            return invalid_value;
+        }
+
+        const packed64_t key_cell = AtomicallyLoadReadCompletePackedCell(bucked_base_index + static_cast<size_t>(HashTableInternalIndexing::KEY_INDEX));
+        const packed64_t value_cell = AtomicallyLoadReadCompletePackedCell(bucked_base_index + static_cast<size_t>(HashTableInternalIndexing::VALUE_INDEX));
+        const packed64_t prob_safty_cell = AtomicallyLoadReadCompletePackedCell(bucked_base_index + static_cast<size_t>(HashTableInternalIndexing::PROB_DISTANCE_LOCK));
+        
+        return HashTableConf::ReadKeyValueProbFromValidCells(
+            key_cell,
+            value_cell,
+            prob_safty_cell
+        );
+    }
 
 }

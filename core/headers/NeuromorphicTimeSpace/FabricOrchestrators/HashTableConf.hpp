@@ -174,7 +174,7 @@ struct HashTableConf : public HashHelpers
     /// @param value_cell 
     /// @param prob_distance_safty MUST MATCH:Raw48BitInCellData -> [LOWEST16->Prob Distance | MID16 -> LOWEST:16 Bit From Hash Key | HIGHIEST16 -> LOWEST:16 Bit From Hash Value] AND Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL
     /// @return CELL INVALID: std::nullopt / HashKeyValueDistanceTriplet with Validity flag
-    static constexpr std::optional<HashKeyValueDistanceTriplet> ReadProbDistanceFromValidPackedCell(
+    static constexpr HashKeyValueDistanceTriplet ReadKeyValueProbFromValidCells(
         packed64_t key_cell,
         packed64_t value_cell,
         packed64_t prob_distance_safty
@@ -184,13 +184,14 @@ struct HashTableConf : public HashHelpers
         const PackedCell64_t::AuthoritiveCellView value_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(value_cell);
         const PackedCell64_t::AuthoritiveCellView prob_lock_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(prob_distance_safty);
 
+        const HashKeyValueDistanceTriplet invalid_value{};
         if (
             !IsHashPackedCellRuntimeAccessable(key_cell_auth_view) ||
             !IsHashPackedCellRuntimeAccessable(value_cell_auth_view) ||
             !IsHashPackedCellRuntimeAccessable(prob_lock_cell_auth_view)
         )
         {
-            return std::nullopt;
+            return invalid_value;
         }
 
         uint16_t lock_mid16_key = UNSIGNED_ZERO;
@@ -201,7 +202,7 @@ struct HashTableConf : public HashHelpers
 
         if (!ok)
         {
-            return std::nullopt;
+            return invalid_value;
         }
 
         const uint16_t key_low16 = static_cast<uint16_t>(key_cell_auth_view.Raw48BitInCellData & MaskLowNBits(LOW16_BIT_LEN));

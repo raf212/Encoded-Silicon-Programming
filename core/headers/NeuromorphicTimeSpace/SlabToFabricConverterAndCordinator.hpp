@@ -114,8 +114,6 @@ namespace PredictedAdaptedEncoding
 
         bool InsertOrUpdateRobinHoodHash48_(FabricTableSegmentClasses hash_table, uint64_t key48, uint64_t value48) noexcept;
 
-        std::optional<HashKeyValueDistanceTriplet> ReadHashBucketTriplet(size_t bucked_base_index) noexcept;
-
         std::optional<uint64_t> FindHashValue48_(FabricTableSegmentClasses hash_table, uint64_t key48) noexcept;
 
     public:
@@ -139,6 +137,8 @@ namespace PredictedAdaptedEncoding
         constexpr packed64_t ReadCompletePackedCellDirectly(size_t slab_index) noexcept;
 
         constexpr packed64_t AtomicallyLoadReadCompletePackedCell(size_t slab_index) noexcept;
+
+        bool ReadFabricMetaCellViewAtomically(MetaIndexOfAPCNode fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept;
 
         constexpr void StorePackedCellUncheckedDirectly(size_t slab_index, packed64_t packed_cell) noexcept;
 
@@ -179,9 +179,13 @@ namespace PredictedAdaptedEncoding
         /// @return VALID: APCDescriptorRange::IsValid -> true || INVALID: APCDescriptorRange::IsValid -> true-> false
         APCDescriptorRange GetSegmentPoolBegainEndForSingleAPCDescription_(uint64_t single_description_index) noexcept;
 
+        /// @brief Takes Base Bucket Index -> GATHER: 3 Cells -> CALLS: HashTableConf::ReadKeyValueProbFromValidCells
+        /// @param bucked_base_index First Index In Slab For That Hash SIMPLY: HashTableInternalIndexing::KEY_INDEX OF: ANY: Hash Table
+        /// @return VALID: HashKeyValueDistanceTriplet.IsValid -> true || INVALID: HashKeyValueDistanceTriplet.IsValid = false
+        HashKeyValueDistanceTriplet ReadValidHashBucketTriplet(size_t bucked_base_index) noexcept;
+
 
 /// checked--------------------------------------------------------
-        bool GetMetaCellView(MetaIndexOfAPCNode fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept;
 
         bool InitializeFabric(
             uint16_t slot_count,
