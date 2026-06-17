@@ -4,7 +4,15 @@
 namespace PredictedAdaptedEncoding
 {
 
-static constexpr uint64_t APC_FABRIC_HASH_TOMBSTONE_KEY_48 = APC_FABRIC_INDEX_SENTINAL;
+struct HashKeyValueDistanceTriplet
+{
+    uint64_t HashValue = UNSIGNED_ZERO;
+    uint64_t HashKey = UNSIGNED_ZERO;
+    uint16_t ProbDistance = UNSIGNED_ZERO;
+    bool IsValid = false;
+};
+static_assert(sizeof(HashKeyValueDistanceTriplet) == HASH_BUCKED_WIDTH_OF_FABRIC * sizeof(uint64_t));
+static_assert(alignof(HashKeyValueDistanceTriplet) == alignof(uint64_t));
 
 struct HashHelpers
 {
@@ -13,7 +21,7 @@ struct HashHelpers
     static constexpr uint8_t HASH_SHIFT_3 = 31u;
     static constexpr uint64_t DEFAULT_HAS_CONST_1 = 0xbf58476d1ce4e5b9ull;
     static constexpr uint64_t DEFAULT_HAS_CONST_2 = 0x94d049bb133111ebull;
-
+    static constexpr uint64_t HASH_TOMBSTONE_KEY = PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT;
     static constexpr uint8_t MIN_HASH_BUCKET_COUNT = 16u;
     
     static constexpr uint64_t NextPowerOf2Unsigned48_(uint64_t given_value) noexcept

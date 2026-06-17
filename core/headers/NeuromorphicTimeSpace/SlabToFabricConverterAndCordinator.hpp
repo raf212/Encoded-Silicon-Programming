@@ -52,7 +52,9 @@ namespace PredictedAdaptedEncoding
             AccessContractOfValue access_contract = AccessContractOfValue::CAS_RMW,
             PriorityPolicy priority = PriorityPolicy::INFLUENCED
         )noexcept;
-    
+
+        //FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES
+
         /// @brief Only Reads Valid FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES -> Cells
         /// @param desired_table OriginOfRecord == FabricTableSegmentClasses -> Used Rename fore Ease of Developement
         /// @return VALID: Index / INVALID: SIZE_MAX
@@ -76,6 +78,9 @@ namespace PredictedAdaptedEncoding
             size_t begin, size_t end, 
             uint8_t slab_id = UNSIGNED_ZERO
         ) noexcept;
+        // END::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES
+
+        //FabricTableSegmentClasses::APC_HANDLE_DESCRIPTOR
 
         APCDescriptorRange ReadRangeForASingleAPCSlotFromAPCDescriptor_(uint64_t apc_slot_index) noexcept;
 
@@ -89,6 +94,12 @@ namespace PredictedAdaptedEncoding
 
         /// @brief BUILD: & INITIALIZED: All The APC Handle Descriptor With Segment Pool <-  CONSISTING: Packed CEll -> PacvkedMode::VALUE32
         void InitializeAPCDescriptorTable_() noexcept;
+        //END:FabricTableSegmentClasses::APC_HANDLE_DESCRIPTOR
+
+        //FabricTableSegmentClasses::BRANCH_HASH / LOGICAL_HASH / SHARED_HASH
+
+        void InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept;
+
 
         /// @brief UPDATES OR: Initializes PAIRED: Occupancy | Why PAIRED ? To Potentially Justify by Version OR: Internal CLOCK16 How Much Accumulatiom Diffarence Between Total and the DISTANCE: By Version or CLOCK16 
         /// @param candidate_to_update DESIRED: LocalityPolicy -> Count Want TO Be Updated | GETS TRANSLETED: To -> FabricMetaIndicies BY: CoreOfFabricCoordinator::GetDesiredLowIdxOfOccupancyPairFromLocality
@@ -108,11 +119,20 @@ namespace PredictedAdaptedEncoding
         /// @param table_directory_begin 
         /// @param table_directory_end 
         constexpr void InitializeCompleateFabricMetaIndices_(size_t table_directory_begin, size_t table_directory_end) noexcept;
+
+
+
 //checked----------------------------------------------
 
-        void InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept;
+        // bool InsertOrUpdateRobinHoodHash48_(FabricTableSegmentClasses hash_table, uint64_t key48, uint64_t value48) noexcept
+        // {
+        //     if (key48 == UNSIGNED_ZERO || key48 ==  HashTableConf::HASH_TOMBSTONE_KEY)
+        //     {
+        //         return false;
+        //     }
+            
+        // }
 
-        bool InsertOrUpdateRobinHoodHash48_(FabricTableSegmentClasses hash_table, uint64_t key48, uint64_t value48) noexcept;
 
         std::optional<uint64_t> FindHashValue48_(FabricTableSegmentClasses hash_table, uint64_t key48) noexcept;
 

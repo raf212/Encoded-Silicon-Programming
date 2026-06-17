@@ -16,8 +16,6 @@ namespace PredictedAdaptedEncoding
     static constexpr size_t THREAD_TABLE_RECORD_WIDTH = 4u;
     static constexpr size_t DEFAULT_THREAD_SLOT_OF_FABRIC = 256u;
 
-
-    static constexpr uint32_t APC_FABRIC_HASH_EMPTY_KEY = 0u;
     static constexpr size_t DEFAULT_FABRIC_CONTROLIO_LENGTH = 1024u;
     ///--------------------------
 
@@ -57,38 +55,6 @@ namespace PredictedAdaptedEncoding
         UNASSIGNED_UNUSED_NANNULL = 12
     };
     static constexpr size_t APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX = static_cast<size_t>(APCDescriptorCellType::UNASSIGNED_UNUSED_NANNULL);
-
-
-    struct FTSC_SlabRangeTripletFrom_RecordBookOfFTSC
-    {
-        packed64_t BeginIdxRawType48Cell = UNSIGNED_ZERO;
-        packed64_t EndIdxRawType48Cell = UNSIGNED_ZERO;
-        packed64_t WidthVersionOriginSafty = UNSIGNED_ZERO;
-    };
-    static_assert(sizeof(FTSC_SlabRangeTripletFrom_RecordBookOfFTSC) == RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC * sizeof(packed64_t));
-    static_assert(alignof(FTSC_SlabRangeTripletFrom_RecordBookOfFTSC) == alignof(packed64_t));
-
-
-    struct HashKeyValueDistanceTriplet
-    {
-        uint64_t HashValue = UNSIGNED_ZERO;
-        uint64_t HashKey = UNSIGNED_ZERO;
-        uint16_t ProbDistance = UNSIGNED_ZERO;
-        bool IsValid = false;
-    };
-    static_assert(sizeof(HashKeyValueDistanceTriplet) == HASH_BUCKED_WIDTH_OF_FABRIC * sizeof(uint64_t));
-    static_assert(alignof(HashKeyValueDistanceTriplet) == alignof(uint64_t));
-
-    struct APCDescriptorRange
-    {
-        size_t BeginIndex = UNSIGNED_ZERO;
-        size_t EndIndex = UNSIGNED_ZERO;
-        bool IsVAlid = false;
-    };
-    static_assert(sizeof(APCDescriptorRange) == RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC * sizeof(packed64_t));
-    static_assert(alignof(APCDescriptorRange) == alignof(packed64_t));
-
-
 
 
 
