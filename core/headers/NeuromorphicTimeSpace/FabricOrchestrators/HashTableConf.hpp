@@ -8,7 +8,15 @@ static constexpr uint64_t APC_FABRIC_HASH_TOMBSTONE_KEY_48 = APC_FABRIC_INDEX_SE
 
 struct HashHelpers
 {
-    static constexpr uint64_t NextPowerOf2Unsigned32_(uint64_t given_value) noexcept
+    static constexpr uint8_t HASH_SHIFT_1 = 30u;
+    static constexpr uint8_t HASH_SHIFT_2 = 27u;
+    static constexpr uint8_t HASH_SHIFT_3 = 31u;
+    static constexpr uint64_t DEFAULT_HAS_CONST_1 = 0xbf58476d1ce4e5b9ull;
+    static constexpr uint64_t DEFAULT_HAS_CONST_2 = 0x94d049bb133111ebull;
+
+    static constexpr uint8_t MIN_HASH_BUCKET_COUNT = 16u;
+    
+    static constexpr uint64_t NextPowerOf2Unsigned48_(uint64_t given_value) noexcept
     {
         if (given_value <= 2u)
         {
@@ -25,19 +33,42 @@ struct HashHelpers
         return given_value + 1u;
     }
 
-    static constexpr uint32_t HashUnsigned32_(uint32_t given_value) noexcept
+    /// @brief Convert A Value to Hash
+    /// @param given_value Must be 
+    /// @return 
+    static constexpr uint64_t HashUnsigned48_(uint64_t given_value) noexcept
     {
-        given_value ^= given_value >> LOW16_BIT_LEN;
+        given_value = given_value & MaskLowNBits(FAMILY_48_BIT_LEN);
+        given_value ^= given_value >> HASH_SHIFT_1;
         given_value *= DEFAULT_HAS_CONST_1;
-        given_value ^= given_value >> (LOW16_BIT_LEN - 1);
+        given_value ^= given_value >> HASH_SHIFT_2;
         given_value *= DEFAULT_HAS_CONST_2;
-        given_value ^=  given_value >> LOW16_BIT_LEN;
-        return given_value;
+        given_value ^=  given_value >> HASH_SHIFT_3;
+
+        given_value = given_value & MaskLowNBits(FAMILY_48_BIT_LEN);
+
+        return given_value == UNSIGNED_ZERO ? 1u : given_value;
+    }
+
+    static constexpr uint64_t BucketCountForExpectedEntries(uint64_t count_of_entries) noexcept
+    {
+        if (
+            count_of_entries == UNSIGNED_ZERO ||
+            count_of_entries >= APC_FABRIC_INDEX_SENTINAL
+        )
+        {
+            return UNSIGNED_ZERO;
+        }
+
+        const uint64_t wanted_bucket_count = std::max<uint64_t>(MIN_HASH_BUCKET_COUNT, count_of_entries * 2);
+
+        return NextPowerOf2Unsigned48_(wanted_bucket_count);
+        
     }
 };
 
 
-struct HashTableConf
+struct HashTableConf : public HashHelpers
 {
 
     static constexpr bool IsHashPackedCellRuntimeAccessable(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept

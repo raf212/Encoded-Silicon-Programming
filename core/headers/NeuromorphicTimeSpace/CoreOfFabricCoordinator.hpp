@@ -18,8 +18,6 @@ namespace PredictedAdaptedEncoding
 
 
     static constexpr uint32_t APC_FABRIC_HASH_EMPTY_KEY = 0u;
-    static constexpr uint32_t DEFAULT_HAS_CONST_1 = 0x7feb352du;
-    static constexpr uint32_t DEFAULT_HAS_CONST_2 = 0x846ca68bu;
     static constexpr size_t DEFAULT_FABRIC_CONTROLIO_LENGTH = 1024u;
     ///--------------------------
 

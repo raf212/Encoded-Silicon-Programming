@@ -112,6 +112,11 @@ namespace PredictedAdaptedEncoding
 
         void InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept;
 
+        bool InsertOrUpdateRobinHoodHash48_(FabricTableSegmentClasses hash_table, uint64_t key48, uint64_t value48) noexcept;
+
+        std::optional<HashKeyValueDistanceTriplet> ReadHashBucketTriplet(size_t bucked_base_index) noexcept;
+
+        std::optional<uint64_t> FindHashValue48_(FabricTableSegmentClasses hash_table, uint64_t key48) noexcept;
 
     public:
         SlabToFabricConverterAndCordinator(/* args */) noexcept = default;
