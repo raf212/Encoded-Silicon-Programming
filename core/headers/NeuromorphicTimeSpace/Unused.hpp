@@ -210,7 +210,7 @@ namespace PredictedAdaptedEncoding
     //         SlabBasePtr_[i].store(idle_free32, MoStoreSeq_);
     //     }
 
-    //     WriteFabricMetaHeader_(table_directory_begin, table_directory_end);
+    //     InitializeCompleateFabricMetaIndices_(table_directory_begin, table_directory_end);
 
     //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::GLOBAL_AND_CONFIG, global_config_begin, global_config_end, APCDataStructure::BRANCH_VERSION);
     //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES, table_directory_begin, table_directory_end, APCDataStructure::BRANCH_VERSION);

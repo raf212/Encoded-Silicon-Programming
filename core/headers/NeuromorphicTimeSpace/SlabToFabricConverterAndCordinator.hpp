@@ -63,15 +63,19 @@ namespace PredictedAdaptedEncoding
         /// @return VALID:: 3 -> Packed Cells:: i)Begin, ii)End iii)SaftyAndOriginMeta OR: std::nullopt
         std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> GetValidSlabRangeTripletFromRecordBookOfFTSC(FabricTableSegmentClasses table_class) noexcept;
 
+        /// @brief FILL: DESIRED: FabricTableSegmentClasses with Idle Fabric Cell -> CALLS: GetValidSlabRangeTripletFromRecordBookOfFTSC TO: Get Range In SLab
+        /// @param table_class Desired FabricTableSegmentClasses You want Idle
         void IdleAFabricTableClassRangesMemory_(FabricTableSegmentClasses table_class) noexcept;
 
-        constexpr bool WriteARecordBookOfTSCEntry_(
-            FabricTableSegmentClasses table_class, 
+        /// @brief WRITES: A Single Entry OF: FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES == (2xPackedMode::VALUE48 + 1xPackedMode::Model32)
+        /// @param table_class Desired FabricTableSegmentClasses == OriginOfRecord
+        /// @param begin Begin Index OF: FabricTableSegmentClasses -> Record
+        /// @param end End Index OF: FabricTableSegmentClasses -> Record
+        constexpr void WriteARecordBookOfTSCEntry_(
+            OriginOfRecord table_class, 
             size_t begin, size_t end, 
             uint8_t slab_id = UNSIGNED_ZERO
         ) noexcept;
-
-        void InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept;
 
         APCDescriptorRange ReadRangeForASingleAPCSlotFromAPCDescriptor_(uint64_t apc_slot_index) noexcept;
 
@@ -86,24 +90,27 @@ namespace PredictedAdaptedEncoding
         /// @brief BUILD: & INITIALIZED: All The APC Handle Descriptor With Segment Pool <-  CONSISTING: Packed CEll -> PacvkedMode::VALUE32
         void InitializeAPCDescriptorTable_() noexcept;
 
-//checked-----------------------------------------------
-
         /// @brief UPDATES OR: Initializes PAIRED: Occupancy | Why PAIRED ? To Potentially Justify by Version OR: Internal CLOCK16 How Much Accumulatiom Diffarence Between Total and the DISTANCE: By Version or CLOCK16 
         /// @param candidate_to_update DESIRED: LocalityPolicy -> Count Want TO Be Updated | GETS TRANSLETED: To -> FabricMetaIndicies BY: CoreOfFabricCoordinator::GetDesiredLowIdxOfOccupancyPairFromLocality
-        /// @param desired_occupancy_value IF: desired_occupancy_value 
-        /// @param force_update 
-        /// @param pair_version 
+        /// @param desired_occupancy_value IF: desired_occupancy_value <= UINT32_MAX ONLY -> USED: FabricMetaIndicies::FABRIC_OCCUPANCY_APPROXIMATION_LOCALITY_LOW32 || BOTH: LOW32 + HIGH32
+        /// @param force_update DO NOT CHANGE TO: true untill Understand USE: IF: false -> CAS: Update || true -> ATOMIC STORE: 
         /// @return 
         constexpr bool UpdateValidPairedOccupancyApproxAtomically_(
             LocalityPolicy candidate_to_update, uint64_t desired_occupancy_value,
             bool force_update = false,
-            clk16_t pair_version = APCDataStructure::BRANCH_VERSION
+            clk16_t pair_version = UNSIGNED_ZERO
         ) noexcept;
 
-        constexpr void ResetAll4TypesOfOccupancyMetaData_() noexcept;
+        /// @brief CALLES: 4xUpdateValidPairedOccupancyApproxAtomically_ ON: Each LocalityPolicy
+        constexpr void Zero4LocalityBasedOccupancyOfFabric_() noexcept;
 
-        /// @brief IN CPP FILE -> FIX:: MakeAndStoreFabricMetaValue48_-> USE ensure proper AccessContractOfValue for each Metaindex
-        constexpr void WriteFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept;
+        /// @brief INITIALIZES: All FabricMetaIndicies
+        /// @param table_directory_begin 
+        /// @param table_directory_end 
+        constexpr void InitializeCompleateFabricMetaIndices_(size_t table_directory_begin, size_t table_directory_end) noexcept;
+//checked----------------------------------------------
+
+        void InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept;
 
 
     public:

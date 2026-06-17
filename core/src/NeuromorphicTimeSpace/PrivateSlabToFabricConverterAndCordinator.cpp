@@ -198,16 +198,16 @@ namespace PredictedAdaptedEncoding
         return ForceUpdate(); 
     }
 
-    constexpr void SlabToFabricConverterAndCordinator::ResetAll4TypesOfOccupancyMetaData_() noexcept
+    constexpr void SlabToFabricConverterAndCordinator::Zero4LocalityBasedOccupancyOfFabric_() noexcept
     {
-        UpdateValidPairedOccupancyApproxAtomically_(LocalityPolicy::IDLE, UNSIGNED_ZERO, true);
-        UpdateValidPairedOccupancyApproxAtomically_(LocalityPolicy::PUBLISHED, UNSIGNED_ZERO, true);
-        UpdateValidPairedOccupancyApproxAtomically_(LocalityPolicy::CLAIMED, UNSIGNED_ZERO, true);
-        UpdateValidPairedOccupancyApproxAtomically_(LocalityPolicy::FAULTY, UNSIGNED_ZERO, true);
+        UpdateValidPairedOccupancyApproxAtomically_(LocalityPolicy::IDLE, UNSIGNED_ZERO, true, APCDataStructure::BRANCH_VERSION);
+        UpdateValidPairedOccupancyApproxAtomically_(LocalityPolicy::PUBLISHED, UNSIGNED_ZERO, true, APCDataStructure::BRANCH_VERSION);
+        UpdateValidPairedOccupancyApproxAtomically_(LocalityPolicy::CLAIMED, UNSIGNED_ZERO, true, APCDataStructure::BRANCH_VERSION);
+        UpdateValidPairedOccupancyApproxAtomically_(LocalityPolicy::FAULTY, UNSIGNED_ZERO, true, APCDataStructure::BRANCH_VERSION);
     }
 
 
-    constexpr void SlabToFabricConverterAndCordinator::WriteFabricMetaHeader_(size_t table_directory_begin, size_t table_directory_end) noexcept
+    constexpr void SlabToFabricConverterAndCordinator::InitializeCompleateFabricMetaIndices_(size_t table_directory_begin, size_t table_directory_end) noexcept
     {
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::MAGIC, APCDataStructure::FABRIC_MAGIC);
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::VERSION, APCDataStructure::BRANCH_VERSION);
@@ -242,7 +242,7 @@ namespace PredictedAdaptedEncoding
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::TABLE_DIRECTORY_COUNT, static_cast<uint64_t>(FabricTableSegmentClasses::COUNT));
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::TABLE_DIRECTORY_VERSION, APCDataStructure::BRANCH_VERSION);
 
-        ResetAll4TypesOfOccupancyMetaData_();
+        Zero4LocalityBasedOccupancyOfFabric_();
 
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::CAS_FAILURE_COUNT, UNSIGNED_ZERO);
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::ERROR_COUNT, UNSIGNED_ZERO);
@@ -292,26 +292,26 @@ namespace PredictedAdaptedEncoding
 
     }
 
-    constexpr bool SlabToFabricConverterAndCordinator::WriteARecordBookOfTSCEntry_(
-        FabricTableSegmentClasses table_class, 
+    constexpr void SlabToFabricConverterAndCordinator::WriteARecordBookOfTSCEntry_(
+        OriginOfRecord table_class, 
         size_t begin, size_t end, 
         uint8_t slab_id
     ) noexcept
     {
         if (!PackedCell64_t::IsValidFabricTable(table_class))
         {
-            return false;
+            return;
         }
 
         if (!SlabBasePtr_)
         {
-            return false;
+            return;
         }
 
         const size_t base_idx = ReadOriginIndexBeginOfRecordBookOfFabricTableSegmentClasses_(table_class);
         if (base_idx == APCDataStructure::APC_SIZE_SENTINAL || (base_idx + RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC > SlabCellCount_))
         {
-            return false;
+            return;
         }
 
         const packed64_t begin48_cell = RecordBookConf::MakeRecordBookCellOfTSC(
@@ -347,10 +347,10 @@ namespace PredictedAdaptedEncoding
                 safty_lock_for_this
             );
 
-            return true;
+            return;
         }
         
-        return false;
+        return;
         
     }
 
