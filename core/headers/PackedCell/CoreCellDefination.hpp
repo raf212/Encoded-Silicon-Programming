@@ -21,7 +21,7 @@ namespace PredictedAdaptedEncoding
         static constexpr bool IsValidFabricTable(FabricTableSegmentClasses table_class) noexcept
         {
             return table_class > FabricTableSegmentClasses::NONE &&
-                table_class < FabricTableSegmentClasses::COUNT;
+                table_class < FabricTableSegmentClasses::NULLNAN;
         }
 
         struct alignas(16) AuthoritiveCellView

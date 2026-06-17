@@ -143,7 +143,7 @@ namespace PredictedAdaptedEncoding
 
     //     size_t cursor = DefaultFabricAlignment16Cell_(global_config_end);
     //     const size_t table_directory_begin = cursor;
-    //     const size_t table_directory_end = table_directory_begin + static_cast<size_t>(FabricTableSegmentClasses::COUNT) * APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX;
+    //     const size_t table_directory_end = table_directory_begin + static_cast<size_t>(FabricTableSegmentClasses::NULLNAN) * APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX;
 
     //     cursor = DefaultFabricAlignment16Cell_(table_directory_end);
     //     const size_t slot_directory_begin = cursor;

@@ -229,7 +229,7 @@ namespace PredictedAdaptedEncoding {
         THREAD_TABLE  = 12,
         SEGMENT_POOL = 13,
         GENERIC_CONTROL = 14,
-        COUNT = 15,
+        NULLNAN = 15,
     };
 
     using OriginOfRecord = FabricTableSegmentClasses;

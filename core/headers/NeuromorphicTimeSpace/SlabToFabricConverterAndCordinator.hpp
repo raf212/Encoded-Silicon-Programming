@@ -60,10 +60,7 @@ namespace PredictedAdaptedEncoding
         /// @return VALID: Index / INVALID: SIZE_MAX
         constexpr size_t ReadOriginIndexBeginOfRecordBookOfFabricTableSegmentClasses_(OriginOfRecord desired_table) noexcept;
         
-        /// @brief Compleatly validates by width and origin -> FabricTableSegmentClasses
-        /// @param table_class desired origin table
-        /// @return VALID:: 3 -> Packed Cells:: i)Begin, ii)End iii)SaftyAndOriginMeta OR: std::nullopt
-        std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> GetValidSlabRangeTripletFromRecordBookOfFTSC(FabricTableSegmentClasses table_class) noexcept;
+
 
         /// @brief FILL: DESIRED: FabricTableSegmentClasses with Idle Fabric Cell -> CALLS: GetValidSlabRangeTripletFromRecordBookOfFTSC TO: Get Range In SLab
         /// @param table_class Desired FabricTableSegmentClasses You want Idle
@@ -124,12 +121,28 @@ namespace PredictedAdaptedEncoding
 
 //checked----------------------------------------------
 
+        /// @brief Compleatly validates by width and origin -> FabricTableSegmentClasses
+        /// @param table_class desired origin table
+        /// @return VALID:: 3 -> Packed Cells:: i)Begin, ii)End iii)SaftyAndOriginMeta OR: std::nullopt
+        std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> GetValidSlabRangeTripletFromRecordBookOfFTSC(FabricTableSegmentClasses table_class) noexcept;
+
+
+
+
+
+
+
+
+
+
         // bool InsertOrUpdateRobinHoodHash48_(FabricTableSegmentClasses hash_table, uint64_t key48, uint64_t value48) noexcept
         // {
         //     if (key48 == UNSIGNED_ZERO || key48 ==  HashTableConf::HASH_TOMBSTONE_KEY)
         //     {
         //         return false;
         //     }
+
+        //     const HashKeyValueDistanceTriplet desired_triplet = ReadValidHashBucketTriplet()
             
         // }
 

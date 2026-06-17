@@ -14,6 +14,18 @@ struct FTSC_SlabRangeTripletFrom_RecordBookOfFTSC
 static_assert(sizeof(FTSC_SlabRangeTripletFrom_RecordBookOfFTSC) == RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC * sizeof(packed64_t));
 static_assert(alignof(FTSC_SlabRangeTripletFrom_RecordBookOfFTSC) == alignof(packed64_t));
 
+struct SlabFabricTableBoundsCarrietFromRecordBookTable
+{
+    uint64_t BeginIndex = UNSIGNED_ZERO;
+    uint64_t EndeIndex = UNSIGNED_ZERO;
+    OriginOfRecord OwnerTableOfTheBounds = OriginOfRecord::NULLNAN;
+    uint8_t Width = UNSIGNED_ZERO;
+    bool IsValid = false;  
+};
+static_assert(sizeof(SlabFabricTableBoundsCarrietFromRecordBookTable) == RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC * sizeof(packed64_t));
+static_assert(alignof(SlabFabricTableBoundsCarrietFromRecordBookTable) == alignof(packed64_t));
+
+
 struct RecordBookConf
 {
     static constexpr bool IsTheCellConsumeableAsRecordBookCellOfTSC(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
@@ -109,7 +121,7 @@ struct RecordBookConf
         {
             if (
                 record_width != CoreOfFabricCoordinator::GetWidthOfValidFabricTable(origin_table_segment_class) ||
-                (full_width % RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC) != UNSIGNED_ZERO
+                (full_width % record_width) != UNSIGNED_ZERO
             )
             {
                 return std::nullopt;

@@ -239,7 +239,7 @@ namespace PredictedAdaptedEncoding
 
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::RECORD_BOOK_OF_TSC_BEGIN, static_cast<uint64_t>(table_directory_begin));
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::RECORD_BOOK_OF_TSC_END, static_cast<uint32_t>(table_directory_end));
-        MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::TABLE_DIRECTORY_COUNT, static_cast<uint64_t>(FabricTableSegmentClasses::COUNT));
+        MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::TABLE_DIRECTORY_COUNT, static_cast<uint64_t>(FabricTableSegmentClasses::NULLNAN));
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::TABLE_DIRECTORY_VERSION, APCDataStructure::BRANCH_VERSION);
 
         Zero4LocalityBasedOccupancyOfFabric_();
