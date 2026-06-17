@@ -23,6 +23,7 @@ struct HashHelpers
     static constexpr uint64_t DEFAULT_HAS_CONST_2 = 0x94d049bb133111ebull;
     static constexpr uint64_t HASH_TOMBSTONE_KEY = PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT;
     static constexpr uint8_t MIN_HASH_BUCKET_COUNT = 16u;
+    static constexpr uint16_t PROB_DISTANCE_SENTINAL = UINT16_MAX;
     
     static constexpr uint64_t NextPowerOf2Unsigned48_(uint64_t given_value) noexcept
     {

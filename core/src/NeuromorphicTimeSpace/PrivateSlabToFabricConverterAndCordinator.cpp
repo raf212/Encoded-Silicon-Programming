@@ -461,7 +461,11 @@ namespace PredictedAdaptedEncoding
             return;
         }
 
-        for (size_t idx = return_bounds.BeginIndex; idx < return_bounds.EndIndex; idx += HASH_BUCKED_WIDTH_OF_FABRIC)
+        for (
+            size_t idx = return_bounds.BeginIndex; 
+            idx < return_bounds.EndIndex; 
+            idx += HASH_BUCKED_WIDTH_OF_FABRIC
+        )
         {
             StorePackedCellUncheckedDirectly(idx + static_cast<size_t>(HashTableInternalIndexing::KEY_INDEX), idle_key_value);
             StorePackedCellUncheckedDirectly(idx + static_cast<size_t>(HashTableInternalIndexing::VALUE_INDEX), idle_key_value);
@@ -528,7 +532,7 @@ namespace PredictedAdaptedEncoding
             std::memcpy(
                 &SlabBasePtr_[desired_single_description_range.BeginIndex],
                 &SlabBasePtr_[desired_single_description_range.EndIndex],
-                HASH_BUCKED_WIDTH_OF_FABRIC * sizeof(packed64_t)
+                APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX * sizeof(packed64_t)
             );
         }
         catch(...)
