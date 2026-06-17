@@ -314,37 +314,42 @@ namespace PredictedAdaptedEncoding
             return;
         }
 
-        const packed64_t begin48_cell = RecordBookConf::MakeRecordBookCellOfTSC(
+        FTSC_SlabRangeTripletFrom_RecordBookOfFTSC desired_record_triplet {};
+
+        desired_record_triplet.BeginIdxRawType48Cell = RecordBookConf::MakeRecordBookCellOfTSC(
             static_cast<uint64_t>(begin)
         );
 
-        const packed64_t end48_cell =  RecordBookConf::MakeRecordBookCellOfTSC(
+        desired_record_triplet.EndIdxRawType48Cell =  RecordBookConf::MakeRecordBookCellOfTSC(
             static_cast<uint64_t>(end)
         );
 
-        const packed64_t safty_lock_for_this = RecordBookConf::MakeRecordBookSaftyLock(
+        desired_record_triplet.WidthVersionOriginSafty = RecordBookConf::MakeRecordBookSaftyLock(
             begin, end, table_class, 
             LocalityPolicy::PUBLISHED, slab_id
         );
 
-        const FTSC_SlabRangeTripletFrom_RecordBookOfFTSC desired_record_triplet {begin48_cell, end48_cell, safty_lock_for_this};
 
-        std::optional<uint64_t> full_width_validated = RecordBookConf::ValidateAFabricTableRangeStruct(desired_record_triplet, table_class);
-        if (full_width_validated.has_value() && full_width_validated.value() > UNSIGNED_ZERO)
+        const SlabFabricTableBoundsCarrietFromRecordBookTable validated_bounds = RecordBookConf::ValidateAFabricTableRangeStruct(desired_record_triplet, table_class);
+        if (
+            validated_bounds.IsValid &&
+            validated_bounds.BeginIndex >= APCDataStructure::METACELL_COUNT &&
+            validated_bounds.EndIndex > validated_bounds.BeginIndex
+        )
         {
             AtomicallyStorePackedCellUnchecked(
                 base_idx + static_cast<size_t>(RecordBookInternalIndexing::BEGIN48), 
-                begin48_cell
+                desired_record_triplet.BeginIdxRawType48Cell
             );
             
             AtomicallyStorePackedCellUnchecked(
                 base_idx + static_cast<size_t>(RecordBookInternalIndexing::END48), 
-                end48_cell
+                desired_record_triplet.EndIdxRawType48Cell
             );                
             
             AtomicallyStorePackedCellUnchecked(
                 base_idx + static_cast<size_t>(RecordBookInternalIndexing::META32), 
-                safty_lock_for_this
+                desired_record_triplet.WidthVersionOriginSafty
             );
 
             return;
@@ -355,11 +360,14 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> SlabToFabricConverterAndCordinator::GetValidSlabRangeTripletFromRecordBookOfFTSC(FabricTableSegmentClasses table_class) noexcept
+    bool SlabToFabricConverterAndCordinator::GetValidSlabRangeTripletFromRecordBookOfFTSC(
+        FabricTableSegmentClasses table_class,
+        SlabFabricTableBoundsCarrietFromRecordBookTable& return_bounds
+    ) noexcept
     {
         if (!PackedCell64_t::IsValidFabricTable(table_class))
         {
-            return std::nullopt;
+            return false;
         }
 
         const size_t begin_of_desired_table = ReadOriginIndexBeginOfRecordBookOfFabricTableSegmentClasses_(table_class) + static_cast<size_t>(RecordBookInternalIndexing::BEGIN48);
@@ -367,7 +375,7 @@ namespace PredictedAdaptedEncoding
         const size_t safty_lock_meta_cell = begin_of_desired_table + static_cast<size_t>(RecordBookInternalIndexing::META32);
         if (end_idx >= SlabCellCount_ || begin_of_desired_table < APCDataStructure::METACELL_COUNT)
         {
-            return std::nullopt;
+            return false;
         }
 
         const FTSC_SlabRangeTripletFrom_RecordBookOfFTSC triplet{ 
@@ -376,30 +384,32 @@ namespace PredictedAdaptedEncoding
             ReadCompletePackedCellDirectly(safty_lock_meta_cell)
         };
 
-        std::optional<uint64_t> full_width_validated = RecordBookConf::ValidateAFabricTableRangeStruct(triplet, table_class);
-        if (full_width_validated.has_value() && full_width_validated.value() > UNSIGNED_ZERO)
+
+        return_bounds  = RecordBookConf::ValidateAFabricTableRangeStruct(triplet, table_class);
+        if (
+            return_bounds.IsValid &&
+            return_bounds.BeginIndex >= APCDataStructure::METACELL_COUNT &&
+            return_bounds.EndIndex > return_bounds.BeginIndex
+        )
         {
-            return triplet;
+            return true;
         }
 
-        return std::nullopt;
+        return_bounds.IsValid = false;
+        return false;
     }
         
 
     void SlabToFabricConverterAndCordinator::IdleAFabricTableClassRangesMemory_(FabricTableSegmentClasses table_class) noexcept
     {
-        const std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> maybe_table_range_triplet = GetValidSlabRangeTripletFromRecordBookOfFTSC(table_class);
-        if (!maybe_table_range_triplet.has_value())
+
+        SlabFabricTableBoundsCarrietFromRecordBookTable return_bounds{};
+        bool bounds_ok = GetValidSlabRangeTripletFromRecordBookOfFTSC(table_class, return_bounds);
+
+        if (!bounds_ok)
         {
             return;
         }
-        const FTSC_SlabRangeTripletFrom_RecordBookOfFTSC table_range_triplet = *maybe_table_range_triplet;
-        const std::optional<packed64_t> maybe_width_masked = RecordBookConf::ValidateAFabricTableRangeStruct(table_range_triplet, table_class);
-        if (!maybe_width_masked.has_value() && maybe_width_masked.value() <= UNSIGNED_ZERO)
-        {
-            return;
-        }
-        
 
         const packed64_t idle_table_cell = PackedCell64_t::MakeTypedFabricValidPackedCell(
             TypeFamily::VALUE48, AccessContractOfValue::ATOMIC_SLNAPSHOT,
@@ -407,7 +417,7 @@ namespace PredictedAdaptedEncoding
             InternalDataTypePolicy::UnsignedPCellDataType
         );
 
-        for (size_t idx = PackedCell64_t::ExtractRaw48FamilyBits(table_range_triplet.BeginIdxRawType48Cell); idx < PackedCell64_t::ExtractRaw48FamilyBits(table_range_triplet.EndIdxRawType48Cell); idx++)
+        for (size_t idx = return_bounds.BeginIndex; idx < return_bounds.EndIndex; idx++)
         {
             StorePackedCellUncheckedDirectly(idx, idle_table_cell);
         }
@@ -416,22 +426,25 @@ namespace PredictedAdaptedEncoding
 
     void SlabToFabricConverterAndCordinator::InitializeHashTable_(FabricTableSegmentClasses hash_table) noexcept
     {
-
+        if (!CoreOfFabricCoordinator::IsValidHashTable(hash_table))
+        {
+            return;
+        }
+        
         const packed64_t desired_idle_hash_key_value_cell = HashTableConf::MakeHashKeyOrValueCell(UNSIGNED_ZERO, hash_table, LocalityPolicy::IDLE);
         if (desired_idle_hash_key_value_cell == PackedCell64_t::PACKED_CELL_SENTINAL)
         {
             return;
         }
 
-        std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> desired_hash_table_triplet = GetValidSlabRangeTripletFromRecordBookOfFTSC(hash_table);
+        SlabFabricTableBoundsCarrietFromRecordBookTable return_bounds{};
 
-        if (!desired_hash_table_triplet.has_value())
+        bool bounds_ok = GetValidSlabRangeTripletFromRecordBookOfFTSC(hash_table, return_bounds);
+
+        if (!bounds_ok)
         {
             return;
         }
-
-        const size_t begin_idx_of_the_hash_table = PackedCell64_t::ExtractRaw48FamilyBits(desired_hash_table_triplet.value().BeginIdxRawType48Cell);
-        const size_t end_idx_of_the_hash_table = PackedCell64_t::ExtractRaw48FamilyBits(desired_hash_table_triplet.value().EndIdxRawType48Cell);
 
         const packed64_t idle_key_value = HashTableConf::MakeHashKeyOrValueCell(UNSIGNED_ZERO, hash_table, LocalityPolicy::IDLE);
 
@@ -448,7 +461,7 @@ namespace PredictedAdaptedEncoding
             return;
         }
 
-        for (size_t idx = begin_idx_of_the_hash_table; idx < end_idx_of_the_hash_table; idx += HASH_BUCKED_WIDTH_OF_FABRIC)
+        for (size_t idx = return_bounds.BeginIndex; idx < return_bounds.EndIndex; idx += HASH_BUCKED_WIDTH_OF_FABRIC)
         {
             StorePackedCellUncheckedDirectly(idx + static_cast<size_t>(HashTableInternalIndexing::KEY_INDEX), idle_key_value);
             StorePackedCellUncheckedDirectly(idx + static_cast<size_t>(HashTableInternalIndexing::VALUE_INDEX), idle_key_value);
@@ -459,11 +472,12 @@ namespace PredictedAdaptedEncoding
 
     APCDescriptorRange SlabToFabricConverterAndCordinator::ReadRangeForASingleAPCSlotFromAPCDescriptor_(uint64_t apc_slot_index) noexcept
     {
-        const APCDescriptorRange probable_full_range_of_apc_descriptor = ReadAPCDescriptorTableBeginEndFromRecordBook();
+        APCDescriptorRange probable_full_range_of_apc_descriptor{};
+        const bool ok = ReadAPCDescriptorTableBeginEndFromRecordBook(probable_full_range_of_apc_descriptor);
 
         APCDescriptorRange desired_slot_of_apc_descriptor{};
 
-        if (!probable_full_range_of_apc_descriptor.IsVAlid)
+        if (!ok)
         {
             return desired_slot_of_apc_descriptor;
         }

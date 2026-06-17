@@ -60,7 +60,13 @@ namespace PredictedAdaptedEncoding
         /// @return VALID: Index / INVALID: SIZE_MAX
         constexpr size_t ReadOriginIndexBeginOfRecordBookOfFabricTableSegmentClasses_(OriginOfRecord desired_table) noexcept;
         
-
+        /// @brief Compleatly validates by width and origin -> FabricTableSegmentClasses
+        /// @param table_class desired origin table
+        /// @return VALID:: 3 -> Packed Cells:: i)Begin, ii)End iii)SaftyAndOriginMeta OR: false & Maybe Inspactable data
+        bool GetValidSlabRangeTripletFromRecordBookOfFTSC(
+            FabricTableSegmentClasses table_class,
+            SlabFabricTableBoundsCarrietFromRecordBookTable& return_bounds
+        ) noexcept;
 
         /// @brief FILL: DESIRED: FabricTableSegmentClasses with Idle Fabric Cell -> CALLS: GetValidSlabRangeTripletFromRecordBookOfFTSC TO: Get Range In SLab
         /// @param table_class Desired FabricTableSegmentClasses You want Idle
@@ -121,11 +127,6 @@ namespace PredictedAdaptedEncoding
 
 //checked----------------------------------------------
 
-        /// @brief Compleatly validates by width and origin -> FabricTableSegmentClasses
-        /// @param table_class desired origin table
-        /// @return VALID:: 3 -> Packed Cells:: i)Begin, ii)End iii)SaftyAndOriginMeta OR: std::nullopt
-        std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> GetValidSlabRangeTripletFromRecordBookOfFTSC(FabricTableSegmentClasses table_class) noexcept;
-
 
 
 
@@ -163,7 +164,9 @@ namespace PredictedAdaptedEncoding
 
         /// @brief Uses -> GetValidSlabRangeTripletFromRecordBookOfFTSC to get record and packs into -> APCDescriptorRange
         /// @return VALID::APCDescriptorRange.IsVAlid = true || INVALID:: APCDescriptorRange.IsVAlid = false
-        APCDescriptorRange ReadAPCDescriptorTableBeginEndFromRecordBook() noexcept;
+        bool ReadAPCDescriptorTableBeginEndFromRecordBook(
+            APCDescriptorRange& return_APC_handle_description_range
+        ) noexcept;
 
         void ShutDownFabric() noexcept;
         

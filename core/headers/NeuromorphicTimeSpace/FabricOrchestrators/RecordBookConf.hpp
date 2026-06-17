@@ -17,7 +17,7 @@ static_assert(alignof(FTSC_SlabRangeTripletFrom_RecordBookOfFTSC) == alignof(pac
 struct SlabFabricTableBoundsCarrietFromRecordBookTable
 {
     uint64_t BeginIndex = UNSIGNED_ZERO;
-    uint64_t EndeIndex = UNSIGNED_ZERO;
+    uint64_t EndIndex = UNSIGNED_ZERO;
     OriginOfRecord OwnerTableOfTheBounds = OriginOfRecord::NULLNAN;
     uint8_t Width = UNSIGNED_ZERO;
     bool IsValid = false;  
@@ -72,16 +72,20 @@ struct RecordBookConf
     }
 
 
-    static constexpr std::optional<uint64_t> ValidateAFabricTableRangeStruct(const FTSC_SlabRangeTripletFrom_RecordBookOfFTSC& provided_range_triplet, OriginOfRecord origin_table_segment_class) noexcept
+    static constexpr SlabFabricTableBoundsCarrietFromRecordBookTable ValidateAFabricTableRangeStruct(
+        const FTSC_SlabRangeTripletFrom_RecordBookOfFTSC& provided_range_triplet,
+        OriginOfRecord origin_table_segment_class
+    ) noexcept
     {
         const PackedCell64_t::AuthoritiveCellView auth_view_of_begin_idx = PackedCell64_t::GetAuthoritiveViewsForACell(provided_range_triplet.BeginIdxRawType48Cell);
         const PackedCell64_t::AuthoritiveCellView auth_view_of_end_idx = PackedCell64_t::GetAuthoritiveViewsForACell(provided_range_triplet.EndIdxRawType48Cell);
         const PackedCell64_t::AuthoritiveCellView auth_view_of_safty_meta = PackedCell64_t::GetAuthoritiveViewsForACell(provided_range_triplet.WidthVersionOriginSafty);
 
+        SlabFabricTableBoundsCarrietFromRecordBookTable return_bounds{};
 
         if (!auth_view_of_begin_idx.IsCellValid || !auth_view_of_begin_idx.IsCellValid || !auth_view_of_safty_meta.IsCellValid)
         {
-            return std::nullopt;
+            return return_bounds;
         }
 
         if (
@@ -90,7 +94,7 @@ struct RecordBookConf
             !IsTheCellConsumeableAsRecordBookCellOfTSC(auth_view_of_safty_meta)
         )
         {
-            return std::nullopt;
+            return return_bounds;
         }
 
         if (auth_view_of_begin_idx.Raw48BitInCellData < APCDataStructure::METACELL_COUNT || 
@@ -99,7 +103,7 @@ struct RecordBookConf
             auth_view_of_safty_meta.InCellClock16 == UNSIGNED_ZERO
         )
         {
-            return std::nullopt;
+            return return_bounds;
         }
 
         const uint8_t record_width = Clock16Subdivision1x8Plus2x4InMode32CellModel::ExtractLowest8Bit_(auth_view_of_safty_meta.InCellClock16);
@@ -107,15 +111,20 @@ struct RecordBookConf
 
         if (origin_table != origin_table_segment_class)
         {
-            return std::nullopt;
+            return return_bounds;
         }
         
+        return_bounds.OwnerTableOfTheBounds = origin_table;
 
         const uint64_t full_width = (auth_view_of_end_idx.Raw48BitInCellData) - (auth_view_of_begin_idx.Raw48BitInCellData);
         if ((static_cast<uint32_t>(full_width) !=  auth_view_of_safty_meta.Raw32BitInCellData))
         {
-            return std::nullopt;
+            return return_bounds;
         }
+
+        return_bounds.BeginIndex = auth_view_of_begin_idx.Raw48BitInCellData;
+        return_bounds.EndIndex = auth_view_of_end_idx.Raw48BitInCellData;
+
         
         if (origin_table != FabricTableSegmentClasses::SEGMENT_POOL)
         {
@@ -124,12 +133,15 @@ struct RecordBookConf
                 (full_width % record_width) != UNSIGNED_ZERO
             )
             {
-                return std::nullopt;
+                return return_bounds;
             }
         }
         
+        return_bounds.Width = record_width ? origin_table != FabricTableSegmentClasses::SEGMENT_POOL : UNSIGNED_ZERO;
 
-        return full_width;
+        return_bounds.IsValid = true;
+
+        return return_bounds;
     }
 
     /// @return VALID -> Packed Cell -> OR: UINT64_MAX

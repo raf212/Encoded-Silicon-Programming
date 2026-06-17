@@ -147,24 +147,25 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    APCDescriptorRange SlabToFabricConverterAndCordinator::ReadAPCDescriptorTableBeginEndFromRecordBook() noexcept
+    bool SlabToFabricConverterAndCordinator::ReadAPCDescriptorTableBeginEndFromRecordBook(
+        APCDescriptorRange& return_APC_handle_description_range
+    ) noexcept
     {
-        APCDescriptorRange return_descriptor{};
+        SlabFabricTableBoundsCarrietFromRecordBookTable return_bounds{};
 
-        const std::optional<FTSC_SlabRangeTripletFrom_RecordBookOfFTSC> range_of_apc_descriptor_directory = GetValidSlabRangeTripletFromRecordBookOfFTSC(FabricTableSegmentClasses::APC_HANDLE_DESCRIPTOR);
-        if (!range_of_apc_descriptor_directory.has_value())
+        bool bounds_ok = GetValidSlabRangeTripletFromRecordBookOfFTSC(FabricTableSegmentClasses::APC_HANDLE_DESCRIPTOR, return_bounds);
+
+        if (!bounds_ok)
         {
-            return return_descriptor;
+            return_APC_handle_description_range.IsVAlid = false;
+            return false;
         }
 
-        const size_t begin_idx_of_apc_descriptor_in_slab = static_cast<size_t>(PackedCell64_t::ExtractRaw48FamilyBits(range_of_apc_descriptor_directory.value().BeginIdxRawType48Cell));
-        const size_t end_idx_of_apc_descriptor_in_slab = static_cast<size_t>(PackedCell64_t::ExtractRaw48FamilyBits(range_of_apc_descriptor_directory.value().EndIdxRawType48Cell));
+        return_APC_handle_description_range.BeginIndex = return_bounds.BeginIndex;
+        return_APC_handle_description_range.EndIndex = return_bounds.EndIndex;
+        return_APC_handle_description_range.IsVAlid = return_bounds.IsValid;
 
-        return_descriptor.BeginIndex = begin_idx_of_apc_descriptor_in_slab;
-        return_descriptor.EndIndex = end_idx_of_apc_descriptor_in_slab;
-        return_descriptor.IsVAlid = true;
-
-        return return_descriptor;
+        return return_bounds.IsValid;
     }
 
 
