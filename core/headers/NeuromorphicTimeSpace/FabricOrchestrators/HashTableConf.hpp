@@ -11,6 +11,8 @@ struct HashKeyValueDistanceTriplet
     uint64_t HashValue = UNSIGNED_ZERO;
     uint64_t HashKey = UNSIGNED_ZERO;
     uint16_t ProbDistance = UNSIGNED_ZERO;
+    FabricTableSegmentClasses HashTable = FabricTableSegmentClasses::NONE;
+    LocalityPolicy AttachedLocality = LocalityPolicy::UNASSIGNED_UNUSED_NANNULL;
     bool IsValid = false;
 };
 static_assert(sizeof(HashKeyValueDistanceTriplet) == HASH_BUCKED_WIDTH_OF_FABRIC * sizeof(uint64_t));
@@ -26,6 +28,7 @@ struct HashHelpers
     static constexpr uint64_t HASH_TOMBSTONE_KEY = PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT;
     static constexpr uint8_t MIN_HASH_BUCKET_COUNT = 16u;
     static constexpr uint16_t PROB_DISTANCE_SENTINAL = UINT16_MAX;
+    static constexpr uint64_t VALIDATION_MARK_OF_HASH_TABLE_BUFFER = 333;
     
     static constexpr uint64_t NextPowerOf2Unsigned48_(uint64_t given_value) noexcept
     {
@@ -124,6 +127,7 @@ struct HashTableConf : public HashHelpers
     }
 
 
+
     /// @brief Cell DEFAULTS: TypeFamily::VALUE48 + AccessContractOfValue::CLAIMED_GURDED + AttributePolicy::INSTRUCTION_CELL
     /// @return VALID -> Packed Cell -> OR: UINT64_MAX:: if FabricTableSegmentClasses dosent belong  BRANCH_HASH, SHARED_HASH, LOGICAL_HASH
     static constexpr packed64_t MakeHashKeyOrValueCell(
@@ -138,7 +142,7 @@ struct HashTableConf : public HashHelpers
         }
 
         if (locality == LocalityPolicy::PUBLISHED && 
-            (hash_key_or_value == UNSIGNED_ZERO || hash_key_or_value >= PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT)
+            (hash_key_or_value == UNSIGNED_ZERO || hash_key_or_value >= HASH_TOMBSTONE_KEY)
         )
         {
             return PackedCell64_t::PACKED_CELL_SENTINAL;
@@ -163,10 +167,31 @@ struct HashTableConf : public HashHelpers
         uint64_t key48, 
         uint64_t hash_48,
         uint16_t prob_distance,
-        FabricTableSegmentClasses table_class,
+        FabricTableSegmentClasses hash_table,
         LocalityPolicy locality = LocalityPolicy::PUBLISHED
     ) noexcept
     {
+
+        if (!CoreOfFabricCoordinator::IsValidHashTable(hash_table))
+        {
+            return PackedCell64_t::PACKED_CELL_SENTINAL;
+        }
+
+        if (
+            locality == LocalityPolicy::PUBLISHED
+        )
+        {
+            if (
+                key48 == UNSIGNED_ZERO || 
+                key48 >= HASH_TOMBSTONE_KEY ||
+                hash_48 == UNSIGNED_ZERO ||
+                hash_48 >= HASH_TOMBSTONE_KEY
+            )
+            {
+                return PackedCell64_t::PACKED_CELL_SENTINAL;
+            }
+        }
+
         const uint16_t mid_Lock_key_low16 = static_cast<uint16_t>(key48 & MaskLowNBits(LOW16_BIT_LEN));
         const uint16_t high_lock_hash_low_16 = static_cast<uint16_t>(hash_48 & MaskLowNBits(LOW16_BIT_LEN));
 
@@ -179,7 +204,7 @@ struct HashTableConf : public HashHelpers
         return PackedCell64_t::MakeModeledFabricValidPackedCell(
             ModelFamily::MODEL48,
             static_cast<tag8_t>(Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL),
-            table_class,
+            hash_table,
             locality,
             InternalDataTypePolicy::UnsignedPCellDataType,
             AttributePolicy::INSTRUCTION_CELL,
@@ -216,6 +241,24 @@ struct HashTableConf : public HashHelpers
             return invalid_value;
         }
 
+        if (
+            key_cell_auth_view.FabricTableSegmentClass != value_cell_auth_view.FabricTableSegmentClass ||
+            value_cell_auth_view.FabricTableSegmentClass != prob_lock_cell_auth_view.FabricTableSegmentClass
+        )
+        {
+            return invalid_value;
+        }
+
+        if (
+            key_cell_auth_view.LocalityOfCell != value_cell_auth_view.LocalityOfCell ||
+            value_cell_auth_view.LocalityOfCell != prob_lock_cell_auth_view.LocalityOfCell
+        )
+        {
+            return invalid_value;
+        }
+        
+        
+
         uint16_t lock_mid16_key = UNSIGNED_ZERO;
         uint16_t lock_highiest16_value = UNSIGNED_ZERO;
         uint16_t lowest_prob_distance = UNSIGNED_ZERO;
@@ -239,6 +282,8 @@ struct HashTableConf : public HashHelpers
                 value_cell_auth_view.Raw48BitInCellData,
                 key_cell_auth_view.Raw48BitInCellData,
                 lowest_prob_distance,
+                value_cell_auth_view.FabricTableSegmentClass,
+                value_cell_auth_view.LocalityOfCell,
                 true
             };
         }
@@ -247,16 +292,72 @@ struct HashTableConf : public HashHelpers
             value_cell_auth_view.Raw48BitInCellData,
             key_cell_auth_view.Raw48BitInCellData,
             lowest_prob_distance,
+            value_cell_auth_view.FabricTableSegmentClass,
+            value_cell_auth_view.LocalityOfCell,
             false
         };
         
 
     }
 
-    // static constexpr SingleHashBuffer BuildAndValidateAHashBufferFromTriplet(HashKeyValueDistanceTriplet& key_valu_distence_triplet) noexcept
-    // {
+    static constexpr SingleHashBuffer BuildAndValidateAHashBufferFromTriplet(HashKeyValueDistanceTriplet& key_value_distence_triplet) noexcept
+    {
+        SingleHashBuffer desired_buffer{};
         
-    // }
+        const size_t key_idx = static_cast<size_t>(HashTableInternalIndexing::KEY_INDEX);
+        const size_t value_idx = static_cast<size_t>(HashTableInternalIndexing::VALUE_INDEX);
+        const size_t prob_lock_idx = static_cast<size_t>(HashTableInternalIndexing::PROB_DISTANCE_LOCK);
+
+        const size_t validation_index = static_cast<size_t>(desired_buffer.size() - 1);
+
+        if (!key_value_distence_triplet.IsValid)
+        {
+            desired_buffer[validation_index] = 0;
+            return desired_buffer;
+        }
+
+        desired_buffer[key_idx] = MakeHashKeyOrValueCell(
+            key_value_distence_triplet.HashKey,
+            key_value_distence_triplet.HashTable,
+            key_value_distence_triplet.AttachedLocality
+        );
+
+        desired_buffer[value_idx] = MakeHashKeyOrValueCell(
+            key_value_distence_triplet.HashValue,
+            key_value_distence_triplet.HashTable,
+            key_value_distence_triplet.AttachedLocality
+        );
+
+        desired_buffer[prob_lock_idx] = MakeHashProbDistanceCellWithSaftyLock(
+            key_value_distence_triplet.HashKey,
+            key_value_distence_triplet.HashValue,
+            key_value_distence_triplet.ProbDistance,
+            key_value_distence_triplet.HashTable,
+            key_value_distence_triplet.AttachedLocality
+        );
+
+        const HashKeyValueDistanceTriplet from_constructed_cell = ReadKeyValueProbFromValidCells(
+            desired_buffer[key_idx],
+            desired_buffer[value_idx],
+            desired_buffer[prob_lock_idx],
+            true
+        );
+
+        if (
+            from_constructed_cell.AttachedLocality == key_value_distence_triplet.AttachedLocality &&
+            from_constructed_cell.HashTable == key_value_distence_triplet.HashTable &&
+            from_constructed_cell.HashKey == key_value_distence_triplet.HashKey &&
+            from_constructed_cell.HashValue == key_value_distence_triplet.HashValue
+        )
+        {
+            desired_buffer[validation_index] = VALIDATION_MARK_OF_HASH_TABLE_BUFFER;
+            return desired_buffer;
+        }
+        
+        desired_buffer[validation_index] = 0;
+
+        return desired_buffer;
+    }
 
 
 };
