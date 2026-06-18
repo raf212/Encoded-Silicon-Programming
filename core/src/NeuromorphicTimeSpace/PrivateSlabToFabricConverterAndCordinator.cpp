@@ -51,7 +51,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    constexpr void SlabToFabricConverterAndCordinator::MakeAndStoreFabricMetaValue48_(
+    constexpr void FabricConstructor::MakeAndStoreFabricMetaValue48_(
         FabricMetaIndicies fabric_meta_idx, 
         uint64_t value, 
         LocalityPolicy cell_locality,
@@ -80,7 +80,7 @@ namespace PredictedAdaptedEncoding
 
     //Integrate AtomicAdaptiveBackoff
     // add CAS_FAILURE_COUNT
-    constexpr bool SlabToFabricConverterAndCordinator::UpdateValidPairedOccupancyApproxAtomically_(
+    constexpr bool FabricConstructor::UpdateValidPairedOccupancyApproxAtomically_(
         LocalityPolicy candidate_to_update, uint64_t desired_occupancy_value,
         bool force_update, clk16_t pair_version
     ) noexcept
@@ -270,7 +270,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    constexpr size_t SlabToFabricConverterAndCordinator::ReadOriginIndexBeginOfRecordBookOfFabricTableSegmentClasses_(
+    constexpr size_t RecordBookConstructor::ReadOriginIndexBeginOfRecordBookOfFabricTableSegmentClasses_(
         OriginOfRecord table_class
     ) noexcept
     {
@@ -293,7 +293,7 @@ namespace PredictedAdaptedEncoding
 
     }
 
-    constexpr void SlabToFabricConverterAndCordinator::WriteARecordBookOfTSCEntry_(
+    constexpr void RecordBookConstructor::WriteARecordBookOfTSCEntry_(
         OriginOfRecord table_class, 
         size_t begin, size_t end, 
         uint8_t slab_id
@@ -361,7 +361,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    bool SlabToFabricConverterAndCordinator::GetValidSlabRangeTripletFromRecordBookOfFTSC(
+    bool RecordBookConstructor::GetValidSlabRangeTripletFromRecordBookOfFTSC(
         FabricTableSegmentClasses table_class,
         SlabFabricTableBoundsCarrietFromRecordBookTable& return_bounds
     ) noexcept
@@ -401,7 +401,7 @@ namespace PredictedAdaptedEncoding
     }
         
 
-    void SlabToFabricConverterAndCordinator::IdleAFabricTableClassRangesMemory_(FabricTableSegmentClasses table_class) noexcept
+    void RecordBookConstructor::IdleAFabricTableClassRangesMemory_(FabricTableSegmentClasses table_class) noexcept
     {
 
         SlabFabricTableBoundsCarrietFromRecordBookTable return_bounds{};
@@ -475,7 +475,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    APCDescriptorRange SlabToFabricConverterAndCordinator::ReadRangeForASingleAPCSlotFromAPCDescriptor_(uint64_t apc_slot_index) noexcept
+    APCDescriptorRange APCHandleDescriptorConstructor::ReadRangeForASingleAPCSlotFromAPCDescriptor_(uint64_t apc_slot_index) noexcept
     {
         APCDescriptorRange probable_full_range_of_apc_descriptor{};
         const bool ok = ReadAPCDescriptorTableBeginEndFromRecordBook(probable_full_range_of_apc_descriptor);
@@ -493,7 +493,7 @@ namespace PredictedAdaptedEncoding
         return desired_slot_of_apc_descriptor;
     }
 
-    bool SlabToFabricConverterAndCordinator::MemCopySingleAPCDescriptionIfValidFromBufferToSlabBasePtr_(
+    bool APCHandleDescriptorConstructor::MemCopySingleAPCDescriptionIfValidFromBufferToSlabBasePtr_(
         DescriptionOfAPC::SingleAPCDescriptionCellBuffer& single_unvalidated_apc_description_buffer,
         DescriptionOfAPC::StateOfSingleAPCDescription updated_state,
         OwnershipPolicy updated_true_owner,

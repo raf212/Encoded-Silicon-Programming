@@ -1,0 +1,96 @@
+#pragma once 
+#include "APCHandleDescriptorConstructor.h"
+
+namespace PredictedAdaptedEncoding
+{
+    class HashTablesConstructor : public APCHandleDescriptorConstructor
+    {
+
+        // bool PublishHashKeyValueAtBUcket_(
+        //     size_t bucket_base,
+        //     HashKeyValueDistanceTriplet& a_valid_hash_triplet,
+        //     FabricTableSegmentClasses hash_table
+        // )
+        // {
+        //     if (
+        //         !CoreOfFabricCoordinator::IsValidHashTable(hash_table) ||
+        //         !a_valid_hash_triplet.IsValid
+        //     )
+        //     {
+        //         return false;
+        //     }
+
+        //     const 
+            
+        // }
+
+
+
+        // bool InsertOrUpdateRobinHoodHash48_(FabricTableSegmentClasses hash_table, uint64_t key48, uint64_t value48) noexcept
+        // {
+        //     if (key48 == UNSIGNED_ZERO || key48 ==  HashTableConf::HASH_TOMBSTONE_KEY)
+        //     {
+        //         return false;
+        //     }
+
+        //     SlabFabricTableBoundsCarrietFromRecordBookTable desired_hash_table_bounds {};
+
+        //     bool is_valid_bounds = GetValidSlabRangeTripletFromRecordBookOfFTSC(hash_table, desired_hash_table_bounds);\
+        //     if (!is_valid_bounds)
+        //     {
+        //         return false;
+        //     }
+            
+        //     const uint64_t bucket_count = static_cast<uint64_t>(
+        //         (desired_hash_table_bounds.EndIndex - desired_hash_table_bounds.BeginIndex) / HASH_BUCKED_WIDTH_OF_FABRIC
+        //     );
+
+        //     if (bucket_count == UNSIGNED_ZERO || (bucket_count & (bucket_count -1) != UNSIGNED_ZERO))
+        //     {
+        //         return false;
+        //     }
+
+        //     uint64_t incoming_key = key48;
+        //     uint64_t incoming_value = value48;
+        //     uint64_t incoming_hash = HashTableConf::HashUnsigned48_(incoming_key);
+        //     uint16_t incoming_prob = UNSIGNED_ZERO;
+        //     uint64_t incoming_bucket = incoming_hash & (bucket_count - 1u);
+
+        //     for (
+        //         uint64_t steps = 0;
+        //         steps < bucket_count && incoming_prob != HashTableConf::PROB_DISTANCE_SENTINAL; 
+        //         steps++
+        //     )
+        //     {
+        //         const size_t base_idx = desired_hash_table_bounds.BeginIndex + static_cast<size_t>(incoming_bucket) * HASH_BUCKED_WIDTH_OF_FABRIC;
+        //         HashKeyValueDistanceTriplet current_hash_data = ReadValidHashBucketTriplet(base_idx);
+        //         if (
+        //             !current_hash_data.IsValid ||
+        //             current_hash_data.HashKey == UNSIGNED_ZERO
+        //         )
+        //         {
+        //             return 
+        //         }
+                
+
+        //     }
+            
+            
+
+            
+            
+        // }
+
+
+        std::optional<uint64_t> FindHashValue48_(FabricTableSegmentClasses hash_table, uint64_t key48) noexcept;
+
+
+    public:
+        /// @brief Takes Base Bucket Index -> GATHER: 3 Cells -> CALLS: HashTableConf::ReadKeyValueProbFromValidCells
+        /// @param bucked_base_index First Index In Slab For That Hash SIMPLY: HashTableInternalIndexing::KEY_INDEX OF: ANY: Hash Table
+        /// @return VALID: HashKeyValueDistanceTriplet.IsValid -> true || INVALID: HashKeyValueDistanceTriplet.IsValid = false
+        HashKeyValueDistanceTriplet ReadValidHashBucketTriplet(size_t bucked_base_index) noexcept;
+
+    };
+
+}

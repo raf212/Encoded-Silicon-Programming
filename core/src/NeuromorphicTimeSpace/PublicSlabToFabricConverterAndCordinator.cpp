@@ -23,7 +23,7 @@ namespace PredictedAdaptedEncoding
         ResetScalarsofTheFabric_();
     }
 
-    constexpr packed64_t SlabToFabricConverterAndCordinator::ReadCompletePackedCellDirectly(size_t slab_index) noexcept
+    constexpr packed64_t FabricConstructor::ReadCompletePackedCellDirectly(size_t slab_index) noexcept
     {
         if (!SlabBasePtr_ || slab_index >= SlabCellCount_)
         {
@@ -34,7 +34,7 @@ namespace PredictedAdaptedEncoding
         return desired_cell_raw;
     } 
 
-    constexpr packed64_t SlabToFabricConverterAndCordinator::AtomicallyLoadReadCompletePackedCell(size_t slab_index) noexcept
+    constexpr packed64_t FabricConstructor::AtomicallyLoadReadCompletePackedCell(size_t slab_index) noexcept
     {
         if (!SlabBasePtr_ || slab_index >= SlabCellCount_)
         {
@@ -46,7 +46,7 @@ namespace PredictedAdaptedEncoding
         return desired_cell_raw;
     }
 
-    constexpr void SlabToFabricConverterAndCordinator::StorePackedCellUncheckedDirectly(size_t slab_index, packed64_t packed_cell) noexcept
+    constexpr void FabricConstructor::StorePackedCellUncheckedDirectly(size_t slab_index, packed64_t packed_cell) noexcept
     {
         if (!SlabBasePtr_ || slab_index >= SlabCellCount_)
         {
@@ -55,7 +55,7 @@ namespace PredictedAdaptedEncoding
         SlabBasePtr_[slab_index] = packed_cell;
     }
 
-    constexpr void SlabToFabricConverterAndCordinator::AtomicallyStorePackedCellUnchecked(
+    constexpr void FabricConstructor::AtomicallyStorePackedCellUnchecked(
         size_t slab_index, packed64_t packed_cell,
         std::memory_order mem_order
     ) noexcept
@@ -69,7 +69,7 @@ namespace PredictedAdaptedEncoding
         packed_cell_ref.notify_all();
     }
 
-    constexpr bool SlabToFabricConverterAndCordinator::CompareExchangeStrongFromFabric(
+    constexpr bool FabricConstructor::CompareExchangeStrongFromFabric(
         size_t slab_index, 
         packed64_t& expected_packed_cell, 
         packed64_t desired_packed_cell,
@@ -85,7 +85,7 @@ namespace PredictedAdaptedEncoding
         return packed_cell_ref.compare_exchange_strong(expected_packed_cell, desired_packed_cell, mem_order_success, mem_order_failure);
     }
 
-    constexpr bool SlabToFabricConverterAndCordinator::CompareExchangeWeakInSlab(
+    constexpr bool FabricConstructor::CompareExchangeWeakInSlab(
         size_t slab_index, 
         packed64_t& expected_packed_cell, 
         packed64_t desired_packed_cell,
@@ -105,7 +105,7 @@ namespace PredictedAdaptedEncoding
     /// @param slab_index 
     /// @param expected_cell 
     /// @return 
-    JustifyClaimCas SlabToFabricConverterAndCordinator::TryClaimACellInSlab(PackedCell64_t::AuthoritiveCellView& expected_cell_auth_view, packed64_t* desired_packed_cell) noexcept
+    JustifyClaimCas FabricConstructor::TryClaimACellInSlab(PackedCell64_t::AuthoritiveCellView& expected_cell_auth_view, packed64_t* desired_packed_cell) noexcept
     {
         if (!expected_cell_auth_view.IsCellValid)
         {
@@ -147,7 +147,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    bool SlabToFabricConverterAndCordinator::ReadAPCDescriptorTableBeginEndFromRecordBook(
+    bool APCHandleDescriptorConstructor::ReadAPCDescriptorTableBeginEndFromRecordBook(
         APCDescriptorRange& return_APC_handle_description_range
     ) noexcept
     {
@@ -169,7 +169,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    APCDescriptorRange SlabToFabricConverterAndCordinator::GetSegmentPoolBegainEndForSingleAPCDescription_(uint64_t single_description_index) noexcept
+    APCDescriptorRange APCHandleDescriptorConstructor::GetSegmentPoolBegainEndForSingleAPCDescription_(uint64_t single_description_index) noexcept
     {
         
         APCDescriptorRange desired_segment_pool_range{};
@@ -196,7 +196,7 @@ namespace PredictedAdaptedEncoding
         
     }
 
-    bool SlabToFabricConverterAndCordinator::ReadFabricMetaCellViewAtomically(MetaIndexOfAPCNode fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept
+    bool FabricConstructor::ReadFabricMetaCellViewAtomically(MetaIndexOfAPCNode fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept
     {
         const size_t meta_index_in_slab = static_cast<size_t>(fabric_meta_idx);
         if (meta_index_in_slab >= APCDataStructure::METACELL_COUNT || !SlabBasePtr_)
@@ -213,7 +213,7 @@ namespace PredictedAdaptedEncoding
 
 
 
-    std::optional<uint64_t> SlabToFabricConverterAndCordinator::ReadOccupancyApproxFromPairedIfValid(
+    std::optional<uint64_t> FabricConstructor::ReadOccupancyApproxFromPairedIfValid(
         LocalityPolicy desired_occupancy_class,
         const PackedCell64_t::AuthoritiveCellView* low_half_view_ptr,
         const PackedCell64_t::AuthoritiveCellView* high_half_view_ptr
@@ -233,7 +233,7 @@ namespace PredictedAdaptedEncoding
 
 
 
-    HashKeyValueDistanceTriplet SlabToFabricConverterAndCordinator::ReadValidHashBucketTriplet(size_t bucked_base_index) noexcept
+    HashKeyValueDistanceTriplet HashTablesConstructor::ReadValidHashBucketTriplet(size_t bucked_base_index) noexcept
     {
         if (!SlabBasePtr_ || bucked_base_index + HASH_BUCKED_WIDTH_OF_FABRIC >= SlabCellCount_)
         {
