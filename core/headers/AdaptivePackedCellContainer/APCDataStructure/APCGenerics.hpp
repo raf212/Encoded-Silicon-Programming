@@ -8,7 +8,7 @@ namespace PredictedAdaptedEncoding
 {
     struct ContainerConf
     {
-        PackedMode InitialMode = PackedMode::MODE_VALUE32;
+        PackedMode InitialMode = PackedMode::MODEL32;
         size_t ProducerBlockSize = MIN_PRODUCER_BLOCK_SIZE;
         size_t RegionSize = MIN_REGION_SIZE;
         uint32_t RetireBatchThreshold = MIN_RETIRE_BATCH_THRESHOLD;
@@ -33,7 +33,7 @@ namespace PredictedAdaptedEncoding
         static constexpr uint8_t HIGH_ALL_EIGHT_NIBBLE = 0xFFu;
         static constexpr size_t SIZE_OF_APCPagedNodeRelMaskClasses = 16u;
 
-        static inline bool INewerClock16(clk16_t candidate, clk16_t baseline) noexcept
+        static constexpr bool INewerClock16(clk16_t candidate, clk16_t baseline) noexcept
         {
             if (candidate == baseline)
             {
@@ -42,16 +42,16 @@ namespace PredictedAdaptedEncoding
             return static_cast<uint16_t>(candidate - baseline) < HALF16Bit_THRESHOLD_WRAP;
             
         }
-        static APCPagedNodeSegmentClasses ExtractPagedRelMaskFromPacked (packed64_t packed_cell) noexcept
+        static constexpr APCPagedNodeSegmentClasses ExtractPagedRelMaskFromPacked (packed64_t packed_cell) noexcept
         {
-            return static_cast<APCPagedNodeSegmentClasses>(PackedCell64_t::ExtractRelMaskFromPacked(packed_cell));
+            return static_cast<APCPagedNodeSegmentClasses>(PackedCell64_t::ExtractAPCPagedNodeSegmentClasse(packed_cell));
         }
 
 
         static constexpr uint32_t MakeOneAPCNodeClassReadyBit(APCPagedNodeSegmentClasses desired_rel_class) noexcept
         {
             const uint32_t rel_class = static_cast<uint8_t>(desired_rel_class) & HIGH_FOUR_NIBBLE;
-            if (rel_class == static_cast<uint8_t>(APCPagedNodeSegmentClasses::NONE) || rel_class == static_cast<uint8_t>(APCPagedNodeSegmentClasses::NANNULL))
+            if (rel_class == static_cast<uint8_t>(APCPagedNodeSegmentClasses::NONE) || rel_class == static_cast<uint8_t>(APCPagedNodeSegmentClasses::NULLNAN))
             {
                 return UNSIGNED_ZERO;
             }
@@ -59,12 +59,11 @@ namespace PredictedAdaptedEncoding
         }
 
 
-        static bool CanCellBeConsumedForThisRegion(packed64_t packed_cell, APCPagedNodeSegmentClasses region_kind) noexcept
+        static constexpr bool CanCellBeConsumedForThisRegion(packed64_t packed_cell, APCPagedNodeSegmentClasses region_kind) noexcept
         {
-            return PackedCell64_t::ExtractLocalityFromPacked(packed_cell) == PackedCellLocalityTypes::ST_PUBLISHED &&
-                ExtractPagedRelMaskFromPacked(packed_cell) == region_kind &&
-                PackedCell64_t::ExtractRelOffset32FromPacked(packed_cell) == RelOffsetMode32::RELOFFSET_GENERIC_VALUE;
-        }
+            return PackedCell64_t::ExtractLocalityPolicy(packed_cell) == LocalityPolicy::PUBLISHED &&
+                ExtractPagedRelMaskFromPacked(packed_cell) == region_kind;        
+            }
 
         static constexpr MetaIndexOfAPCNode GetOccupancyMetIndexByRegionClass(
             APCPagedNodeSegmentClasses desired_region_class
@@ -76,7 +75,7 @@ namespace PredictedAdaptedEncoding
                 );
         }
 
-        static inline bool IsEmbededControlCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        static constexpr bool IsEmbededControlCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
             if (a_cell_view.PageClass == APCPagedNodeSegmentClasses::CONTROL_SLOT)
             {
@@ -86,27 +85,30 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-        static inline bool IsEmbededTimerCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        static constexpr bool IsEmbededTimerCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
-            return a_cell_view.CellMode == PackedMode::MODE_CLKVAL48 && 
-                a_cell_view.RelationOffsetForMode48.has_value() &&
-                *a_cell_view.RelationOffsetForMode48 == RelOffsetMode48::RELOFFSET_PURE_TIMER;
+            return a_cell_view.CellMode == PackedMode::MODEL48 && 
+                a_cell_view.SubClassOfModel48 == Model48Subclass::PURE_TIMER_48;
         }
 
-        static inline bool IsThisCellAppropriateAndGenericToConsume(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        static constexpr bool IsThisCellAppropriateAndGenericToConsume(const PackedCell64_t::AuthoritiveCellView& a_cell_view, APCPagedNodeSegmentClasses page_class) noexcept
         {
 
-
-            if (!IsGenericPayloadOffset(a_cell_view))
+            if (!a_cell_view.IsCellValid)
+            {
+                return false;
+            }
+            
+            if (a_cell_view.LocalityOfCell != LocalityPolicy::PUBLISHED)
             {
                 return false;
             }
 
-            if (a_cell_view.LocalityOfCell != PackedCellLocalityTypes::ST_PUBLISHED)
+            if (page_class != a_cell_view.PageClass)
             {
                 return false;
             }
-
+            
             if (!IsDataConsumablePageClass(a_cell_view.PageClass))
             {
                 return false;
@@ -120,16 +122,8 @@ namespace PredictedAdaptedEncoding
             return true;
         }
 
-        static inline bool IsCellAppropriatelyPagedAndPublishedAsGeneric(
-            const PackedCell64_t::AuthoritiveCellView& view,
-            APCPagedNodeSegmentClasses region_kind
-        ) noexcept
-        {
-            return IsThisCellAppropriateAndGenericToConsume(view) &&
-                view.PageClass == region_kind;
-        }    
 
-        static inline bool IsTrackedOccupancyPageClass(APCPagedNodeSegmentClasses page_class) noexcept
+        static constexpr bool IsTrackedOccupancyPageClass(APCPagedNodeSegmentClasses page_class) noexcept
         {
             /*
                 Occupancy-tracked means:
@@ -142,52 +136,33 @@ namespace PredictedAdaptedEncoding
                 Normal idle free capacity is still derived, not counted.
             */
             return page_class != APCPagedNodeSegmentClasses::NONE &&
-                page_class != APCPagedNodeSegmentClasses::NANNULL;
+                page_class != APCPagedNodeSegmentClasses::NULLNAN;
         }
 
-        static inline bool IsDataConsumablePageClass(APCPagedNodeSegmentClasses page_class) noexcept
+        static constexpr bool IsDataConsumablePageClass(APCPagedNodeSegmentClasses page_class) noexcept
         {
             /*
                 These regions may contain normal user/runtime data.
                 CONTROL_SLOT is not data-consumable.
                 FREE_SLOT is not data-consumable.
-                NONE/NANNULL are invalid.
+                NONE/NULLNAN are invalid.
             */
             return page_class != APCPagedNodeSegmentClasses::NONE &&
-                page_class != APCPagedNodeSegmentClasses::NANNULL &&
+                page_class != APCPagedNodeSegmentClasses::NULLNAN &&
                 page_class != APCPagedNodeSegmentClasses::CONTROL_SLOT &&
                 page_class != APCPagedNodeSegmentClasses::FREE_SLOT;
         }
 
-        static inline bool IsGenericPayloadOffset(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
-        {
-            if (!a_cell_view.IsCellValid)
-            {
-                return false;
-            }
-            
-            if (a_cell_view.CellMode == PackedMode::MODE_VALUE32)
-            {
-                return a_cell_view.RelationOffsetForMode32.has_value() && *a_cell_view.RelationOffsetForMode32 == RelOffsetMode32::RELOFFSET_GENERIC_VALUE;
-            }
-            if (a_cell_view.CellMode == PackedMode::MODE_CLKVAL48)
-            {
-                return a_cell_view.RelationOffsetForMode48.has_value() && *a_cell_view.RelationOffsetForMode48 == RelOffsetMode48::RELOFFSET_GENERIC_VALUE;
-            }
-            return false;
-        }
-
-        static inline bool DoseThisCellUpdateableAsOccupancy16x3(
+        static constexpr bool DoseThisCellUpdateableAsOccupancy16x3(
             const PackedCell64_t::AuthoritiveCellView& occupancy_cell_view,
-            PackedCellLocalityTypes desired_cell_locality = PackedCellLocalityTypes::ST_PUBLISHED
+            LocalityPolicy desired_cell_locality = LocalityPolicy::PUBLISHED
         ) noexcept
         {
             if (
                 !occupancy_cell_view.IsCellValid || occupancy_cell_view.PageClass != APCPagedNodeSegmentClasses::CONTROL_SLOT ||
-                occupancy_cell_view.CellMode != PackedMode::MODE_CLKVAL48 ||
+                occupancy_cell_view.CellMode != PackedMode::MODEL48 ||
                 occupancy_cell_view.LocalityOfCell != desired_cell_locality ||
-                !occupancy_cell_view.RelationOffsetForMode48.has_value() ||
-                *occupancy_cell_view.RelationOffsetForMode48 != RelOffsetMode48::THREE_16_BIT_SUB_DIVISION
+                occupancy_cell_view.SubClassOfModel48 != Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL
             )
             {
                 return false;
@@ -195,17 +170,65 @@ namespace PredictedAdaptedEncoding
             return true;
         }
 
+    static constexpr packed64_t TryToSwitchPageClassRuntime(
+        packed64_t packed_cell,
+        APCPagedNodeSegmentClasses page_class
+    ) noexcept
+    {
+        const PackedCell64_t::AuthoritiveCellView desired_cell_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
+        if (!desired_cell_view.IsCellValid)
+        {
+            return PackedCell64_t::MakeFaultyCell();
+        }
+
+        if (desired_cell_view.CellOwnership != OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER)
+        {
+            return packed_cell;
+        }
+
+        if (desired_cell_view.ContractOfValue == AccessContractOfValue::CAS_RMW)
+        {
+            return packed_cell;
+        }
+
+        if (desired_cell_view.LocalityOfCell == LocalityPolicy::CLAIMED)
+        {
+            switch (desired_cell_view.ContractOfValue)
+            {
+
+            case AccessContractOfValue::ATOMIC_SLNAPSHOT:
+                return packed_cell;
+
+            case AccessContractOfValue::CLAIMED_GURDED:
+                return packed_cell;
+            
+            default:
+                break;
+            }
+        }
+        
+        if (desired_cell_view.PageClass == APCPagedNodeSegmentClasses::CONTROL_SLOT)
+        {
+            return packed_cell;
+        }
+
+        packed_cell = PackedCell64_t::SetPageClassInPacked(packed_cell, page_class);
+        
+        return packed_cell;
+        
+    }
+
 };
     
     struct LayoutBoundsOfSingleRelNodeClass
     {
         uint32_t BeginIndex = APCDataStructure::BRANCH_SENTINAL;
         uint32_t EndIndex = APCDataStructure::BRANCH_SENTINAL;
-        APCPagedNodeSegmentClasses PAGE_LAYOUT_CLASS = APCPagedNodeSegmentClasses::NANNULL;
+        APCPagedNodeSegmentClasses PAGE_LAYOUT_CLASS = APCPagedNodeSegmentClasses::NULLNAN;
         float InitialOrCurrentPercentage = 0u;
         uint16_t VersionNumber = 0u;
 
-        static inline MetaIndexOfAPCNode GetLayoutCellMetaIndexForPageClass(
+        static constexpr MetaIndexOfAPCNode GetLayoutCellMetaIndexForPageClass(
             APCPagedNodeSegmentClasses page_class
         ) noexcept
         {
@@ -235,14 +258,14 @@ namespace PredictedAdaptedEncoding
                 case APCPagedNodeSegmentClasses::AUX_SLOT:
                     return MetaIndexOfAPCNode::AUX_BOUNDS_VERSION;
 
-                case APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT:
-                    return MetaIndexOfAPCNode::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT_BOUNDS_VERSION;
+                case APCPagedNodeSegmentClasses::HETEROGENOUS_RAW_MEMORY:
+                    return MetaIndexOfAPCNode::HETEROGENOUS_RAW_MEMORY_BOUNDS_VERSION;
                     
-                case APCPagedNodeSegmentClasses::PAIRED_POINTER_LOCAL_MEMORY:
-                    return MetaIndexOfAPCNode::PAIRED_POINTER_LOCAL_MEMORY_BOUNDS_VERSION;
+                case APCPagedNodeSegmentClasses::SLOT_TABLE_DESCRIPTOR:
+                    return MetaIndexOfAPCNode::SLOT_TABLE_DESCRIPTOR_BOUNDS_VERSION;
 
-                case APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY:
-                    return MetaIndexOfAPCNode::PAIRED_POINTER_DISTANCE_MEMORY_BOUNDS_VERSION;
+                case APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY:
+                    return MetaIndexOfAPCNode::PAIRED_POINTER_IN_MEMORY_BOUNDS_VERSION;
 
                 case APCPagedNodeSegmentClasses::UNDEFINED:
                     return MetaIndexOfAPCNode::UNDEFINED_BOUNDS_VERSION;
@@ -263,30 +286,30 @@ namespace PredictedAdaptedEncoding
 
         constexpr bool IsValid(uint32_t payload_begain, uint32_t payload_end) const noexcept
         {
-            return BeginIndex >= payload_begain && EndIndex >= BeginIndex && EndIndex <= payload_end && PAGE_LAYOUT_CLASS!= APCPagedNodeSegmentClasses::NANNULL;
+            return BeginIndex >= payload_begain && EndIndex >= BeginIndex && EndIndex <= payload_end && PAGE_LAYOUT_CLASS!= APCPagedNodeSegmentClasses::NULLNAN;
         }
 
-        bool IsEmpty() const noexcept
+        constexpr bool IsEmpty() const noexcept
         {
-            return EndIndex <= BeginIndex || PAGE_LAYOUT_CLASS == APCPagedNodeSegmentClasses::NANNULL;
+            return EndIndex <= BeginIndex || PAGE_LAYOUT_CLASS == APCPagedNodeSegmentClasses::NULLNAN;
         }
 
-        uint32_t GetPayloadSpan() const noexcept
+        constexpr uint32_t GetPayloadSpan() const noexcept
         {
             return (EndIndex > BeginIndex) ? (EndIndex - BeginIndex) : 0u;
         }
 
         constexpr bool CanBorrowRightFrom(const LayoutBoundsOfSingleRelNodeClass& right) const noexcept
         {
-            return EndIndex == right.BeginIndex && right.GetPayloadSpan() > 0u && right.PAGE_LAYOUT_CLASS != APCPagedNodeSegmentClasses::NANNULL;
+            return EndIndex == right.BeginIndex && right.GetPayloadSpan() > 0u && right.PAGE_LAYOUT_CLASS != APCPagedNodeSegmentClasses::NULLNAN;
         }
 
         constexpr bool CanBorrowLeftFrom(const LayoutBoundsOfSingleRelNodeClass& left) const noexcept
         {
-            return BeginIndex == left.EndIndex && left.GetPayloadSpan() > 0u && left.PAGE_LAYOUT_CLASS != APCPagedNodeSegmentClasses::NANNULL;
+            return BeginIndex == left.EndIndex && left.GetPayloadSpan() > 0u && left.PAGE_LAYOUT_CLASS != APCPagedNodeSegmentClasses::NULLNAN;
         }
 
-        bool TryGrowRight(uint32_t amount, LayoutBoundsOfSingleRelNodeClass& right) noexcept
+        constexpr bool TryGrowRight(uint32_t amount, LayoutBoundsOfSingleRelNodeClass& right) noexcept
         {
             if (!CanBorrowRightFrom(right) || amount == 0u || right.GetPayloadSpan() < amount)
             {
@@ -297,7 +320,7 @@ namespace PredictedAdaptedEncoding
             return true;            
         }
 
-        bool TryGrowLeft(uint32_t amount, LayoutBoundsOfSingleRelNodeClass& left) noexcept
+        constexpr bool TryGrowLeft(uint32_t amount, LayoutBoundsOfSingleRelNodeClass& left) noexcept
         {
             if (!CanBorrowLeftFrom(left) || amount == 0u || left.GetPayloadSpan() < amount)
             {
@@ -308,7 +331,7 @@ namespace PredictedAdaptedEncoding
             return true;
         }
 
-        uint32_t ClampOrNormalize(uint32_t idx) const noexcept
+        constexpr uint32_t ClampOrNormalize(uint32_t idx) const noexcept
         {
             if (IsEmpty())
             {
@@ -326,12 +349,12 @@ namespace PredictedAdaptedEncoding
             return (static_cast<uint32_t>(InitialOrCurrentPercentage) * total_payload_span) / 100u;
         }
 
-        inline bool DoseThisIndexPhysicallyExistInThisRegion(size_t index) const noexcept
+         bool DoseThisIndexPhysicallyExistInThisRegion(size_t index) const noexcept
         {
             return index >= BeginIndex && index < EndIndex;
         }
         
-        inline bool CanCellBEConsumedForThisPhysicalRegion(
+         bool CanCellBEConsumedForThisPhysicalRegion(
             packed64_t packed_cell,
             size_t idx
         ) noexcept
@@ -357,8 +380,13 @@ namespace PredictedAdaptedEncoding
             {
                 return false;
             }
+
+            if (!APCAndPagedNodeHelpers::IsDataConsumablePageClass(a_cell_view.PageClass))
+            {
+                return false;
+            }
             
-            return APCAndPagedNodeHelpers::IsCellAppropriatelyPagedAndPublishedAsGeneric(a_cell_view, PAGE_LAYOUT_CLASS);
+            return true;
         }
 
     };
@@ -386,9 +414,9 @@ namespace PredictedAdaptedEncoding
         LayoutBoundsOfSingleRelNodeClass EdgeDescriptorLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::EDGE_DESCRIPTOR, EDGEDESCRIPTOR_PERCENTAGE)};
         LayoutBoundsOfSingleRelNodeClass WeightLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::WEIGHT_SLOT, WEIGHTSLOT_PERCENTAGE)};
         LayoutBoundsOfSingleRelNodeClass AUXLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::AUX_SLOT, AUXSLOT_PERCENTAGE)};
-        LayoutBoundsOfSingleRelNodeClass HeterogenousMemoryLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT, UNSIGNED_ZERO)};
-        LayoutBoundsOfSingleRelNodeClass LocalPairedPointerLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::PAIRED_POINTER_LOCAL_MEMORY, UNSIGNED_ZERO)};
-        LayoutBoundsOfSingleRelNodeClass DistancePairedLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY, UNSIGNED_ZERO)};
+        LayoutBoundsOfSingleRelNodeClass HeterogenousMemoryLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::HETEROGENOUS_RAW_MEMORY, UNSIGNED_ZERO)};
+        LayoutBoundsOfSingleRelNodeClass LocalPairedPointerLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::SLOT_TABLE_DESCRIPTOR, UNSIGNED_ZERO)};
+        LayoutBoundsOfSingleRelNodeClass DistancePairedLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY, UNSIGNED_ZERO)};
         LayoutBoundsOfSingleRelNodeClass UndefinedLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::UNDEFINED, UNSIGNED_ZERO)};
         LayoutBoundsOfSingleRelNodeClass FreeLayout{MakeDefaultDesiredLayout(APCPagedNodeSegmentClasses::FREE_SLOT, FREE_PERCENTAGE)};
         //we can add 8 more threrritically rel_mask = 4 bit ->16 classes 
@@ -405,7 +433,7 @@ namespace PredictedAdaptedEncoding
                     FreeLayout.InitialOrCurrentPercentage;
         }
 
-        bool DoseAllPhysicalLayoutCarrySameVersionNumberAsGlobal(
+        constexpr bool DoseAllPhysicalLayoutCarrySameVersionNumberAsGlobal(
             uint16_t global_version_number
         ) noexcept
         {
@@ -431,7 +459,7 @@ namespace PredictedAdaptedEncoding
                 FreeLayout.VersionNumber == global_version_number;
         }
         
-        bool NormalizePercentagesIfNeeded() noexcept
+        constexpr bool NormalizePercentagesIfNeeded() noexcept
         {
             const float sum_of_default = SumOfPercentage();
             if (sum_of_default == 100.00)
@@ -470,7 +498,7 @@ namespace PredictedAdaptedEncoding
             return true;
         }
 
-        LayoutBoundsOfSingleRelNodeClass* GetALayoutByRelMask(APCPagedNodeSegmentClasses desired_rel_mask) noexcept
+        constexpr LayoutBoundsOfSingleRelNodeClass* GetALayoutByRelMask(APCPagedNodeSegmentClasses desired_rel_mask) noexcept
         {
             switch (desired_rel_mask)
             {
@@ -482,11 +510,11 @@ namespace PredictedAdaptedEncoding
                 case APCPagedNodeSegmentClasses::EDGE_DESCRIPTOR:      return &EdgeDescriptorLayout;
                 case APCPagedNodeSegmentClasses::WEIGHT_SLOT:          return &WeightLayout;
                 case APCPagedNodeSegmentClasses::AUX_SLOT:             return &AUXLayout;
-                case APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT:
+                case APCPagedNodeSegmentClasses::HETEROGENOUS_RAW_MEMORY:
                     return &HeterogenousMemoryLayout;
-                case APCPagedNodeSegmentClasses::PAIRED_POINTER_LOCAL_MEMORY: 
+                case APCPagedNodeSegmentClasses::SLOT_TABLE_DESCRIPTOR: 
                     return &LocalPairedPointerLayout;
-                case APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY:
+                case APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY:
                     return &DistancePairedLayout;
                 case APCPagedNodeSegmentClasses::UNDEFINED:            return &UndefinedLayout;
                 case APCPagedNodeSegmentClasses::FREE_SLOT:            return &FreeLayout;
@@ -505,11 +533,11 @@ namespace PredictedAdaptedEncoding
                 case APCPagedNodeSegmentClasses::EDGE_DESCRIPTOR:      return &EdgeDescriptorLayout;
                 case APCPagedNodeSegmentClasses::WEIGHT_SLOT:          return &WeightLayout;
                 case APCPagedNodeSegmentClasses::AUX_SLOT:             return &AUXLayout;
-                case APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT:
+                case APCPagedNodeSegmentClasses::HETEROGENOUS_RAW_MEMORY:
                     return &HeterogenousMemoryLayout;
-                case APCPagedNodeSegmentClasses::PAIRED_POINTER_LOCAL_MEMORY: 
+                case APCPagedNodeSegmentClasses::SLOT_TABLE_DESCRIPTOR: 
                     return &LocalPairedPointerLayout;
-                case APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY:
+                case APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY:
                     return &DistancePairedLayout;
                 case APCPagedNodeSegmentClasses::UNDEFINED:            return &UndefinedLayout;
                 case APCPagedNodeSegmentClasses::FREE_SLOT:            return &FreeLayout;
@@ -536,11 +564,11 @@ namespace PredictedAdaptedEncoding
     struct AcquirePairedPointerStruct
     {
         uint64_t AssembeledPtr = 0;
-        size_t HeadIdx = SIZE_MAX;
-        size_t TailIdx = SIZE_MAX;
+        size_t HeadIdx = APCDataStructure::APC_SIZE_SENTINAL;
+        size_t TailIdx = APCDataStructure::APC_SIZE_SENTINAL;
         packed64_t HeadScreenshot = 0;
         packed64_t TailScreenshot = 0;
-        RelOffsetMode32 Position = RelOffsetMode32::RELOFFSET_GENERIC_VALUE;
+        Model32Subclass Position = Model32Subclass::SELF_CLASS;
         bool Ownership = false;
     };
 
@@ -554,7 +582,7 @@ namespace PredictedAdaptedEncoding
     struct PublishResult
     {
         PublishStatus ResultStatus{PublishStatus::INVALID};
-        size_t Index{SIZE_MAX};
+        size_t Index{APCDataStructure::APC_SIZE_SENTINAL};
     };
     
 }

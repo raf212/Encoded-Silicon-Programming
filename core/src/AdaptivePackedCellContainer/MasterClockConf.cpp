@@ -1,85 +1,105 @@
-#include "APCSegmentsCausalCordinator.hpp"
+#include "NeuromorphicTimeSpace/APCSegmentsCausalCordinator.hpp"
 
 namespace PredictedAdaptedEncoding
 {
 
-    packed64_t MasterClockConf::RefreshPackedCellClockOnly(
-        packed64_t provided_packed_cell,
-        APCPagedNodeSegmentClasses force_rel_mask,
-        std::optional<PackedCellLocalityTypes> override_locality
-    ) noexcept
-    {
-        const uint64_t now_ticks48 = NowTicks48();
-        const clk16_t now_clk16 = GetImmidiateDownShiftedClock16(now_ticks48);
 
-        const PriorityPhysics priority_of_provided_cell = PackedCell64_t::ExtractPriorityFromPacked(provided_packed_cell);
-        const PackedCellNodeAuthority node_authority = PackedCell64_t::ExtractNodeAuthorityFromPacked(provided_packed_cell);
-        PackedCellLocalityTypes locality_of_provided_cell = PackedCell64_t::ExtractLocalityFromPacked(provided_packed_cell);
-        if (override_locality.has_value())
-        {
-            locality_of_provided_cell = *override_locality;
-        }
-        const APCPagedNodeSegmentClasses rel_mask = (force_rel_mask == APCPagedNodeSegmentClasses::NANNULL) ? 
-                        PackedCell64_t::ExtractRelMaskFromPacked(provided_packed_cell) : force_rel_mask;
-        const PackedCellDataType dtype_of_provided_cell = PackedCell64_t::ExtractPCellDataTypeFromPacked(provided_packed_cell);
-        const PackedMode mode_of_provided_cell = PackedCell64_t::ExtractModeOfPackedCellFromPacked(provided_packed_cell);
-        if (mode_of_provided_cell == PackedMode::MODE_VALUE32)
-        {
-            const val32_t value32_of_provided_cell = PackedCell64_t::ExtractValue32(provided_packed_cell);
-            const RelOffsetMode32 reloffset32_of_provided_cell = PackedCell64_t::ExtractRelOffset32FromPacked(provided_packed_cell);
-            return PackedCell64_t::ComposeValue32u_64(
-                value32_of_provided_cell,
-                now_clk16,
-                PackedCell64_t::MakeInCellMetaForMode_32t(priority_of_provided_cell, node_authority, locality_of_provided_cell, rel_mask, reloffset32_of_provided_cell, dtype_of_provided_cell)
-            );
-        }
 
-        const RelOffsetMode48 reloffset48_of_provided_cell = PackedCell64_t::ExtractRelOffset48FromPacked(provided_packed_cell);
+    // packed64_t MasterClockConf::RefreshPackedCellClockOnly(
+    //     packed64_t provided_packed_cell,
+    //     std::optional<LocalityPolicy> override_locality
+    // ) noexcept
+    // {
+    //     const uint64_t now_ticks48 = NowTicks48();
+    //     const clk16_t now_clk16 = GetImmidiateDownShiftedClock16(now_ticks48);
+
+    //     const PackedCell64_t::AuthoritiveCellView desired_authoretive_view = PackedCell64_t::GetAuthoritiveViewsForACell(provided_packed_cell);
+    //     if (!desired_authoretive_view.IsCellValid)
+    //     {
+    //         return provided_packed_cell;
+    //     }
         
-        if (reloffset48_of_provided_cell == RelOffsetMode48::RELOFFSET_PURE_TIMER)
-        {
-            return PackedCell64_t::ComposeCLK48u_64(
-                now_ticks48,
-                //rename Strl to STRL(future)
-                PackedCell64_t::MakeInCellMetaForMode_48t(priority_of_provided_cell, node_authority, locality_of_provided_cell, rel_mask, reloffset48_of_provided_cell, dtype_of_provided_cell)
-            );
-        }
-        return provided_packed_cell;
-    }
+    //     if (
+    //         (desired_authoretive_view.CellMode == PackedMode::MODEL32 || desired_authoretive_view.CellMode == PackedMode::MODEL48 ) &&
+    //         desired_authoretive_view.SubClassOfModel32 != Model32Subclass::SELF_CLASS
+    //     )
+    //     {
+    //         return provided_packed_cell;
+    //     }
+        
+    //     if (
+    //         (desired_authoretive_view.CellMode == PackedMode::MODEL32 || desired_authoretive_view.CellMode == PackedMode::VALUE32) &&
+    //         (desired_authoretive_view.AccessContractOfValue.has_value() || desired_authoretive_view.SubClassOfModel32.has_value())
+    //     )
+    //     {
+    //         return PackedCell64_t::Compose32BitFamilyPackedCell(
+    //             desired_authoretive_view.Raw32BitInCellData.value_or(UNSIGNED_ZERO),
+    //             now_clk16,
+    //             PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_32t(
+    //                 desired_authoretive_view.CellOwnership,
+    //                 desired_authoretive_view.CellOwnership == OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER ? static_cast<tag8_t>(desired_authoretive_view.PageClass) : static_cast<tag8_t>(desired_authoretive_view.FabricTableSegmentClass),
+    //                 desired_authoretive_view.SubClassOfModel32.value(),
+    //                 desired_authoretive_view.Priority,
+    //                 override_locality.has_value() ? override_locality.value() : desired_authoretive_view.LocalityOfCell,
+    //                 desired_authoretive_view.CellValueDataType
+    //             )
+    //         );
+    //     }
+        
 
-    std::optional<packed64_t> MasterClockConf::TouchPackedCellClockAndGetCellWithNewClock(
-        size_t index_of_packed_cell,
-        APCPagedNodeSegmentClasses force_rel_mask,
-        std::optional<PackedCellLocalityTypes> override_locality
-    ) noexcept
-    {
-        if (!APCPtr_)
-        {
-            return std::nullopt;
-        }
-        if (!APCPtr_->IfIndexValid(index_of_packed_cell))
-        {
-            return std::nullopt;
-        }
-        packed64_t current_packed_cell = APCPtr_->BackingPtr[index_of_packed_cell].load(MoLoad_);
-        while (true)
-        {
-            const packed64_t refreshed_packed_cell = RefreshPackedCellClockOnly(current_packed_cell, force_rel_mask, override_locality);
-            if (APCPtr_->BackingPtr[index_of_packed_cell].compare_exchange_strong(
-                current_packed_cell,
-                refreshed_packed_cell,
-                OnExchangeSuccess,
-                OnExchangeFailure
-            ))
-            {
-                return refreshed_packed_cell;
-            }
-            if (APCPtr_->GetAtomicAdaptiveBackoffPtr())
-            {
-                APCPtr_->GetAtomicAdaptiveBackoffPtr()->AdaptiveBackOffPacked(current_packed_cell);
-            }
-        }
-    }
+    //     const Model48Subclass reloffset48_of_provided_cell = PackedCell64_t::ExtractModel48Subclass(provided_packed_cell);
+        
+    //     if (reloffset48_of_provided_cell == Model48Subclass::PURE_TIMER_48)
+    //     {
+    //         return PackedCell64_t::Compose48BitFamilyPackedCell(
+    //             now_ticks48,
+    //             //rename Strl to STRL(future)
+    //             PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_48t(
+    //                 desired_authoretive_view.CellOwnership,
+    //                 desired_authoretive_view.CellOwnership == OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER ? static_cast<tag8_t>(desired_authoretive_view.PageClass) : static_cast<tag8_t>(desired_authoretive_view.FabricTableSegmentClass),
+    //                 desired_authoretive_view.SubClassOfModel48.value(),
+    //                 desired_authoretive_view.Priority,
+    //                 override_locality.has_value() ? override_locality.value() : desired_authoretive_view.LocalityOfCell,
+    //                 desired_authoretive_view.CellValueDataType
+    //             )            
+    //         );
+    //     }
+    //     return provided_packed_cell;
+    // }
+
+
+    // std::optional<packed64_t> MasterClockConf::TouchPackedCellClockAndGetCellWithNewClock(
+    //     size_t index_of_packed_cell,
+    //     std::optional<LocalityPolicy> override_locality
+    // ) noexcept
+    // {
+    //     if (!APCPtr_)
+    //     {
+    //         return std::nullopt;
+    //     }
+    //     if (!APCPtr_->IfIndexValid(index_of_packed_cell))
+    //     {
+    //         return std::nullopt;
+    //     }
+    //     packed64_t current_packed_cell = APCPtr_->BackingPtr[index_of_packed_cell].load(MoLoad_);
+    //     while (true)
+    //     {
+    //         const packed64_t refreshed_packed_cell = RefreshPackedCellClockOnly(current_packed_cell, override_locality);
+    //         if (APCPtr_->BackingPtr[index_of_packed_cell].compare_exchange_strong(
+    //             current_packed_cell,
+    //             refreshed_packed_cell,
+    //             OnExchangeSuccess,
+    //             OnExchangeFailure
+    //         ))
+    //         {
+    //             return refreshed_packed_cell;
+    //         }
+    //         if (APCPtr_->GetAtomicAdaptiveBackoffPtr())
+    //         {
+    //             APCPtr_->GetAtomicAdaptiveBackoffPtr()->AdaptiveBackOffPacked(current_packed_cell);
+    //         }
+    //     }
+    // }
 
 std::optional<uint64_t> MasterClockConf::ReconstructCellClock16toFull48BySegmentLocalClock48(
     size_t index_of_packed_cell
@@ -100,17 +120,17 @@ std::optional<uint64_t> MasterClockConf::ReconstructCellClock16toFull48BySegment
 
     const packed64_t local_clock_cell = APCPtr_->ReadFullMetaCell(MetaIndexOfAPCNode::LOCAL_CLOCK48);
 
-    const uint64_t local_clock48 = PackedCell64_t::ExtractClk48(local_clock_cell) & MaskLowNBits(CLK_B48);
+    const uint64_t local_clock48 = PackedCell64_t::ExtractRaw48FamilyBits(local_clock_cell) & MaskLowNBits(FAMILY_48_BIT_LEN);
 
-    const uint64_t local_down = (local_clock48 >> TimerDownShift_) & MaskLowNBits(CLK_B48);
+    const uint64_t local_down = (local_clock48 >> TimerDownShift_) & MaskLowNBits(FAMILY_48_BIT_LEN);
     uint64_t candidate_down = (local_down & ~uint64_t(0xFFFFu)) | static_cast<uint64_t>(stored_clk16);
 
     if (candidate_down > local_down)
     {
-        candidate_down -= (1ull << CLK_B16);
+        candidate_down -= (1ull << LOW16_BIT_LEN);
     }
 
-    const uint64_t reconstructed = (candidate_down << TimerDownShift_) & MaskLowNBits(CLK_B48);
+    const uint64_t reconstructed = (candidate_down << TimerDownShift_) & MaskLowNBits(FAMILY_48_BIT_LEN);
     return reconstructed;
 }
 
@@ -121,7 +141,7 @@ std::optional<uint64_t> MasterClockConf::ReconstructCellClock16toFull48BySegment
         {
             return false;
         }
-        packed64_t wanted_pure_clock48 = ComposePureClockCell48(PriorityPhysics::TIME_DEPENDENCY);
+        packed64_t wanted_pure_clock48 = ComposePureClockCell48(OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER);
         APCPtr_->BackingPtr[static_cast<size_t>(MetaIndexOfAPCNode::LOCAL_CLOCK48)].store(wanted_pure_clock48, MoStoreSeq_);
         APCPtr_->BackingPtr[static_cast<size_t>(MetaIndexOfAPCNode::LOCAL_CLOCK48)].notify_all();
         return true;
@@ -149,7 +169,7 @@ std::optional<uint64_t> MasterClockConf::ReconstructCellClock16toFull48BySegment
         clk16_t candidate_clock16 = NowClock16();
         while (true)
         {
-            uint32_t current32 = APCPtr_->ReadMetaCellValue32(idx);
+            uint32_t current32 = APCPtr_->ReadMetaCellFamily32(idx);
             const clk16_t current_segment_clock16 = static_cast<clk16_t>(current32);
             if (!APCAndPagedNodeHelpers::INewerClock16(candidate_clock16, current_segment_clock16))
             {

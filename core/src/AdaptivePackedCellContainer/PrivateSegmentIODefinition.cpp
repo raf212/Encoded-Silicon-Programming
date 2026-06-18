@@ -1,4 +1,4 @@
-#include "APCSegmentsCausalCordinator.hpp"
+#include "NeuromorphicTimeSpace/APCSegmentsCausalCordinator.hpp"
 #include "PackedCellContainerManager.hpp"
 #include <iostream>
 
@@ -27,9 +27,9 @@ namespace PredictedAdaptedEncoding
                 return;
         }
 
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::REGION_DIR_COUNT, static_cast<val32_t>(APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses));
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::EDGE_TABLE_COUNT, UNSIGNED_ZERO);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::WEIGHT_TABLE_COUNT, UNSIGNED_ZERO);
+        WriteTypedValue32MetaCEll_(MetaIndexOfAPCNode::REGION_DIR_COUNT, static_cast<val32_t>(APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses));
+        WriteTypedValue32MetaCEll_(MetaIndexOfAPCNode::EDGE_TABLE_COUNT, UNSIGNED_ZERO);
+        WriteTypedValue32MetaCEll_(MetaIndexOfAPCNode::WEIGHT_TABLE_COUNT, UNSIGNED_ZERO);
         #ifndef NDEBUG
             auto layout = ReadAndGetFullRegionLayout_(false);
             if (!layout)
@@ -172,14 +172,13 @@ namespace PredictedAdaptedEncoding
         {
             resolved_version = static_cast<uint16_t>(BRANCH_VERSION);
         }
-
-        const packed64_t desired_layout =
-            ComposeLayoutModelof16x3(
-                static_cast<uint16_t>(layout_bound.BeginIndex),
-                static_cast<uint16_t>(layout_bound.EndIndex),
-                resolved_version,
-                layout_bound.PAGE_LAYOUT_CLASS
-            );
+        
+        const packed64_t desired_layout = ComposeAPCOwned16x3Model_48t(
+            static_cast<uint16_t>(layout_bound.BeginIndex),
+            static_cast<uint16_t>(layout_bound.EndIndex),
+            resolved_version,
+            layout_bound.PAGE_LAYOUT_CLASS
+        );
 
         BackingPtr[static_cast<size_t>(layout_idx)].store(
             desired_layout,
@@ -202,7 +201,7 @@ namespace PredictedAdaptedEncoding
         
         while (true)
         {
-            const uint32_t current_flags = ReadMetaCellValue32(desired_flag_idx);
+            const uint32_t current_flags = ReadMetaCellFamily32(desired_flag_idx);
             if (current_flags == BRANCH_SENTINAL)
             {
                 return false;
@@ -250,9 +249,9 @@ namespace PredictedAdaptedEncoding
         ok = LoadOne(APCPagedNodeSegmentClasses::EDGE_DESCRIPTOR, out_layout.EdgeDescriptorLayout) && ok;
         ok = LoadOne(APCPagedNodeSegmentClasses::WEIGHT_SLOT, out_layout.WeightLayout) && ok;
         ok = LoadOne(APCPagedNodeSegmentClasses::AUX_SLOT, out_layout.AUXLayout) && ok;
-        ok = LoadOne(APCPagedNodeSegmentClasses::HETEROGENOUS_MEMORY_MAYBE_PAIRED_POINTER_OR_RAW_APC_SEGMENT, out_layout.HeterogenousMemoryLayout) && ok;
-        ok = LoadOne(APCPagedNodeSegmentClasses::PAIRED_POINTER_LOCAL_MEMORY, out_layout.LocalPairedPointerLayout) && ok;
-        ok = LoadOne(APCPagedNodeSegmentClasses::PAIRED_POINTER_DISTANCE_MEMORY, out_layout.DistancePairedLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::HETEROGENOUS_RAW_MEMORY, out_layout.HeterogenousMemoryLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::SLOT_TABLE_DESCRIPTOR, out_layout.LocalPairedPointerLayout) && ok;
+        ok = LoadOne(APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY, out_layout.DistancePairedLayout) && ok;
         ok = LoadOne(APCPagedNodeSegmentClasses::UNDEFINED, out_layout.UndefinedLayout) && ok;
         ok = LoadOne(APCPagedNodeSegmentClasses::FREE_SLOT, out_layout.FreeLayout) && ok;
         if (!ok)
@@ -397,7 +396,7 @@ namespace PredictedAdaptedEncoding
         }
         while (true)
         {
-            const uint32_t compleate_current_paged_node_ready_bit = ReadMetaCellValue32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
+            const uint32_t compleate_current_paged_node_ready_bit = ReadMetaCellFamily32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
             const uint32_t updated_current_ready_bit = compleate_current_paged_node_ready_bit | anew_readybit;
             if (updated_current_ready_bit == compleate_current_paged_node_ready_bit)
             {
@@ -420,7 +419,7 @@ namespace PredictedAdaptedEncoding
         }
         while (true)
         {
-            const uint32_t compleate_current_paged_node_ready_bit = ReadMetaCellValue32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
+            const uint32_t compleate_current_paged_node_ready_bit = ReadMetaCellFamily32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
             const uint32_t updated_current_ready_bit = compleate_current_paged_node_ready_bit & ~anew_readybit;
             if (updated_current_ready_bit == compleate_current_paged_node_ready_bit)
             {
@@ -455,10 +454,10 @@ namespace PredictedAdaptedEncoding
             {
                 return false;
             }
-            const packed64_t wanted_cell = ComposeAPCOccupancyModel_16x3_48t(
+            const packed64_t wanted_cell = ComposeAPCOwned16x3Model_48t(
                 published, claimed, faulty,
                 APCPagedNodeSegmentClasses ::CONTROL_SLOT,
-                PackedCellLocalityTypes::ST_PUBLISHED
+                LocalityPolicy::PUBLISHED
             );
             BackingPtr[static_cast<size_t>(meta_idx)].store(wanted_cell, MoStoreSeq_);
             BackingPtr[static_cast<size_t>(meta_idx)].notify_all();
@@ -513,7 +512,7 @@ namespace PredictedAdaptedEncoding
 
     std::optional<uint16_t> SegmentIODefinition::ReadGlobalLayoutVersion_() noexcept
     {
-        const uint32_t raw = ReadMetaCellValue32(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
+        const uint32_t raw = ReadMetaCellFamily32(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
         if (raw == BRANCH_SENTINAL || raw == UNSIGNED_ZERO)
         {
             return std::nullopt;
@@ -530,7 +529,7 @@ namespace PredictedAdaptedEncoding
 
         while (true)
         {
-            const uint32_t current_version = ReadMetaCellValue32(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
+            const uint32_t current_version = ReadMetaCellFamily32(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
             if ((current_version) == layout_version)
             {
                 return true;
@@ -572,8 +571,8 @@ namespace PredictedAdaptedEncoding
     }
 
     bool SegmentIODefinition::ApplyRegionalMigrationOccupancyTransitionCell(
-        PackedCellLocalityTypes from_locality_of_source_cell,
-        PackedCellLocalityTypes destination_to_locality_of_source_cell,
+        LocalityPolicy from_locality_of_source_cell,
+        LocalityPolicy destination_to_locality_of_source_cell,
         APCPagedNodeSegmentClasses source_page_class,
         APCPagedNodeSegmentClasses destination_page_class
     ) noexcept
@@ -588,8 +587,8 @@ namespace PredictedAdaptedEncoding
         */
         const bool source_region_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(
             from_locality_of_source_cell,
-            PackedCellLocalityTypes::ST_IDLE, source_page_class,
-            PackedCellLocalityTypes::ST_PUBLISHED, false
+            LocalityPolicy::IDLE, source_page_class,
+            LocalityPolicy::PUBLISHED, false
         );
 
         if (!source_region_ok)
@@ -601,17 +600,17 @@ namespace PredictedAdaptedEncoding
             2. destination region: idle -> destination_to
         */
         const bool destination_region_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(
-            PackedCellLocalityTypes::ST_IDLE,
+            LocalityPolicy::IDLE,
             destination_to_locality_of_source_cell, destination_page_class,
-            PackedCellLocalityTypes::ST_PUBLISHED, false
+            LocalityPolicy::PUBLISHED, false
         );
 
         if (!destination_region_ok)
         {
             CasUpdateOccupancy3x16ThreeSubdivisionCell__(
-                PackedCellLocalityTypes::ST_IDLE,
+                LocalityPolicy::IDLE,
                 from_locality_of_source_cell, source_page_class,
-                PackedCellLocalityTypes::ST_PUBLISHED, false
+                LocalityPolicy::PUBLISHED, false
             );
             return false;
         }
@@ -621,25 +620,25 @@ namespace PredictedAdaptedEncoding
         */
        const bool central_source_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(
         from_locality_of_source_cell,
-        PackedCellLocalityTypes::ST_IDLE, std::nullopt,
-        PackedCellLocalityTypes::ST_PUBLISHED, true
+        LocalityPolicy::IDLE, std::nullopt,
+        LocalityPolicy::PUBLISHED, true
        );
 
        if (!central_source_ok)
        {
             CasUpdateOccupancy3x16ThreeSubdivisionCell__(
                 destination_to_locality_of_source_cell,
-                PackedCellLocalityTypes::ST_IDLE,
+                LocalityPolicy::IDLE,
                 destination_page_class,
-                PackedCellLocalityTypes::ST_PUBLISHED,
+                LocalityPolicy::PUBLISHED,
                 false
             );
             
             CasUpdateOccupancy3x16ThreeSubdivisionCell__(
-                PackedCellLocalityTypes::ST_IDLE,
+                LocalityPolicy::IDLE,
                 from_locality_of_source_cell,
                 source_page_class,
-                PackedCellLocalityTypes::ST_PUBLISHED,
+                LocalityPolicy::PUBLISHED,
                 false
             );
             return false;
@@ -650,29 +649,29 @@ namespace PredictedAdaptedEncoding
         */
         
         const bool central_destination_ok = CasUpdateOccupancy3x16ThreeSubdivisionCell__(
-            PackedCellLocalityTypes::ST_IDLE, destination_to_locality_of_source_cell,
-            std::nullopt, PackedCellLocalityTypes::ST_PUBLISHED,
+            LocalityPolicy::IDLE, destination_to_locality_of_source_cell,
+            std::nullopt, LocalityPolicy::PUBLISHED,
             true
         );
 
         if (!central_destination_ok)
         {
             CasUpdateOccupancy3x16ThreeSubdivisionCell__(
-                PackedCellLocalityTypes::ST_IDLE, from_locality_of_source_cell,
-                std::nullopt, PackedCellLocalityTypes::ST_PUBLISHED,
+                LocalityPolicy::IDLE, from_locality_of_source_cell,
+                std::nullopt, LocalityPolicy::PUBLISHED,
                 true
             );
             CasUpdateOccupancy3x16ThreeSubdivisionCell__(
                 destination_to_locality_of_source_cell,
-                PackedCellLocalityTypes::ST_IDLE, destination_page_class,
-                PackedCellLocalityTypes::ST_PUBLISHED,
+                LocalityPolicy::IDLE, destination_page_class,
+                LocalityPolicy::PUBLISHED,
                 false
             );
             CasUpdateOccupancy3x16ThreeSubdivisionCell__(
-                PackedCellLocalityTypes::ST_IDLE,
+                LocalityPolicy::IDLE,
                 from_locality_of_source_cell,
                 source_page_class,
-                PackedCellLocalityTypes::ST_PUBLISHED,
+                LocalityPolicy::PUBLISHED,
                 false
             );
             return false;
@@ -697,14 +696,14 @@ namespace PredictedAdaptedEncoding
                 continue;
             }
             
-            published_sum += ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED, page_class);
-            claimed_sum += ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::ST_CLAIMED, page_class);
-            faulty_sum += ReadRegionOccupancyOfALocality(PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY, page_class);
+            published_sum += ReadRegionOccupancyOfALocality(LocalityPolicy::PUBLISHED, page_class);
+            claimed_sum += ReadRegionOccupancyOfALocality(LocalityPolicy::CLAIMED, page_class);
+            faulty_sum += ReadRegionOccupancyOfALocality(LocalityPolicy::FAULTY, page_class);
         }
 
-        const uint32_t central_published = ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED);
-        const uint32_t central_claimed = ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_CLAIMED);
-        const uint32_t central_faulty = ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY);
+        const uint32_t central_published = ReadCentralAPCOccupancyOfALocality(LocalityPolicy::PUBLISHED);
+        const uint32_t central_claimed = ReadCentralAPCOccupancyOfALocality(LocalityPolicy::CLAIMED);
+        const uint32_t central_faulty = ReadCentralAPCOccupancyOfALocality(LocalityPolicy::FAULTY);
 
         return central_published == published_sum &&
             central_claimed == claimed_sum &&

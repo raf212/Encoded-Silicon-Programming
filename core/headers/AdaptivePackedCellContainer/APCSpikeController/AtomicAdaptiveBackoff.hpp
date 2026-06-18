@@ -5,7 +5,7 @@
 namespace PredictedAdaptedEncoding
 {
 
-static inline void CpuRelaxHint()
+static  void CpuRelaxHint()
 {
 #if defined(_MSC_VER)
     _mm_pause();
@@ -19,11 +19,11 @@ struct SpinBackoff
     int Tries = 0;
     uint16_t MaxTries = 8;
     uint16_t MazLazySleepDurationUS = 200;
-    inline void Reset()
+     void Reset()
     {
         Tries = 0;
     }
-    inline void SpinOnce()
+     void SpinOnce()
     {
         if (Tries < MaxTries)
         {
@@ -120,8 +120,8 @@ public:
         double HazardAlpha = 0.08;    
     };
 public:
-    static inline constexpr uint8_t MIN_BIN_COUNT = 8;
-    static inline constexpr uint8_t MAX_BIN_COUNT = 64;
+    static  constexpr uint8_t MIN_BIN_COUNT = 8;
+    static  constexpr uint8_t MAX_BIN_COUNT = 64;
 
     HazardEstimatorPC() noexcept :
         HazardEstimatorPC(HECfg())
@@ -201,14 +201,14 @@ private :
     std::vector<uint64_t> HBNUpperUS_;
     uint64_t HSamples_;
 
-    inline unsigned BinIndexForUS_(uint64_t tus) const noexcept
+     unsigned BinIndexForUS_(uint64_t tus) const noexcept
     {
         unsigned i = 0;
         while(i + 1 < HBNUpperUS_.size() && tus >= HBNUpperUS_[i]) ++i;
         return i;
     }
 
-    inline uint64_t BinWidthForIndex_(unsigned idx) const noexcept
+     uint64_t BinWidthForIndex_(unsigned idx) const noexcept
     {
         if (idx == 0)
         {
@@ -269,7 +269,7 @@ private:
     SpinBackoff AdaptiveSpinBackoff_;
     std::atomic<bool>ActivityHints_{false};
 
-    static inline uint64_t JitterUS_(uint64_t base) noexcept
+    static  uint64_t JitterUS_(uint64_t base) noexcept
     {
         thread_local static std::mt19937_64 t_rand((std::random_device())());
         if (base <= 2)
@@ -298,11 +298,11 @@ private:
             C_OVER_P_ = Cfg_.CostSpinPerSec / Cfg_.CostPark;
         }
     }
-    inline uint64_t ReconstructPublishTicks_(uint64_t now_ticks, packed64_t packed, std::optional<size_t>master_clock_slot_id = std::nullopt) const noexcept
+     uint64_t ReconstructPublishTicks_(uint64_t now_ticks, packed64_t packed, std::optional<size_t>master_clock_slot_id = std::nullopt) const noexcept
     {
-        if (PCMode_ == PackedMode::MODE_CLKVAL48)
+        if (PCMode_ == PackedMode::MODEL48)
         {
-            return (PackedCell64_t::ExtractClk48(packed) & MaskLowNBits(CLK_B48));
+            return (PackedCell64_t::ExtractRaw48FamilyBits(packed) & MaskLowNBits(FAMILY_48_BIT_LEN));
         }
         else
         {
@@ -320,20 +320,20 @@ private:
             uint64_t candidate = (((now_down & ~uint64_t(0xFFFFu)) | (static_cast<uint64_t>(stored_clock16))));
             if (candidate > now_down)
             {
-                candidate -= (1ull << CLK_B16); //why?
+                candidate -= (1ull << LOW16_BIT_LEN); //why?
             }
             uint64_t pub_ticks = (candidate << ds) & MaskLowNBits(TOTAL_LOW);
             return pub_ticks;
         }
         
     }
-    inline uint64_t ReconstructPublishTicks_(packed64_t p) const noexcept
+     uint64_t ReconstructPublishTicks_(packed64_t p) const noexcept
     {
         uint64_t now = PublicTimer48.NowTicks();
         return ReconstructPublishTicks_(now, p);
     }
     
-    inline double FallbackHazard_(uint64_t age_ticks) const noexcept
+     double FallbackHazard_(uint64_t age_ticks) const noexcept
     {
         uint64_t age_us = age_ticks / 1000u; // ticks to micro sec
         double age_s = static_cast<double>(age_us) / 1e6;
@@ -346,12 +346,12 @@ private:
     /* data */
 public:
     AtomicAdaptiveBackoff() noexcept :
-        AtomicAdaptiveBackoff(PCBCfg(), PackedMode::MODE_VALUE32, nullptr)
+        AtomicAdaptiveBackoff(PCBCfg(), PackedMode::MODEL32, nullptr)
     {}
     explicit AtomicAdaptiveBackoff
                 (
                     const PCBCfg& cfg,
-                    PackedMode mode = PackedMode::MODE_VALUE32,
+                    PackedMode mode = PackedMode::MODEL32,
                     MasterClockConf* master_clock_ptr = nullptr
                 ) noexcept :
         Cfg_(cfg), PCMode_(mode), Ema_(cfg.EMACfg),
@@ -395,7 +395,7 @@ public:
         {
             now = now_ticks_opt.value_or(PublicTimer48.NowTicks());
         }
-        int8_t priority = static_cast<int8_t>(PackedCell64_t::ExtractPriorityFromPacked(slot_payload));
+        int8_t attribute = static_cast<int8_t>(PackedCell64_t::ExtractPriorityPolicy(slot_payload));
         uint64_t pub_ticks = ReconstructPublishTicks_(now, slot_payload, master_clock_slot_id_opt);
         uint64_t age_ticks = (now - pub_ticks) & MaskLowNBits(TOTAL_LOW);
         uint64_t age_us = age_ticks / 1000u;
@@ -417,7 +417,7 @@ public:
                 hazard = FallbackHazard_(age_ticks);
             }
         }
-        double priority_scale = 1.0 + Cfg_.PriorityGama * static_cast<double>(priority);
+        double priority_scale = 1.0 + Cfg_.PriorityGama * static_cast<double>(attribute);
         double effective_threshold = C_OVER_P_ / priority_scale;
         PCBDecision dec{};
         dec.EstHazPerSec = hazard;

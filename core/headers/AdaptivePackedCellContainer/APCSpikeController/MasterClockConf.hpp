@@ -1,5 +1,4 @@
 #pragma once 
-#include "../PackedCell/CoreCellDefination.hpp"
 #include "../APCDataStructure/APCGenerics.hpp"
 
 
@@ -14,12 +13,12 @@ class AdaptivePackedCellContainer;
     {
         uint64_t TicksPerSec_ = A_BILLION;
 
-        inline uint64_t NowTicks() const noexcept
+         uint64_t NowTicks() const noexcept
         {
             using  cns = std::chrono::nanoseconds;
             auto d = std::chrono::steady_clock::now().time_since_epoch();
             uint64_t ns_count = static_cast<uint64_t>(std::chrono::duration_cast<cns>(d).count());
-            return ns_count & MaskLowNBits(CLK_B48);
+            return ns_count & MaskLowNBits(FAMILY_48_BIT_LEN);
         }
     };
 
@@ -39,17 +38,15 @@ class AdaptivePackedCellContainer;
         MasterClockConf& operator = (MasterClockConf&&) = delete;
         ~MasterClockConf() noexcept = default;
 
-        packed64_t RefreshPackedCellClockOnly(
-            packed64_t provided_packed_cell,
-            APCPagedNodeSegmentClasses force_rel_mask = APCPagedNodeSegmentClasses::NANNULL,
-            std::optional<PackedCellLocalityTypes> override_locality = std::nullopt
-        ) noexcept;
+        // packed64_t RefreshPackedCellClockOnly(
+        //     packed64_t provided_packed_cell,
+        //     std::optional<LocalityPolicy> override_locality = std::nullopt
+        // ) noexcept;
 
-        std::optional<packed64_t> TouchPackedCellClockAndGetCellWithNewClock(
-            size_t index_of_packed_cell,
-            APCPagedNodeSegmentClasses force_rel_mask = APCPagedNodeSegmentClasses::NANNULL,
-            std::optional<PackedCellLocalityTypes> override_locality = std::nullopt
-        ) noexcept;
+        // std::optional<packed64_t> TouchPackedCellClockAndGetCellWithNewClock(
+        //     size_t index_of_packed_cell,
+        //     std::optional<LocalityPolicy> override_locality = std::nullopt
+        // ) noexcept;
 
         bool TouchSegmentLocalClock48HighPriority() noexcept;
 
@@ -61,56 +58,63 @@ class AdaptivePackedCellContainer;
             return this;
         }
 
-        inline uint64_t NowTicks48() const noexcept
+         uint64_t NowTicks48() const noexcept
         {
             return MasterTimer48_.NowTicks();
         }
 
-        inline clk16_t GetImmidiateDownShiftedClock16(uint64_t now_ticks48) const noexcept
+         clk16_t GetImmidiateDownShiftedClock16(uint64_t now_ticks48) const noexcept
         {
-            return static_cast<clk16_t>((now_ticks48 >> TimerDownShift_) & MaskLowNBits(CLK_B16));
+            return static_cast<clk16_t>((now_ticks48 >> TimerDownShift_) & MaskLowNBits(LOW16_BIT_LEN));
         }
 
-        inline clk16_t NowClock16() const noexcept
+         clk16_t NowClock16() const noexcept
         {
             return GetImmidiateDownShiftedClock16(NowTicks48());
         }
 
         std::optional<uint64_t> ReconstructCellClock16toFull48BySegmentLocalClock48(size_t index_of_packed_cell) noexcept;
 
-
-        inline packed64_t ComposeValue32WithCurrentThreadStamp16(
+         /// @brief Compose Packed Cell with CLOCK16 for -> ModelFamily::MODEL32 && OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
+         /// @return 
+         packed64_t ComposeClockedModel32FroAPC(
             val32_t provided_cell_value32,
-            APCPagedNodeSegmentClasses desired_page_class = APCPagedNodeSegmentClasses::NONE,
-            PriorityPhysics desired_priority = PriorityPhysics::IDLE,
-            PackedCellLocalityTypes desired_locality = PackedCellLocalityTypes::ST_PUBLISHED,
-            RelOffsetMode32 desired_reloffset = RelOffsetMode32::RELOFFSET_GENERIC_VALUE,
-            PackedCellDataType desired_dtype = PackedCellDataType::UnsignedPCellDataType,
-            PackedCellNodeAuthority desired_node_authority = PackedCellNodeAuthority::IDLE_OR_FREE
+            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::UNDEFINED,
+            AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
+            LocalityPolicy locality = LocalityPolicy::PUBLISHED,
+            Model32Subclass sub_class = Model32Subclass::SELF_CLASS,
+            InternalDataTypePolicy dtype = InternalDataTypePolicy::UnsignedPCellDataType,
+            OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
         )
         {
             const clk16_t now_clock16 = NowClock16();
-            const meta16_t strlfor32 = PackedCell64_t::MakeInCellMetaForMode_32t(desired_priority, desired_node_authority, desired_locality, desired_page_class, desired_reloffset, desired_dtype);
-            return PackedCell64_t::ComposeValue32u_64(provided_cell_value32, now_clock16, strlfor32);
+            const meta16_t desired_meta16 = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_32t(
+                ownership,
+                static_cast<tag8_t>(page_class),
+                sub_class, attribute, locality, dtype
+            );
+            return PackedCell64_t::Compose32BitFamilyPackedCell(provided_cell_value32, now_clock16, desired_meta16);
         }
 
-        inline packed64_t ComposePureClockCell48(
-            PriorityPhysics desired_priority = PriorityPhysics::IDLE,
-            PackedCellLocalityTypes desired_locality = PackedCellLocalityTypes::ST_PUBLISHED
+         packed64_t ComposePureClockCell48(
+            OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+            LocalityPolicy locality = LocalityPolicy::PUBLISHED,
+            tag8_t cell_class = static_cast<tag8_t>(APCPagedNodeSegmentClasses::FREE_SLOT),
+            AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
         ) noexcept
         {
             const uint64_t full_clock48 = NowTicks48();
-            const meta16_t strl_for_pure48_clock = PackedCell64_t::MakeInCellMetaForMode_48t(desired_priority, 
-                                PackedCellNodeAuthority::IDLE_OR_FREE,
-                                desired_locality, 
-                                APCPagedNodeSegmentClasses::CONTROL_SLOT,
-                                RelOffsetMode48::RELOFFSET_PURE_TIMER,
-                                PackedCellDataType::UnsignedPCellDataType
-                            );
-            return PackedCell64_t::ComposeCLK48u_64(full_clock48, strl_for_pure48_clock);
+
+            const meta16_t meta16 = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_48t(
+                ownership, cell_class, 
+                Model48Subclass::PURE_TIMER_48, attribute,
+                locality, InternalDataTypePolicy::UnsignedPCellDataType
+            );
+
+            return PackedCell64_t::Compose48BitFamilyPackedCell(full_clock48, meta16);
         }
 
-        inline uint8_t SetAndGetTimerDownShift(unsigned down_shift_value = UNSIGNED_ZERO) noexcept
+         uint8_t SetAndGetTimerDownShift(unsigned down_shift_value = UNSIGNED_ZERO) noexcept
         {
             if (down_shift_value >= MIN_TIMER_DOWNSHIFT && down_shift_value <= MAX_TIMER_DOWNSHIFT)
             {

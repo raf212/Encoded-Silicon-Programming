@@ -1,8 +1,8 @@
 #pragma once
 #include <array>
 #include <utility>
-#include "AdaptivePackedCellContainer/AdaptivePackedCellContainer.hpp"
-#include "PackedCellContainerManager.hpp"
+#include "../AdaptivePackedCellContainer/AdaptivePackedCellContainer.hpp"
+#include "../PackedCellContainerManager.hpp"
 
 namespace PredictedAdaptedEncoding
 {
@@ -42,7 +42,7 @@ private:
 
         while (true)
         {
-            const uint32_t current32 = ReadMetaCellValue32(idx);
+            const uint32_t current32 = ReadMetaCellFamily32(idx);
             const clk16_t current = static_cast<clk16_t>(current32);
 
             if (current32 != UNSIGNED_ZERO &&

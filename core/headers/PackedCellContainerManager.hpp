@@ -12,7 +12,7 @@ namespace PredictedAdaptedEncoding
         public :
             struct ThreadHandlePCCM
             {
-                size_t QSBRIdx = SIZE_MAX;
+                size_t QSBRIdx = APCDataStructure::APC_SIZE_SENTINAL;
                 std::atomic<uint64_t>* WaitSlotPtr = nullptr;
                 uint64_t NodeTokenOfAPC = 0;
             };
@@ -65,9 +65,8 @@ namespace PredictedAdaptedEncoding
             }
 
 
-            void UsePreAllocatedNodePoolOfAdaptivePackedCellContainer(size_t pool_size_of_preallocated_adaptive_packed_cell_container) noexcept;
-
-        private :
+        protected :
+        
             PackedCellContainerManager();
             ~PackedCellContainerManager();
             PackedCellContainerManager(const PackedCellContainerManager&) = delete;
@@ -77,7 +76,7 @@ namespace PredictedAdaptedEncoding
             std::atomic<AdaptivePackedCellContainer*> WorkStackHeadAPC_{nullptr};
             std::atomic<AdaptivePackedCellContainer*> CleanupStackHeadAPC_{nullptr};
 
-            std::atomic<size_t>ThreadFreelistHead_{SIZE_MAX};
+            std::atomic<size_t>ThreadFreelistHead_{APCDataStructure::APC_SIZE_SENTINAL};
             size_t MaxThreads_ = 4096;
             size_t  ThreadTableCapacity_{0};
             std::unique_ptr<std::atomic<size_t>[]> ThreadNextIdxPtr_;

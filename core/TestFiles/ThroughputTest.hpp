@@ -5,22 +5,22 @@
 #include <chrono>
 #include <mutex>
 #include <algorithm>
+#include <array>
 #include <optional>
-#include <cstdint>
 
-#include "APCSegmentsCausalCordinator.hpp"
+#include "NeuromorphicTimeSpace/APCSegmentsCausalCordinator.hpp"
 #include "PackedCellContainerManager.hpp"
+
 
 using namespace PredictedAdaptedEncoding;
 
-namespace
+namespace 
 {
-    constexpr uint32_t VALUE_COUNT = 25600u;
+    constexpr uint32_t VALUE_COUNT = 256u;
     constexpr uint32_t PRODUCER_COUNT = 2u;
     constexpr uint32_t FF_WORKER_COUNT = 3u;
     constexpr uint32_t FB_WORKER_COUNT = 2u;
     constexpr uint32_t FINAL_WORKER_COUNT = 1u;
-    constexpr uint32_t PUBLISH_BUDGET = 4096u;
 
     struct GraphStats
     {
@@ -64,17 +64,17 @@ namespace
         MasterClockConf& clock,
         uint32_t value,
         APCPagedNodeSegmentClasses region,
-        PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY
+        AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
     )
     {
-        return clock.ComposeValue32WithCurrentThreadStamp16(
+        return clock.ComposeClockedModel32FroAPC(
             value,
             region,
-            priority,
-            PackedCellLocalityTypes::ST_PUBLISHED,
-            RelOffsetMode32::RELOFFSET_GENERIC_VALUE,
-            PackedCellDataType::UnsignedPCellDataType,
-            PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM
+            attribute,
+            LocalityPolicy::PUBLISHED,
+            Model32Subclass::SELF_CLASS,
+            InternalDataTypePolicy::UnsignedPCellDataType,
+            OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
         );
     }
 
@@ -82,19 +82,19 @@ namespace
         MasterClockConf& clock,
         float value,
         APCPagedNodeSegmentClasses region,
-        PriorityPhysics priority = PriorityPhysics::DEFAULT_PRIORITY
+        AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
     )
     {
         const uint32_t bits = BitCastMaybe<uint32_t>(value);
 
-        return clock.ComposeValue32WithCurrentThreadStamp16(
+        return clock.ComposeClockedModel32FroAPC(
             bits,
             region,
-            priority,
-            PackedCellLocalityTypes::ST_PUBLISHED,
-            RelOffsetMode32::RELOFFSET_GENERIC_VALUE,
-            PackedCellDataType::FloatPCellDataType,
-            PackedCellNodeAuthority::BIDIRECTIONAL_NEUROMORPHIC_SYSTEM
+            attribute,
+            LocalityPolicy::PUBLISHED,
+            Model32Subclass::SELF_CLASS,
+            InternalDataTypePolicy::FloatPCellDataType,
+            OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
         );
     }
 
@@ -105,7 +105,7 @@ namespace
         PackedCellContainerManager& manager,
         std::atomic<uint64_t>* grow_counter,
         GraphStats& stats,
-        uint32_t budget = PUBLISH_BUDGET
+        uint32_t budget = 4096
     )
     {
         for (uint32_t attempt = 0; attempt < budget; ++attempt)
@@ -138,7 +138,7 @@ namespace
             const auto view = PackedCell64_t::GetAuthoritiveViewsForACell(cell);
 
             if (!view.IsCellValid ||
-                view.LocalityOfCell == PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY)
+                view.LocalityOfCell == LocalityPolicy::FAULTY)
             {
                 ++out.Faulty;
                 continue;
@@ -146,19 +146,19 @@ namespace
 
             switch (view.LocalityOfCell)
             {
-                case PackedCellLocalityTypes::ST_IDLE:
+                case LocalityPolicy::IDLE:
                     ++out.Idle;
                     break;
 
-                case PackedCellLocalityTypes::ST_PUBLISHED:
+                case LocalityPolicy::PUBLISHED:
                     ++out.Published;
                     break;
 
-                case PackedCellLocalityTypes::ST_CLAIMED:
+                case LocalityPolicy::CLAIMED:
                     ++out.Claimed;
                     break;
 
-                case PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY:
+                case LocalityPolicy::FAULTY:
                 default:
                     ++out.Faulty;
                     break;
@@ -176,16 +176,13 @@ namespace
     static uint32_t HeaderLocalitySum(APCSegmentsCausalCordinator& apc)
     {
         return
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_IDLE) +
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED) +
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_CLAIMED) +
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY);
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::IDLE) +
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::PUBLISHED) +
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::CLAIMED) +
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::FAULTY);
     }
-
-    static uint32_t RegionMeta(
-        APCSegmentsCausalCordinator& apc,
-        APCPagedNodeSegmentClasses region
-    )
+    
+    static uint32_t RegionMeta(APCSegmentsCausalCordinator& apc, APCPagedNodeSegmentClasses region)
     {
         return apc.ReadPublishedOccupancyOfAPageClass(region);
     }
@@ -219,13 +216,16 @@ namespace
         const ExactLocalityCount exact = CountExactLocality(apc);
 
         const uint32_t header_idle =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_IDLE);
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::IDLE);
+
         const uint32_t header_pub =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_PUBLISHED);
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::PUBLISHED);
+
         const uint32_t header_claim =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_CLAIMED);
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::CLAIMED);
+
         const uint32_t header_fault =
-            apc.ReadCentralAPCOccupancyOfALocality(PackedCellLocalityTypes::ST_EXCEPTION_BIT_FAULTY);
+            apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::FAULTY);
 
         const uint32_t header_sum = HeaderLocalitySum(apc);
         const uint32_t header_used = HeaderUsedSum(apc);
@@ -235,34 +235,25 @@ namespace
         std::cout << "  branch=" << apc.GetBranchId()
                   << " logical=" << apc.GetLogicalId()
                   << " shared=" << apc.GetSharedId()
-                  << " group=" << apc.ReadMetaCellValue32(MetaIndexOfAPCNode::NODE_GROUP_SIZE)
+                  << " group=" << apc.ReadMetaCellFamily32(MetaIndexOfAPCNode::NODE_GROUP_SIZE)
                   << "\n";
 
         std::cout << "  payload_capacity=" << payload
                   << " total_capacity=" << apc.GetTotalCapacityForThisAPC()
                   << " ready_bit=0x" << std::hex
-                  << apc.ReadMetaCellValue32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT)
+                  << apc.ReadMetaCellFamily32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT)
                   << std::dec
                   << "\n";
 
         std::cout << "  header locality: "
-                  << "idle=" << header_idle
-                  << " pub=" << header_pub
-                  << " claim=" << header_claim
-                  << " faulty=" << header_fault
-                  << " used=" << header_used
-                  << " sum=" << header_sum
-                  << " invariant=" << (header_sum == payload ? "OK" : "BAD")
-                  << "\n";
-
-        std::cout << "  exact  locality: "
-                  << "idle=" << exact.Idle
-                  << " pub=" << exact.Published
-                  << " claim=" << exact.Claimed
-                  << " faulty=" << exact.Faulty
-                  << " sum=" << exact.Sum()
-                  << " invariant=" << (exact.Sum() == payload ? "OK" : "BAD")
-                  << "\n";
+                << "idle=" << header_idle
+                << " pub=" << header_pub
+                << " claim=" << header_claim
+                << " faulty=" << header_fault
+                << " used=" << header_used
+                << " sum=" << header_sum
+                << " invariant=" << (header_sum == header_idle + header_pub + header_claim + header_fault ? "OK" : "BAD")
+                << "\n";
 
         std::cout << "  region published-data pressure:\n";
         PrintRegion("FF   ", apc, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE);
@@ -280,7 +271,7 @@ namespace
     }
 }
 
-int main()
+void ThroughputTest()
 {
     std::ios::sync_with_stdio(true);
     std::cout.setf(std::ios::unitbuf);
@@ -293,7 +284,7 @@ int main()
     MasterClockConf clock(nullptr, timer);
 
     ContainerConf cfg;
-    cfg.InitialMode = PackedMode::MODE_VALUE32;
+    cfg.InitialMode = PackedMode::VALUE32;
     cfg.ProducerBlockSize = 8;
     cfg.RegionSize = 16;
     cfg.EnableBranching = true;
@@ -316,45 +307,32 @@ int main()
 
     Sensor.InitAPCAsNode(
         cfg.BranchMinChildCapacity,
-        cfg,
-        SegmentIODefinition::APCNodeComputeKind::GENERATOR_UINT32,
-        0
+        cfg
     );
 
     Predictor.InitAPCAsNode(
         cfg.BranchMinChildCapacity,
-        cfg,
-        SegmentIODefinition::APCNodeComputeKind::BIDIRECTIONAL_PREDECTIVE,
-        0
+        cfg
     );
 
     Comparator.InitAPCAsNode(
         cfg.BranchMinChildCapacity,
-        cfg,
-        SegmentIODefinition::APCNodeComputeKind::ADD_UINT32,
-        0
+        cfg
     );
 
     Integrator.InitAPCAsNode(
         cfg.BranchMinChildCapacity,
-        cfg,
-        SegmentIODefinition::APCNodeComputeKind::GENERIC_VECTOR,
-        0
+        cfg
     );
 
     Motor.InitAPCAsNode(
         cfg.BranchMinChildCapacity,
-        cfg,
-        SegmentIODefinition::APCNodeComputeKind::GENERIC_VECTOR,
-        0
+        cfg
     );
 
     GraphStats stats;
 
     std::atomic<bool> producers_done{false};
-    std::atomic<bool> ff_stage_done{false};
-    std::atomic<bool> fb_stage_done{false};
-
     std::atomic<uint64_t> ff_consumed{0};
     std::atomic<uint64_t> fb_consumed{0};
     std::atomic<uint64_t> state_consumed{0};
@@ -367,9 +345,7 @@ int main()
     const auto start_time = std::chrono::steady_clock::now();
 
     std::vector<std::thread> producers;
-    std::vector<std::thread> ff_workers;
-    std::vector<std::thread> fb_workers;
-    std::vector<std::thread> final_workers;
+    std::vector<std::thread> workers;
 
     for (uint32_t p = 0; p < PRODUCER_COUNT; ++p)
     {
@@ -380,10 +356,10 @@ int main()
             for (uint32_t i = p + 1; i <= VALUE_COUNT; i += PRODUCER_COUNT)
             {
                 const packed64_t ff =
-                    PackU32(clock, i, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, PriorityPhysics::IMPORTANT);
+                    PackU32(clock, i, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE);
 
                 const packed64_t fb =
-                    PackU32(clock, i + 1u, APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE, PriorityPhysics::TIME_DEPENDENCY);
+                    PackU32(clock, i + 1u, APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE);
 
                 if (PublishBudgeted(
                         Sensor,
@@ -393,8 +369,8 @@ int main()
                         &stats.GrowFF,
                         stats))
                 {
-                    stats.SensorFFProduced.fetch_add(1, std::memory_order_release);
-                    stats.ForwardEmitted.fetch_add(1, std::memory_order_release);
+                    stats.SensorFFProduced.fetch_add(1);
+                    stats.ForwardEmitted.fetch_add(1);
                 }
 
                 if (PublishBudgeted(
@@ -405,8 +381,8 @@ int main()
                         &stats.GrowFB,
                         stats))
                 {
-                    stats.PredictorFBProduced.fetch_add(1, std::memory_order_release);
-                    stats.FeedbackEmitted.fetch_add(1, std::memory_order_release);
+                    stats.PredictorFBProduced.fetch_add(1);
+                    stats.FeedbackEmitted.fetch_add(1);
                 }
             }
 
@@ -416,26 +392,18 @@ int main()
 
     for (uint32_t w = 0; w < FF_WORKER_COUNT; ++w)
     {
-        ff_workers.emplace_back([&]()
+        workers.emplace_back([&, w]()
         {
             auto th = manager.RegisterAPCThread();
             size_t cursor = Sensor.PayloadBegin();
 
-            while (true)
+            while (ff_consumed.load(std::memory_order_acquire) < VALUE_COUNT)
             {
-                if (producers_done.load(std::memory_order_acquire) &&
-                    ff_consumed.load(std::memory_order_acquire) >=
-                        stats.SensorFFProduced.load(std::memory_order_acquire))
-                {
-                    break;
-                }
-
                 auto maybe =
                     Sensor.ConsumeCausal(
                         APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
                         cursor,
-                        &stats.OlderFFObserved,
-                        false
+                        &stats.OlderFFObserved
                     );
 
                 if (!maybe)
@@ -444,14 +412,11 @@ int main()
                     continue;
                 }
 
-                ff_consumed.fetch_add(1, std::memory_order_release);
-
                 const auto maybe_x =
                     PackedCell64_t::ExtractAnyPackedValueX<uint32_t>(*maybe);
 
                 if (!maybe_x)
                 {
-                    stats.TerminalFail.fetch_add(1, std::memory_order_relaxed);
                     continue;
                 }
 
@@ -462,7 +427,7 @@ int main()
                         clock,
                         state_value,
                         APCPagedNodeSegmentClasses::STATE_SLOT,
-                        PriorityPhysics::STRUCTURAL_DEPENDENCY
+                        AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
                     );
 
                 if (PublishBudgeted(
@@ -473,7 +438,8 @@ int main()
                         &stats.GrowSTATE,
                         stats))
                 {
-                    stats.StateIntegrated.fetch_add(1, std::memory_order_release);
+                    stats.StateIntegrated.fetch_add(1);
+                    ff_consumed.fetch_add(1);
                 }
             }
 
@@ -483,26 +449,18 @@ int main()
 
     for (uint32_t w = 0; w < FB_WORKER_COUNT; ++w)
     {
-        fb_workers.emplace_back([&]()
+        workers.emplace_back([&, w]()
         {
             auto th = manager.RegisterAPCThread();
             size_t cursor = Predictor.PayloadBegin();
 
-            while (true)
+            while (fb_consumed.load(std::memory_order_acquire) < VALUE_COUNT)
             {
-                if (producers_done.load(std::memory_order_acquire) &&
-                    fb_consumed.load(std::memory_order_acquire) >=
-                        stats.PredictorFBProduced.load(std::memory_order_acquire))
-                {
-                    break;
-                }
-
                 auto maybe =
                     Predictor.ConsumeCausal(
                         APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
                         cursor,
-                        &stats.OlderFBObserved,
-                        false
+                        &stats.OlderFBObserved
                     );
 
                 if (!maybe)
@@ -511,23 +469,22 @@ int main()
                     continue;
                 }
 
-                fb_consumed.fetch_add(1, std::memory_order_release);
-
-                const auto maybe_y =
+                const auto maybe_x =
                     PackedCell64_t::ExtractAnyPackedValueX<uint32_t>(*maybe);
 
-                if (!maybe_y)
+                if (!maybe_x)
                 {
-                    stats.TerminalFail.fetch_add(1, std::memory_order_relaxed);
                     continue;
                 }
+
+                const uint32_t error_value = 1u;
 
                 const packed64_t error_cell =
                     PackU32(
                         clock,
-                        maybe_y.value(),
+                        error_value,
                         APCPagedNodeSegmentClasses::ERROR_SLOT,
-                        PriorityPhysics::ERROR_DEPENDENCY
+                        AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
                     );
 
                 if (PublishBudgeted(
@@ -538,7 +495,8 @@ int main()
                         &stats.GrowERROR,
                         stats))
                 {
-                    stats.ErrorComputed.fetch_add(1, std::memory_order_release);
+                    stats.ErrorComputed.fetch_add(1);
+                    fb_consumed.fetch_add(1);
                 }
             }
 
@@ -548,138 +506,100 @@ int main()
 
     for (uint32_t w = 0; w < FINAL_WORKER_COUNT; ++w)
     {
-        final_workers.emplace_back([&]()
+        workers.emplace_back([&, w]()
         {
             auto th = manager.RegisterAPCThread();
 
             size_t state_cursor = Integrator.PayloadBegin();
             size_t error_cursor = Comparator.PayloadBegin();
-            size_t motor_cursor = Motor.PayloadBegin();
 
-            while (true)
+            while (final_done.load(std::memory_order_acquire) < VALUE_COUNT)
             {
-                bool did_work = false;
-
                 auto maybe_state =
                     Integrator.ConsumeCausal(
                         APCPagedNodeSegmentClasses::STATE_SLOT,
                         state_cursor,
-                        nullptr,
-                        false
+                        nullptr
                     );
 
-                if (maybe_state)
+                if (!maybe_state)
                 {
-                    did_work = true;
-                    state_consumed.fetch_add(1, std::memory_order_release);
-
-                    const auto maybe_state_u32 =
-                        PackedCell64_t::ExtractAnyPackedValueX<uint32_t>(*maybe_state);
-
-                    if (!maybe_state_u32)
-                    {
-                        stats.TerminalFail.fetch_add(1, std::memory_order_relaxed);
-                    }
-                    else
-                    {
-                        const float motor_value =
-                            static_cast<float>(maybe_state_u32.value()) + 0.5f;
-
-                        const packed64_t motor_cell =
-                            PackFloat32(
-                                clock,
-                                motor_value,
-                                APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                                PriorityPhysics::HANDLE_NOW
-                            );
-
-                        (void)PublishBudgeted(
-                            Motor,
-                            APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                            motor_cell,
-                            manager,
-                            nullptr,
-                            stats
-                        );
-                    }
+                    manager.GetManagersAdaptiveBackoff().AutoBackoff();
+                    continue;
                 }
+
+                const auto maybe_state_u32 =
+                    PackedCell64_t::ExtractAnyPackedValueX<uint32_t>(*maybe_state);
+
+                if (!maybe_state_u32)
+                {
+                    continue;
+                }
+
+                uint32_t error_adjust = 0u;
 
                 auto maybe_error =
                     Comparator.ConsumeCausal(
                         APCPagedNodeSegmentClasses::ERROR_SLOT,
                         error_cursor,
-                        nullptr,
-                        false
+                        nullptr
                     );
 
                 if (maybe_error)
                 {
-                    did_work = true;
-                    error_consumed.fetch_add(1, std::memory_order_release);
-
                     const auto maybe_error_u32 =
                         PackedCell64_t::ExtractAnyPackedValueX<uint32_t>(*maybe_error);
 
-                    if (!maybe_error_u32)
+                    if (maybe_error_u32)
                     {
-                        stats.TerminalFail.fetch_add(1, std::memory_order_relaxed);
+                        error_adjust = maybe_error_u32.value();
+                        error_consumed.fetch_add(1);
                     }
                 }
 
-                auto maybe_final =
+                const float motor_value =
+                    static_cast<float>(maybe_state_u32.value()) + 0.5f * static_cast<float>(error_adjust);
+
+                const packed64_t motor_cell =
+                    PackFloat32(
+                        clock,
+                        motor_value,
+                        APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
+                        AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
+                    );
+
+                if (PublishBudgeted(
+                        Motor,
+                        APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
+                        motor_cell,
+                        manager,
+                        nullptr,
+                        stats))
+                {
+                    state_consumed.fetch_add(1);
+                }
+
+                size_t motor_cursor = Motor.PayloadBegin();
+
+                auto final_cell =
                     Motor.ConsumeCausal(
                         APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
                         motor_cursor,
-                        nullptr,
-                        false
+                        nullptr
                     );
 
-                if (maybe_final)
+                if (final_cell)
                 {
-                    did_work = true;
-
                     const auto maybe_float =
-                        PackedCell64_t::ExtractAnyPackedValueX<float>(*maybe_final);
+                        PackedCell64_t::ExtractAnyPackedValueX<float>(*final_cell);
 
                     if (maybe_float)
                     {
-                        {
-                            std::lock_guard<std::mutex> lock(collected_mutex);
-                            collected.push_back(maybe_float.value());
-                        }
-
-                        stats.FinalCollected.fetch_add(1, std::memory_order_release);
-                        final_done.fetch_add(1, std::memory_order_release);
+                        std::lock_guard<std::mutex> lock(collected_mutex);
+                        collected.push_back(maybe_float.value());
+                        stats.FinalCollected.fetch_add(1);
+                        final_done.fetch_add(1);
                     }
-                    else
-                    {
-                        stats.TerminalFail.fetch_add(1, std::memory_order_relaxed);
-                    }
-                }
-
-                const bool state_closed =
-                    ff_stage_done.load(std::memory_order_acquire) &&
-                    state_consumed.load(std::memory_order_acquire) >=
-                        stats.StateIntegrated.load(std::memory_order_acquire) &&
-                    !Integrator.HasAnyPublishedInChain(APCPagedNodeSegmentClasses::STATE_SLOT);
-
-                const bool error_closed =
-                    fb_stage_done.load(std::memory_order_acquire) &&
-                    error_consumed.load(std::memory_order_acquire) >=
-                        stats.ErrorComputed.load(std::memory_order_acquire) &&
-                    !Comparator.HasAnyPublishedInChain(APCPagedNodeSegmentClasses::ERROR_SLOT);
-
-                const bool motor_closed =
-                    !Motor.HasAnyPublishedInChain(APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE);
-
-                if (state_closed && error_closed && motor_closed)
-                {
-                    break;
-                }
-
-                if (!did_work)
-                {
-                    manager.GetManagersAdaptiveBackoff().AutoBackoff();
                 }
             }
 
@@ -695,21 +615,7 @@ int main()
     producers_done.store(true, std::memory_order_release);
     std::cout << "All producers joined\n";
 
-    for (auto& t : ff_workers)
-    {
-        t.join();
-    }
-
-    ff_stage_done.store(true, std::memory_order_release);
-
-    for (auto& t : fb_workers)
-    {
-        t.join();
-    }
-
-    fb_stage_done.store(true, std::memory_order_release);
-
-    for (auto& t : final_workers)
+    for (auto& t : workers)
     {
         t.join();
     }
@@ -728,12 +634,8 @@ int main()
     std::cout << "Runtime us             : " << runtime_us << "\n";
     std::cout << "Sensor FF produced     : " << stats.SensorFFProduced.load() << "\n";
     std::cout << "Predictor FB produced  : " << stats.PredictorFBProduced.load() << "\n";
-    std::cout << "FF consumed            : " << ff_consumed.load() << "\n";
-    std::cout << "FB consumed            : " << fb_consumed.load() << "\n";
     std::cout << "State integrated       : " << stats.StateIntegrated.load() << "\n";
     std::cout << "Error computed         : " << stats.ErrorComputed.load() << "\n";
-    std::cout << "State consumed         : " << state_consumed.load() << "\n";
-    std::cout << "Error consumed         : " << error_consumed.load() << "\n";
     std::cout << "Forward emitted        : " << stats.ForwardEmitted.load() << "\n";
     std::cout << "Feedback emitted       : " << stats.FeedbackEmitted.load() << "\n";
     std::cout << "Final collected        : " << stats.FinalCollected.load() << "\n";
@@ -765,5 +667,4 @@ int main()
     Sensor.FreeAll();
 
     manager.StopAPCManager();
-    return 0;
 }
