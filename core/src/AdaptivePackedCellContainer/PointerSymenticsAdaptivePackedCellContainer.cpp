@@ -253,7 +253,7 @@ namespace PredictedAdaptedEncoding
                             OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
                             static_cast<tag8_t>(APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY),
                             Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL,
-                            PriorityPolicy::INFLUENCED
+                            AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
                         );
                         packed64_t tail_packed = PackedCell64_t::Compose32BitFamilyPackedCell(tail_ptr_val32, 0u, meta16_tail);
                         BackingPtr[tail].store(tail_packed, MoStoreSeq_);
@@ -263,7 +263,7 @@ namespace PredictedAdaptedEncoding
                             OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
                             static_cast<tag8_t>(APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY),
                             Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL,
-                            PriorityPolicy::INFLUENCED
+                            AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
                         );
                         packed64_t head_packed = PackedCell64_t::Compose32BitFamilyPackedCell(head_ptr_value32, 0u, meta16_head);
                         BackingPtr[head].store(head_packed, MoStoreSeq_);

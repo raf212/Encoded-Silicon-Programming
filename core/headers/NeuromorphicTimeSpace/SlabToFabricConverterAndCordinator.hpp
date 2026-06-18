@@ -50,7 +50,7 @@ namespace PredictedAdaptedEncoding
             FabricMetaIndicies fabric_meta_idx, uint64_t value, 
             LocalityPolicy cell_locality = LocalityPolicy::PUBLISHED,
             AccessContractOfValue access_contract = AccessContractOfValue::CAS_RMW,
-            PriorityPolicy priority = PriorityPolicy::INFLUENCED
+            AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
         )noexcept;
 
         //FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES
@@ -127,6 +127,11 @@ namespace PredictedAdaptedEncoding
 
 //checked----------------------------------------------
 
+
+
+
+
+
         // bool InsertOrUpdateRobinHoodHash48_(FabricTableSegmentClasses hash_table, uint64_t key48, uint64_t value48) noexcept
         // {
         //     if (key48 == UNSIGNED_ZERO || key48 ==  HashTableConf::HASH_TOMBSTONE_KEY)
@@ -163,6 +168,16 @@ namespace PredictedAdaptedEncoding
         //         steps++
         //     )
         //     {
+        //         const size_t base_idx = desired_hash_table_bounds.BeginIndex + static_cast<size_t>(incoming_bucket) * HASH_BUCKED_WIDTH_OF_FABRIC;
+        //         HashKeyValueDistanceTriplet current_hash_data = ReadValidHashBucketTriplet(base_idx);
+        //         if (
+        //             !current_hash_data.IsValid ||
+        //             current_hash_data.HashKey == UNSIGNED_ZERO
+        //         )
+        //         {
+        //             return 
+        //         }
+                
 
         //     }
             

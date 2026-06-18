@@ -64,13 +64,13 @@ namespace
         MasterClockConf& clock,
         uint32_t value,
         APCPagedNodeSegmentClasses region,
-        PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST
+        AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
     )
     {
         return clock.ComposeClockedModel32FroAPC(
             value,
             region,
-            priority,
+            attribute,
             LocalityPolicy::PUBLISHED,
             Model32Subclass::SELF_CLASS,
             InternalDataTypePolicy::UnsignedPCellDataType,
@@ -82,7 +82,7 @@ namespace
         MasterClockConf& clock,
         float value,
         APCPagedNodeSegmentClasses region,
-        PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST
+        AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
     )
     {
         const uint32_t bits = BitCastMaybe<uint32_t>(value);
@@ -90,7 +90,7 @@ namespace
         return clock.ComposeClockedModel32FroAPC(
             bits,
             region,
-            priority,
+            attribute,
             LocalityPolicy::PUBLISHED,
             Model32Subclass::SELF_CLASS,
             InternalDataTypePolicy::FloatPCellDataType,
@@ -427,7 +427,7 @@ void ThroughputTest()
                         clock,
                         state_value,
                         APCPagedNodeSegmentClasses::STATE_SLOT,
-                        PriorityPolicy::PRESSURE_FIRST
+                        AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
                     );
 
                 if (PublishBudgeted(
@@ -484,7 +484,7 @@ void ThroughputTest()
                         clock,
                         error_value,
                         APCPagedNodeSegmentClasses::ERROR_SLOT,
-                        PriorityPolicy::PRESSURE_FIRST
+                        AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
                     );
 
                 if (PublishBudgeted(
@@ -565,7 +565,7 @@ void ThroughputTest()
                         clock,
                         motor_value,
                         APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                        PriorityPolicy::PRESSURE_FIRST
+                        AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
                     );
 
                 if (PublishBudgeted(

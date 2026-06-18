@@ -160,7 +160,7 @@ namespace PredictedAdaptedEncoding
                 page_class,
                 locality,
                 InternalDataTypePolicy ::UnsignedPCellDataType,
-                PriorityPolicy::INFLUENCED,
+                AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
                 raw_48
             );
         }

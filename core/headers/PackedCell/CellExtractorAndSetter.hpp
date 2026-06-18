@@ -74,9 +74,9 @@ namespace PredictedAdaptedEncoding
             return static_cast<uint64_t>(packed_cell & MaskLowNBits(FAMILY_48_BIT_LEN));
         }
 
-        static constexpr PriorityPolicy ExtractPriorityPolicy(packed64_t packed_cell) noexcept
+        static constexpr AttributePolicy ExtractPriorityPolicy(packed64_t packed_cell) noexcept
         {
-            return static_cast<PriorityPolicy>(ExtractPriorityFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
+            return static_cast<AttributePolicy>(ExtractPriorityFromMETA16_U_(ExtractMeta16fromPackedCell(packed_cell)));
         }
 
         static constexpr LocalityPolicy ExtractLocalityPolicy(packed64_t packed_cell) noexcept
@@ -138,7 +138,7 @@ namespace PredictedAdaptedEncoding
         /// @brief Make meta Using only HIGHEST_TRUTH: 
         /// @param class_of_cell TYPE: uint8_t :: For safer use Use like static_cast<uint8_t>(Param->enum::value)
         /// @param sub_class TYPE: uint8_t :: For safer use Use like static_cast<uint8_t>(Param->enum::value)
-        /// @param priority TYPE: uint8_t :: For safer use Use like static_cast<uint8_t>(Param->enum::value)
+        /// @param attribute TYPE: uint8_t :: For safer use Use like static_cast<uint8_t>(Param->enum::value)
         /// @return VALID: meta16 or UINT16_MAX if any one cross their indexing limit
         static constexpr meta16_t MakeInCellMeta_16t(
             PackedMode mode, 
@@ -147,11 +147,11 @@ namespace PredictedAdaptedEncoding
             InternalDataTypePolicy data_type,
             tag8_t class_of_cell, 
             tag8_t sub_class, 
-            tag8_t priority
+            tag8_t attribute
         ) noexcept
         {
 
-            meta16_t cell_priority = static_cast<meta16_t>(static_cast<tag8_t>(priority) & PRIORITY_MASK);
+            meta16_t cell_attribute = static_cast<meta16_t>(static_cast<tag8_t>(attribute) & PRIORITY_MASK);
             meta16_t cell_authority = static_cast<meta16_t>(static_cast<tag8_t>(cell_ownership) & NODE_AUTH_MASK); 
             meta16_t cell_locality = static_cast<meta16_t>(static_cast<tag8_t>(locality) & LOCALITY_MASK);
             meta16_t cell_mode = static_cast<meta16_t>(static_cast<tag8_t>(mode) & CELL_MODE_MASK);
@@ -160,7 +160,7 @@ namespace PredictedAdaptedEncoding
             meta16_t cell_data_type = static_cast<meta16_t>(static_cast<unsigned>(data_type) & CELL_INTERNAL_DATA_TYPE_MASK);
 
             if (
-                cell_priority > DEFAULT_META16_INDEXING_LIMIT_2BIT ||
+                cell_attribute > DEFAULT_META16_INDEXING_LIMIT_2BIT ||
                 cell_authority > DEFAULT_META16_INDEXING_LIMIT_2BIT ||
                 cell_locality > DEFAULT_META16_INDEXING_LIMIT_2BIT ||
                 cell_mode > DEFAULT_META16_INDEXING_LIMIT_2BIT ||
@@ -173,7 +173,7 @@ namespace PredictedAdaptedEncoding
             
 
             meta16_t cell_meta = static_cast<meta16_t>(
-                (cell_priority  << (PRIORITY_SHIFT))
+                (cell_attribute  << (PRIORITY_SHIFT))
                 | (cell_authority << (NODE_AUTH_SHIFT))
                 | (cell_locality << LOCALITY_SHIFT)
                 | (cell_mode << CELL_MODE_SHIFT)
@@ -234,7 +234,7 @@ protected:
             OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
             tag8_t cell_class = static_cast<tag8_t>(APCPagedNodeSegmentClasses::FREE_SLOT),
             Model48Subclass sub_class = Model48Subclass::SELF_CLASS,
-            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
+            AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL, 
             LocalityPolicy locality = LocalityPolicy::IDLE,
             InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
         ) noexcept
@@ -246,7 +246,7 @@ protected:
                 cell_data_type,
                 static_cast<tag8_t>(cell_class),
                 static_cast<tag8_t>(sub_class),
-                static_cast<tag8_t>(priority)
+                static_cast<tag8_t>(attribute)
             );
         }
 
@@ -257,7 +257,7 @@ protected:
             OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
             tag8_t cell_class = static_cast<tag8_t>(APCPagedNodeSegmentClasses::FREE_SLOT),
             Model32Subclass sub_class = Model32Subclass::SELF_CLASS,
-            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, 
+            AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL, 
             LocalityPolicy locality = LocalityPolicy::IDLE,
             InternalDataTypePolicy cell_data_type = InternalDataTypePolicy::UnsignedPCellDataType
         ) noexcept
@@ -269,7 +269,7 @@ protected:
                 cell_data_type,
                 static_cast<tag8_t>(cell_class),
                 static_cast<tag8_t>(sub_class),
-                static_cast<tag8_t>(priority)
+                static_cast<tag8_t>(attribute)
             );
         }
         
@@ -281,9 +281,9 @@ protected:
             return packed_cell;
         }
 
-        static constexpr packed64_t SetPriorityInPacked(packed64_t packed_cell, PriorityPolicy priority) noexcept
+        static constexpr packed64_t SetPriorityInPacked(packed64_t packed_cell, AttributePolicy attribute) noexcept
         {
-            const meta16_t new_desired_meta = SetPriorityInMETA16(ExtractMeta16fromPackedCell(packed_cell), priority);
+            const meta16_t new_desired_meta = SetPriorityInMETA16(ExtractMeta16fromPackedCell(packed_cell), attribute);
             return SetMETA16InPacked(packed_cell, new_desired_meta);
         }
 
@@ -342,14 +342,14 @@ protected:
 
         static  constexpr meta16_t SetPriorityInMETA16(
             meta16_t meta16,
-            PriorityPolicy priority
+            AttributePolicy attribute
         ) noexcept
         {
             return SetIndicatedMetaInMeta16(
                 meta16,
                 PRIORITY_SHIFT,
                 PRIORITY_MASK,
-                static_cast<tag8_t>(priority)
+                static_cast<tag8_t>(attribute)
             );
         }
 

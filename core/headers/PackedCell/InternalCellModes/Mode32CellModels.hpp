@@ -71,13 +71,19 @@ namespace PredictedAdaptedEncoding
     {
         //In paired cell Ideology clk16 is a version count-> CLOCK is unnecessery because it will be mostly used for contron / paired pointers
         static constexpr std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64ForAPC(
-            uint64_t value, clk16_t version,
+            uint64_t value, 
+            clk16_t version,
             LocalityPolicy locality = LocalityPolicy::IDLE,
-            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT
+            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
+            AttributePolicy attribute_policy = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
         ) noexcept
         {
             const std::pair<packed64_t, packed64_t> lowf_highs = GetPairOfLow32FAndHigh32SFromUnsigned64_(
-                value, version, locality, OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, static_cast<tag8_t>(page_class)
+                value, version, 
+                locality, 
+                OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, 
+                static_cast<tag8_t>(page_class),
+                attribute_policy
             );
 
             if (page_class == APCPagedNodeSegmentClasses::CONTROL_SLOT && value <= IN_CELL_VALUE_MODE32_SENTINAL)
@@ -90,11 +96,16 @@ namespace PredictedAdaptedEncoding
         static constexpr std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64ForFabric(
             uint64_t value, clk16_t version,
             LocalityPolicy locality = LocalityPolicy::IDLE,
-            FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG
+            FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
+            AttributePolicy attribute_policy = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
         ) noexcept
         {
             const std::pair<packed64_t, packed64_t> lowf_highs = GetPairOfLow32FAndHigh32SFromUnsigned64_(
-                value, version, locality, OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC, static_cast<tag8_t>(fabric_segment_class)
+                value, version, 
+                locality, 
+                OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC, 
+                static_cast<tag8_t>(fabric_segment_class), 
+                attribute_policy
             );
 
             if (fabric_segment_class != FabricTableSegmentClasses::GLOBAL_AND_CONFIG && value <= IN_CELL_VALUE_MODE32_SENTINAL)
@@ -157,7 +168,8 @@ private:
             uint64_t value, clk16_t version,
             LocalityPolicy locality,
             OwnershipPolicy ownership,
-            tag8_t page_class
+            tag8_t page_class,
+            AttributePolicy attribute_policy = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
         ) noexcept
         {
             const uint32_t low_half32 = static_cast<uint32_t>(value & MaskLowNBits(VALBITS));
@@ -166,14 +178,14 @@ private:
             const packed64_t low_half_packed_cell = PackedCell64_t::MakeInitialValidGeneralPackedCell(
                 PackedMode::MODEL32, locality, ownership, page_class,
                 InternalDataTypePolicy::UnsignedPCellDataType, low_half32, version,
-                PriorityPolicy::INFLUENCED, 
+                attribute_policy, 
                 static_cast<tag8_t>(Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL)
             );
     
             const packed64_t high_half_packed_cell = PackedCell64_t::MakeInitialValidGeneralPackedCell(
                 PackedMode::MODEL32, locality, ownership, page_class,
                 InternalDataTypePolicy::UnsignedPCellDataType, high_half32, version,
-                PriorityPolicy::INFLUENCED, 
+                attribute_policy, 
                 static_cast<tag8_t>(Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL)
             );
 

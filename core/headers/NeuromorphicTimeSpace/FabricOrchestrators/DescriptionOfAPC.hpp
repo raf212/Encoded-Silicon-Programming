@@ -115,7 +115,7 @@ struct DescriptionOfAPC
             FabricTableSegmentClasses::APC_HANDLE_DESCRIPTOR,
             locality,
             InternalDataTypePolicy ::UnsignedPCellDataType,
-            PriorityPolicy::INFLUENCED,
+            AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
             cell_value
         );
         
@@ -146,7 +146,7 @@ struct DescriptionOfAPC
             FabricTableSegmentClasses::APC_HANDLE_DESCRIPTOR,
             locality,
             InternalDataTypePolicy ::UnsignedPCellDataType,
-            PriorityPolicy::INFLUENCED,
+            AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
             raw_48
         );
     }
@@ -179,7 +179,7 @@ struct DescriptionOfAPC
             static_cast<tag8_t>(Model32Subclass::UNCLOCKED_1x8_PLUS_2x4),
             FabricTableSegmentClasses::APC_HANDLE_DESCRIPTOR,
             locality, InternalDataTypePolicy::UnsignedPCellDataType,
-            PriorityPolicy::INFLUENCED,
+            AttributePolicy::INSTRUCTION_CELL,
             apc_width,
             state_version_ownership
         );

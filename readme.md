@@ -1,6 +1,6 @@
 # AdaptivePackedCellContainer (APC)
 
-AdaptivePackedCellContainer is an experimental C++ runtime substrate for **atomic, region-aware, causally tagged data cells**. It is designed around a simple but unusual idea: a cell should not only carry a value; it should also carry enough local metadata to describe its state, priority, signal class, datatype, and causal time.
+AdaptivePackedCellContainer is an experimental C++ runtime substrate for **atomic, region-aware, causally tagged data cells**. It is designed around a simple but unusual idea: a cell should not only carry a value; it should also carry enough local metadata to describe its state, attribute, signal class, datatype, and causal time.
 
 The current implementation should be read as a research prototype and systems experiment, not as a production-ready container library. The uploaded build shows strong evidence that the publish/consume pipeline can move thousands of values without terminal failure, but it also exposes important accounting and efficiency issues that must be fixed before the structure can be treated as stable.
 
@@ -66,7 +66,7 @@ The smallest unit is `PackedCell64_t`, a 64-bit atomic-compatible cell. The cell
 
 The metadata field acts as a compact control word. It encodes ideas such as:
 
-- cell priority;
+- cell attribute;
 - node authority;
 - cell locality/state;
 - packed mode;
@@ -137,7 +137,7 @@ The 16-bit clock is useful as a compact local recency marker. It should be descr
 
 The design intent is strong: each publish, consume, cursor move, and readiness decision should eventually be explainable using:
 
-1. packed-cell priority;
+1. packed-cell attribute;
 2. packed-cell causality/clock;
 3. region class;
 4. node authority.
@@ -193,7 +193,7 @@ Until those scopes are separated, an invariant may look bad for the wrong reason
 
 ### 7. Adaptive backoff model
 
-The adaptive backoff system exists to avoid wasting CPU cycles during contention. When CAS loops fail, or when workers find no useful work, the runtime can spin, yield, park, or sleep depending on estimated pressure and priority.
+The adaptive backoff system exists to avoid wasting CPU cycles during contention. When CAS loops fail, or when workers find no useful work, the runtime can spin, yield, park, or sleep depending on estimated pressure and attribute.
 
 This matters because APC is not a simple single-thread vector. It is intended for concurrent publish/consume behavior, background management, shared-chain growth, and eventual heterogeneous scheduling.
 
@@ -392,7 +392,7 @@ Examples include names such as `SEGEMENT`, `THRASHOLD`, `Cursore`, `LATERAL_MESA
 
 APC is not garbage because it has a real systems thesis:
 
-> A memory cell in a neural/event runtime should carry value, state, datatype, signal direction, priority, and local time in one atomic unit.
+> A memory cell in a neural/event runtime should carry value, state, datatype, signal direction, attribute, and local time in one atomic unit.
 
 That idea is coherent. It directly addresses problems that plain tensors do not address well:
 
@@ -431,7 +431,7 @@ That bias produces the following design choices:
 
 - metadata is stored inside the cell;
 - direction is encoded as a region class;
-- priority is encoded inside the cell;
+- attribute is encoded inside the cell;
 - local time is encoded inside the cell;
 - payload and control live in one unified packed-cell memory model;
 - nodes are designed as graph-like entities, not plain arrays;
@@ -462,7 +462,7 @@ The most realistic future for APC is not to replace PyTorch, oneDNN, oneMKL, or 
 
 A future APC neural model could look like this:
 
-- APC cells hold local event state, priority, region class, and clock.
+- APC cells hold local event state, attribute, region class, and clock.
 - APC regions hold feedforward, feedbackward, state, error, and auxiliary signals.
 - APC node chains represent logical neural modules or microcircuits.
 - Dense parameter tensors remain in optimized tensor libraries.
@@ -492,7 +492,7 @@ This is the cleanest way to “renovate the wheel” without rebuilding the alre
 
 ## Honest conclusion
 
-AdaptivePackedCellContainer is a serious and original systems experiment. Its strongest idea is the packed cell: a 64-bit atomic datum that combines value, local clock, state, priority, datatype, authority, and signal class. That is a meaningful foundation for asynchronous, predictive, bidirectional, heterogeneous neural computation.
+AdaptivePackedCellContainer is a serious and original systems experiment. Its strongest idea is the packed cell: a 64-bit atomic datum that combines value, local clock, state, attribute, datatype, authority, and signal class. That is a meaningful foundation for asynchronous, predictive, bidirectional, heterogeneous neural computation.
 
 The current implementation is not yet clean enough to claim production correctness. The biggest immediate issues are occupancy accounting, growth efficiency, instrumentation consistency, indexing, and transactional layout mutation.
 

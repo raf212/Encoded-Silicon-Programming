@@ -40,7 +40,7 @@ namespace PredictedAdaptedEncoding
 
     packed64_t SegmentIODefinition::PackPureClock48AsPackedCell(
         std::optional<uint64_t> clock48,
-        PriorityPolicy priority,
+        AttributePolicy attribute,
         LocalityPolicy locality,
         APCPagedNodeSegmentClasses page_class
     ) noexcept
@@ -55,7 +55,7 @@ namespace PredictedAdaptedEncoding
             OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
             static_cast<tag8_t>(page_class),
             Model48Subclass::PURE_TIMER_48, 
-            priority, locality, 
+            attribute, locality, 
             InternalDataTypePolicy::UnsignedPCellDataType
         );
 
@@ -68,10 +68,10 @@ namespace PredictedAdaptedEncoding
         return PackedCell64_t::Compose48BitFamilyPackedCell((now_timer.NowTicks() & MaskLowNBits(FAMILY_48_BIT_LEN)), meta16);
     }
 
-    void SegmentIODefinition::WriteOrUpdateMetaClock48(PriorityPolicy priority, std::optional<uint64_t>meta_clock_48 ) noexcept
+    void SegmentIODefinition::WriteOrUpdateMetaClock48(AttributePolicy attribute, std::optional<uint64_t>meta_clock_48 ) noexcept
     {
         size_t idx = static_cast<size_t>(MetaIndexOfAPCNode::LOCAL_CLOCK48);
-        packed64_t wanted_cell = PackPureClock48AsPackedCell(meta_clock_48, priority, LocalityPolicy::PUBLISHED);
+        packed64_t wanted_cell = PackPureClock48AsPackedCell(meta_clock_48, attribute, LocalityPolicy::PUBLISHED);
         BackingPtr[idx].store(wanted_cell, MoStoreSeq_);
         BackingPtr[idx].notify_all();
     }
@@ -167,7 +167,7 @@ namespace PredictedAdaptedEncoding
         uint32_t aux_param_uint32,
         uint32_t branch_depth,
         uint8_t branch_priority,
-        PriorityPolicy write_cell_priority
+        AttributePolicy write_cell_priority
 
     ) noexcept
     {

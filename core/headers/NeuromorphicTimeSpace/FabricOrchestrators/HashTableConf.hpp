@@ -113,7 +113,7 @@ struct HashTableConf : public HashHelpers
     }
 
 
-    /// @brief Cell DEFAULTS: TypeFamily::VALUE48 + AccessContractOfValue::CLAIMED_GURDED + PriorityPolicy::INFLUENCED
+    /// @brief Cell DEFAULTS: TypeFamily::VALUE48 + AccessContractOfValue::CLAIMED_GURDED + AttributePolicy::INSTRUCTION_CELL
     /// @return VALID -> Packed Cell -> OR: UINT64_MAX:: if FabricTableSegmentClasses dosent belong  BRANCH_HASH, SHARED_HASH, LOGICAL_HASH
     static constexpr packed64_t MakeHashKeyOrValueCell(
         uint64_t hash_key_or_value,
@@ -139,7 +139,7 @@ struct HashTableConf : public HashHelpers
             hash_table_class, 
             locality,
             InternalDataTypePolicy::UnsignedPCellDataType, 
-            PriorityPolicy::INFLUENCED,
+            AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
             hash_key_or_value
         );
     }
@@ -171,7 +171,7 @@ struct HashTableConf : public HashHelpers
             table_class,
             locality,
             InternalDataTypePolicy::UnsignedPCellDataType,
-            PriorityPolicy::INFLUENCED,
+            AttributePolicy::INSTRUCTION_CELL,
             desired_prob_distance_lock
         );
     }

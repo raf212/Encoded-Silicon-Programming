@@ -80,7 +80,7 @@ class AdaptivePackedCellContainer;
          packed64_t ComposeClockedModel32FroAPC(
             val32_t provided_cell_value32,
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::UNDEFINED,
-            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST,
+            AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
             LocalityPolicy locality = LocalityPolicy::PUBLISHED,
             Model32Subclass sub_class = Model32Subclass::SELF_CLASS,
             InternalDataTypePolicy dtype = InternalDataTypePolicy::UnsignedPCellDataType,
@@ -91,7 +91,7 @@ class AdaptivePackedCellContainer;
             const meta16_t desired_meta16 = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_32t(
                 ownership,
                 static_cast<tag8_t>(page_class),
-                sub_class, priority, locality, dtype
+                sub_class, attribute, locality, dtype
             );
             return PackedCell64_t::Compose32BitFamilyPackedCell(provided_cell_value32, now_clock16, desired_meta16);
         }
@@ -100,14 +100,14 @@ class AdaptivePackedCellContainer;
             OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
             LocalityPolicy locality = LocalityPolicy::PUBLISHED,
             tag8_t cell_class = static_cast<tag8_t>(APCPagedNodeSegmentClasses::FREE_SLOT),
-            PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST
+            AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
         ) noexcept
         {
             const uint64_t full_clock48 = NowTicks48();
 
             const meta16_t meta16 = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_48t(
                 ownership, cell_class, 
-                Model48Subclass::PURE_TIMER_48, priority,
+                Model48Subclass::PURE_TIMER_48, attribute,
                 locality, InternalDataTypePolicy::UnsignedPCellDataType
             );
 

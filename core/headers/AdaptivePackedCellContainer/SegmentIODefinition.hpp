@@ -115,12 +115,12 @@ protected:
     /// @brief APC META USES TypeFamily::VALUE32 path WITH::AccessContractOfValue
     /// @param idx 
     /// @param value32 
-    /// @param priority 
+    /// @param attribute 
     /// @param page_class 
     void WriteTypedValue32MetaCEll_(
         MetaIndexOfAPCNode idx,
         uint32_t value32,
-        PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST,
+        AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
         APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT
     ) noexcept
     {
@@ -136,7 +136,7 @@ protected:
             page_class,
             LocalityPolicy::PUBLISHED,
             InternalDataTypePolicy::UnsignedPCellDataType,
-            priority,
+            attribute,
             value32,
             UNSIGNED_ZERO
         );
@@ -152,7 +152,7 @@ protected:
         Model48Subclass sub_class = Model48Subclass::SELF_CLASS,
         LocalityPolicy locality = LocalityPolicy::PUBLISHED,
         InternalDataTypePolicy dtype = InternalDataTypePolicy::UnsignedPCellDataType,
-        PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST
+        AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
     ) noexcept
     {
         size_t index = static_cast<size_t>(idx);
@@ -163,7 +163,7 @@ protected:
         const meta16_t meta16 = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_48t(
             OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
             static_cast<tag8_t>(APCPagedNodeSegmentClasses::CONTROL_SLOT),
-            sub_class, priority, locality, dtype
+            sub_class, attribute, locality, dtype
         );
         const packed64_t packed_cell = PackedCell64_t::Compose48BitFamilyPackedCell(raw48_value & MaskLowNBits(FAMILY_48_BIT_LEN), meta16);
         BackingPtr[index].store(packed_cell, MoStoreSeq_);
@@ -185,12 +185,12 @@ private:
 public:
     packed64_t PackPureClock48AsPackedCell(
         std::optional<uint64_t> clock48 = std::nullopt,
-        PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST,
+        AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
         LocalityPolicy locality = LocalityPolicy::PUBLISHED,
         APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT
     ) noexcept;
 
-    void WriteOrUpdateMetaClock48(PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST, std::optional<uint64_t>meta_clock_48 = std::nullopt) noexcept;
+    void WriteOrUpdateMetaClock48(AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL, std::optional<uint64_t>meta_clock_48 = std::nullopt) noexcept;
 
     bool JustUpdateValueOfMeta32(
         MetaIndexOfAPCNode idx,
@@ -231,7 +231,7 @@ public:
         uint32_t aux_param_uint32 = UNSIGNED_ZERO,
         uint32_t branch_depth = UNSIGNED_ZERO,
         uint8_t branch_priority = UNSIGNED_ZERO,
-        PriorityPolicy write_cell_priority = PriorityPolicy::PRESSURE_FIRST
+        AttributePolicy write_cell_priority = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
 
     ) noexcept;
 
@@ -354,9 +354,9 @@ public:
     }
 
 
-    void ResetTotalCASFailureForThisBranch(PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST) noexcept
+    void ResetTotalCASFailureForThisBranch(AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL) noexcept
     {
-        WriteTypedValue32MetaCEll_(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH, UNSIGNED_ZERO, priority);
+        WriteTypedValue32MetaCEll_(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH, UNSIGNED_ZERO, attribute);
     }
 
     bool SetSegmentRegionKind(APCPagedNodeSegmentClasses region_kind) noexcept

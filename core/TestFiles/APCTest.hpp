@@ -192,7 +192,7 @@ namespace
         MasterClockConf& clock,
         float value,
         APCPagedNodeSegmentClasses page_class,
-        PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST,
+        AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
         PackedMode mode = PackedMode::VALUE32
     )
     {
@@ -206,7 +206,7 @@ namespace
                 static_cast<ModelFamily>(mode),
                 UNSIGNED_ZERO, page_class, LocalityPolicy::PUBLISHED,
                 InternalDataTypePolicy::FloatPCellDataType,
-                priority,
+                attribute,
                 bits,
                 now_16
             );
@@ -219,7 +219,7 @@ namespace
             page_class,
             LocalityPolicy::PUBLISHED,
             InternalDataTypePolicy::FloatPCellDataType,
-            priority,
+            attribute,
             bits,
             now_16
         );
@@ -655,7 +655,7 @@ namespace
                         clock,
                         value,
                         APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                        PriorityPolicy::PRESSURE_FIRST
+                        AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
                     ),
                     manager,
                     growth_counter,
@@ -687,7 +687,7 @@ namespace
                         clock,
                         prediction,
                         APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
-                        PriorityPolicy::PRESSURE_FIRST
+                        AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
                     ),
                     manager,
                     growth_counter,
@@ -909,7 +909,7 @@ void APCTest()
                 clock,
                 state,
                 APCPagedNodeSegmentClasses::STATE_SLOT,
-                PriorityPolicy::PRESSURE_FIRST
+                AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
             ),
             manager,
             grow_integrator,
@@ -923,7 +923,7 @@ void APCTest()
                 clock,
                 error,
                 APCPagedNodeSegmentClasses::ERROR_SLOT,
-                PriorityPolicy::PRESSURE_FIRST
+                AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
             ),
             manager,
             grow_integrator,
@@ -983,7 +983,7 @@ void APCTest()
                 clock,
                 motor,
                 APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                PriorityPolicy::PRESSURE_FIRST
+                AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
             ),
             manager,
             grow_motor,
@@ -997,7 +997,7 @@ void APCTest()
                 clock,
                 feedback,
                 APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
-                PriorityPolicy::PRESSURE_FIRST
+                AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
             ),
             manager,
             grow_predictor,

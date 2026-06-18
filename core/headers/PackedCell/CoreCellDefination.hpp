@@ -30,7 +30,7 @@ namespace PredictedAdaptedEncoding
 
             meta16_t  InCellMeta16{0};
 
-            PriorityPolicy Priority{PriorityPolicy::PRESSURE_FIRST};
+            AttributePolicy Priority{AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL};
 
             OwnershipPolicy CellOwnership{OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER};
 
@@ -251,7 +251,7 @@ namespace PredictedAdaptedEncoding
                 PackedMode::MODEL32,
                 IN_CELL_VALUE_MODE32_SENTINAL,
                 UINT16_MAX,
-                PriorityPolicy::ERROR_FIRST,
+                AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
                 OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
                 LocalityPolicy::FAULTY
             );
@@ -305,7 +305,7 @@ namespace PredictedAdaptedEncoding
                     AccessContractOfValue::CLAIMED_GURDED,
                     page_class,
                     cell_locality,
-                    dtype, PriorityPolicy::PRESSURE_FIRST,
+                    dtype, AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
                     value, cell_clock16
                 );
             
@@ -315,7 +315,7 @@ namespace PredictedAdaptedEncoding
                     AccessContractOfValue::CLAIMED_GURDED,
                     page_class,
                     cell_locality,
-                    dtype, PriorityPolicy::PRESSURE_FIRST,
+                    dtype, AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
                     value
                 );
 
@@ -325,7 +325,7 @@ namespace PredictedAdaptedEncoding
                     static_cast<tag8_t>(Model32Subclass::SELF_CLASS),
                     page_class,
                     cell_locality,
-                    dtype, PriorityPolicy::PRESSURE_FIRST,
+                    dtype, AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
                     value,
                     cell_clock16
                 );
@@ -336,7 +336,7 @@ namespace PredictedAdaptedEncoding
                     static_cast<tag8_t>(Model48Subclass::SELF_CLASS),
                     page_class,
                     cell_locality,
-                    dtype, PriorityPolicy::PRESSURE_FIRST,
+                    dtype, AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
                     value
                 );
             default:
@@ -354,7 +354,7 @@ namespace PredictedAdaptedEncoding
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::UNDEFINED,
             LocalityPolicy cell_locality = LocalityPolicy::IDLE,
             InternalDataTypePolicy in_cell_value_data_type = InternalDataTypePolicy::UnsignedPCellDataType,
-            PriorityPolicy cell_priority = PriorityPolicy::PRESSURE_FIRST,
+            AttributePolicy cell_attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
             uint64_t in_cell_value = UNSIGNED_ZERO,
             clk16_t in_cell_clk16 = UNSIGNED_ZERO
 
@@ -366,7 +366,7 @@ namespace PredictedAdaptedEncoding
                 OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, 
                 static_cast<tag8_t>(page_class),
                 in_cell_value_data_type, in_cell_value, in_cell_clk16,
-                cell_priority, sub_class
+                cell_attribute, sub_class
             );
         }
 
@@ -380,7 +380,7 @@ namespace PredictedAdaptedEncoding
             FabricTableSegmentClasses table_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
             LocalityPolicy cell_locality = LocalityPolicy::IDLE,
             InternalDataTypePolicy in_cell_value_data_type = InternalDataTypePolicy::UnsignedPCellDataType,
-            PriorityPolicy cell_priority = PriorityPolicy::PRESSURE_FIRST,
+            AttributePolicy cell_attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
             uint64_t in_cell_value = UNSIGNED_ZERO,
             clk16_t in_cell_clk16 = UNSIGNED_ZERO
 
@@ -392,7 +392,7 @@ namespace PredictedAdaptedEncoding
                 OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC, 
                 static_cast<tag8_t>(table_class),
                 in_cell_value_data_type, in_cell_value, in_cell_clk16,
-                cell_priority, sub_class
+                cell_attribute, sub_class
             );
         }
 
@@ -408,13 +408,13 @@ namespace PredictedAdaptedEncoding
             InternalDataTypePolicy in_cell_value_data_type,
             uint64_t in_cell_value,
             clk16_t in_cell_clk16,
-            PriorityPolicy cell_priority,
+            AttributePolicy cell_attribute,
             tag8_t sub_class
         ) noexcept
         {
             const packed64_t requested_cell = MakeAnUncheckedCell_(
                 cell_mode, in_cell_value, in_cell_clk16,
-                cell_priority, cell_ownership, cell_locality,
+                cell_attribute, cell_ownership, cell_locality,
                 cell_class, sub_class,
                 in_cell_value_data_type
             );
@@ -433,7 +433,7 @@ namespace PredictedAdaptedEncoding
             FabricTableSegmentClasses table_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
             LocalityPolicy cell_locality = LocalityPolicy::IDLE,
             InternalDataTypePolicy in_cell_value_data_type = InternalDataTypePolicy::UnsignedPCellDataType,
-            PriorityPolicy cell_priority = PriorityPolicy::PRESSURE_FIRST,
+            AttributePolicy cell_attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
             uint64_t in_cell_value = UNSIGNED_ZERO,
             clk16_t in_cell_clk16 = UNSIGNED_ZERO
         ) noexcept
@@ -444,7 +444,7 @@ namespace PredictedAdaptedEncoding
                 OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC, 
                 static_cast<tag8_t>(table_class),
                 in_cell_value_data_type, in_cell_value, 
-                in_cell_clk16, cell_priority, 
+                in_cell_clk16, cell_attribute, 
                 static_cast<tag8_t>(sub_class)
             );
         }
@@ -457,7 +457,7 @@ namespace PredictedAdaptedEncoding
             APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::UNDEFINED,
             LocalityPolicy cell_locality = LocalityPolicy::IDLE,
             InternalDataTypePolicy in_cell_value_data_type = InternalDataTypePolicy::UnsignedPCellDataType,
-            PriorityPolicy cell_priority = PriorityPolicy::PRESSURE_FIRST,
+            AttributePolicy cell_attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
             uint64_t in_cell_value = UNSIGNED_ZERO,
             clk16_t in_cell_clk16 = UNSIGNED_ZERO
         ) noexcept
@@ -468,7 +468,7 @@ namespace PredictedAdaptedEncoding
                 OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, 
                 static_cast<tag8_t>(page_class),
                 in_cell_value_data_type, in_cell_value, 
-                in_cell_clk16, cell_priority, 
+                in_cell_clk16, cell_attribute, 
                 static_cast<tag8_t>(sub_class)
             );
         }
@@ -537,7 +537,7 @@ namespace PredictedAdaptedEncoding
             const meta16_t meta16 = ExtractMeta16fromPackedCell(packed_cell);
             out_packed_cell_view.RawCell = packed_cell;
             out_packed_cell_view.InCellMeta16 = meta16;
-            out_packed_cell_view.Priority = static_cast<PriorityPolicy>(ExtractPriorityFromMETA16_U_(meta16));
+            out_packed_cell_view.Priority = static_cast<AttributePolicy>(ExtractPriorityFromMETA16_U_(meta16));
             out_packed_cell_view.CellOwnership =  static_cast<OwnershipPolicy>(ExtractCellLocalNodeAuthotityFromMETA16_U_(meta16));
             out_packed_cell_view.LocalityOfCell = static_cast<LocalityPolicy>(ExtractLocalityFromMETA16_U_(meta16));
             out_packed_cell_view.CellMode = static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16));
@@ -592,7 +592,7 @@ namespace PredictedAdaptedEncoding
             PackedMode cell_mode,
             uint64_t cell_value = UNSIGNED_ZERO,
             clk16_t clock16 = UNSIGNED_ZERO,
-            PriorityPolicy cell_priority = PriorityPolicy::PRESSURE_FIRST,
+            AttributePolicy cell_attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
             OwnershipPolicy cell_ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
             LocalityPolicy cell_locality = LocalityPolicy::IDLE, 
             tag8_t cell_class = UNSIGNED_ZERO,
@@ -607,7 +607,7 @@ namespace PredictedAdaptedEncoding
                 cell_data_type,
                 cell_class,
                 sub_class,
-                static_cast<tag8_t>(cell_priority)
+                static_cast<tag8_t>(cell_attribute)
             );
 
             if (desired_meta16 == META_16_SENTINAL)

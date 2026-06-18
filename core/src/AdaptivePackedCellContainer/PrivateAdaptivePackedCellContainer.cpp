@@ -510,7 +510,7 @@ namespace PredictedAdaptedEncoding
             return 1u;
         }
 
-        const PriorityPolicy priority =
+        const AttributePolicy attribute =
             PackedCell64_t::ExtractPriorityPolicy(packed_cell);
 
         std::optional<LayoutBoundsOfSingleRelNodeClass> layout_bounds =
@@ -573,9 +573,9 @@ namespace PredictedAdaptedEncoding
         }
 
         const uint32_t priority_u32 =
-            static_cast<uint32_t>(priority);
+            static_cast<uint32_t>(attribute);
 
-        if (priority_u32 > static_cast<uint32_t>(PriorityPolicy::PRESSURE_FIRST))
+        if (priority_u32 > static_cast<uint32_t>(AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL))
         {
             budget = std::max<uint32_t>(
                 1u,

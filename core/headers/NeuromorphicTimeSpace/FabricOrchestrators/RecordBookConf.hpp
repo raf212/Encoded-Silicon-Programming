@@ -156,7 +156,7 @@ struct RecordBookConf
             FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES,
             cell_locality,
             InternalDataTypePolicy::UnsignedPCellDataType,
-            PriorityPolicy::INFLUENCED,
+            AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
             value 
         );
 
@@ -192,7 +192,7 @@ struct RecordBookConf
             static_cast<tag8_t>(Model32Subclass::UNCLOCKED_1x8_PLUS_2x4),
             FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES,
             locality, InternalDataTypePolicy::UnsignedPCellDataType,
-            PriorityPolicy::INFLUENCED,
+            AttributePolicy::INSTRUCTION_CELL,
             masked_width,
             version_origin_slabid
         );

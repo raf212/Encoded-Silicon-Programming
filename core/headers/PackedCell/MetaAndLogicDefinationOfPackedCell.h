@@ -24,9 +24,9 @@
     #include <intrin.h>
 #endif
 // META16 / PNLTCOD:
-// [ priority:2 | node_authority:2 | locality:2 | cell_mode:2 | cell_class:4 | mode_subclass:2 | dtype:2 ]
+// [ attribute:2 | node_authority:2 | locality:2 | cell_mode:2 | cell_class:4 | mode_subclass:2 | dtype:2 ]
 // shifts:
-// priority=14, node_authority=12, locality=10, cell_mode= 8, cell_class=4, mode_subclass=2, dtype=0
+// attribute=14, node_authority=12, locality=10, cell_mode= 8, cell_class=4, mode_subclass=2, dtype=0
 
 
 namespace PredictedAdaptedEncoding {
@@ -173,14 +173,18 @@ namespace PredictedAdaptedEncoding {
         UNASSIGNED_UNUSED_NANNULL = 4
     };
 
-    enum class PriorityPolicy : tag8_t
+    /// @brief Describs Attribute OF: Packed Cell & Why it exist
+    /// @param SELF_CONTAINED_DATA_OR_MODEL VALUE OR: MODEL -> Itself Carry The Whole Message
+    /// @param INSTRUCTION_CELL VALUE OR: MODEL -> Describs ANY: Kind OF: Instruction TO: Closeby PackedCell
+    /// @param INSTRUCTION_RAW64_NEXT INSTRUCTIONS: If Cells Are Raw64 how TO: Read and Write Them & SEQUENTIAL: N * INSTRUCTION_RAW64_NEXT (N  AMOUNT: Can be used to describe the Meta)
+    /// @param INSTRUCTION_RAW64_EOF INSTRUCTIONS: Defines Its the end Raw64 and LATER ON: Cells Are Packed Cell
+    enum class AttributePolicy : tag8_t
     {
-        INFLUENCED = 0, // extended
-        PRESSURE_FIRST = 1,
-        IN_CLOCKED_GENERIC_SPIKE = 2,
-        ERROR_FIRST = 3,
+        SELF_CONTAINED_DATA_OR_MODEL = 0,
+        INSTRUCTION_CELL = 1,
+        INSTRUCTION_RAW64_NEXT = 2,
+        INSTRUCTION_RAW64_EOF = 3,
         UNASSIGNED_UNUSED_NANNULL = 4
-
     };
 
     enum class APCPagedNodeSegmentClasses : tag8_t
@@ -197,7 +201,6 @@ namespace PredictedAdaptedEncoding {
         AUX_SLOT = 0x9,
         HETEROGENOUS_RAW_MEMORY = 0xA,
         SLOT_TABLE_DESCRIPTOR = 0xB,
-        //paired pinter should be valid only in case of Model32Subclass->Paired Subclass
         PAIRED_POINTER_IN_MEMORY = 0xC,
         FREE_SLOT     = 0xD,
         UNDEFINED = 0xE,

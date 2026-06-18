@@ -56,7 +56,7 @@ namespace PredictedAdaptedEncoding
         uint64_t value, 
         LocalityPolicy cell_locality,
         AccessContractOfValue access_contract,
-        PriorityPolicy priority
+        AttributePolicy attribute
     )noexcept
     {
         const size_t slab_index = static_cast<size_t>(fabric_meta_idx);
@@ -70,7 +70,7 @@ namespace PredictedAdaptedEncoding
             FabricTableSegmentClasses::GENERIC_CONTROL,
             cell_locality,
             InternalDataTypePolicy ::UnsignedPCellDataType,
-            priority,
+            attribute,
             value
         );
 
@@ -98,7 +98,8 @@ namespace PredictedAdaptedEncoding
         const std::pair<packed64_t, packed64_t> low32_and_probable_high32 = PairedVersionedCellModelOfMode32::GetPairOfLow32FAndHigh32SFromUnsigned64ForFabric(
             desired_occupancy_value, pair_version,
             LocalityPolicy::PUBLISHED,
-            FabricTableSegmentClasses::GENERIC_CONTROL
+            FabricTableSegmentClasses::GENERIC_CONTROL,
+            AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
         );
 
         auto ForceUpdate = [&](){
@@ -553,7 +554,7 @@ namespace PredictedAdaptedEncoding
             APCPagedNodeSegmentClasses::UNDEFINED,
             LocalityPolicy::IDLE,
             InternalDataTypePolicy::UnsignedPCellDataType,
-            PriorityPolicy::IN_CLOCKED_GENERIC_SPIKE,
+            AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
             UNSIGNED_ZERO,
             UNSIGNED_ZERO
         );
