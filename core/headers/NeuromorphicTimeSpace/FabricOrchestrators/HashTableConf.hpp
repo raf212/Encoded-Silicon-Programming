@@ -1,5 +1,5 @@
 #pragma once 
-#include "../CoreOfFabricCoordinator.hpp"
+#include "CoreOfFabricCoordinator.hpp"
 
 namespace PredictedAdaptedEncoding
 {

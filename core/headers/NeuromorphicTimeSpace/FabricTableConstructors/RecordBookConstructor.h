@@ -1,5 +1,5 @@
 #pragma once 
-#include "../FabricCellConf.hpp"
+#include "FabricConstructor.hpp"
 
 namespace PredictedAdaptedEncoding
 {
