@@ -20,7 +20,7 @@ struct DescriptionOfAPC
 
     static constexpr uint64_t VALID_BUFFER_MARK = 1111111111111;
 
-    using SingleAPCDescriptionCellBuffer = std::array<uint64_t, APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX + 1>;
+    using SingleAPCDescriptionCellBuffer = std::array<packed64_t, APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX + 1>;
 
     /// @brief Assignes UINT64_MAX  UPTO:INDEX: APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX - 1 and Next 2 INDEX: UNSIGNED_ZERO
     /// @param default_array 

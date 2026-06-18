@@ -4,6 +4,8 @@
 namespace PredictedAdaptedEncoding
 {
 
+using SingleHashBuffer = std::array<packed64_t, HASH_BUCKED_WIDTH_OF_FABRIC + 1>;
+
 struct HashKeyValueDistanceTriplet
 {
     uint64_t HashValue = UNSIGNED_ZERO;
@@ -79,8 +81,14 @@ struct HashHelpers
 
 struct HashTableConf : public HashHelpers
 {
-
-    static constexpr bool IsHashPackedCellRuntimeAccessable(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+    /// @brief 
+    /// @param a_cell_view 
+    /// @param caller_holds_Claim_guard IF: FALSE: Claimed Cell is Invalid & ONLY: -> SET: -> TRUE: When Caller Is the One Claimed The Cell 
+    /// @return 
+    static constexpr bool IsHashPackedCellRuntimeAccessable(
+        const PackedCell64_t::AuthoritiveCellView& a_cell_view,
+        bool caller_holds_Claim_guard = false
+    ) noexcept
     {
 
         if (!CoreOfFabricCoordinator::CommonValidityCheckOfFabricCellsTableSegmentClasses(a_cell_view))
@@ -88,10 +96,13 @@ struct HashTableConf : public HashHelpers
             return false;
         }
         
+        if (!caller_holds_Claim_guard && a_cell_view.LocalityOfCell == LocalityPolicy::CLAIMED)
+        {
+            return false;
+        }
 
         if (
             !CoreOfFabricCoordinator::IsValidHashTable(a_cell_view.FabricTableSegmentClass) ||
-            a_cell_view.LocalityOfCell == LocalityPolicy::CLAIMED ||
             a_cell_view.Raw48BitInCellData == PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT
         )
         {
@@ -182,11 +193,13 @@ struct HashTableConf : public HashHelpers
     /// @param key_cell 
     /// @param value_cell 
     /// @param prob_distance_safty MUST MATCH:Raw48BitInCellData -> [LOWEST16->Prob Distance | MID16 -> LOWEST:16 Bit From Hash Key | HIGHIEST16 -> LOWEST:16 Bit From Hash Value] AND Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL
+    /// @param caller_holds_Claim_guard IF: FALSE: Claimed Cell is Invalid & ONLY: -> SET: -> TRUE: When Caller Is the One Claimed The Cell 
     /// @return CELL INVALID: std::nullopt / HashKeyValueDistanceTriplet with Validity flag
     static constexpr HashKeyValueDistanceTriplet ReadKeyValueProbFromValidCells(
         packed64_t key_cell,
         packed64_t value_cell,
-        packed64_t prob_distance_safty
+        packed64_t prob_distance_safty,
+        bool caller_holds_Claim_guard
     ) noexcept
     {
         const PackedCell64_t::AuthoritiveCellView key_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(key_cell);
@@ -195,9 +208,9 @@ struct HashTableConf : public HashHelpers
 
         const HashKeyValueDistanceTriplet invalid_value{};
         if (
-            !IsHashPackedCellRuntimeAccessable(key_cell_auth_view) ||
-            !IsHashPackedCellRuntimeAccessable(value_cell_auth_view) ||
-            !IsHashPackedCellRuntimeAccessable(prob_lock_cell_auth_view)
+            !IsHashPackedCellRuntimeAccessable(key_cell_auth_view, caller_holds_Claim_guard) ||
+            !IsHashPackedCellRuntimeAccessable(value_cell_auth_view, caller_holds_Claim_guard) ||
+            !IsHashPackedCellRuntimeAccessable(prob_lock_cell_auth_view, caller_holds_Claim_guard)
         )
         {
             return invalid_value;
@@ -239,6 +252,11 @@ struct HashTableConf : public HashHelpers
         
 
     }
+
+    // static constexpr SingleHashBuffer BuildAndValidateAHashBufferFromTriplet(HashKeyValueDistanceTriplet& key_valu_distence_triplet) noexcept
+    // {
+        
+    // }
 
 
 };

@@ -5,7 +5,7 @@
 namespace PredictedAdaptedEncoding
 {
 
-    HashKeyValueDistanceTriplet HashTablesConstructor::ReadValidHashBucketTriplet(size_t bucked_base_index) noexcept
+    HashKeyValueDistanceTriplet HashTablesConstructor::ReadValidHashBucketTriplet(size_t bucked_base_index, bool caller_holds_Claim_guard) noexcept
     {
         if (!SlabBasePtr_ || bucked_base_index + HASH_BUCKED_WIDTH_OF_FABRIC >= SlabCellCount_)
         {
@@ -20,7 +20,8 @@ namespace PredictedAdaptedEncoding
         return HashTableConf::ReadKeyValueProbFromValidCells(
             key_cell,
             value_cell,
-            prob_safty_cell
+            prob_safty_cell,
+            caller_holds_Claim_guard
         );
     }
 }
