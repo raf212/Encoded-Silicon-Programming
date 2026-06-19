@@ -77,11 +77,19 @@ struct RecordBookConf
         OriginOfRecord origin_table_segment_class
     ) noexcept
     {
+
+        RecordBookTablesBoundsCarrier return_bounds{};
+
+        if (!PackedCell64_t::IsValidFabricTable(origin_table_segment_class))
+        {
+            return return_bounds;
+        }
+        
+
         const PackedCell64_t::AuthoritiveCellView auth_view_of_begin_idx = PackedCell64_t::GetAuthoritiveViewsForACell(provided_range_triplet.BeginIdxRawType48Cell);
         const PackedCell64_t::AuthoritiveCellView auth_view_of_end_idx = PackedCell64_t::GetAuthoritiveViewsForACell(provided_range_triplet.EndIdxRawType48Cell);
         const PackedCell64_t::AuthoritiveCellView auth_view_of_safty_meta = PackedCell64_t::GetAuthoritiveViewsForACell(provided_range_triplet.WidthVersionOriginSafty);
 
-        RecordBookTablesBoundsCarrier return_bounds{};
 
         if (!auth_view_of_begin_idx.IsCellValid || !auth_view_of_begin_idx.IsCellValid || !auth_view_of_safty_meta.IsCellValid)
         {
