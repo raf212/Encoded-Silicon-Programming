@@ -1,5 +1,3 @@
-#pragma once
-
 #include "NeuromorphicTimeSpace/SlabToFabricConverterAndCordinator.hpp"
 
 namespace PredictedAdaptedEncoding

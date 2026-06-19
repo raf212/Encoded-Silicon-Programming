@@ -1,5 +1,3 @@
-#pragma once
-
 #include "NeuromorphicTimeSpace/SlabToFabricConverterAndCordinator.hpp"
 
 namespace PredictedAdaptedEncoding
@@ -114,6 +112,32 @@ namespace PredictedAdaptedEncoding
 
         return true;
 
+    }
+
+
+    bool HashTablesConstructor::PublishHashKeyValueAtBucket_(
+        size_t bucket_base,
+        HashKeyValueDistanceTriplet& a_valid_hash_triplet,
+        FabricTableSegmentClasses hash_table
+    ) noexcept
+    {
+        if (
+            !CoreOfFabricCoordinator::IsValidHashTable(hash_table) ||
+            !a_valid_hash_triplet.IsValid
+        )
+        {
+            return false;
+        }
+
+        HashTableConf::SingleHashBuffer desired_hash_buffer = HashTableConf::BuildAndValidateAHashBufferFromTriplet(a_valid_hash_triplet);
+
+        if (desired_hash_buffer[HashTableConf::VALIDATION_INDEX_HASH_BUFFER] != HashTableConf::VALIDATION_MARK_OF_HASH_TABLE_BUFFER)
+        {
+            return false;
+        }
+        
+        return ClaimThenMemCopyFromArray_(bucket_base, HASH_BUCKED_WIDTH_OF_FABRIC, desired_hash_buffer);
+        
     }
 
 }
