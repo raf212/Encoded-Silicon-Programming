@@ -19,8 +19,8 @@ namespace PredictedAdaptedEncoding
     static constexpr size_t DEFAULT_FABRIC_CONTROLIO_LENGTH = 1024u;
     ///--------------------------
 
-    static constexpr uint8_t MAXIMUM_CLAIMABLE_SEQUENTIALLY = 32u;
-    static_assert(MAXIMUM_CLAIMABLE_SEQUENTIALLY <= UINT8_MAX);
+    static constexpr uint8_t MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY = 32u;
+    static_assert(MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY <= UINT8_MAX);
 
     enum class RecordBookInternalIndexing : tag8_t
     {
@@ -279,6 +279,16 @@ namespace PredictedAdaptedEncoding
             }
         }
 
+        using DefaultMemCopyBuffer = std::array<packed64_t, MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY>;
+
+        static constexpr void BuildDefaultMemCopyBuffer(DefaultMemCopyBuffer& a_default_buffer) noexcept
+        {
+            for (size_t i = 0; i < MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY; i++)
+            {
+                a_default_buffer[i] = PackedCell64_t::PACKED_CELL_SENTINAL;
+            }
+        }
+    
     };
 
 
@@ -353,5 +363,6 @@ namespace PredictedAdaptedEncoding
 #endif
         }
     };
-    
+
+
 }

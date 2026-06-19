@@ -314,16 +314,27 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    bool FabricConstructor::ClaimNxSequentialPackedCellStrong(size_t slab_idx, uint8_t number_of_cells) noexcept
+    bool FabricConstructor::ClaimNxSequentialPackedCellStrong_(size_t claim_starting_idx_in_slab, size_t number_of_cells) noexcept
     {
+        if (
+            !SlabBasePtr_ ||
+            claim_starting_idx_in_slab > SlabCellCount_ ||
+            number_of_cells == UNSIGNED_ZERO || 
+            number_of_cells > MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY ||
+            number_of_cells > SlabCellCount_ - claim_starting_idx_in_slab
+        )
+        {
+            return false;
+        }
+        
         uint8_t changed_amount = UNSIGNED_ZERO;
-
-        std::array<packed64_t, MAXIMUM_CLAIMABLE_SEQUENTIALLY> packed_cell_buffer{};
+        CoreOfFabricCoordinator::DefaultMemCopyBuffer packed_cell_buffer{};
+        CoreOfFabricCoordinator::BuildDefaultMemCopyBuffer(packed_cell_buffer);
 
         bool succeed = false;
         for (uint8_t idx_inc = 0; idx_inc < number_of_cells; idx_inc++)
         {
-            const size_t current_slab_idx = static_cast<size_t>(idx_inc + slab_idx);
+            const size_t current_slab_idx = static_cast<size_t>(idx_inc + claim_starting_idx_in_slab);
             packed64_t expected_cell = AtomicallyLoadReadCompletePackedCell(current_slab_idx);
 
             packed_cell_buffer[idx_inc] = expected_cell;
@@ -355,7 +366,7 @@ namespace PredictedAdaptedEncoding
         {
             for (uint8_t recover_idx = 0; recover_idx < changed_amount; recover_idx++)
             {
-                const size_t current_recover_slab_idx = static_cast<size_t>(slab_idx + recover_idx);
+                const size_t current_recover_slab_idx = static_cast<size_t>(claim_starting_idx_in_slab + recover_idx);
 
                 const packed64_t original_cell = packed_cell_buffer[recover_idx];
 
@@ -365,5 +376,37 @@ namespace PredictedAdaptedEncoding
         
         return succeed;
     }
+
+
+    bool FabricConstructor::ForceNxMemCopy_(
+        size_t slab_starting_idx, 
+        size_t number_of_cells, 
+        const packed64_t* desired_cells,
+        bool force_update
+    ) noexcept
+    {
+        if (
+            !desired_cells || 
+            (sizeof(desired_cells) / sizeof(packed64_t) < sizeof(packed64_t) * number_of_cells) 
+        )
+        {
+            return false;
+        }
+        
+        bool claim_ok = ClaimNxSequentialPackedCellStrong_(slab_starting_idx, number_of_cells);
+        if (!claim_ok && !force_update)
+        {
+            return false;
+        }
+
+        std::memcpy(
+            &SlabBasePtr_[slab_starting_idx],
+            desired_cells,
+            number_of_cells * sizeof(packed64_t)
+        );
+
+        return true;
+    }
+
 
 }
