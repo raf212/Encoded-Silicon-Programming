@@ -10,7 +10,7 @@ struct APCDescriptorRange
     size_t EndIndex = UNSIGNED_ZERO;
     bool IsVAlid = false;
 };
-static_assert(sizeof(APCDescriptorRange) == RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC * sizeof(packed64_t));
+static_assert(sizeof(APCDescriptorRange) == RECORD_BOOK_WIDTH * sizeof(packed64_t));
 static_assert(alignof(APCDescriptorRange) == alignof(packed64_t));
 
 
@@ -153,7 +153,7 @@ struct DescriptionOfAPC
 
     /// @brief 
     /// @param state_of_apc MUST PACKEDMODE:MODEL32 -> AND Model32Subclass::UNCLOCKED_1x8_PLUS_2x4 -> [LOWEST16-> VERSION | MID16 -> State Of APC | HIGHIEST16 -> Ownership Of APC] 
-    /// @return CELL INVALID: std::nullopt / HashKeyValueDistanceTriplet with Validity flag
+    /// @return CELL INVALID: std::nullopt / HashFilesCarrier with Validity flag
     static constexpr packed64_t MakeStateandSaftyCellOfSingleAPCDescriptor(
         size_t segment_pool_begin, 
         size_t segment_pool_end,

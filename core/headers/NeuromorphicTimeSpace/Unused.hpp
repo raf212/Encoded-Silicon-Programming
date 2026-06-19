@@ -102,7 +102,7 @@ namespace PredictedAdaptedEncoding
         //         return false;
         //     }
 
-        //     SlabFabricTableBoundsCarrietFromRecordBookTable desired_hash_table_bounds {};
+        //     RecordBookTablesBoundsCarrier desired_hash_table_bounds {};
 
         //     bool is_valid_bounds = GetValidSlabRangeTripletFromRecordBookOfFTSC(hash_table, desired_hash_table_bounds);
         //     if (!is_valid_bounds)
@@ -132,7 +132,7 @@ namespace PredictedAdaptedEncoding
         //     )
         //     {
         //         const size_t base_idx = desired_hash_table_bounds.BeginIndex + static_cast<size_t>(incoming_bucket) * HASH_BUCKED_WIDTH_OF_FABRIC;
-        //         HashKeyValueDistanceTriplet current_hash_data = ReadValidHashBucketTriplet(base_idx);
+        //         HashFilesCarrier current_hash_data = ReadValidHashBucketTriplet(base_idx);
         //         if (
         //             !current_hash_data.IsValid ||
         //             current_hash_data.HashKey == UNSIGNED_ZERO
@@ -191,7 +191,7 @@ namespace PredictedAdaptedEncoding
     //     }
         
     //     SlabId_ = static_cast<uint8_t>(slab_id & Clock16Subdivision1x8Plus2x4InMode32CellModel::MASK_LOW_4);
-    //     SlotCount_ = slot_count,
+    //     CountOfAPC_ = slot_count,
     //     PerAPCRuntimeCellCount_ = slot_cell_count,
     //     ThreadTableCapacity_ = std::max<uint32_t>(1u, fabric_thread_capacity);
 

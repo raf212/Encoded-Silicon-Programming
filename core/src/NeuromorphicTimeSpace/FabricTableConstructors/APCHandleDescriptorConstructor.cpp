@@ -6,7 +6,7 @@ namespace PredictedAdaptedEncoding
         APCDescriptorRange& return_APC_handle_description_range
     ) noexcept
     {
-        SlabFabricTableBoundsCarrietFromRecordBookTable return_bounds{};
+        RecordBookTablesBoundsCarrier return_bounds{};
 
         bool bounds_ok = GetValidSlabRangeTripletFromRecordBookOfFTSC(FabricTableSegmentClasses::APC_HANDLE_DESCRIPTOR, return_bounds);
 
@@ -29,7 +29,7 @@ namespace PredictedAdaptedEncoding
         
         APCDescriptorRange desired_segment_pool_range{};
 
-        if (single_description_index >= SlotCount_)
+        if (single_description_index >= CountOfAPC_)
         {
             return desired_segment_pool_range;
         }
@@ -117,7 +117,7 @@ namespace PredictedAdaptedEncoding
 
     bool HashTablesConstructor::PublishHashKeyValueAtBucket_(
         size_t bucket_base,
-        HashKeyValueDistanceTriplet& a_valid_hash_triplet,
+        HashFilesCarrier& a_valid_hash_triplet,
         FabricTableSegmentClasses hash_table
     ) noexcept
     {

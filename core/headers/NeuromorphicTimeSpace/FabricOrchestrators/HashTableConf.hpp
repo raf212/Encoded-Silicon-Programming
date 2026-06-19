@@ -4,7 +4,7 @@
 namespace PredictedAdaptedEncoding
 {
 
-struct HashKeyValueDistanceTriplet
+struct HashFilesCarrier
 {
     uint64_t HashValue = UNSIGNED_ZERO;
     uint64_t HashKey = UNSIGNED_ZERO;
@@ -13,8 +13,8 @@ struct HashKeyValueDistanceTriplet
     LocalityPolicy AttachedLocality = LocalityPolicy::UNASSIGNED_UNUSED_NANNULL;
     bool IsValid = false;
 };
-static_assert(sizeof(HashKeyValueDistanceTriplet) == HASH_BUCKED_WIDTH_OF_FABRIC * sizeof(uint64_t));
-static_assert(alignof(HashKeyValueDistanceTriplet) == alignof(uint64_t));
+static_assert(sizeof(HashFilesCarrier) == HASH_BUCKED_WIDTH_OF_FABRIC * sizeof(uint64_t));
+static_assert(alignof(HashFilesCarrier) == alignof(uint64_t));
 
 struct HashHelpers
 {
@@ -221,8 +221,8 @@ struct HashTableConf : public HashHelpers
     /// @param value_cell 
     /// @param prob_distance_safty MUST MATCH:Raw48BitInCellData -> [LOWEST16->Prob Distance | MID16 -> LOWEST:16 Bit From Hash Key | HIGHIEST16 -> LOWEST:16 Bit From Hash Value] AND Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL
     /// @param caller_holds_Claim_guard IF: FALSE: Claimed Cell is Invalid & ONLY: -> SET: -> TRUE: When Caller Is the One Claimed The Cell 
-    /// @return CELL INVALID: std::nullopt / HashKeyValueDistanceTriplet with Validity flag
-    static constexpr HashKeyValueDistanceTriplet ReadKeyValueProbFromValidCells(
+    /// @return CELL INVALID: std::nullopt / HashFilesCarrier with Validity flag
+    static constexpr HashFilesCarrier ReadKeyValueProbFromValidCells(
         packed64_t key_cell,
         packed64_t value_cell,
         packed64_t prob_distance_safty,
@@ -233,7 +233,7 @@ struct HashTableConf : public HashHelpers
         const PackedCell64_t::AuthoritiveCellView value_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(value_cell);
         const PackedCell64_t::AuthoritiveCellView prob_lock_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(prob_distance_safty);
 
-        const HashKeyValueDistanceTriplet invalid_value{};
+        const HashFilesCarrier invalid_value{};
         if (
             !IsHashPackedCellRuntimeAccessable(key_cell_auth_view, caller_holds_Claim_guard) ||
             !IsHashPackedCellRuntimeAccessable(value_cell_auth_view, caller_holds_Claim_guard) ||
@@ -280,7 +280,7 @@ struct HashTableConf : public HashHelpers
             lock_highiest16_value == value_low16
         )
         {
-            return HashKeyValueDistanceTriplet{
+            return HashFilesCarrier{
                 value_cell_auth_view.Raw48BitInCellData,
                 key_cell_auth_view.Raw48BitInCellData,
                 lowest_prob_distance,
@@ -290,7 +290,7 @@ struct HashTableConf : public HashHelpers
             };
         }
 
-        return HashKeyValueDistanceTriplet{
+        return HashFilesCarrier{
             value_cell_auth_view.Raw48BitInCellData,
             key_cell_auth_view.Raw48BitInCellData,
             lowest_prob_distance,
@@ -302,7 +302,7 @@ struct HashTableConf : public HashHelpers
 
     }
 
-    static constexpr SingleHashBuffer BuildAndValidateAHashBufferFromTriplet(HashKeyValueDistanceTriplet& key_value_distence_triplet) noexcept
+    static constexpr SingleHashBuffer BuildAndValidateAHashBufferFromTriplet(HashFilesCarrier& key_value_distence_triplet) noexcept
     {
         SingleHashBuffer desired_buffer{};
         
@@ -337,7 +337,7 @@ struct HashTableConf : public HashHelpers
             key_value_distence_triplet.AttachedLocality
         );
 
-        const HashKeyValueDistanceTriplet from_constructed_cell = ReadKeyValueProbFromValidCells(
+        const HashFilesCarrier from_constructed_cell = ReadKeyValueProbFromValidCells(
             desired_buffer[key_idx],
             desired_buffer[value_idx],
             desired_buffer[prob_lock_idx],

@@ -17,7 +17,7 @@ namespace PredictedAdaptedEncoding
         /// @return VALID:: 3 -> Packed Cells:: i)Begin, ii)End iii)SaftyAndOriginMeta OR: false & Maybe Inspactable data
         bool GetValidSlabRangeTripletFromRecordBookOfFTSC(
             FabricTableSegmentClasses table_class,
-            SlabFabricTableBoundsCarrietFromRecordBookTable& return_bounds
+            RecordBookTablesBoundsCarrier& return_bounds
         ) noexcept;
 
         /// @brief FILL: DESIRED: FabricTableSegmentClasses with Idle Fabric Cell -> CALLS: GetValidSlabRangeTripletFromRecordBookOfFTSC TO: Get Range In SLab

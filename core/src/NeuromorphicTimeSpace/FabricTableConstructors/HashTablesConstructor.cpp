@@ -3,11 +3,11 @@
 namespace PredictedAdaptedEncoding
 {
 
-    HashKeyValueDistanceTriplet HashTablesConstructor::ReadValidHashBucketTriplet(size_t bucked_base_index, bool caller_holds_Claim_guard) noexcept
+    HashFilesCarrier HashTablesConstructor::ReadValidHashBucketTriplet(size_t bucked_base_index, bool caller_holds_Claim_guard) noexcept
     {
         if (!SlabBasePtr_ || bucked_base_index + HASH_BUCKED_WIDTH_OF_FABRIC >= SlabCellCount_)
         {
-            const HashKeyValueDistanceTriplet invalid_value{};
+            const HashFilesCarrier invalid_value{};
             return invalid_value;
         }
 

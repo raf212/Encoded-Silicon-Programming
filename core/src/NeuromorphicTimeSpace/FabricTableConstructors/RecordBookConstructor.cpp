@@ -6,7 +6,7 @@ namespace PredictedAdaptedEncoding
     void RecordBookConstructor::IdleAFabricTableClassRangesMemory_(FabricTableSegmentClasses table_class) noexcept
     {
 
-        SlabFabricTableBoundsCarrietFromRecordBookTable return_bounds{};
+        RecordBookTablesBoundsCarrier return_bounds{};
         bool bounds_ok = GetValidSlabRangeTripletFromRecordBookOfFTSC(table_class, return_bounds);
 
         if (!bounds_ok)
@@ -29,7 +29,7 @@ namespace PredictedAdaptedEncoding
 
     bool RecordBookConstructor::GetValidSlabRangeTripletFromRecordBookOfFTSC(
         FabricTableSegmentClasses table_class,
-        SlabFabricTableBoundsCarrietFromRecordBookTable& return_bounds
+        RecordBookTablesBoundsCarrier& return_bounds
     ) noexcept
     {
         if (!PackedCell64_t::IsValidFabricTable(table_class))
@@ -45,7 +45,7 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-        const FTSC_SlabRangeTripletFrom_RecordBookOfFTSC triplet{ 
+        const RecordBookCellTripletGroup triplet{ 
             ReadCompletePackedCellDirectly(begin_of_desired_table),
             ReadCompletePackedCellDirectly(end_idx),
             ReadCompletePackedCellDirectly(safty_lock_meta_cell)
@@ -84,12 +84,12 @@ namespace PredictedAdaptedEncoding
         }
 
         const size_t base_idx = ReadOriginIndexBeginOfRecordBookOfFabricTableSegmentClasses_(table_class);
-        if (base_idx == APCDataStructure::APC_SIZE_SENTINAL || (base_idx + RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC > SlabCellCount_))
+        if (base_idx == APCDataStructure::APC_SIZE_SENTINAL || (base_idx + RECORD_BOOK_WIDTH > SlabCellCount_))
         {
             return;
         }
 
-        FTSC_SlabRangeTripletFrom_RecordBookOfFTSC desired_record_triplet {};
+        RecordBookCellTripletGroup desired_record_triplet {};
 
         desired_record_triplet.BeginIdxRawType48Cell = RecordBookConf::MakeRecordBookCellOfTSC(
             static_cast<uint64_t>(begin)
@@ -105,7 +105,7 @@ namespace PredictedAdaptedEncoding
         );
 
 
-        const SlabFabricTableBoundsCarrietFromRecordBookTable validated_bounds = RecordBookConf::ValidateAFabricTableRangeStruct(desired_record_triplet, table_class);
+        const RecordBookTablesBoundsCarrier validated_bounds = RecordBookConf::ValidateAFabricTableRangeStruct(desired_record_triplet, table_class);
         if (
             validated_bounds.IsValid &&
             validated_bounds.BeginIndex >= APCDataStructure::METACELL_COUNT &&
@@ -151,7 +151,7 @@ namespace PredictedAdaptedEncoding
         {
             const size_t base_origin_table_idx = static_cast<size_t>(PackedCell64_t::ExtractRaw48FamilyBits(directory_begin_cell));
 
-            return base_origin_table_idx + (static_cast<size_t>(table_class) * RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC);        
+            return base_origin_table_idx + (static_cast<size_t>(table_class) * RECORD_BOOK_WIDTH);        
         }
         
         return APCDataStructure::APC_SIZE_SENTINAL;

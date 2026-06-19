@@ -33,7 +33,7 @@ namespace PredictedAdaptedEncoding
         SlabBasePtr_ = nullptr;
         SlabCellCount_ = UNSIGNED_ZERO;
         PerAPCRuntimeCellCount_ = UNSIGNED_ZERO;
-        SlotCount_ = UNSIGNED_ZERO;
+        CountOfAPC_ = UNSIGNED_ZERO;
         SlabId_ = APCDataStructure::BRANCH_VERSION;
 
         SegmentPoolBegin_ = APCDataStructure::METACELL_COUNT;
@@ -68,7 +68,7 @@ namespace PredictedAdaptedEncoding
 
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::TOTAL_CELLS, static_cast<uint64_t>(SlabCellCount_));
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::CONTROL_CELLS_OF_FABRIC, static_cast<uint64_t>(SegmentPoolBegin_));
-        MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::APC_DESCRIPTION_COUNT, static_cast<uint64_t>(SlotCount_));
+        MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::APC_DESCRIPTION_COUNT, static_cast<uint64_t>(CountOfAPC_));
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::PER_APC_RUNTIME_CELL_COUNT, static_cast<uint64_t>(PerAPCRuntimeCellCount_));
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::SEGMENT_POOL_BEGIN_IDX, static_cast<uint64_t>(SegmentPoolBegin_));
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::SEGMENT_POOL_END_IDX, static_cast<uint64_t>(SegmentPoolEnd_));
@@ -137,7 +137,7 @@ namespace PredictedAdaptedEncoding
             return;
         }
 
-        SlabFabricTableBoundsCarrietFromRecordBookTable return_bounds{};
+        RecordBookTablesBoundsCarrier return_bounds{};
 
         bool bounds_ok = GetValidSlabRangeTripletFromRecordBookOfFTSC(hash_table, return_bounds);
 
@@ -189,7 +189,7 @@ namespace PredictedAdaptedEncoding
             UNSIGNED_ZERO
         );
 
-        for (uint64_t desc_idx = 0; desc_idx < SlotCount_; desc_idx++)
+        for (uint64_t desc_idx = 0; desc_idx < CountOfAPC_; desc_idx++)
         {
             const APCDescriptorRange self_range = ReadRangeForASingleAPCSlotFromAPCDescriptor_(desc_idx);
             if (!self_range.IsVAlid)

@@ -14,7 +14,7 @@ namespace PredictedAdaptedEncoding
 
         size_t SlabCellCount_{UNSIGNED_ZERO};
         uint64_t PerAPCRuntimeCellCount_{UNSIGNED_ZERO};
-        uint64_t SlotCount_{UNSIGNED_ZERO};
+        uint64_t CountOfAPC_{UNSIGNED_ZERO};
         uint8_t SlabId_{UNSIGNED_ZERO};
 
         size_t SegmentPoolBegin_{APCDataStructure::METACELL_COUNT};

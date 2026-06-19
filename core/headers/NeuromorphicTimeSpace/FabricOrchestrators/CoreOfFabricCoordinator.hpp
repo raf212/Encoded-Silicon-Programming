@@ -29,7 +29,7 @@ namespace PredictedAdaptedEncoding
         META32 = 2,
         UNASSIGNED_UNUSED_NANNULL = 3
     };
-    static constexpr size_t RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC = static_cast<size_t>(RecordBookInternalIndexing::UNASSIGNED_UNUSED_NANNULL);
+    static constexpr size_t RECORD_BOOK_WIDTH = static_cast<size_t>(RecordBookInternalIndexing::UNASSIGNED_UNUSED_NANNULL);
 
     enum class HashTableInternalIndexing : tag8_t
     {
@@ -201,7 +201,7 @@ namespace PredictedAdaptedEncoding
             switch (table_idintity)
             {
             case FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES:
-                return static_cast<uint8_t>(RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC);
+                return static_cast<uint8_t>(RECORD_BOOK_WIDTH);
             
             case FabricTableSegmentClasses::APC_HANDLE_DESCRIPTOR:
                 return static_cast<uint8_t>(APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX);
