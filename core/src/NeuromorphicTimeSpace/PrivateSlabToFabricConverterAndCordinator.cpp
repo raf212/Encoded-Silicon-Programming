@@ -193,6 +193,12 @@ namespace PredictedAdaptedEncoding
 
         for (uint64_t desc_idx = 0; desc_idx < SlotCount_; desc_idx++)
         {
+            const APCDescriptorRange self_range = ReadRangeForASingleAPCSlotFromAPCDescriptor_(desc_idx);
+            if (!self_range.IsVAlid)
+            {
+                continue;
+            }
+            
             const APCDescriptorRange segment_pool_range = GetSegmentPoolBegainEndForSingleAPCDescription_(desc_idx);
             if (!segment_pool_range.IsVAlid)
             {
@@ -207,16 +213,21 @@ namespace PredictedAdaptedEncoding
                 static_cast<uint64_t>(segment_pool_range.EndIndex),
                 static_cast<uint64_t>(next_segment_pool_range.BeginIndex),
                 version,
-                LocalityPolicy::PUBLISHED
+                LocalityPolicy::PUBLISHED                
             );
 
-            if (!MemCopySingleAPCDescriptionIfValidFromBufferToSlabBasePtr_(
+            bool buffer_ok = DescriptionOfAPC::ValidateSingleAPCDescriptionBuffer(
                 desired_buffer,
-                DescriptionOfAPC::StateOfSingleAPCDescription::RECORD_WITH_SEGMENT_POOL,
+                true,
                 OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC,
-                false,
-                version
-            ))
+                DescriptionOfAPC::StateOfSingleAPCDescription::RECORD_WITH_SEGMENT_POOL
+            );
+            if (!buffer_ok)
+            {
+                continue;
+            }
+
+            if (!ForceMemCopyFromArray_(self_range.BeginIndex, static_cast<size_t>(APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX), desired_buffer))
             {
                 continue;
             }

@@ -106,18 +106,11 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-        try
-        {
-            std::memcpy(
-                &SlabBasePtr_[desired_single_description_range.BeginIndex],
-                &SlabBasePtr_[desired_single_description_range.EndIndex],
-                APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX * sizeof(packed64_t)
-            );
-        }
-        catch(...)
-        {
-            return false;
-        }
+        std::memcpy(
+            &SlabBasePtr_[desired_single_description_range.BeginIndex],
+            &SlabBasePtr_[desired_single_description_range.EndIndex],
+            APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX * sizeof(packed64_t)
+        );
 
         return true;
 
