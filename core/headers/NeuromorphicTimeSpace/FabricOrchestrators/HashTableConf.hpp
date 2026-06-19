@@ -4,8 +4,6 @@
 namespace PredictedAdaptedEncoding
 {
 
-using SingleHashBuffer = std::array<packed64_t, HASH_BUCKED_WIDTH_OF_FABRIC + 1>;
-
 struct HashKeyValueDistanceTriplet
 {
     uint64_t HashValue = UNSIGNED_ZERO;
@@ -84,6 +82,10 @@ struct HashHelpers
 
 struct HashTableConf : public HashHelpers
 {
+    using SingleHashBuffer = std::array<packed64_t, HASH_BUCKED_WIDTH_OF_FABRIC + 1>;
+    static constexpr size_t VALIDATION_INDEX_HASH_BUFFER = static_cast<size_t>(HASH_BUCKED_WIDTH_OF_FABRIC);
+
+
     /// @brief 
     /// @param a_cell_view 
     /// @param caller_holds_Claim_guard IF: FALSE: Claimed Cell is Invalid & ONLY: -> SET: -> TRUE: When Caller Is the One Claimed The Cell 
@@ -308,11 +310,10 @@ struct HashTableConf : public HashHelpers
         const size_t value_idx = static_cast<size_t>(HashTableInternalIndexing::VALUE_INDEX);
         const size_t prob_lock_idx = static_cast<size_t>(HashTableInternalIndexing::PROB_DISTANCE_LOCK);
 
-        const size_t validation_index = static_cast<size_t>(desired_buffer.size() - 1);
 
         if (!key_value_distence_triplet.IsValid)
         {
-            desired_buffer[validation_index] = 0;
+            desired_buffer[VALIDATION_INDEX_HASH_BUFFER] = 0;
             return desired_buffer;
         }
 
@@ -350,11 +351,11 @@ struct HashTableConf : public HashHelpers
             from_constructed_cell.HashValue == key_value_distence_triplet.HashValue
         )
         {
-            desired_buffer[validation_index] = VALIDATION_MARK_OF_HASH_TABLE_BUFFER;
+            desired_buffer[VALIDATION_INDEX_HASH_BUFFER] = VALIDATION_MARK_OF_HASH_TABLE_BUFFER;
             return desired_buffer;
         }
         
-        desired_buffer[validation_index] = 0;
+        desired_buffer[VALIDATION_INDEX_HASH_BUFFER] = 0;
 
         return desired_buffer;
     }

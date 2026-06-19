@@ -20,7 +20,13 @@ namespace PredictedAdaptedEncoding
         //         return false;
         //     }
 
-        //     const 
+        //     const HashTableConf::SingleHashBuffer desired_hash_buffer = HashTableConf::BuildAndValidateAHashBufferFromTriplet(a_valid_hash_triplet);
+
+        //     if (desired_hash_buffer[HashTableConf::VALIDATION_INDEX_HASH_BUFFER] != HashTableConf::VALIDATION_MARK_OF_HASH_TABLE_BUFFER)
+        //     {
+        //         return false;
+        //     }
+            
             
         // }
 

@@ -527,7 +527,7 @@ namespace PredictedAdaptedEncoding
             AuthoritiveCellView out_packed_cell_view{};
             out_packed_cell_view.ValidatedView = true;
 
-            if (packed_cell == PACKED_CELL_SENTINAL)
+            if (packed_cell == PACKED_CELL_SENTINAL || packed_cell == UNSIGNED_ZERO)
             {
                 out_packed_cell_view.RawCell = packed_cell;
                 out_packed_cell_view.IsCellValid = false;
@@ -583,6 +583,14 @@ namespace PredictedAdaptedEncoding
             out_packed_cell_view.CellValueDataType = static_cast<InternalDataTypePolicy>(ExtractValueDataTypeFromMETA16_U_(meta16));
             out_packed_cell_view.IsThisPackedCellValidInRuntime();
             return out_packed_cell_view;      
+        }
+
+
+        static constexpr bool IsCellClaimableFromThisCaller(packed64_t packed_cell) noexcept
+        {
+            const LocalityPolicy locality = ExtractLocalityPolicy(packed_cell);
+            
+            return locality != LocalityPolicy::CLAIMED;
         }
 
     private:

@@ -19,6 +19,9 @@ namespace PredictedAdaptedEncoding
     static constexpr size_t DEFAULT_FABRIC_CONTROLIO_LENGTH = 1024u;
     ///--------------------------
 
+    static constexpr uint8_t MAXIMUM_CLAIMABLE_SEQUENTIALLY = 32u;
+    static_assert(MAXIMUM_CLAIMABLE_SEQUENTIALLY <= UINT8_MAX);
+
     enum class RecordBookInternalIndexing : tag8_t
     {
         BEGIN48 = 0,

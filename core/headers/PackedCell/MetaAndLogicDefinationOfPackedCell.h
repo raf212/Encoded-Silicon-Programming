@@ -83,8 +83,6 @@ namespace PredictedAdaptedEncoding {
     static constexpr tag8_t NODE_AUTH_MASK = static_cast<tag8_t>((1u << NODE_AUTH_LEN) - 1u);
     static constexpr tag8_t PRIORITY_MASK = static_cast<tag8_t>((1u << PRIO_LEN) - 1u);
     
-    static constexpr uint8_t MAX_PRIORITY   = static_cast<tag8_t>(PRIORITY_MASK);
-
     /// @brief HIGHEST_TRUTH of Packed Cell
     enum class LocalityPolicy : tag8_t
     {
@@ -187,6 +185,9 @@ namespace PredictedAdaptedEncoding {
         UNASSIGNED_UNUSED_NANNULL = 4
     };
 
+    /// @brief Name Of Each Segment On APC
+    /// @param NONE Lower guard prevents a Packed Cell to be ever VALID: 0
+    /// @param NULLNAN Uppper Guard Prevents Pack-ed Cell to be VALID: UINT64_MAX
     enum class APCPagedNodeSegmentClasses : tag8_t
     {
         NONE = 0x0,
@@ -208,6 +209,7 @@ namespace PredictedAdaptedEncoding {
     };
 
     /// @brief Name Of Each Segment On Fabric
+    /// @param NONE It is the lower guard prevents a Packed Cell to be ever 0
     /// @param GLOBAL_AND_CONFIG USED:FOR: Everything else after @param THREAD_TABLE
     /// @param RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES STORES:All Begin & End Pair of indicies for every class of FabricTableSegmentClasses
     /// @param APC_HANDLE_DESCRIPTOR HOLDS:Each APC x RECORD:APCDescriptorCellType -> DESCRIBS: Initial Fundamental Meta for An APC When Created 
@@ -215,6 +217,7 @@ namespace PredictedAdaptedEncoding {
     /// @param LOGICAL_HASH
     /// @param SHARED_HASH
     /// @param GENERIC_CONTROL USED:FOR: first 96 FabricMetaIndicies
+    /// @param NULLNAN Uppper Guard Prevents Pack-ed Cell to be VALID: UINT64_MAX
     enum class FabricTableSegmentClasses : tag8_t
     {
         NONE = 0,

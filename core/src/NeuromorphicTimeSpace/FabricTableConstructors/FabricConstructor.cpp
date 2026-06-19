@@ -313,4 +313,57 @@ namespace PredictedAdaptedEncoding
         return PairedVersionedCellModelOfMode32::GetFullUnsigned64FromPairedVersionedCell(raw_occ_low, raw_occ_high, low_half_view_ptr, high_half_view_ptr);
     }
 
+
+    bool FabricConstructor::ClaimNxSequentialPackedCellStrong(size_t slab_idx, uint8_t number_of_cells) noexcept
+    {
+        uint8_t changed_amount = UNSIGNED_ZERO;
+
+        std::array<packed64_t, MAXIMUM_CLAIMABLE_SEQUENTIALLY> packed_cell_buffer{};
+
+        bool succeed = false;
+        for (uint8_t idx_inc = 0; idx_inc < number_of_cells; idx_inc++)
+        {
+            const size_t current_slab_idx = static_cast<size_t>(idx_inc + slab_idx);
+            packed64_t expected_cell = AtomicallyLoadReadCompletePackedCell(current_slab_idx);
+
+            packed_cell_buffer[idx_inc] = expected_cell;
+
+            if (!PackedCell64_t::IsCellClaimableFromThisCaller(expected_cell))
+            {
+                changed_amount = idx_inc;
+                succeed = false;
+                break;
+            }
+            
+            const packed64_t desired_cell = PackedCell64_t::SetLocalityInPacked(expected_cell, LocalityPolicy::CLAIMED);
+
+            if (!CompareExchangeStrongFromFabric(
+                current_slab_idx,
+                expected_cell,
+                desired_cell
+            ))
+            {
+                changed_amount = idx_inc;
+                succeed = false;
+            }
+            
+            changed_amount = idx_inc + 1;
+            succeed = true;
+        }
+
+        if (!succeed)
+        {
+            for (uint8_t recover_idx = 0; recover_idx < changed_amount; recover_idx++)
+            {
+                const size_t current_recover_slab_idx = static_cast<size_t>(slab_idx + recover_idx);
+
+                const packed64_t original_cell = packed_cell_buffer[recover_idx];
+
+                StorePackedCellUncheckedDirectly(current_recover_slab_idx, original_cell);
+            }
+        }
+        
+        return succeed;
+    }
+
 }

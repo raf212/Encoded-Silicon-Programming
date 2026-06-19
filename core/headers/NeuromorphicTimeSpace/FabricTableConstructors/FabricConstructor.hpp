@@ -46,6 +46,15 @@ namespace PredictedAdaptedEncoding
         )noexcept;
 
 
+        /// @brief Try to claim N <= MAXIMUM_CLAIMABLE_SEQUENTIALLY Packed Cells 
+        /// @param slab_idx STARTING: Index -> From Where Claiming Starts
+        /// @param number_of_cells Number Of CElls Wants Claimed
+        bool ClaimNxSequentialPackedCellStrong(size_t slab_idx, uint8_t number_of_cells) noexcept;
+
+
+        bool ClaimNxMemCopy(size_t slab_starting_idx, uint8_t number_of_cells, packed64_t* arrayptr) noexcept;
+
+
     public:
 
         constexpr packed64_t ReadCompletePackedCellDirectly(size_t slab_index) noexcept;
