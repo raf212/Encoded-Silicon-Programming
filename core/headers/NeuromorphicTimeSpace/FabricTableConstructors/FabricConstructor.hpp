@@ -150,7 +150,7 @@ namespace PredictedAdaptedEncoding
 
         constexpr packed64_t AtomicallyLoadReadCompletePackedCell(size_t slab_index) noexcept;
 
-        bool ReadFabricMetaCellViewAtomically(MetaIndexOfAPCNode fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept;
+        bool ReadFabricMetaCellViewAtomically(FabricMetaIndicies fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept;
 
         constexpr void StorePackedCellUncheckedDirectly(size_t slab_index, packed64_t packed_cell) noexcept;
 
@@ -182,8 +182,8 @@ namespace PredictedAdaptedEncoding
 
         std::optional<uint64_t> ReadOccupancyApproxFromPairedIfValid(
             LocalityPolicy desired_occupancy_class,
-            const PackedCell64_t::AuthoritiveCellView* low_half_view_ptr = nullptr,
-            const PackedCell64_t::AuthoritiveCellView* high_half_view_ptr = nullptr
+            PackedCell64_t::AuthoritiveCellView* low_half_view_ptr = nullptr,
+            PackedCell64_t::AuthoritiveCellView* high_half_view_ptr = nullptr
         ) noexcept;
 
         /// @brief UPDATES OR: Initializes PAIRED: Occupancy | Why PAIRED ? To Potentially Justify by Version OR: Internal CLOCK16 How Much Accumulatiom Diffarence Between Total and the DISTANCE: By Version or CLOCK16 

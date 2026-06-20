@@ -107,7 +107,7 @@ struct RecordBookConf
 
         if (auth_view_of_begin_idx.Raw48BitInCellData < APCDataStructure::METACELL_COUNT || 
             auth_view_of_begin_idx.Raw48BitInCellData >= auth_view_of_end_idx.Raw48BitInCellData ||
-            auth_view_of_begin_idx.CellMode != PackedMode::MODEL32 ||
+            auth_view_of_begin_idx.CellMode != PackedMode::VALUE48 || auth_view_of_end_idx.CellMode != PackedMode::VALUE48 ||
             auth_view_of_safty_meta.InCellClock16 == UNSIGNED_ZERO
         )
         {

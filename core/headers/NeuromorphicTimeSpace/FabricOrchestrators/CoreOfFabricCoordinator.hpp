@@ -288,6 +288,33 @@ namespace PredictedAdaptedEncoding
                 a_default_buffer[i] = PackedCell64_t::PACKED_CELL_SENTINAL;
             }
         }
+
+
+        static constexpr bool IsCellValidFabricMetaIndecies(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        {
+            if (
+                !a_cell_view.IsCellValid ||
+                a_cell_view.CellOwnership != OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC ||
+                a_cell_view.FabricTableSegmentClass != FabricTableSegmentClasses::GENERIC_CONTROL
+            )
+            {
+                return false;
+            }
+
+            switch (a_cell_view.CellMode)
+            {
+
+            case PackedMode::MODEL48:
+                return a_cell_view.SubClassOfModel48 == Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL;
+            
+            case PackedMode::VALUE48:
+                return true;
+
+            default:
+                return false;
+            }
+            
+        }
     
     };
 

@@ -64,9 +64,9 @@ namespace PredictedAdaptedEncoding
             return ForceUpdate();
         }
 
-        const PackedCell64_t::AuthoritiveCellView low32_half_view{};
-        const PackedCell64_t::AuthoritiveCellView high32_half_view{};
-        const std::optional<uint64_t> maybe_desired_candidate_occupancy = ReadOccupancyApproxFromPairedIfValid(candidate_to_update, &low32_half_view, &high32_half_view);
+        PackedCell64_t::AuthoritiveCellView low32_half_view{};
+        PackedCell64_t::AuthoritiveCellView high32_half_view{};
+        std::optional<uint64_t> maybe_desired_candidate_occupancy = ReadOccupancyApproxFromPairedIfValid(candidate_to_update, &low32_half_view, &high32_half_view);
 
         if (!maybe_desired_candidate_occupancy|| *maybe_desired_candidate_occupancy == PackedCell64_t::PACKED_CELL_SENTINAL)
         {
@@ -276,7 +276,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    bool FabricConstructor::ReadFabricMetaCellViewAtomically(MetaIndexOfAPCNode fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept
+    bool FabricConstructor::ReadFabricMetaCellViewAtomically(FabricMetaIndicies fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept
     {
         const size_t meta_index_in_slab = static_cast<size_t>(fabric_meta_idx);
         if (meta_index_in_slab >= APCDataStructure::METACELL_COUNT || !SlabBasePtr_)
@@ -295,8 +295,8 @@ namespace PredictedAdaptedEncoding
 
     std::optional<uint64_t> FabricConstructor::ReadOccupancyApproxFromPairedIfValid(
         LocalityPolicy desired_occupancy_class,
-        const PackedCell64_t::AuthoritiveCellView* low_half_view_ptr,
-        const PackedCell64_t::AuthoritiveCellView* high_half_view_ptr
+        PackedCell64_t::AuthoritiveCellView* low_half_view_ptr,
+        PackedCell64_t::AuthoritiveCellView* high_half_view_ptr
     ) noexcept
     {
         const FabricMetaIndicies desired_occupancy_low_idx = CoreOfFabricCoordinator::GetDesiredLowIdxOfOccupancyPairFromLocality(desired_occupancy_class);
@@ -305,10 +305,26 @@ namespace PredictedAdaptedEncoding
             return std::nullopt;
         }
 
-        const packed64_t raw_occ_low = AtomicallyLoadReadCompletePackedCell(static_cast<size_t>(desired_occupancy_low_idx));
-        const packed64_t raw_occ_high = AtomicallyLoadReadCompletePackedCell(static_cast<size_t>(desired_occupancy_low_idx) + 1);
+        const size_t desired_low_idx = static_cast<size_t>(desired_occupancy_low_idx);
+        const size_t desired_high_idx = static_cast<size_t>(desired_occupancy_low_idx) + 1;
 
-        return PairedVersionedCellModelOfMode32::GetFullUnsigned64FromPairedVersionedCell(raw_occ_low, raw_occ_high, low_half_view_ptr, high_half_view_ptr);
+        packed64_t raw_occ_low = AtomicallyLoadReadCompletePackedCell(desired_low_idx);
+        packed64_t raw_occ_high = AtomicallyLoadReadCompletePackedCell(desired_high_idx);
+
+        
+        auto result = PairedVersionedCellModelOfMode32::GetFullUnsigned64FromPairedVersionedCell(raw_occ_low, raw_occ_high, low_half_view_ptr, high_half_view_ptr);
+
+        if (low_half_view_ptr)
+        {
+            low_half_view_ptr->SlabIndexOfPackeCell =  desired_low_idx;
+        } 
+
+        if (high_half_view_ptr)
+        {
+            high_half_view_ptr->SlabIndexOfPackeCell = desired_high_idx;
+        }
+
+        return result;
     }
 
 

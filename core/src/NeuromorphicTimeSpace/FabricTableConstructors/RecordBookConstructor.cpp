@@ -37,7 +37,8 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-        const size_t begin_of_desired_table = ReadOriginIndexBeginOfRecordBookOfFabricTableSegmentClasses_(table_class) + static_cast<size_t>(RecordBookInternalIndexing::BEGIN48);
+        const size_t begin_of_desired_table = ReadOriginIndexBeginOfRecordBookOfFabricTableSegmentClasses_(table_class);
+        
         const size_t end_idx = begin_of_desired_table + static_cast<size_t>(RecordBookInternalIndexing::END48);
         const size_t safty_lock_meta_cell = begin_of_desired_table + static_cast<size_t>(RecordBookInternalIndexing::META32);
         if (end_idx >= SlabCellCount_ || begin_of_desired_table < APCDataStructure::METACELL_COUNT)
@@ -73,12 +74,7 @@ namespace PredictedAdaptedEncoding
         uint8_t slab_id
     ) noexcept
     {
-        if (!PackedCell64_t::IsValidFabricTable(table_class))
-        {
-            return;
-        }
-
-        if (!SlabBasePtr_)
+        if (!SlabBasePtr_ || !PackedCell64_t::IsValidFabricTable(table_class))
         {
             return;
         }
@@ -147,14 +143,14 @@ namespace PredictedAdaptedEncoding
         /// ALways same derives from -> FabricMetaIndicies
         const packed64_t directory_begin_cell = ReadCompletePackedCellDirectly(static_cast<size_t>(FabricMetaIndicies::RECORD_BOOK_OF_TSC_BEGIN));
 
-        if (RecordBookConf::IsThisValidRecordBookPackedCell(directory_begin_cell))
-        {
-            const size_t base_origin_table_idx = static_cast<size_t>(PackedCell64_t::ExtractRaw48FamilyBits(directory_begin_cell));
+        const PackedCell64_t::AuthoritiveCellView base_idx_record_book_view = PackedCell64_t::GetAuthoritiveViewsForACell(directory_begin_cell);
 
-            return base_origin_table_idx + (static_cast<size_t>(table_class) * RECORD_BOOK_WIDTH);        
+        if (!CoreOfFabricCoordinator::IsCellValidFabricMetaIndecies(base_idx_record_book_view))
+        {
+            return APCDataStructure::APC_SIZE_SENTINAL;
         }
-        
-        return APCDataStructure::APC_SIZE_SENTINAL;
+
+        return static_cast<size_t>(base_idx_record_book_view.Raw48BitInCellData + (static_cast<size_t>(table_class) * RECORD_BOOK_WIDTH));        
 
     }
         

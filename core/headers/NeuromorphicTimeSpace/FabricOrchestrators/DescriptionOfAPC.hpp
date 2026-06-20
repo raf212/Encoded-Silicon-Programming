@@ -350,10 +350,12 @@ struct DescriptionOfAPC
         SetADescriptionInCellBuffer(apc_description_buffer, APCDescriptorCellType::RETIRE_EPOCH48, UNSIGNED_ZERO, cell_locality);
         SetADescriptionInCellBuffer(apc_description_buffer, APCDescriptorCellType::APC_FLAGS_FOR_THIS, UNSIGNED_ZERO, cell_locality);
         SetOccupancyInBuffer(apc_description_buffer, UNSIGNED_ZERO, UNSIGNED_ZERO, UNSIGNED_ZERO, cell_locality);
-        MakeStateandSaftyCellOfSingleAPCDescriptor(
+        const packed64_t state_ownership_version_cell =  MakeStateandSaftyCellOfSingleAPCDescriptor(
             segment_pool_begin, segment_pool_end, StateOfSingleAPCDescription::RECORD_WITH_SEGMENT_POOL, 
             version, cell_locality, OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC
         );
+
+        apc_description_buffer[static_cast<size_t>(APCDescriptorCellType::STATE_OWNERSHIP_VESION_SAFTY)] = state_ownership_version_cell;
 
         apc_description_buffer[APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX] = UNSIGNED_ZERO;
 
