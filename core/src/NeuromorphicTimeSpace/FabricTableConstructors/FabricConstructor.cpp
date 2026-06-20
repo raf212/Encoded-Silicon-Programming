@@ -11,7 +11,7 @@ namespace PredictedAdaptedEncoding
     )noexcept
     {
         const size_t slab_index = static_cast<size_t>(fabric_meta_idx);
-        if (slab_index >= APCDataStructure::METACELL_COUNT)
+        if (slab_index >= APCDataStructure::METACELL_COUNT || !SlabBasePtr_ || slab_index >= SlabCellCount_)
         {
             return;
         }
@@ -279,13 +279,12 @@ namespace PredictedAdaptedEncoding
     bool FabricConstructor::ReadFabricMetaCellViewAtomically(FabricMetaIndicies fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept
     {
         const size_t meta_index_in_slab = static_cast<size_t>(fabric_meta_idx);
-        if (meta_index_in_slab >= APCDataStructure::METACELL_COUNT || !SlabBasePtr_)
+        if (meta_index_in_slab >= APCDataStructure::METACELL_COUNT || !SlabBasePtr_ || meta_index_in_slab >= SlabCellCount_)
         {
             return false;
         }
 
-        std::atomic_ref<const packed64_t> packed_cell_ref(SlabBasePtr_[meta_index_in_slab]);
-        const packed64_t packed_meta_cell = packed_cell_ref.load(MoLoad_);
+        const packed64_t packed_meta_cell = AtomicallyLoadReadCompletePackedCell(meta_index_in_slab);
         meta_cell_view_address = PackedCell64_t::GetAuthoritiveViewsForACell(packed_meta_cell);
 
         return true;        
@@ -328,14 +327,14 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    bool FabricConstructor::ClaimNxSequentialPackedCellStrong_(size_t claim_starting_idx_in_slab, size_t number_of_cells) noexcept
+    bool FabricConstructor::ClaimNxSequentialPackedCellStrong_(size_t claim_starting_idx_in_slab, size_t claim_order_cell_count) noexcept
     {
         if (
             !SlabBasePtr_ ||
             claim_starting_idx_in_slab > SlabCellCount_ ||
-            number_of_cells == UNSIGNED_ZERO || 
-            number_of_cells > MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY ||
-            number_of_cells > SlabCellCount_ - claim_starting_idx_in_slab
+            claim_order_cell_count == UNSIGNED_ZERO || 
+            claim_order_cell_count > MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY ||
+            claim_order_cell_count > SlabCellCount_ - claim_starting_idx_in_slab
         )
         {
             return false;
@@ -345,8 +344,7 @@ namespace PredictedAdaptedEncoding
         CoreOfFabricCoordinator::DefaultMemCopyBuffer packed_cell_buffer{};
         CoreOfFabricCoordinator::BuildDefaultMemCopyBuffer(packed_cell_buffer);
 
-        bool succeed = false;
-        for (uint8_t idx_inc = 0; idx_inc < number_of_cells; idx_inc++)
+        for (uint8_t idx_inc = 0; idx_inc < claim_order_cell_count; idx_inc++)
         {
             const size_t current_slab_idx = static_cast<size_t>(idx_inc + claim_starting_idx_in_slab);
             packed64_t expected_cell = AtomicallyLoadReadCompletePackedCell(current_slab_idx);
@@ -355,8 +353,6 @@ namespace PredictedAdaptedEncoding
 
             if (!PackedCell64_t::IsCellClaimableFromThisCaller(expected_cell))
             {
-                changed_amount = idx_inc;
-                succeed = false;
                 break;
             }
             
@@ -368,15 +364,13 @@ namespace PredictedAdaptedEncoding
                 desired_cell
             ))
             {
-                changed_amount = idx_inc;
-                succeed = false;
+                break;
             }
             
             changed_amount = idx_inc + 1;
-            succeed = true;
         }
 
-        if (!succeed)
+        if (changed_amount != claim_order_cell_count)
         {
             for (uint8_t recover_idx = 0; recover_idx < changed_amount; recover_idx++)
             {
@@ -386,9 +380,11 @@ namespace PredictedAdaptedEncoding
 
                 StorePackedCellUncheckedDirectly(current_recover_slab_idx, original_cell);
             }
+
+            return true;
         }
         
-        return succeed;
+        return false;
     }
 
 
@@ -400,17 +396,23 @@ namespace PredictedAdaptedEncoding
     ) noexcept
     {
         if (
-            !desired_cells || 
-            (sizeof(desired_cells) / sizeof(packed64_t) < sizeof(packed64_t) * number_of_cells) 
+            !SlabBasePtr_ ||
+            !desired_cells ||
+            slab_starting_idx >= SlabCellCount_ ||
+            number_of_cells == UNSIGNED_ZERO ||
+            number_of_cells > SlabCellCount_ - slab_starting_idx
         )
         {
             return false;
         }
-        
-        bool claim_ok = ClaimNxSequentialPackedCellStrong_(slab_starting_idx, number_of_cells);
-        if (!claim_ok && !force_update)
+
+        if (!force_update)
         {
-            return false;
+            const bool claim_ok = ClaimNxSequentialPackedCellStrong_(slab_starting_idx, number_of_cells);
+            if (!claim_ok)
+            {
+                return false;
+            }
         }
 
         std::memcpy(

@@ -80,7 +80,11 @@ namespace PredictedAdaptedEncoding
         }
 
         const size_t base_idx = ReadOriginIndexBeginOfRecordBookOfFabricTableSegmentClasses_(table_class);
-        if (base_idx == APCDataStructure::APC_SIZE_SENTINAL || (base_idx + RECORD_BOOK_WIDTH > SlabCellCount_))
+        if (
+            base_idx == APCDataStructure::APC_SIZE_SENTINAL || 
+            (base_idx + RECORD_BOOK_WIDTH > SlabCellCount_) ||
+            begin >= end || end > SlabCellCount_
+        )
         {
             return;
         }
@@ -103,30 +107,26 @@ namespace PredictedAdaptedEncoding
 
         const RecordBookTablesBoundsCarrier validated_bounds = RecordBookConf::ValidateAFabricTableRangeStruct(desired_record_triplet, table_class);
         if (
-            validated_bounds.IsValid &&
-            validated_bounds.BeginIndex >= APCDataStructure::METACELL_COUNT &&
-            validated_bounds.EndIndex > validated_bounds.BeginIndex
+            !validated_bounds.IsValid 
         )
         {
-            AtomicallyStorePackedCellUnchecked(
-                base_idx + static_cast<size_t>(RecordBookInternalIndexing::BEGIN48), 
-                desired_record_triplet.BeginIdxRawType48Cell
-            );
-            
-            AtomicallyStorePackedCellUnchecked(
-                base_idx + static_cast<size_t>(RecordBookInternalIndexing::END48), 
-                desired_record_triplet.EndIdxRawType48Cell
-            );                
-            
-            AtomicallyStorePackedCellUnchecked(
-                base_idx + static_cast<size_t>(RecordBookInternalIndexing::META32), 
-                desired_record_triplet.WidthVersionOriginSafty
-            );
-
             return;
         }
+
+        AtomicallyStorePackedCellUnchecked(
+            base_idx + static_cast<size_t>(RecordBookInternalIndexing::BEGIN48), 
+            desired_record_triplet.BeginIdxRawType48Cell
+        );
         
-        return;
+        AtomicallyStorePackedCellUnchecked(
+            base_idx + static_cast<size_t>(RecordBookInternalIndexing::END48), 
+            desired_record_triplet.EndIdxRawType48Cell
+        );                
+        
+        AtomicallyStorePackedCellUnchecked(
+            base_idx + static_cast<size_t>(RecordBookInternalIndexing::META32), 
+            desired_record_triplet.WidthVersionOriginSafty
+        );
         
     }
 
