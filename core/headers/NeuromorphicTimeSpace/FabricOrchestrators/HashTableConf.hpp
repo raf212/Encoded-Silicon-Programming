@@ -85,6 +85,17 @@ struct HashTableConf : public HashHelpers
     using SingleHashBuffer = std::array<packed64_t, HASH_BUCKED_WIDTH_OF_FABRIC + 1>;
     static constexpr size_t VALIDATION_INDEX_HASH_BUFFER = static_cast<size_t>(HASH_BUCKED_WIDTH_OF_FABRIC);
 
+    /// @brief FILL: The buffer with UINT64_MAX EXCEPT:VALIDATION_INDEX_HASH_BUFFER -> 0
+    /// @param a_hash_buffer ADDRESS: OF: SingleHashBuffer
+    static constexpr void BuildEmptyHashBuffer(SingleHashBuffer& a_hash_buffer) noexcept
+    {
+        for (size_t i = 0; i < a_hash_buffer.size(); i++)
+        {
+            a_hash_buffer[i] = PackedCell64_t::PACKED_CELL_SENTINAL;
+        }
+
+        a_hash_buffer[VALIDATION_INDEX_HASH_BUFFER] = UNSIGNED_ZERO;
+    }
 
     /// @brief 
     /// @param a_cell_view 
@@ -302,39 +313,45 @@ struct HashTableConf : public HashHelpers
 
     }
 
-    static constexpr SingleHashBuffer BuildAndValidateAHashBufferFromTriplet(HashFilesCarrier& key_value_distence_triplet) noexcept
+    /// @brief CREATES: A buffer array of HASH: [KEY | VALUE | PROB DISTANCE | VALIDATION_INDEX_HASH_BUFFER]
+    /// @param provided_hash_files TAKES: A valid HashFilesCarrier
+    /// @return 
+    static constexpr void BuildValidatedHashBuffer(
+        const HashFilesCarrier& provided_hash_files,
+        SingleHashBuffer& desired_buffer
+    ) noexcept
     {
-        SingleHashBuffer desired_buffer{};
         
         const size_t key_idx = static_cast<size_t>(HashTableInternalIndexing::KEY_INDEX);
         const size_t value_idx = static_cast<size_t>(HashTableInternalIndexing::VALUE_INDEX);
         const size_t prob_lock_idx = static_cast<size_t>(HashTableInternalIndexing::PROB_DISTANCE_LOCK);
 
 
-        if (!key_value_distence_triplet.IsValid)
+        if (!provided_hash_files.IsValid)
         {
             desired_buffer[VALIDATION_INDEX_HASH_BUFFER] = 0;
-            return desired_buffer;
         }
 
+        BuildEmptyHashBuffer(desired_buffer);
+
         desired_buffer[key_idx] = MakeHashKeyOrValueCell(
-            key_value_distence_triplet.HashKey,
-            key_value_distence_triplet.HashTable,
-            key_value_distence_triplet.AttachedLocality
+            provided_hash_files.HashKey,
+            provided_hash_files.HashTable,
+            provided_hash_files.AttachedLocality
         );
 
         desired_buffer[value_idx] = MakeHashKeyOrValueCell(
-            key_value_distence_triplet.HashValue,
-            key_value_distence_triplet.HashTable,
-            key_value_distence_triplet.AttachedLocality
+            provided_hash_files.HashValue,
+            provided_hash_files.HashTable,
+            provided_hash_files.AttachedLocality
         );
 
         desired_buffer[prob_lock_idx] = MakeHashProbDistanceCellWithSaftyLock(
-            key_value_distence_triplet.HashKey,
-            key_value_distence_triplet.HashValue,
-            key_value_distence_triplet.ProbDistance,
-            key_value_distence_triplet.HashTable,
-            key_value_distence_triplet.AttachedLocality
+            provided_hash_files.HashKey,
+            provided_hash_files.HashValue,
+            provided_hash_files.ProbDistance,
+            provided_hash_files.HashTable,
+            provided_hash_files.AttachedLocality
         );
 
         const HashFilesCarrier from_constructed_cell = ReadKeyValueProbFromValidCells(
@@ -345,19 +362,35 @@ struct HashTableConf : public HashHelpers
         );
 
         if (
-            from_constructed_cell.AttachedLocality == key_value_distence_triplet.AttachedLocality &&
-            from_constructed_cell.HashTable == key_value_distence_triplet.HashTable &&
-            from_constructed_cell.HashKey == key_value_distence_triplet.HashKey &&
-            from_constructed_cell.HashValue == key_value_distence_triplet.HashValue
+            from_constructed_cell.AttachedLocality == provided_hash_files.AttachedLocality &&
+            from_constructed_cell.HashTable == provided_hash_files.HashTable &&
+            from_constructed_cell.HashKey == provided_hash_files.HashKey &&
+            from_constructed_cell.HashValue == provided_hash_files.HashValue
         )
         {
             desired_buffer[VALIDATION_INDEX_HASH_BUFFER] = VALIDATION_MARK_OF_HASH_TABLE_BUFFER;
-            return desired_buffer;
         }
         
         desired_buffer[VALIDATION_INDEX_HASH_BUFFER] = 0;
 
-        return desired_buffer;
+    }
+
+
+    static constexpr bool IfHashBufferHaveValidationMark(SingleHashBuffer& a_hash_buffer) noexcept
+    {
+        return a_hash_buffer[VALIDATION_INDEX_HASH_BUFFER] == VALIDATION_MARK_OF_HASH_TABLE_BUFFER;  
+    }
+
+
+
+    static constexpr void RestHashFilesCarrier(HashFilesCarrier& a_file_carrier) noexcept
+    {
+        a_file_carrier.HashValue = UNSIGNED_ZERO;
+        a_file_carrier.HashKey = UNSIGNED_ZERO;
+        a_file_carrier.ProbDistance = UNSIGNED_ZERO;
+        a_file_carrier.HashTable = FabricTableSegmentClasses::NONE;
+        a_file_carrier.AttachedLocality = LocalityPolicy::UNASSIGNED_UNUSED_NANNULL;
+        a_file_carrier.IsValid = false;
     }
 
 
