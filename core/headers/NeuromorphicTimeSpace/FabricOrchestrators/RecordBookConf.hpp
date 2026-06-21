@@ -28,6 +28,7 @@ static_assert(alignof(RecordBookTablesBoundsCarrier) == alignof(packed64_t));
 
 struct RecordBookConf
 {
+    static constexpr uint8_t RECORD_BOOK_INTERNAL_SEGMENT_COUNT = static_cast<uint8_t>(FabricTableSegmentClasses::NULLNAN) - 1u;
     static constexpr bool IsTheCellConsumeableAsRecordBookCellOfTSC(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
     {
 

@@ -228,7 +228,7 @@ namespace PredictedAdaptedEncoding {
         LOGICAL_HASH = 5,
         SHARED_HASH = 6,
         EDGE_TABLE = 7,
-        FREE_RETIRE_TABLE = 8,
+        FREE_APC_LIST = 8,
         READY_QUEUE = 9,
         WORK_QUEUE = 10,
         DEVICE_VIEW_TABLE = 11,

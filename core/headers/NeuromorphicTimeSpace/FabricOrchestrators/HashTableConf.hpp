@@ -24,7 +24,8 @@ struct HashHelpers
     static constexpr uint64_t DEFAULT_HAS_CONST_1 = 0xbf58476d1ce4e5b9ull;
     static constexpr uint64_t DEFAULT_HAS_CONST_2 = 0x94d049bb133111ebull;
     static constexpr uint64_t HASH_TOMBSTONE_KEY = PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT;
-    static constexpr uint8_t MIN_HASH_BUCKET_COUNT = 16u;
+    static constexpr uint8_t MIN_LIMIT_POW_OF_2 = 16u;
+    static constexpr uint8_t DEFAULT_TABLE_TAILROOM_MULT = 2u;
     static constexpr uint16_t PROB_DISTANCE_SENTINAL = UINT16_MAX;
     static constexpr uint64_t VALIDATION_MARK_OF_HASH_TABLE_BUFFER = 333;
     
@@ -72,7 +73,7 @@ struct HashHelpers
             return UNSIGNED_ZERO;
         }
 
-        const uint64_t wanted_bucket_count = std::max<uint64_t>(MIN_HASH_BUCKET_COUNT, count_of_entries * 2);
+        const uint64_t wanted_bucket_count = std::max<uint64_t>(MIN_LIMIT_POW_OF_2, count_of_entries * DEFAULT_TABLE_TAILROOM_MULT);
 
         return NextPowerOf2Unsigned48_(wanted_bucket_count);
         

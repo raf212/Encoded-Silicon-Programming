@@ -220,7 +220,7 @@ namespace PredictedAdaptedEncoding
     //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::LOGICAL_HASH, logical_hash_begin, logical_hash_end, APCDataStructure::BRANCH_VERSION);
     //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::SHARED_HASH, shared_hash_begin, shared_hash_end, APCDataStructure::BRANCH_VERSION);
     //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::EDGE_TABLE, edge_of_fabric_table_begin, edge_of_fabric_table_end, APCDataStructure::BRANCH_VERSION);      
-    //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::FREE_RETIRE_TABLE, free_retire_begin, free_retire_end, APCDataStructure::BRANCH_VERSION);
+    //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::FREE_APC_LIST, free_retire_begin, free_retire_end, APCDataStructure::BRANCH_VERSION);
     //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::READY_QUEUE, ready_begin, ready_end, APCDataStructure::BRANCH_VERSION);
     //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::WORK_QUEUE, work_begin, work_end, APCDataStructure::BRANCH_VERSION);
     //     WriteARecordBookOfTSCEntry_(FabricTableSegmentClasses::DEVICE_VIEW_TABLE, device_view_begin, device_view_end, APCDataStructure::BRANCH_VERSION);

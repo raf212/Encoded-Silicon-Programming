@@ -91,15 +91,14 @@ namespace PredictedAdaptedEncoding
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::READY_READ_CURSOR, UNSIGNED_ZERO);
 
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::RECORD_BOOK_OF_TSC_BEGIN, static_cast<uint64_t>(table_directory_begin));
-        MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::RECORD_BOOK_OF_TSC_END, static_cast<uint32_t>(table_directory_end));
-        MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::TABLE_DIRECTORY_COUNT, static_cast<uint64_t>(FabricTableSegmentClasses::NULLNAN));
+        MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::RECORD_BOOK_OF_TSC_END, static_cast<uint64_t>(table_directory_end));
+        MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::TABLE_DIRECTORY_COUNT, RecordBookConf::RECORD_BOOK_INTERNAL_SEGMENT_COUNT);
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::TABLE_DIRECTORY_VERSION, APCDataStructure::BRANCH_VERSION);
 
         Zero4LocalityBasedOccupancyOfFabric_();
 
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::CAS_FAILURE_COUNT, UNSIGNED_ZERO);
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::ERROR_COUNT, UNSIGNED_ZERO);
-        MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::RETIRE_SLOT_HEAD, UNSIGNED_ZERO);
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::LIVE_SLOT_COUNT, UNSIGNED_ZERO);
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::HASH_TOMBSTONE_COUNT, UNSIGNED_ZERO);
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::HASH_COMPACTION_COUNT, UNSIGNED_ZERO);
@@ -186,24 +185,18 @@ namespace PredictedAdaptedEncoding
         for (uint64_t desc_idx = 0; desc_idx < CountOfAPC_; desc_idx++)
         {
             const APCDescriptorRange self_range = ReadRangeForASingleAPCSlotFromAPCDescriptor_(desc_idx);
-            if (!self_range.IsVAlid)
-            {
-                continue;
-            }
-            
             const APCDescriptorRange segment_pool_range = GetSegmentPoolBegainEndForSingleAPCDescription_(desc_idx);
-            if (!segment_pool_range.IsVAlid)
+            if (!self_range.IsVAlid || !segment_pool_range.IsVAlid)
             {
                 continue;
             }
-
             const APCDescriptorRange next_segment_pool_range = GetSegmentPoolBegainEndForSingleAPCDescription_(desc_idx + 1);
 
             DescriptionOfAPC::SingleAPCDescriptionCellBuffer desired_buffer = DescriptionOfAPC::MakeADefaultAPCDescription(
                 desc_idx,
                 static_cast<uint64_t>(segment_pool_range.BeginIndex),
                 static_cast<uint64_t>(segment_pool_range.EndIndex),
-                static_cast<uint64_t>(next_segment_pool_range.BeginIndex),
+                static_cast<uint64_t>(next_segment_pool_range.BeginIndex == UNSIGNED_ZERO ? APC_FABRIC_INDEX_SENTINAL : next_segment_pool_range.BeginIndex),
                 version,
                 LocalityPolicy::PUBLISHED                
             );
@@ -219,12 +212,12 @@ namespace PredictedAdaptedEncoding
                 continue;
             }
 
-            if (!ForceMemCopyFromArray_(self_range.BeginIndex, static_cast<size_t>(APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX), desired_buffer))
+            if (!ForceMemCopyFromArray_(self_range.BeginIndex, APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX, desired_buffer))
             {
                 continue;
             }
             
-            for (size_t seg_idx = segment_pool_range.BeginIndex; seg_idx <= segment_pool_range.EndIndex; seg_idx++)
+            for (size_t seg_idx = segment_pool_range.BeginIndex; seg_idx < segment_pool_range.EndIndex; seg_idx++)
             {
                 StorePackedCellUncheckedDirectly(seg_idx, idle_apc_cell);
             }
