@@ -24,13 +24,6 @@ namespace PredictedAdaptedEncoding
 
     bool HashTablesConstructor::InsertOrUpdateRobinHoodHash48_(FabricTableSegmentClasses hash_table, uint64_t key48, uint64_t value48) noexcept
     {
-        if (
-            key48 == UNSIGNED_ZERO || key48 ==  HashTableConf::HASH_TOMBSTONE_KEY ||
-            value48 == UNSIGNED_ZERO || value48 == HashTableConf::HASH_TOMBSTONE_KEY
-        )
-        {
-            return false;
-        }
 
         RecordBookTablesBoundsCarrier desired_hash_table_bounds {};
 
@@ -73,6 +66,7 @@ namespace PredictedAdaptedEncoding
             reuseable_carrier.HashKey = desired_key;
             reuseable_carrier.HashValue = desired_value;
             reuseable_carrier.ProbDistance = desired_prob;
+            reuseable_carrier.HashTable = hash_table;
             reuseable_carrier.AttachedLocality = LocalityPolicy::PUBLISHED;
             reuseable_carrier.IsValid = true;
         };
@@ -115,7 +109,7 @@ namespace PredictedAdaptedEncoding
             {
                 const bool reuse_made_ok = MakeReuseableBuffer(incoming_key, incoming_value, incoming_prob);
 
-                return reuse_made_ok? ForceMemCopyFromArray_(base_idx, HASH_BUCKED_WIDTH_OF_FABRIC, reuseable_hash_buffer) : false;
+                return reuse_made_ok? ClaimThenMemCopyFromArray_(base_idx, HASH_BUCKED_WIDTH_OF_FABRIC, reuseable_hash_buffer) : false;
             }
 
             /// update

@@ -161,7 +161,7 @@ struct HashTableConf : public HashHelpers
             return PackedCell64_t::PACKED_CELL_SENTINAL;
         }
         
-        return PackedCell64_t::PackedCell64_t::MakeTypedFabricValidPackedCell(
+        return PackedCell64_t::MakeTypedFabricValidPackedCell(
             TypeFamily::VALUE48, 
             AccessContractOfValue::CLAIMED_GURDED, 
             hash_table_class, 
@@ -178,7 +178,7 @@ struct HashTableConf : public HashHelpers
     /// @return 
     static constexpr packed64_t MakeHashProbDistanceCellWithSaftyLock(
         uint64_t key48, 
-        uint64_t hash_48,
+        uint64_t value48,
         uint16_t prob_distance,
         FabricTableSegmentClasses hash_table,
         LocalityPolicy locality = LocalityPolicy::PUBLISHED
@@ -197,8 +197,8 @@ struct HashTableConf : public HashHelpers
             if (
                 key48 == UNSIGNED_ZERO || 
                 key48 >= HASH_TOMBSTONE_KEY ||
-                hash_48 == UNSIGNED_ZERO ||
-                hash_48 >= HASH_TOMBSTONE_KEY
+                value48 == UNSIGNED_ZERO ||
+                value48 >= HASH_TOMBSTONE_KEY
             )
             {
                 return PackedCell64_t::PACKED_CELL_SENTINAL;
@@ -206,7 +206,7 @@ struct HashTableConf : public HashHelpers
         }
 
         const uint16_t mid_Lock_key_low16 = static_cast<uint16_t>(key48 & MaskLowNBits(LOW16_BIT_LEN));
-        const uint16_t high_lock_hash_low_16 = static_cast<uint16_t>(hash_48 & MaskLowNBits(LOW16_BIT_LEN));
+        const uint16_t high_lock_hash_low_16 = static_cast<uint16_t>(value48 & MaskLowNBits(LOW16_BIT_LEN));
 
         const uint64_t desired_prob_distance_lock = Subdevision16x3InternalMode48CellModel::PackUnsigned16x3ToMode48_(
             prob_distance,
@@ -327,9 +327,14 @@ struct HashTableConf : public HashHelpers
         const size_t prob_lock_idx = static_cast<size_t>(HashTableInternalIndexing::PROB_DISTANCE_LOCK);
 
 
-        if (!provided_hash_files.IsValid)
+        if (
+            !provided_hash_files.IsValid ||
+            provided_hash_files.HashKey == UNSIGNED_ZERO || provided_hash_files.HashKey >= HashTableConf::HASH_TOMBSTONE_KEY ||
+            provided_hash_files.HashValue == UNSIGNED_ZERO || provided_hash_files.HashValue >= HashTableConf::HASH_TOMBSTONE_KEY
+        )
         {
-            desired_buffer[VALIDATION_INDEX_HASH_BUFFER] = 0;
+            BuildEmptyHashBuffer(desired_buffer);
+            return;
         }
 
         BuildEmptyHashBuffer(desired_buffer);
@@ -365,14 +370,14 @@ struct HashTableConf : public HashHelpers
             from_constructed_cell.AttachedLocality == provided_hash_files.AttachedLocality &&
             from_constructed_cell.HashTable == provided_hash_files.HashTable &&
             from_constructed_cell.HashKey == provided_hash_files.HashKey &&
-            from_constructed_cell.HashValue == provided_hash_files.HashValue
+            from_constructed_cell.HashValue == provided_hash_files.HashValue &&
+            from_constructed_cell.ProbDistance == provided_hash_files.ProbDistance
         )
         {
             desired_buffer[VALIDATION_INDEX_HASH_BUFFER] = VALIDATION_MARK_OF_HASH_TABLE_BUFFER;
+            return;
         }
-        
-        desired_buffer[VALIDATION_INDEX_HASH_BUFFER] = 0;
-
+        desired_buffer[VALIDATION_INDEX_HASH_BUFFER] = UNSIGNED_ZERO;
     }
 
 
