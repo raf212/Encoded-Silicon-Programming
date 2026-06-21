@@ -131,27 +131,20 @@ namespace PredictedAdaptedEncoding
         {
             return;
         }
-        
-        const packed64_t desired_idle_hash_key_value_cell = HashTableConf::MakeHashKeyOrValueCell(UNSIGNED_ZERO, hash_table, LocalityPolicy::IDLE);
-        if (desired_idle_hash_key_value_cell == PackedCell64_t::PACKED_CELL_SENTINAL)
-        {
-            return;
-        }
 
         RecordBookTablesBoundsCarrier return_bounds{};
-
         bool bounds_ok = GetValidSlabRangeTripletFromRecordBookOfFTSC(hash_table, return_bounds);
-
         if (!bounds_ok)
         {
             return;
         }
 
+        
         const packed64_t idle_key_value = HashTableConf::MakeHashKeyOrValueCell(UNSIGNED_ZERO, hash_table, LocalityPolicy::IDLE);
-
         const packed64_t prob_distance_lock_cell_idle = HashTableConf::MakeHashProbDistanceCellWithSaftyLock(
             UNSIGNED_ZERO, UNSIGNED_ZERO, UNSIGNED_ZERO,
-            hash_table
+            hash_table, 
+            LocalityPolicy::IDLE
         );
 
         if (
@@ -164,7 +157,7 @@ namespace PredictedAdaptedEncoding
 
         for (
             size_t idx = return_bounds.BeginIndex; 
-            idx < return_bounds.EndIndex; 
+            idx + HASH_BUCKED_WIDTH_OF_FABRIC <= static_cast<size_t>(return_bounds.EndIndex);
             idx += HASH_BUCKED_WIDTH_OF_FABRIC
         )
         {

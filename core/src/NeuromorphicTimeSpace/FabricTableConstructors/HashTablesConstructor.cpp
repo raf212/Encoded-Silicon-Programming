@@ -5,10 +5,9 @@ namespace PredictedAdaptedEncoding
 
     HashFilesCarrier HashTablesConstructor::ReadValidHashBucketTriplet(size_t bucked_base_index, bool caller_holds_Claim_guard) noexcept
     {
-        if (!SlabBasePtr_ || bucked_base_index + HASH_BUCKED_WIDTH_OF_FABRIC >= SlabCellCount_)
+        if (!SlabBasePtr_ || bucked_base_index + HASH_BUCKED_WIDTH_OF_FABRIC > SlabCellCount_)
         {
-            const HashFilesCarrier invalid_value{};
-            return invalid_value;
+            return HashFilesCarrier{};
         }
 
         const packed64_t key_cell = AtomicallyLoadReadCompletePackedCell(bucked_base_index + static_cast<size_t>(HashTableInternalIndexing::KEY_INDEX));

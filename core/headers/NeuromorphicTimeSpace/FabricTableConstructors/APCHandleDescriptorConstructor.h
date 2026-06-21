@@ -8,14 +8,6 @@ namespace PredictedAdaptedEncoding
     protected:
         APCDescriptorRange ReadRangeForASingleAPCSlotFromAPCDescriptor_(uint64_t apc_slot_index) noexcept;
 
-        bool MemCopySingleAPCDescriptionIfValidFromBufferToSlabBasePtr_(
-            DescriptionOfAPC::SingleAPCDescriptionCellBuffer& single_unvalidated_apc_description_buffer,
-            DescriptionOfAPC::StateOfSingleAPCDescription updated_state,
-            OwnershipPolicy updated_true_owner,
-            bool check_consumeablity = false,
-            std::optional<uint8_t> vesrion_match = std::nullopt
-        ) noexcept;
-
     public:
         /// @brief Uses -> GetValidSlabRangeTripletFromRecordBookOfFTSC to get record and packs into -> APCDescriptorRange
         /// @return VALID::APCDescriptorRange.IsVAlid = true || INVALID:: APCDescriptorRange.IsVAlid = false
