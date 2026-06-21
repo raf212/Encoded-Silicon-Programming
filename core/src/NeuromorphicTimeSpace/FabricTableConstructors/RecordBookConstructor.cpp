@@ -28,7 +28,7 @@ namespace PredictedAdaptedEncoding
     }
 
     bool RecordBookConstructor::GetValidSlabRangeTripletFromRecordBookOfFTSC(
-        FabricTableSegmentClasses table_class,
+        const FabricTableSegmentClasses table_class,
         RecordBookTablesBoundsCarrier& return_bounds
     ) noexcept
     {

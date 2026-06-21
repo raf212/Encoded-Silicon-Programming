@@ -16,7 +16,7 @@ namespace PredictedAdaptedEncoding
         /// @param table_class desired origin table
         /// @return VALID:: 3 -> Packed Cells:: i)Begin, ii)End iii)SaftyAndOriginMeta OR: false & Maybe Inspactable data
         bool GetValidSlabRangeTripletFromRecordBookOfFTSC(
-            FabricTableSegmentClasses table_class,
+            const FabricTableSegmentClasses table_class,
             RecordBookTablesBoundsCarrier& return_bounds
         ) noexcept;
 

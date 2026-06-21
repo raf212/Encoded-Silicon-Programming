@@ -165,4 +165,54 @@ namespace PredictedAdaptedEncoding
 
 
 
+
+    std::optional<uint64_t> HashTablesConstructor::FindHashValue48_(FabricTableSegmentClasses hash_table, uint64_t key48) noexcept
+    {
+        if (
+            !CoreOfFabricCoordinator::IsValidHashTable(hash_table) ||
+            key48 == UNSIGNED_ZERO ||
+            key48 >= HashTableConf::HASH_TOMBSTONE_KEY
+        )
+        {
+            return std::nullopt;
+        }
+        
+        RecordBookTablesBoundsCarrier desired_hash_table_bounds{};
+
+        if (!GetValidSlabRangeTripletFromRecordBookOfFTSC(hash_table, desired_hash_table_bounds))
+        {
+            return std::nullopt;
+        }
+
+        const uint64_t bucket_count_dht = (desired_hash_table_bounds.BeginIndex - desired_hash_table_bounds.EndIndex) / HASH_BUCKED_WIDTH_OF_FABRIC;
+
+        if (bucket_count_dht == UNSIGNED_ZERO)
+        {
+            return std::nullopt;
+        }
+
+        uint64_t bucket = HashHelpers::HashUnsigned48_(key48) & (bucket_count_dht - 1u);
+
+        for (uint64_t prob = 0; prob < bucket_count_dht; prob++)
+        {
+            const size_t base_idx_dht = static_cast<size_t>(desired_hash_table_bounds.BeginIndex + (bucket * HASH_BUCKED_WIDTH_OF_FABRIC));
+            const HashFilesCarrier exissting_hash = ReadHashFilesFromSlab(base_idx_dht, false);
+            
+            if (!exissting_hash.IsValid || exissting_hash.AttachedLocality == LocalityPolicy::IDLE)
+            {
+                return std::nullopt;
+            }
+
+            if (exissting_hash.HashKey == key48)
+            {
+                return exissting_hash.HashValue;
+            }
+            
+            bucket = (bucket + 1u) & (bucket_count_dht - 1u);
+        }
+        
+        return std::nullopt;
+    }
+
+
 }
