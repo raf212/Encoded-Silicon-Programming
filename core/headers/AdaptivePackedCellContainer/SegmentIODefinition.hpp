@@ -66,7 +66,7 @@ protected:
     /// @param value32 
     /// @param attribute 
     /// @param page_class 
-    void WriteTypedValue48MetaCellAPC_(
+    void WriteTypedValue32MetaCellAPC_(
         MetaIndexOfAPCNode idx,
         uint64_t value48,
         AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
@@ -250,13 +250,13 @@ public:
 
     void MakeAPCBranchOwned() noexcept
     {
-        WriteTypedValue48MetaCellAPC_(MetaIndexOfAPCNode::CURRENTLY_OWNED, 1u);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::CURRENTLY_OWNED, 1u);
     }
 
 
     void ResetTotalCASFailureForThisBranch(AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL) noexcept
     {
-        WriteTypedValue48MetaCellAPC_(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH, UNSIGNED_ZERO, attribute);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH, UNSIGNED_ZERO, attribute);
     }
 
     bool SetSegmentRegionKind(APCPagedNodeSegmentClasses region_kind) noexcept

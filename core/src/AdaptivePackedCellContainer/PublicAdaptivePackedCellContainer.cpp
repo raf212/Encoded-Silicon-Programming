@@ -112,8 +112,22 @@ namespace PredictedAdaptedEncoding
             throw std::invalid_argument("Capacity is unbounded and not acceptable must be > METACELL_COUNT(95) && <= APC_MAX_LENGTH_OR_COUNTER ");
         }
         
-        BackingPtr->CellPtr = AllocateAlignedRawPackedCells_(container_capacity);
+        OwnedRawBackingCells_ = AllocateAlignedRawPackedCells_(container_capacity);
+        OwnedBackingView_ = APCBackingCellAtomicRefViewTemp::BuildBackingViewOverCells_(OwnedRawBackingCells_, container_capacity);
+        BackingPtr = OwnedBackingView_;
         CapacityOfThisAPC_ = container_capacity;        
+
+        if (!OwnedRawBackingCells_ || !OwnedBackingView_)
+        {
+            APCBackingCellAtomicRefViewTemp::FreeBackingView_(OwnedBackingView_, container_capacity);
+            FreeAlignedRawPackedCells_(OwnedRawBackingCells_);
+            OwnedBackingView_ = nullptr;
+            OwnedRawBackingCells_ = nullptr;
+            BackingPtr = nullptr;
+            CapacityOfThisAPC_ = UNSIGNED_ZERO;
+            throw std::bad_alloc{};
+        }
+
         packed64_t idle_cell = PackedCell64_t::MakeDefaultAPCPayloadCellOnMode(container_cfg.InitialMode);
         for (size_t i = 0; i < container_capacity; i++)
         {
@@ -141,8 +155,12 @@ namespace PredictedAdaptedEncoding
         {
             AdaptiveBackoffOfAPCPtr_ = nullptr;
             OwnedMasterClockConfPtr_.reset();
-            FreeAlignedRawPackedCells_(BackingPtr->CellPtr);
+            APCBackingCellAtomicRefViewTemp::FreeBackingView_(OwnedBackingView_, container_capacity);
+            FreeAlignedRawPackedCells_(OwnedRawBackingCells_);
+            OwnedBackingView_ = nullptr;
+            OwnedRawBackingCells_ = nullptr;
             BackingPtr = nullptr;
+            CapacityOfThisAPC_ = UNSIGNED_ZERO;
             throw;
         }
         

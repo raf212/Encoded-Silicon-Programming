@@ -5,7 +5,7 @@
 namespace PredictedAdaptedEncoding
 {
 
-    void SegmentIODefinition::WriteTypedValue48MetaCellAPC_(
+    void SegmentIODefinition::WriteTypedValue32MetaCellAPC_(
         MetaIndexOfAPCNode idx,
         uint64_t value48,
         AttributePolicy attribute,
@@ -19,7 +19,7 @@ namespace PredictedAdaptedEncoding
         }
 
         const packed64_t packed_cell = PackedCell64_t::MakeTypedAPCValidPackedCell(
-            TypeFamily::VALUE48,
+            TypeFamily::VALUE32,
             AccessContractOfValue::CAS_RMW,
             page_class,
             LocalityPolicy::PUBLISHED,
@@ -80,9 +80,9 @@ namespace PredictedAdaptedEncoding
                 return;
         }
 
-        WriteTypedValue48MetaCellAPC_(MetaIndexOfAPCNode::REGION_DIR_COUNT, static_cast<val32_t>(APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses));
-        WriteTypedValue48MetaCellAPC_(MetaIndexOfAPCNode::EDGE_TABLE_COUNT, UNSIGNED_ZERO);
-        WriteTypedValue48MetaCellAPC_(MetaIndexOfAPCNode::WEIGHT_TABLE_COUNT, UNSIGNED_ZERO);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::REGION_DIR_COUNT, static_cast<val32_t>(APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses));
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::EDGE_TABLE_COUNT, UNSIGNED_ZERO);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::WEIGHT_TABLE_COUNT, UNSIGNED_ZERO);
         #ifndef NDEBUG
             auto layout = ReadAndGetFullRegionLayout_(false);
             if (!layout)
