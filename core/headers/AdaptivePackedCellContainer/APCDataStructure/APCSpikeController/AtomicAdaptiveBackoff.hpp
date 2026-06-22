@@ -302,7 +302,7 @@ private:
     {
         if (PCMode_ == PackedMode::MODEL48)
         {
-            return (PackedCell64_t::ExtractClk48(packed) & MaskLowNBits(CLK_B48));
+            return (PackedCell64_t::ExtractRaw48FamilyBits(packed) & MaskLowNBits(FAMILY_48_BIT_LEN));
         }
         else
         {
@@ -320,7 +320,7 @@ private:
             uint64_t candidate = (((now_down & ~uint64_t(0xFFFFu)) | (static_cast<uint64_t>(stored_clock16))));
             if (candidate > now_down)
             {
-                candidate -= (1ull << CLK_B16); //why?
+                candidate -= (1ull << LOW16_BIT_LEN); //why?
             }
             uint64_t pub_ticks = (candidate << ds) & MaskLowNBits(TOTAL_LOW);
             return pub_ticks;
@@ -395,7 +395,7 @@ public:
         {
             now = now_ticks_opt.value_or(PublicTimer48.NowTicks());
         }
-        int8_t priority = static_cast<int8_t>(PackedCell64_t::ExtractPriorityFromPacked(slot_payload));
+        int8_t attribute = static_cast<int8_t>(PackedCell64_t::ExtractPriorityPolicy(slot_payload));
         uint64_t pub_ticks = ReconstructPublishTicks_(now, slot_payload, master_clock_slot_id_opt);
         uint64_t age_ticks = (now - pub_ticks) & MaskLowNBits(TOTAL_LOW);
         uint64_t age_us = age_ticks / 1000u;
@@ -417,7 +417,7 @@ public:
                 hazard = FallbackHazard_(age_ticks);
             }
         }
-        double priority_scale = 1.0 + Cfg_.PriorityGama * static_cast<double>(priority);
+        double priority_scale = 1.0 + Cfg_.PriorityGama * static_cast<double>(attribute);
         double effective_threshold = C_OVER_P_ / priority_scale;
         PCBDecision dec{};
         dec.EstHazPerSec = hazard;

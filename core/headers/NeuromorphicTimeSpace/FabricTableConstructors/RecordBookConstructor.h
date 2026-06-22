@@ -1,0 +1,41 @@
+#pragma once 
+#include "FabricConstructor.hpp"
+
+namespace PredictedAdaptedEncoding
+{
+    class RecordBookConstructor : public FabricConstructor
+    {
+        
+    protected:
+        /// @brief Only Reads Valid FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES -> Cells
+        /// @param desired_table OriginOfRecord == FabricTableSegmentClasses -> Used Rename fore Ease of Developement
+        /// @return VALID: Index / INVALID: SIZE_MAX
+        constexpr size_t ReadOriginIndexBeginOfRecordBookOfFabricTableSegmentClasses_(OriginOfRecord desired_table) noexcept;
+        
+        /// @brief Compleatly validates by width and origin -> FabricTableSegmentClasses
+        /// @param table_class desired origin table
+        /// @return VALID:: 3 -> Packed Cells:: i)Begin, ii)End iii)SaftyAndOriginMeta OR: false & Maybe Inspactable data
+        bool GetValidSlabRangeTripletFromRecordBookOfFTSC(
+            const FabricTableSegmentClasses table_class,
+            RecordBookTablesBoundsCarrier& return_bounds
+        ) noexcept;
+
+        /// @brief FILL: DESIRED: FabricTableSegmentClasses with Idle Fabric Cell -> CALLS: GetValidSlabRangeTripletFromRecordBookOfFTSC TO: Get Range In SLab
+        /// @param table_class Desired FabricTableSegmentClasses You want Idle
+        void IdleAFabricTableClassRangesMemory_(FabricTableSegmentClasses table_class) noexcept;
+
+        /// @brief WRITES: A Single Entry OF: FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES == (2xPackedMode::VALUE48 + 1xPackedMode::Model32)
+        /// @param table_class Desired FabricTableSegmentClasses == OriginOfRecord
+        /// @param begin Begin Index OF: FabricTableSegmentClasses -> Record
+        /// @param end End Index OF: FabricTableSegmentClasses -> Record
+        constexpr void WriteARecordBookOfTSCEntry_(
+            OriginOfRecord table_class, 
+            size_t begin, size_t end, 
+            uint8_t slab_id = UNSIGNED_ZERO
+        ) noexcept;
+
+    public:
+
+    };
+
+}

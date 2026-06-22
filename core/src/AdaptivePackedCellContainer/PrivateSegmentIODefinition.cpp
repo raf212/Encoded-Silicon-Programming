@@ -1,9 +1,62 @@
-#include "NeuromorphicTimeSpace/APCSegmentsCausalCordinator.hpp"
-#include "PackedCellContainerManager.hpp"
+#include "AdaptivePackedCellContainer/APCSegmentsCausalCordinator.hpp"
+#include "AdaptivePackedCellContainer/PackedCellContainerManager.hpp"
 #include <iostream>
 
 namespace PredictedAdaptedEncoding
 {
+
+    void SegmentIODefinition::WriteTypedValue32MetaCellAPC_(
+        MetaIndexOfAPCNode idx,
+        uint64_t value48,
+        AttributePolicy attribute,
+        APCPagedNodeSegmentClasses page_class
+    ) noexcept
+    {
+        size_t index = static_cast<size_t>(idx);
+        if (!ValidMetaIdx(idx))
+        {
+            return;
+        }
+
+        const packed64_t packed_cell = PackedCell64_t::MakeTypedAPCValidPackedCell(
+            TypeFamily::VALUE32,
+            AccessContractOfValue::CAS_RMW,
+            page_class,
+            LocalityPolicy::PUBLISHED,
+            InternalDataTypePolicy::UnsignedPCellDataType,
+            attribute,
+            value48,
+            UNSIGNED_ZERO
+        );
+
+
+        BackingPtr[index].store(packed_cell, MoStoreSeq_);
+        BackingPtr[index].notify_all();
+    }
+
+    void SegmentIODefinition::WrireAPCMetaModel_48t(
+        MetaIndexOfAPCNode idx,
+        uint64_t raw48_value,
+        Model48Subclass sub_class,
+        LocalityPolicy locality,
+        InternalDataTypePolicy dtype,
+        AttributePolicy attribute 
+    ) noexcept
+    {
+        size_t index = static_cast<size_t>(idx);
+        if (!ValidMetaIdx(idx))
+        {
+            return;
+        }
+        const meta16_t meta16 = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_48t(
+            OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+            static_cast<tag8_t>(APCPagedNodeSegmentClasses::CONTROL_SLOT),
+            sub_class, attribute, locality, dtype
+        );
+        const packed64_t packed_cell = PackedCell64_t::Compose48BitFamilyPackedCell(raw48_value & MaskLowNBits(FAMILY_48_BIT_LEN), meta16);
+        BackingPtr[index].store(packed_cell, MoStoreSeq_);
+        BackingPtr[index].notify_all();
+    }
 
     void SegmentIODefinition::InitDefaultAPCSegmentedNodeLayout_() noexcept
     {
@@ -27,9 +80,9 @@ namespace PredictedAdaptedEncoding
                 return;
         }
 
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::REGION_DIR_COUNT, static_cast<val32_t>(APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses));
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::EDGE_TABLE_COUNT, UNSIGNED_ZERO);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::WEIGHT_TABLE_COUNT, UNSIGNED_ZERO);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::REGION_DIR_COUNT, static_cast<val32_t>(APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses));
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::EDGE_TABLE_COUNT, UNSIGNED_ZERO);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::WEIGHT_TABLE_COUNT, UNSIGNED_ZERO);
         #ifndef NDEBUG
             auto layout = ReadAndGetFullRegionLayout_(false);
             if (!layout)
@@ -172,14 +225,13 @@ namespace PredictedAdaptedEncoding
         {
             resolved_version = static_cast<uint16_t>(BRANCH_VERSION);
         }
-
-        const packed64_t desired_layout =
-            ComposeLayoutModelof16x3(
-                static_cast<uint16_t>(layout_bound.BeginIndex),
-                static_cast<uint16_t>(layout_bound.EndIndex),
-                resolved_version,
-                layout_bound.PAGE_LAYOUT_CLASS
-            );
+        
+        const packed64_t desired_layout = ComposeAPCOwned16x3Model_48t(
+            static_cast<uint16_t>(layout_bound.BeginIndex),
+            static_cast<uint16_t>(layout_bound.EndIndex),
+            resolved_version,
+            layout_bound.PAGE_LAYOUT_CLASS
+        );
 
         BackingPtr[static_cast<size_t>(layout_idx)].store(
             desired_layout,
@@ -202,7 +254,7 @@ namespace PredictedAdaptedEncoding
         
         while (true)
         {
-            const uint32_t current_flags = ReadMetaCellValue32(desired_flag_idx);
+            const uint32_t current_flags = ReadMetaCellFamily32(desired_flag_idx);
             if (current_flags == BRANCH_SENTINAL)
             {
                 return false;
@@ -301,7 +353,7 @@ namespace PredictedAdaptedEncoding
         {
             if (owns_layout_flag)
             {
-                ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
+                ClearOneControlEnumFlagOfAPC(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
             }
         };
 
@@ -383,7 +435,7 @@ namespace PredictedAdaptedEncoding
         {
             return FailedWrite();
         }
-        TurnOnASegmentFlag(ControlEnumOfAPCSegment::HAS_LAYOUT_DIR);
+        TurnOnASegmentFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::HAS_LAYOUT_DIR);
         ClearIfOwned();
         return true;
     }
@@ -397,7 +449,7 @@ namespace PredictedAdaptedEncoding
         }
         while (true)
         {
-            const uint32_t compleate_current_paged_node_ready_bit = ReadMetaCellValue32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
+            const uint32_t compleate_current_paged_node_ready_bit = ReadMetaCellFamily32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
             const uint32_t updated_current_ready_bit = compleate_current_paged_node_ready_bit | anew_readybit;
             if (updated_current_ready_bit == compleate_current_paged_node_ready_bit)
             {
@@ -420,7 +472,7 @@ namespace PredictedAdaptedEncoding
         }
         while (true)
         {
-            const uint32_t compleate_current_paged_node_ready_bit = ReadMetaCellValue32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
+            const uint32_t compleate_current_paged_node_ready_bit = ReadMetaCellFamily32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
             const uint32_t updated_current_ready_bit = compleate_current_paged_node_ready_bit & ~anew_readybit;
             if (updated_current_ready_bit == compleate_current_paged_node_ready_bit)
             {
@@ -513,7 +565,7 @@ namespace PredictedAdaptedEncoding
 
     std::optional<uint16_t> SegmentIODefinition::ReadGlobalLayoutVersion_() noexcept
     {
-        const uint32_t raw = ReadMetaCellValue32(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
+        const uint32_t raw = ReadMetaCellFamily32(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
         if (raw == BRANCH_SENTINAL || raw == UNSIGNED_ZERO)
         {
             return std::nullopt;
@@ -530,7 +582,7 @@ namespace PredictedAdaptedEncoding
 
         while (true)
         {
-            const uint32_t current_version = ReadMetaCellValue32(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
+            const uint32_t current_version = ReadMetaCellFamily32(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
             if ((current_version) == layout_version)
             {
                 return true;

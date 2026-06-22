@@ -1,5 +1,5 @@
-#include "NeuromorphicTimeSpace/APCSegmentsCausalCordinator.hpp"
-#include "PackedCellContainerManager.hpp"
+#include "AdaptivePackedCellContainer/APCSegmentsCausalCordinator.hpp"
+#include "AdaptivePackedCellContainer/PackedCellContainerManager.hpp"
 #include <iostream>
 
 namespace PredictedAdaptedEncoding
@@ -19,14 +19,14 @@ namespace PredictedAdaptedEncoding
         return desired_occupancy ? *desired_occupancy : UNSIGNED_ZERO;
     }
 
-    val32_t SegmentIODefinition::ReadMetaCellValue32(MetaIndexOfAPCNode idx) noexcept
+    val32_t SegmentIODefinition::ReadMetaCellFamily32(MetaIndexOfAPCNode idx) noexcept
     {
         if (!ValidMetaIdx(idx) || idx == MetaIndexOfAPCNode::LOCAL_CLOCK48)
         {
             return UNSIGNED_ZERO;
         }
         size_t index = static_cast<size_t>(idx);
-        return PackedCell64_t::ExtractValue32(BackingPtr[index].load(MoLoad_));
+        return PackedCell64_t::ExtractRaw32FamilyBits(BackingPtr[index].load(MoLoad_));
     }
 
     void SegmentIODefinition::TouchLocalMetaClock48() noexcept
@@ -40,37 +40,38 @@ namespace PredictedAdaptedEncoding
 
     packed64_t SegmentIODefinition::PackPureClock48AsPackedCell(
         std::optional<uint64_t> clock48,
-        PriorityPolicy priority,
+        AttributePolicy attribute,
         LocalityPolicy locality,
-        APCPagedNodeSegmentClasses page_class,
-        Model48Subclass reloffset,
-        InternalDataTypePolicy dtype,
-        OwnershipPolicy node_authority
+        APCPagedNodeSegmentClasses page_class
     ) noexcept
     {
-        if ((reloffset != Model48Subclass::PURE_TIMER_48))
-        {
-            return PackedCell64_t::MakeFaultyCell();
-        }
         
         if (OwnedMasterClockConfPtr_)
         {
             return OwnedMasterClockConfPtr_->ComposePureClockCell48();
         }
         
-        meta16_t strl_clock48 = PackedCell64_t::MakeInCellMetaForMode_48t(StructureFamily48::MODEL48, priority, node_authority, locality, page_class, reloffset, dtype);
+        const meta16_t meta16 = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_48t(
+            OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+            static_cast<tag8_t>(page_class),
+            Model48Subclass::PURE_TIMER_48, 
+            attribute, locality, 
+            InternalDataTypePolicy::UnsignedPCellDataType
+        );
+
         if (clock48)
         {
-            return PackedCell64_t::Compose48BitFamilyPackedCell(clock48.value(), strl_clock48);
+            return PackedCell64_t::Compose48BitFamilyPackedCell(clock48.value(), meta16);
         }
+        
         Timer48 now_timer;
-        return PackedCell64_t::Compose48BitFamilyPackedCell((now_timer.NowTicks() & MaskLowNBits(CLK_B48)), strl_clock48);
+        return PackedCell64_t::Compose48BitFamilyPackedCell((now_timer.NowTicks() & MaskLowNBits(FAMILY_48_BIT_LEN)), meta16);
     }
 
-    void SegmentIODefinition::WriteOrUpdateMetaClock48(PriorityPolicy priority, std::optional<uint64_t>meta_clock_48 ) noexcept
+    void SegmentIODefinition::WriteOrUpdateMetaClock48(AttributePolicy attribute, std::optional<uint64_t>meta_clock_48 ) noexcept
     {
         size_t idx = static_cast<size_t>(MetaIndexOfAPCNode::LOCAL_CLOCK48);
-        packed64_t wanted_cell = PackPureClock48AsPackedCell(meta_clock_48, priority, LocalityPolicy::PUBLISHED);
+        packed64_t wanted_cell = PackPureClock48AsPackedCell(meta_clock_48, attribute, LocalityPolicy::PUBLISHED);
         BackingPtr[idx].store(wanted_cell, MoStoreSeq_);
         BackingPtr[idx].notify_all();
     }
@@ -88,11 +89,11 @@ namespace PredictedAdaptedEncoding
         }
         const size_t index = static_cast<size_t>(idx);
         packed64_t expected_packed = BackingPtr[index].load(MoLoad_);
-        if (PackedCell64_t::ExtractValue32(expected_packed) != expected_value)
+        if (PackedCell64_t::ExtractRaw32FamilyBits(expected_packed) != expected_value)
         {
             return false;
         }
-        if (PackedCell64_t::ExtractLocalityFromPacked(expected_packed) == LocalityPolicy::CLAIMED)
+        if (PackedCell64_t::ExtractLocalityPolicy(expected_packed) == LocalityPolicy::CLAIMED)
         {
             return false;
         }
@@ -113,61 +114,60 @@ namespace PredictedAdaptedEncoding
     }
 
     void SegmentIODefinition::InitLogicalNodeIdentity(
-        uint32_t logical_node_id,
-        uint32_t shared_id,
+        uint64_t logical_node_id,
+        uint64_t shared_id,
         bool is_root_shared
     ) noexcept
     {
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::LOGICAL_NODE_ID, logical_node_id, PriorityPolicy::PRESSURE_FIRST);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::SHARED_ID, shared_id, PriorityPolicy::PRESSURE_FIRST);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::SHARED_PREVIOUS_ID, BRANCH_SENTINAL, PriorityPolicy::PRESSURE_FIRST);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::SHARED_NEXT_ID, BRANCH_SENTINAL, PriorityPolicy::PRESSURE_FIRST);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::LOGICAL_NODE_ID, logical_node_id);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::SHARED_ID, shared_id);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::SHARED_PREVIOUS_ID, BRANCH_SENTINAL);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::SHARED_NEXT_ID, BRANCH_SENTINAL);
         if (is_root_shared)
         {
-            TurnOnMultipleSegmentFlagsAtOnce_(static_cast<uint32_t>(ControlEnumOfAPCSegment::IS_GRAPH_NODE) | static_cast<uint32_t>(ControlEnumOfAPCSegment::IS_SHARED_ROOT));
-            ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::IS_SHARED_MAMBER);
+            TurnOnMultipleSegmentFlagsAtOnce_(static_cast<uint32_t>(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::IS_GRAPH_NODE) | static_cast<uint32_t>(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::IS_SHARED_ROOT));
+            ClearOneControlEnumFlagOfAPC(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::IS_SHARED_MAMBER);
         }
         else
         {
-            TurnOnMultipleSegmentFlagsAtOnce_(static_cast<uint32_t>(ControlEnumOfAPCSegment::IS_GRAPH_NODE) | static_cast<uint32_t>(ControlEnumOfAPCSegment::IS_SHARED_MAMBER));
-            ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::IS_SHARED_ROOT);    
+            TurnOnMultipleSegmentFlagsAtOnce_(static_cast<uint32_t>(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::IS_GRAPH_NODE) | static_cast<uint32_t>(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::IS_SHARED_MAMBER));
+            ClearOneControlEnumFlagOfAPC(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::IS_SHARED_ROOT);    
         }
         
     }
 
     void SegmentIODefinition::InitNodeSemantics(
-        uint32_t aux_param_uint32
+        uint64_t aux_param_uint48
     ) noexcept
     {
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::NODE_COMPUTE_KIND, UNSIGNED_ZERO, PriorityPolicy::PRESSURE_FIRST);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::NODE_AUX_PARAM_U32, aux_param_uint32, PriorityPolicy::PRESSURE_FIRST);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_FORWARD_CLOCK16, UNSIGNED_ZERO, PriorityPolicy::PRESSURE_FIRST);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_BACKWARD_CLOCK16, UNSIGNED_ZERO, PriorityPolicy::PRESSURE_FIRST);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_EMITTED_FEED_FORWARD_CLOCK16, UNSIGNED_ZERO, PriorityPolicy::PRESSURE_FIRST);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_EMITTED_FEED_BACKWARD_CLOCK16, UNSIGNED_ZERO, PriorityPolicy::PRESSURE_FIRST);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::NODE_COMPUTE_KIND, UNSIGNED_ZERO);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::NODE_AUX_PARAM_U32, aux_param_uint48);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_FORWARD_CLOCK16, UNSIGNED_ZERO);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_BACKWARD_CLOCK16, UNSIGNED_ZERO);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::LAST_EMITTED_FEED_FORWARD_CLOCK16, UNSIGNED_ZERO);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::LAST_EMITTED_FEED_BACKWARD_CLOCK16, UNSIGNED_ZERO);
 
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::FEEDFORWARD_IN_TARGET_ID, BRANCH_SENTINAL);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::FEEDFORWARD_OUT_TARGET_ID, BRANCH_SENTINAL);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::FEEDBACKWARD_IN_TARGET_ID, BRANCH_SENTINAL);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::FEEDBACKWARD_OUT_TARGET_ID, BRANCH_SENTINAL);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::LATERAL_0_TARGET_ID, BRANCH_SENTINAL);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::LATERAL_1_TARGET_ID, BRANCH_SENTINAL);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::FEEDFORWARD_IN_TARGET_ID, BRANCH_SENTINAL);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::FEEDFORWARD_OUT_TARGET_ID, BRANCH_SENTINAL);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::FEEDBACKWARD_IN_TARGET_ID, BRANCH_SENTINAL);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::FEEDBACKWARD_OUT_TARGET_ID, BRANCH_SENTINAL);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::LATERAL_0_TARGET_ID, BRANCH_SENTINAL);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::LATERAL_1_TARGET_ID, BRANCH_SENTINAL);
     }
 
 
 
     void SegmentIODefinition::InitRootOrChildBranch(
-        uint32_t branch_id,
-        uint32_t logical_node_id,
-        uint32_t shared_id,
+        uint64_t branch_id,
+        uint64_t logical_node_id,
+        uint64_t shared_id,
         size_t total_capacity,
         const ContainerConf& container_configuration,
         bool is_root_shared,
-        uint32_t aux_param_uint32,
-        uint32_t branch_depth,
-        uint8_t branch_priority,
-        PriorityPolicy write_cell_priority
-
+        uint64_t aux_param_uint48,
+        uint64_t branch_depth,
+        uint64_t branch_priority,
+        AttributePolicy write_cell_priority
     ) noexcept
     {
         if (!IsBound())
@@ -178,47 +178,47 @@ namespace PredictedAdaptedEncoding
         const uint32_t safe_capacity = static_cast<uint32_t>(std::min<size_t>(total_capacity, BRANCH_SENTINAL));
 
         const uint32_t region_count = container_configuration.RegionSize == 0 ? 0 : static_cast<uint32_t>((std::max<size_t>(total_capacity, METACELL_COUNT) - METACELL_COUNT + container_configuration.RegionSize - 1) / container_configuration.RegionSize);
-        const uint32_t resolve_shared_id = (shared_id == UNSIGNED_ZERO || shared_id == BRANCH_SENTINAL) ? branch_id : shared_id;
+        const uint64_t resolve_shared_id = (shared_id == UNSIGNED_ZERO || shared_id == BRANCH_SENTINAL) ? branch_id : shared_id;
         
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::MAGIC_ID, BRANCH_MAGIC, write_cell_priority);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::BRANCH_ID, static_cast<uint32_t>(std::min<uint32_t>(branch_id, BRANCH_SENTINAL)), write_cell_priority);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION, BRANCH_VERSION, write_cell_priority, APCPagedNodeSegmentClasses::CONTROL_SLOT);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::MAGIC_ID, BRANCH_MAGIC, write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::BRANCH_ID, static_cast<uint64_t>(std::min<uint64_t>(branch_id, BRANCH_SENTINAL)), write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION, BRANCH_VERSION, write_cell_priority, APCPagedNodeSegmentClasses::CONTROL_SLOT);
 
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::BRANCH_DEPTH, branch_depth, write_cell_priority);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::BRANCH_PRIORITY, branch_priority, write_cell_priority);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS, container_configuration.EnableBranching ? static_cast<uint32_t>(ControlEnumOfAPCSegment::ENABLE_BRANCHING) : static_cast<uint32_t>(ControlEnumOfAPCSegment::NONE), write_cell_priority);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::CURRENT_ACTIVE_THREADS, UNSIGNED_ZERO, write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::BRANCH_DEPTH, branch_depth, write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::BRANCH_PRIORITY, branch_priority, write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS, container_configuration.EnableBranching ? static_cast<uint32_t>(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::ENABLE_BRANCHING) : static_cast<uint32_t>(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::NONE), write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::CURRENT_ACTIVE_THREADS, UNSIGNED_ZERO, write_cell_priority);
         WrireAPCMetaModel_48t(MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48, UNSIGNED_ZERO);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE, container_configuration.BranchSplitThresholdPercentage, write_cell_priority);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::SEGMENT_KIND, static_cast<uint32_t>(APCPagedNodeSegmentClasses::FREE_SLOT), write_cell_priority);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::MAX_DEPTH, container_configuration.BranchMaxDepth, write_cell_priority);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::TOTAL_CAPACITY_OF_THIS_SEGEMENT, safe_capacity, write_cell_priority);                                                                                        
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::LAST_SPLIT_EPOCH, UNSIGNED_ZERO, write_cell_priority);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::REGION_SIZE, static_cast<uint32_t>(container_configuration.RegionSize), write_cell_priority);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::REGION_COUNT, region_count, write_cell_priority);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT, UNSIGNED_ZERO, write_cell_priority);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::PRODUCER_BLOCK_SIZE, static_cast<uint32_t>(container_configuration.ProducerBlockSize), write_cell_priority);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::BACKGROUND_EPOCH_ADVANCE_MS, static_cast<uint32_t>(container_configuration.BackgroundEpochAdvanceMS), write_cell_priority);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::DEFINED_MODE_OF_CURRENT_APC, static_cast<uint32_t>(container_configuration.InitialMode), write_cell_priority);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::RETIRE_BRANCH_THRASHOLD, container_configuration.RetireBatchThreshold, write_cell_priority);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::PRODUCER_CURSOR_PLACEMENT, static_cast<uint32_t>(METACELL_COUNT), write_cell_priority);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::CONSUMER_CURSORE_PLACEMENT, static_cast<uint32_t>(METACELL_COUNT), write_cell_priority);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::CURRENTLY_OWNED, UNSIGNED_ZERO, write_cell_priority);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH, UNSIGNED_ZERO, write_cell_priority);
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::NODE_GROUP_SIZE, container_configuration.NodeGroupSize, write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE, container_configuration.BranchSplitThresholdPercentage, write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::SEGMENT_KIND, static_cast<uint32_t>(APCPagedNodeSegmentClasses::FREE_SLOT), write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::MAX_DEPTH, container_configuration.BranchMaxDepth, write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::TOTAL_CAPACITY_OF_THIS_SEGEMENT, safe_capacity, write_cell_priority);                                                                                        
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::LAST_SPLIT_EPOCH, UNSIGNED_ZERO, write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::REGION_SIZE, static_cast<uint32_t>(container_configuration.RegionSize), write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::REGION_COUNT, region_count, write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT, UNSIGNED_ZERO, write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::PRODUCER_BLOCK_SIZE, static_cast<uint32_t>(container_configuration.ProducerBlockSize), write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::BACKGROUND_EPOCH_ADVANCE_MS, static_cast<uint32_t>(container_configuration.BackgroundEpochAdvanceMS), write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::DEFINED_MODE_OF_CURRENT_APC, static_cast<uint32_t>(container_configuration.InitialMode), write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::RETIRE_BRANCH_THRASHOLD, container_configuration.RetireBatchThreshold, write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::PRODUCER_CURSOR_PLACEMENT, static_cast<uint32_t>(METACELL_COUNT), write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::CONSUMER_CURSORE_PLACEMENT, static_cast<uint32_t>(METACELL_COUNT), write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::CURRENTLY_OWNED, UNSIGNED_ZERO, write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH, UNSIGNED_ZERO, write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::NODE_GROUP_SIZE, container_configuration.NodeGroupSize, write_cell_priority);
         InitLogicalNodeIdentity(logical_node_id, resolve_shared_id, is_root_shared);
-        InitNodeSemantics(aux_param_uint32);
+        InitNodeSemantics(aux_param_uint48);
         InitDefaultAPCSegmentedNodeLayout_();
         for (uint8_t i = 0; i < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses; i++)
         {
-            WriteMetaCellMode32_(static_cast<MetaIndexOfAPCNode>(static_cast<size_t>(MetaIndexOfAPCNode::REGION_OCCUPANCY_NONE) + i), 
+            WriteTypedValue32MetaCellAPC_(static_cast<MetaIndexOfAPCNode>(static_cast<size_t>(MetaIndexOfAPCNode::REGION_OCCUPANCY_NONE) + i), 
                             UNSIGNED_ZERO, write_cell_priority, APCPagedNodeSegmentClasses::CONTROL_SLOT
                         );
         }
 
         ResetALLOccupancy16x3ModelToZero_();
         
-        WriteMetaCellMode32_(MetaIndexOfAPCNode::EOF_APC_HEADER, EOF_HEADER, write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::EOF_APC_HEADER, EOF_HEADER, write_cell_priority);
 #ifndef NDEBUG
 {
     auto layout = ReadAndGetFullRegionLayout_(false);
@@ -251,7 +251,7 @@ namespace PredictedAdaptedEncoding
         
         while (true)
         {
-            uint32_t current_thread_count = ReadMetaCellValue32(MetaIndexOfAPCNode::CURRENT_ACTIVE_THREADS);
+            uint32_t current_thread_count = ReadMetaCellFamily32(MetaIndexOfAPCNode::CURRENT_ACTIVE_THREADS);
             if (current_thread_count == IN_CELL_VALUE_MODE32_SENTINAL)
             {
                 return false;
@@ -279,7 +279,7 @@ namespace PredictedAdaptedEncoding
         }
         while (true)
         {
-            const uint32_t current_meta_value = ReadMetaCellValue32(port_meta_idx);
+            const uint32_t current_meta_value = ReadMetaCellFamily32(port_meta_idx);
             if (current_meta_value == target_branch_id)
             {
                 return true;
@@ -297,9 +297,9 @@ namespace PredictedAdaptedEncoding
 
     bool SegmentIODefinition::ShouldSplitNow() noexcept
     {
-        const val32_t split_threshold = ReadMetaCellValue32(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE);
-        const val32_t max_depth = ReadMetaCellValue32(MetaIndexOfAPCNode::MAX_DEPTH);
-        const val32_t depth_of_current_branch = ReadMetaCellValue32(MetaIndexOfAPCNode::BRANCH_DEPTH);
+        const val32_t split_threshold = ReadMetaCellFamily32(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE);
+        const val32_t max_depth = ReadMetaCellFamily32(MetaIndexOfAPCNode::MAX_DEPTH);
+        const val32_t depth_of_current_branch = ReadMetaCellFamily32(MetaIndexOfAPCNode::BRANCH_DEPTH);
         if (depth_of_current_branch >= max_depth)
         {
             return false;
@@ -341,10 +341,10 @@ namespace PredictedAdaptedEncoding
 
     bool SegmentIODefinition::TryMarkSplitInFlight() noexcept
     {
-        const uint32_t bit = static_cast<uint32_t>(ControlEnumOfAPCSegment::SPLIT_INFLIGHT);
+        const uint32_t bit = static_cast<uint32_t>(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::SPLIT_INFLIGHT);
         while (true)
         {
-            const uint32_t current_flags = ReadMetaCellValue32(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
+            const uint32_t current_flags = ReadMetaCellFamily32(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
             if ((current_flags & bit) != UNSIGNED_ZERO)
             {
                 return false;
@@ -375,7 +375,7 @@ namespace PredictedAdaptedEncoding
     {
         while (true)
         {
-            val32_t current_total_cas_failure = ReadMetaCellValue32(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH);
+            val32_t current_total_cas_failure = ReadMetaCellFamily32(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH);
             if (current_total_cas_failure == BRANCH_SENTINAL)
             {
                 return BRANCH_SENTINAL;
@@ -524,7 +524,7 @@ namespace PredictedAdaptedEncoding
             if (owns_layout_flag)
             {
                 ClearOneControlEnumFlagOfAPC(
-                    ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT
+                    APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT
                 );            
             }
         };
@@ -548,7 +548,7 @@ namespace PredictedAdaptedEncoding
                 return false;
             }
             
-            packed64_t desired_layout = ComposeLayoutModelof16x3(begain_index, end_index, resolved_version, page_class);
+            packed64_t desired_layout = ComposeAPCOwned16x3Model_48t(begain_index, end_index, resolved_version, page_class);
             packed64_t expected_layout_cell = observed_layout;
 
             if (BackingPtr[static_cast<size_t>(layout_idx)].compare_exchange_strong(
@@ -575,11 +575,11 @@ namespace PredictedAdaptedEncoding
 
     bool SegmentIODefinition::TrySetLayoutMutationInFlight() noexcept
     {
-        const uint32_t bit = static_cast<uint32_t>(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
+        const uint32_t bit = static_cast<uint32_t>(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
 
         while (true)
         {
-            const uint32_t current_flags = ReadMetaCellValue32(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
+            const uint32_t current_flags = ReadMetaCellFamily32(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
             if (current_flags == BRANCH_SENTINAL)
             {
                 return false;
@@ -624,7 +624,7 @@ namespace PredictedAdaptedEncoding
 
         auto ClearIfOwned = [this]() noexcept
         {
-            ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
+            ClearOneControlEnumFlagOfAPC(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
         };
 
         auto FailedWrite = [&]()noexcept -> bool
@@ -794,10 +794,10 @@ namespace PredictedAdaptedEncoding
         switch (region_kind)
         {
             case APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE :
-                return static_cast<clk16_t>(ReadMetaCellValue32(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_BACKWARD_CLOCK16));
+                return static_cast<clk16_t>(ReadMetaCellFamily32(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_BACKWARD_CLOCK16));
         
         default:
-            return static_cast<clk16_t>(ReadMetaCellValue32(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_FORWARD_CLOCK16));
+            return static_cast<clk16_t>(ReadMetaCellFamily32(MetaIndexOfAPCNode::LAST_ACCEPTED_FEED_FORWARD_CLOCK16));
         }
     }
 
@@ -806,10 +806,10 @@ namespace PredictedAdaptedEncoding
         switch (region_kind)
         {
             case APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE :
-                return static_cast<clk16_t>(ReadMetaCellValue32(MetaIndexOfAPCNode::LAST_EMITTED_FEED_BACKWARD_CLOCK16));
+                return static_cast<clk16_t>(ReadMetaCellFamily32(MetaIndexOfAPCNode::LAST_EMITTED_FEED_BACKWARD_CLOCK16));
         
         default:
-            return static_cast<clk16_t>(ReadMetaCellValue32(MetaIndexOfAPCNode::LAST_EMITTED_FEED_FORWARD_CLOCK16));
+            return static_cast<clk16_t>(ReadMetaCellFamily32(MetaIndexOfAPCNode::LAST_EMITTED_FEED_FORWARD_CLOCK16));
         }
     }
 
@@ -817,7 +817,7 @@ namespace PredictedAdaptedEncoding
     {
         while (true)
         {
-            const uint32_t current_value = ReadMetaCellValue32(idx);
+            const uint32_t current_value = ReadMetaCellFamily32(idx);
             if (current_value == value)
             {
                 return true;
@@ -923,7 +923,7 @@ namespace PredictedAdaptedEncoding
             uint16_t faulty_count = UNSIGNED_ZERO;
             //
 
-            const uint64_t raw48 = PackedCell64_t::ExtractClk48(observed_cell);
+            const uint64_t raw48 = PackedCell64_t::ExtractRaw48FamilyBits(observed_cell);
 
             if (!Subdevision16x3InternalMode48CellModel::ExtractLowMidHighFromMode48_(raw48, published_count, claimed_count, faulty_count))
             {
@@ -1039,8 +1039,8 @@ namespace PredictedAdaptedEncoding
         APCPagedNodeSegmentClasses physical_page_class
     ) noexcept
     {
-        const LocalityPolicy from_locality = PackedCell64_t::ExtractLocalityFromPacked(old_cell);
-        const LocalityPolicy to_locality = PackedCell64_t::ExtractLocalityFromPacked(new_cell);
+        const LocalityPolicy from_locality = PackedCell64_t::ExtractLocalityPolicy(old_cell);
+        const LocalityPolicy to_locality = PackedCell64_t::ExtractLocalityPolicy(new_cell);
         if (from_locality == to_locality)
         {
             return true;

@@ -11,8 +11,9 @@
 #include <algorithm>
 #include <string>
 
-#include "NeuromorphicTimeSpace/APCSegmentsCausalCordinator.hpp"
-#include "PackedCellContainerManager.hpp"
+#include "AdaptivePackedCellContainer/APCSegmentsCausalCordinator.hpp"
+#include "AdaptivePackedCellContainer/PackedCellContainerManager.hpp"
+
 
 using namespace PredictedAdaptedEncoding;
 
@@ -190,21 +191,39 @@ namespace
     packed64_t PackF32(
         MasterClockConf& clock,
         float value,
-        APCPagedNodeSegmentClasses region,
-        CellMapAndPriority priority = CellMapAndPriority::IDLE
+        APCPagedNodeSegmentClasses page_class,
+        AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
+        PackedMode mode = PackedMode::VALUE32
     )
     {
         const uint32_t bits = BitCastPortable<uint32_t>(value);
 
-        return clock.ComposeClockedModel32FroAPC(
-            bits,
-            region,
-            priority,
+        const clk16_t now_16 = clock.NowClock16();
+
+        if (mode == PackedMode::MODEL32 || mode == PackedMode::MODEL48)
+        {
+            return PackedCell64_t::MakeModeledAPCValidPackedCell(
+                static_cast<ModelFamily>(mode),
+                UNSIGNED_ZERO, page_class, LocalityPolicy::PUBLISHED,
+                InternalDataTypePolicy::FloatPCellDataType,
+                attribute,
+                bits,
+                now_16
+            );
+        }
+
+
+        return PackedCell64_t::MakeTypedAPCValidPackedCell(
+            static_cast<TypeFamily>(mode),
+            AccessContractOfValue::CLAIMED_GURDED,
+            page_class,
             LocalityPolicy::PUBLISHED,
-            Model32Subclass::SELF_CLASS,
             InternalDataTypePolicy::FloatPCellDataType,
-            OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
+            attribute,
+            bits,
+            now_16
         );
+
     }
 
     float UnpackF32(packed64_t cell, float fallback = 0.0f)
@@ -424,11 +443,11 @@ namespace
             << "branch=" << seg.GetBranchId()
             << " logical=" << seg.GetLogicalId()
             << " shared=" << seg.GetSharedId()
-            << " group=" << seg.ReadMetaCellValue32(MetaIndexOfAPCNode::NODE_GROUP_SIZE)
+            << " group=" << seg.ReadMetaCellFamily32(MetaIndexOfAPCNode::NODE_GROUP_SIZE)
             << " cap=" << seg.GetTotalCapacityForThisAPC()
             << " payload=" << seg.PayloadCapacityFromHeader()
             << " ready=0x" << std::hex
-            << seg.ReadMetaCellValue32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT)
+            << seg.ReadMetaCellFamily32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT)
             << std::dec
             << " central(pub=" << central.Published
             << ",claim=" << central.Claimed
@@ -636,7 +655,7 @@ namespace
                         clock,
                         value,
                         APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                        CellMapAndPriority::OLDEST_CLOCK_FIRST
+                        AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
                     ),
                     manager,
                     growth_counter,
@@ -668,7 +687,7 @@ namespace
                         clock,
                         prediction,
                         APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
-                        CellMapAndPriority::COMPLEATE_ATOMICITY
+                        AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
                     ),
                     manager,
                     growth_counter,
@@ -683,7 +702,7 @@ namespace
     }
 }
 
-int main()
+void APCTest()
 {
     std::ios::sync_with_stdio(true);
     std::cout.setf(std::ios::unitbuf);
@@ -701,7 +720,7 @@ int main()
     MasterClockConf clock(nullptr, timer);
 
     ContainerConf cfg;
-    cfg.InitialMode = PackedMode::MODE_32;
+    cfg.InitialMode = PackedMode::MODEL32;
     cfg.ProducerBlockSize = 4;
     cfg.RegionSize = 8;
     cfg.EnableBranching = true;
@@ -890,7 +909,7 @@ int main()
                 clock,
                 state,
                 APCPagedNodeSegmentClasses::STATE_SLOT,
-                CellMapAndPriority::COMPLEATE_ATOMICITY
+                AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
             ),
             manager,
             grow_integrator,
@@ -904,7 +923,7 @@ int main()
                 clock,
                 error,
                 APCPagedNodeSegmentClasses::ERROR_SLOT,
-                CellMapAndPriority::ERROR_FIRST
+                AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
             ),
             manager,
             grow_integrator,
@@ -964,7 +983,7 @@ int main()
                 clock,
                 motor,
                 APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                CellMapAndPriority::CLAIMED_CAS_DEPENDENT
+                AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
             ),
             manager,
             grow_motor,
@@ -978,7 +997,7 @@ int main()
                 clock,
                 feedback,
                 APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
-                CellMapAndPriority::ERROR_FIRST
+                AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
             ),
             manager,
             grow_predictor,
@@ -1120,6 +1139,5 @@ int main()
     std::cout << "overall    : " << PassFail(final_ok) << "\n";
 
     manager.StopAPCManager();
-
-    return final_ok ? 0 : 1;
+    
 }

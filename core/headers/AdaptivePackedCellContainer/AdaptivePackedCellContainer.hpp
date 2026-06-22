@@ -5,20 +5,18 @@
 #include <cstdio>
 #include <iostream>
 #include "SegmentIODefinition.hpp"
-#include "../PackedCellContainerManager.hpp"
+#include "PackedCellContainerManager.hpp"
 
 namespace PredictedAdaptedEncoding
 {
 static_assert(__cpp_lib_atomic_wait, "C++ must suppoet atomic wait/notify");
 
-class PackedCellContainerManager;
 
 class AdaptivePackedCellContainer : public SegmentIODefinition
 {
 
     protected:
 
-        PackedCellContainerManager* APCManagerPtr_{nullptr};
         static inline std::atomic<uint32_t> GlobalBranchIdAlloc_{1};
         static inline thread_local PackedCellContainerManager::ThreadHandlePCCM  ThreadHandleAPCTL_ = {};
         
@@ -69,13 +67,6 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
         uint32_t SuggestedInternalAPCExpension_(CompleteAPCNodeRegionsLayout* complete_layout, uint8_t prefared_percentage_of_free = 50) noexcept;
 
         uint16_t ComputeAdaptivemaxTreies_(packed64_t packed_cell) noexcept;
-
-
-        packed64_t NormalizeDesiredPublishedCellForRegion_(
-            packed64_t out_going_cell,
-            APCPagedNodeSegmentClasses region_kind,
-            OwnershipPolicy node_authority
-        ) noexcept;
 
          bool IfValidPayloadIndex_(size_t idx) noexcept
         {
@@ -131,7 +122,6 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         );
 
-        void FreeAll() noexcept;
 
         void InitRegionIdx(size_t region_size) noexcept;
 
@@ -174,13 +164,6 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
         uint32_t CountExactTotalChainOccupancy(APCPagedNodeSegmentClasses desired_region_class) noexcept;
         
         bool RebuildExectReadyMask() noexcept;
-
-
-
-        static constexpr uint32_t PayloadBegin() noexcept
-        {
-            return SegmentIODefinition::METACELL_COUNT;
-        }
         
          bool IfAPCBranchValid() noexcept
         {
@@ -193,7 +176,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         uint32_t GetProducerCursorPlacement() noexcept
         {
-            return ReadMetaCellValue32(MetaIndexOfAPCNode::PRODUCER_CURSOR_PLACEMENT);
+            return ReadMetaCellFamily32(MetaIndexOfAPCNode::PRODUCER_CURSOR_PLACEMENT);
         }
 
         bool UpdateProducerCursorPlacement(uint32_t new_cursor_placement_idx) noexcept
@@ -212,7 +195,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         uint32_t GetConsumerCursorPlacement() noexcept
         {
-            return ReadMetaCellValue32(MetaIndexOfAPCNode::CONSUMER_CURSORE_PLACEMENT);
+            return ReadMetaCellFamily32(MetaIndexOfAPCNode::CONSUMER_CURSORE_PLACEMENT);
         }
 
         bool UpdateConsumerCursorPlacement(uint32_t new_cursor_value) noexcept
@@ -236,21 +219,6 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
                 return true;
             }
             return false;        
-        }
-
-         AtomicAdaptiveBackoff* GetAtomicAdaptiveBackoffPtr() noexcept
-        {
-            return AdaptiveBackoffOfAPCPtr_;
-        }
-
-
-        PackedCellContainerManager* GetAPCManager() noexcept
-        {
-            if (!APCManagerPtr_)
-            {
-                return nullptr;
-            }
-            return APCManagerPtr_;
         }
 
          AdaptivePackedCellContainer* LoadRegistryNextAPC() const noexcept
@@ -282,6 +250,68 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
         {
             CleanupNextAPCPtr_.store(apc_ptr, MoStoreSeq_);
         }
+
+        bool InitOnFabricBackingAfterBind(
+            size_t capacity,
+            ContainerConf container_cfg,
+            uint64_t branch_id,
+            uint64_t logical_id,
+            uint64_t shared_id,
+            bool is_shared_root,
+            uint64_t aux_param48 = UNSIGNED_ZERO,
+            uint64_t branch_depth = UNSIGNED_ZERO,
+            uint8_t branch_priority = UNSIGNED_ZERO
+        ) noexcept
+        {
+            if (
+                !FabricBackend_ || 
+                !BackingPtr || 
+                capacity != CapacityOfThisAPC_ || 
+                !IsCapacityOfAPCLegal(capacity)
+            )
+            {
+                return false;
+            }
+            
+            const packed64_t default_idle_cell = PackedCell64_t::MakeDefaultAPCPayloadCellOnMode(container_cfg.InitialMode);
+
+            for (size_t i = 0; i < capacity; i++)
+            {
+                BackingPtr[i].store(default_idle_cell, MoStoreSeq_);
+            }
+
+            try
+            {
+                OwnedMasterClockConfPtr_ = std::make_unique<MasterClockConf>(this, LocalTimer48_);
+            }
+            catch(...)
+            {
+                OwnedMasterClockConfPtr_.reset();
+                return false;
+            }
+
+            InitRootOrChildBranch(
+                branch_id,
+                logical_id,
+                shared_id,
+                capacity,
+                container_cfg,
+                is_shared_root,
+                aux_param48,
+                branch_depth,
+                branch_priority
+            );
+
+            container_cfg.NodeGroupSize = 1u;
+            InitZeroState_();
+            if (container_cfg.RegionSize > UNSIGNED_ZERO)
+            {
+                InitRegionIdx(container_cfg.RegionSize);
+            }
+            RefreshAPCMeta_();
+            return true;
+        }
+
 
 
 };

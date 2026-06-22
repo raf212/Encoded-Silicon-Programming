@@ -1,5 +1,5 @@
-#include "NeuromorphicTimeSpace/APCSegmentsCausalCordinator.hpp"
-#include "AdaptivePackedCellContainer/PointerSymenticsAdaptivePackedCellContainer.hpp"
+#include "AdaptivePackedCellContainer/APCSegmentsCausalCordinator.hpp"
+#include "AdaptivePackedCellContainer/APCDataStructure/APCSpikeController/PointerSymenticsAdaptivePackedCellContainer.hpp"
 #include <iostream>
 
 namespace PredictedAdaptedEncoding
@@ -7,8 +7,8 @@ namespace PredictedAdaptedEncoding
     class PackedCellContainerManager;
     uint64_t Assemble64BitFrom2Cell(packed64_t head_cell, packed64_t tail_cell) noexcept
     {
-        val32_t head_val32 = PackedCell64_t::ExtractValue32(head_cell);
-        val32_t tail_val32 = PackedCell64_t::ExtractValue32(tail_cell);
+        val32_t head_val32 = PackedCell64_t::ExtractRaw32FamilyBits(head_cell);
+        val32_t tail_val32 = PackedCell64_t::ExtractRaw32FamilyBits(tail_cell);
         uint64_t assembeled64 = (
             (static_cast<uint64_t>(tail_val32) << VALBITS) | static_cast<uint64_t>(head_val32)
         );
@@ -30,7 +30,7 @@ namespace PredictedAdaptedEncoding
         while (curent_tries++ < max_claim_attempts)
         {
             packed64_t packed_cell_value64 = BackingPtr[probable_idx].load(MoLoad_);
-            Model32Subclass curent_ptr_position = PackedCell64_t::ExtractRelOffset32FromPacked(packed_cell_value64);
+            Model32Subclass curent_ptr_position = PackedCell64_t::ExtractModel32Subclass(packed_cell_value64);
             size_t head_idx = APCDataStructure::APC_SIZE_SENTINAL;
             size_t tail_idx = APCDataStructure::APC_SIZE_SENTINAL;
             if (curent_ptr_position == Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL)
@@ -56,8 +56,8 @@ namespace PredictedAdaptedEncoding
                 return std::nullopt;
             }
 
-            LocalityPolicy head_locality = PackedCell64_t::ExtractLocalityFromPacked(head_screenshot);
-            LocalityPolicy tail_locality = PackedCell64_t::ExtractLocalityFromPacked(tail_screenshot);
+            LocalityPolicy head_locality = PackedCell64_t::ExtractLocalityPolicy(head_screenshot);
+            LocalityPolicy tail_locality = PackedCell64_t::ExtractLocalityPolicy(tail_screenshot);
 
             if (!claim_ownership)
             {
@@ -157,7 +157,8 @@ namespace PredictedAdaptedEncoding
         {
             return;
         }
-        packed64_t idle32 = PackedCell64_t::MakeInitialAPCValidPackedCell(PackedMode::MODEL32);
+
+        packed64_t idle32 = PackedCell64_t::MakeModeledAPCValidPackedCell(ModelFamily::MODEL32);
         BackingPtr[acquired_paired_pointer_struct.HeadIdx].store(idle32, MoStoreSeq_);
         BackingPtr[acquired_paired_pointer_struct.TailIdx].store(idle32, MoStoreSeq_);
         BackingPtr[acquired_paired_pointer_struct.HeadIdx].notify_all();
@@ -225,8 +226,8 @@ namespace PredictedAdaptedEncoding
             size_t tail = (head + 1);
             packed64_t cur_head = BackingPtr[head].load(MoLoad_);
             packed64_t cur_tail = BackingPtr[tail].load(MoLoad_);
-            LocalityPolicy head_locality = PackedCell64_t::ExtractLocalityFromPacked(cur_head);
-            LocalityPolicy tail_locality = PackedCell64_t::ExtractLocalityFromPacked(cur_tail);
+            LocalityPolicy head_locality = PackedCell64_t::ExtractLocalityPolicy(cur_head);
+            LocalityPolicy tail_locality = PackedCell64_t::ExtractLocalityPolicy(cur_tail);
             if (head_locality == LocalityPolicy::IDLE && tail_locality == LocalityPolicy::IDLE)
             {
                 packed64_t claimed_cur_head = PackedCell64_t::SetLocalityInPacked(cur_head, LocalityPolicy::CLAIMED);
@@ -252,7 +253,7 @@ namespace PredictedAdaptedEncoding
                             OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
                             static_cast<tag8_t>(APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY),
                             Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL,
-                            PriorityPolicy::VERSIONED
+                            AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
                         );
                         packed64_t tail_packed = PackedCell64_t::Compose32BitFamilyPackedCell(tail_ptr_val32, 0u, meta16_tail);
                         BackingPtr[tail].store(tail_packed, MoStoreSeq_);
@@ -262,7 +263,7 @@ namespace PredictedAdaptedEncoding
                             OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
                             static_cast<tag8_t>(APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY),
                             Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL,
-                            PriorityPolicy::VERSIONED
+                            AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
                         );
                         packed64_t head_packed = PackedCell64_t::Compose32BitFamilyPackedCell(head_ptr_value32, 0u, meta16_head);
                         BackingPtr[head].store(head_packed, MoStoreSeq_);
@@ -306,7 +307,7 @@ namespace PredictedAdaptedEncoding
                 backoff.AdaptiveBackOffPacked(observed);
             }
             if (
-                HasThisControlEnumFlag(SegmentIODefinition::ControlEnumOfAPCSegment::ENABLE_BRANCHING) && 
+                HasThisControlEnumFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::ENABLE_BRANCHING) && 
                 ShouldSplitNow() && APCManagerPtr_
             )
             {

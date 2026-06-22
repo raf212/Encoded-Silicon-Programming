@@ -24,9 +24,9 @@
     #include <intrin.h>
 #endif
 // META16 / PNLTCOD:
-// [ priority:2 | node_authority:2 | locality:2 | cell_mode:2 | cell_class:4 | mode_subclass:2 | dtype:2 ]
+// [ attribute:2 | node_authority:2 | locality:2 | cell_mode:2 | cell_class:4 | mode_subclass:2 | dtype:2 ]
 // shifts:
-// priority=14, node_authority=12, locality=10, cell_mode= 8, cell_class=4, mode_subclass=2, dtype=0
+// attribute=14, node_authority=12, locality=10, cell_mode= 8, cell_class=4, mode_subclass=2, dtype=0
 
 
 namespace PredictedAdaptedEncoding {
@@ -48,12 +48,14 @@ namespace PredictedAdaptedEncoding {
     static constexpr ::std::memory_order OnExchangeFailure   = ::std::memory_order_relaxed;
     //--
 
-    static constexpr unsigned CLK_B48 = 48u;
+    static constexpr unsigned FAMILY_48_BIT_LEN = 48u;
     static constexpr unsigned VALBITS  = 32u;
-    static constexpr unsigned CLK_B16  = 16u;
+    static constexpr unsigned LOW16_BIT_LEN  = 16u;
     static constexpr unsigned META16_B16  = 16u;
     static constexpr unsigned STBITS   = 8u;
     static constexpr unsigned TOTAL_LOW = 48u;
+
+    static constexpr uint8_t DEFAULT_META16_INDEXING_LIMIT_2BIT = 3;
 
     static constexpr unsigned PRIO_LEN = 2u;
     static constexpr unsigned NODE_AUTH_LEN = 2u;
@@ -81,15 +83,14 @@ namespace PredictedAdaptedEncoding {
     static constexpr tag8_t NODE_AUTH_MASK = static_cast<tag8_t>((1u << NODE_AUTH_LEN) - 1u);
     static constexpr tag8_t PRIORITY_MASK = static_cast<tag8_t>((1u << PRIO_LEN) - 1u);
     
-    static constexpr uint8_t MAX_PRIORITY   = static_cast<tag8_t>(PRIORITY_MASK);
-
     /// @brief HIGHEST_TRUTH of Packed Cell
     enum class LocalityPolicy : tag8_t
     {
         IDLE = 0,
         PUBLISHED = 1,
         CLAIMED = 2,
-        FAULTY = 3
+        FAULTY = 3,
+        UNASSIGNED_UNUSED_NANNULL = 4
     };
 
     /// @brief HIGHEST_TRUTH of Packed Cell
@@ -98,7 +99,8 @@ namespace PredictedAdaptedEncoding {
         ADAPTIVE_PACKED_CELL_CONTAINER = 0,
         NEUROMORPHIC_SPACE_TIME_FABRIC = 1,
         RESERVED_2 = 2,
-        RESERVED_3 = 3
+        RESERVED_3 = 3,
+        UNASSIGNED_UNUSED_NANNULL = 4
     };
 
     /// @brief HIGHEST_TRUTH of Packed Cell
@@ -107,7 +109,9 @@ namespace PredictedAdaptedEncoding {
         CharPCellDataType = 0,
         IntPCellDataType = 1,
         FloatPCellDataType = 2,
-        UnsignedPCellDataType = 3
+        UnsignedPCellDataType = 3,
+        UNASSIGNED_UNUSED_NANNULL = 4
+
     };
 
     /// @brief HIGHEST_TRUTH of Packed Cell
@@ -120,7 +124,8 @@ namespace PredictedAdaptedEncoding {
         MODEL32 = 0,
         VALUE32 = 1,
         MODEL48 = 2,
-        VALUE48 = 3
+        VALUE48 = 3,
+        UNASSIGNED_UNUSED_NANNULL = 4
     };
 
     enum class ModelFamily : tag8_t
@@ -135,28 +140,17 @@ namespace PredictedAdaptedEncoding {
         VALUE48 = PackedMode::VALUE48
     };
 
-    enum class StructureFamily32 : tag8_t
-    {
-        MODEL32 = PackedMode::MODEL32,
-        VALUE32 = PackedMode::VALUE32
-    };
-
-    enum class StructureFamily48 : tag8_t
-    {
-        MODEL48 = PackedMode::MODEL48,
-        VALUE48 = PackedMode::VALUE48
-    };
-
     /// @param RAW_PRIVATE Caller owns range/cell; init/shutdown/private APC segment. 
-    /// @param ATOMIC_SLAMSHOT Atomic load/store whole 64-bit cell. Multiple writers are allowed only if last-writer-wins is acceptable.
+    /// @param ATOMIC_SLNAPSHOT Atomic load/store whole 64-bit cell. Multiple writers are allowed only if last-writer-wins is acceptable.
     /// @param CLAIMED_GURDED Exclusive mutation. After claim, writer may raw-store companion cells, then publish with release store.
     /// @param CAS_RMW For counters, cursors, epochs, clocks, version increments, occupancy deltas. No `CLAIMED` state needed.
-    enum class AccessContractOfValue
+    enum class AccessContractOfValue : tag8_t
     {
         RAW_PRIVATE = 0,
-        ATOMIC_SLAMSHOT = 1,
+        ATOMIC_SLNAPSHOT = 1,
         CLAIMED_GURDED = 2,
-        CAS_RMW = 3
+        CAS_RMW = 3,
+        UNASSIGNED_UNUSED_NANNULL = 4
     };
 
     enum class Model32Subclass : tag8_t
@@ -164,7 +158,8 @@ namespace PredictedAdaptedEncoding {
         SELF_CLASS = 0,
         LOW_OF_PAIRED_VERSIONED_CELL = 1,
         HIGH_OF_PAIRED_VERSIONED_CELL = 2,
-        SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 = 3
+        UNCLOCKED_1x8_PLUS_2x4 = 3,
+        UNASSIGNED_UNUSED_NANNULL = 4
     };
 
     enum class Model48Subclass : tag8_t
@@ -172,17 +167,27 @@ namespace PredictedAdaptedEncoding {
         SELF_CLASS = 0,
         PURE_TIMER_48 = 1,
         SUBDIVISION16x3_INTERNAL_CELL_MODEL  = 2,
-        FOUR_SUBDIVISION_2x16_AND_2x8 = 3
+        FOUR_SUBDIVISION_2x16_AND_2x8 = 3,
+        UNASSIGNED_UNUSED_NANNULL = 4
     };
 
-    enum class PriorityPolicy : tag8_t
+    /// @brief Describs Attribute OF: Packed Cell & Why it exist
+    /// @param SELF_CONTAINED_DATA_OR_MODEL VALUE OR: MODEL -> Itself Carry The Whole Message
+    /// @param INSTRUCTION_CELL VALUE OR: MODEL -> Describs ANY: Kind OF: Instruction TO: Closeby PackedCell
+    /// @param INSTRUCTION_RAW64_NEXT INSTRUCTIONS: If Cells Are Raw64 how TO: Read and Write Them & SEQUENTIAL: N * INSTRUCTION_RAW64_NEXT (N  AMOUNT: Can be used to describe the Meta)
+    /// @param INSTRUCTION_RAW64_EOF INSTRUCTIONS: Defines Its the end Raw64 and LATER ON: Cells Are Packed Cell
+    enum class AttributePolicy : tag8_t
     {
-        VERSIONED = 0,
-        PRESSURE_FIRST = 1,
-        IN_CLOCKED_GENERIC_SPIKE = 2,
-        ERROR_FIRST = 3
+        SELF_CONTAINED_DATA_OR_MODEL = 0,
+        INSTRUCTION_CELL = 1,
+        INSTRUCTION_RAW64_NEXT = 2,
+        INSTRUCTION_RAW64_EOF = 3,
+        UNASSIGNED_UNUSED_NANNULL = 4
     };
 
+    /// @brief Name Of Each Segment On APC
+    /// @param NONE Lower guard prevents a Packed Cell to be ever VALID: 0
+    /// @param NULLNAN Uppper Guard Prevents Pack-ed Cell to be VALID: UINT64_MAX
     enum class APCPagedNodeSegmentClasses : tag8_t
     {
         NONE = 0x0,
@@ -197,33 +202,44 @@ namespace PredictedAdaptedEncoding {
         AUX_SLOT = 0x9,
         HETEROGENOUS_RAW_MEMORY = 0xA,
         SLOT_TABLE_DESCRIPTOR = 0xB,
-        //paired pinter should be valid only in case of Model32Subclass->Paired Subclass
         PAIRED_POINTER_IN_MEMORY = 0xC,
         FREE_SLOT     = 0xD,
         UNDEFINED = 0xE,
         NULLNAN     = 0xF
     };
 
-    enum class FabricTableSegmentClasses : uint16_t //14
-    {   //none should be invalid identifier
+    /// @brief Name Of Each Segment On Fabric
+    /// @param NONE It is the lower guard prevents a Packed Cell to be ever 0
+    /// @param GLOBAL_AND_CONFIG USED:FOR: Everything else after @param THREAD_TABLE
+    /// @param RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES STORES:All Begin & End Pair of indicies for every class of FabricTableSegmentClasses
+    /// @param APC_HANDLE_DESCRIPTOR HOLDS:Each APC x RECORD:APCDescriptorCellType -> DESCRIBS: Initial Fundamental Meta for An APC When Created 
+    /// @param BRANCH_HASH
+    /// @param LOGICAL_HASH
+    /// @param SHARED_HASH
+    /// @param GENERIC_CONTROL USED:FOR: first 96 FabricMetaIndicies
+    /// @param NULLNAN Uppper Guard Prevents Pack-ed Cell to be VALID: UINT64_MAX
+    enum class FabricTableSegmentClasses : tag8_t
+    {
         NONE = 0,
-        //GLOBAL_AND_CONFIG used for everything else where FabricTableSegmentClasses fails 
         GLOBAL_AND_CONFIG = 1,
-        TABLE_DIRECTORY = 2,
-        SLOT_DIRECTORY = 3,
+        RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES = 2,
+        APC_HANDLE_DESCRIPTOR = 3,
         BRANCH_HASH = 4,
         LOGICAL_HASH = 5,
         SHARED_HASH = 6,
         EDGE_TABLE = 7,
-        FREE_RETIRE_TABLE = 8,
+        FREE_APC_LIST = 8,
         READY_QUEUE = 9,
         WORK_QUEUE = 10,
         DEVICE_VIEW_TABLE = 11,
         THREAD_TABLE  = 12,
         SEGMENT_POOL = 13,
-        COUNT = 14,
-        GENERIC_CONTROL = 15
+        GENERIC_CONTROL = 14,
+        NULLNAN = 15,
     };
+
+    using OriginOfRecord = FabricTableSegmentClasses;
+
 
     static  constexpr packed64_t MaskLowNBits(unsigned n) noexcept
     {

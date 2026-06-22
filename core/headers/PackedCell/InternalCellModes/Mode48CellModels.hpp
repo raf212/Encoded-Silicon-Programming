@@ -22,19 +22,24 @@ namespace PredictedAdaptedEncoding
             meta16_t meta16
         ) noexcept
         {
-            const uint64_t raw48 = (PackUnsigned16x3ToMode48_(low16_bits, mid_16_bits, high_16_bits) & MaskLowNBits(CLK_B48));
+            const uint64_t raw48 = (PackUnsigned16x3ToMode48_(low16_bits, mid_16_bits, high_16_bits) & MaskLowNBits(FAMILY_48_BIT_LEN));
             return PackedCell64_t::Compose48BitFamilyPackedCell(raw48, meta16);
         }
 
+        /// @brief Just pack 3 Unsigned value
+        /// @param low16_bits LOWEST 16 bits
+        /// @param mid_16_bits MIDDLE 16 BITS
+        /// @param high_16_bits HIGHIEST 16 BITS
+        /// @return 48bit value -> uint64_t :: HIGH16:MASKED
         static constexpr uint64_t PackUnsigned16x3ToMode48_(
             uint16_t low16_bits,
             uint16_t mid_16_bits,
             uint16_t high_16_bits
         ) noexcept
         {
-            return (uint64_t{low16_bits} << PACK3XU16TOMODE48_SHIFT_LOW)    |
+            return ((uint64_t{low16_bits} << PACK3XU16TOMODE48_SHIFT_LOW)    |
                 (uint64_t{mid_16_bits} << PACK3XU16TOMODE48_SHIFT_MID)      |
-                (uint64_t(high_16_bits) << PACK3XU16TOMODE48_SHIFT_HIGH);
+                (uint64_t(high_16_bits) << PACK3XU16TOMODE48_SHIFT_HIGH)) & MaskLowNBits(FAMILY_48_BIT_LEN);
         }
 
         static constexpr uint16_t ExtractLow16FromUnsigned48_(uint64_t raw48) noexcept
@@ -55,13 +60,13 @@ namespace PredictedAdaptedEncoding
         static constexpr bool IsThisCellASubdevision_3x16_48t(packed64_t packed_cell) noexcept
         {
             return PackedCell64_t::ExtractModeOfPackedCellFromPacked(packed_cell) == PackedMode::MODEL48 &&
-                PackedCell64_t::ExtractRelOffset48FromPacked(packed_cell) == Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL &&
-                PackedCell64_t::ExtractLocalityFromPacked(packed_cell) != LocalityPolicy::FAULTY;
+                PackedCell64_t::ExtractModel48Subclass(packed_cell) == Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL &&
+                PackedCell64_t::ExtractLocalityPolicy(packed_cell) != LocalityPolicy::FAULTY;
         }
 
         static constexpr bool ExtractLowMidHighFromMode48_(uint64_t raw48, uint16_t& low, uint16_t& mid, uint16_t& high)
         {
-            if (raw48 == PackedCell64_t::PACKED_CELL_SENTINAL)
+            if (raw48 >= PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT)
             {
                 return false;
             }
@@ -95,7 +100,7 @@ namespace PredictedAdaptedEncoding
                 Pack2x16Plus2x8UnsignedSubdivision_(
                     lowest_16bit_0, low_16bit_1,
                     high_8bit_2, highest_8bit_3
-                ) & MaskLowNBits(CLK_B48)
+                ) & MaskLowNBits(FAMILY_48_BIT_LEN)
             );
             const packed64_t compressed_packed_cell = PackedCell64_t::Compose48BitFamilyPackedCell(raw48, meta16);
             if (!IsThisCellAFourSubdevision_48t(compressed_packed_cell))
@@ -142,8 +147,7 @@ namespace PredictedAdaptedEncoding
         {
             const PackedCell64_t::AuthoritiveCellView this_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
             return this_cell_auth_view.CellMode == PackedMode::MODEL48 &&
-                this_cell_auth_view.SubClassOfModel48.has_value() &&
-                this_cell_auth_view.SubClassOfModel48.value() == Model48Subclass::FOUR_SUBDIVISION_2x16_AND_2x8 &&
+                this_cell_auth_view.SubClassOfModel48 == Model48Subclass::FOUR_SUBDIVISION_2x16_AND_2x8 &&
                 this_cell_auth_view.CellValueDataType == InternalDataTypePolicy::UnsignedPCellDataType &&
                 this_cell_auth_view.LocalityOfCell != LocalityPolicy::FAULTY;
         }

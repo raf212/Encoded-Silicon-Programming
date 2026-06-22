@@ -33,7 +33,38 @@ namespace PredictedAdaptedEncoding
         static constexpr uint8_t HIGH_ALL_EIGHT_NIBBLE = 0xFFu;
         static constexpr size_t SIZE_OF_APCPagedNodeRelMaskClasses = 16u;
 
-        static  bool INewerClock16(clk16_t candidate, clk16_t baseline) noexcept
+
+        enum class ControlEnumOfAPCSegment : uint32_t
+        {
+            NONE = 0u,
+            ENABLE_BRANCHING = 1u << 0,
+            HAS_REGION_INDEX =  1u << 1,
+            SATURATED = 1u << 2,
+            SPLIT_INFLIGHT = 1u << 3,
+            IS_GRAPH_NODE = 1u << 4,
+            IS_SHARED_ROOT = 1u << 5,
+            IS_SHARED_MAMBER = 1u << 6,
+            HAS_SHARED_NEXT = 1u << 7,
+            HAS_SHARED_PREVIOUS = 1u << 8,
+            HAS_LAYOUT_DIR = 1u << 9,
+            HAS_EDGE_TABLE = 1u << 10,
+            HAS_WEIGHT_TABLE = 1u << 11,
+            LAYOUT_MUTATION_INFLIGHT = 1u << 12
+        };
+
+        enum class ManagerControlFlagBits : uint32_t
+        {
+            NONE = 0u,
+            REGISTERED_APC = 1U << 0,
+            DEAD_APC = 1U << 1,
+            RECLAIMATION_REQUST_FOR_JUST_THIS_APC = 1u << 2,
+            RECLAIMATION_REQUEST_FOR_WHOLE_CHAIN = 1u << 3,
+            REQUEST_NEW_SEGMENTATION = 1u << 4,
+            IN_WORK_STACK = 1u << 5,
+            IN_CLEANUP_STACK = 1u << 6
+        };
+
+        static constexpr bool INewerClock16(clk16_t candidate, clk16_t baseline) noexcept
         {
             if (candidate == baseline)
             {
@@ -42,9 +73,9 @@ namespace PredictedAdaptedEncoding
             return static_cast<uint16_t>(candidate - baseline) < HALF16Bit_THRESHOLD_WRAP;
             
         }
-        static APCPagedNodeSegmentClasses ExtractPagedRelMaskFromPacked (packed64_t packed_cell) noexcept
+        static constexpr APCPagedNodeSegmentClasses ExtractPagedRelMaskFromPacked (packed64_t packed_cell) noexcept
         {
-            return static_cast<APCPagedNodeSegmentClasses>(PackedCell64_t::ExtractRelMaskFromPacked(packed_cell));
+            return static_cast<APCPagedNodeSegmentClasses>(PackedCell64_t::ExtractAPCPagedNodeSegmentClasse(packed_cell));
         }
 
 
@@ -59,12 +90,11 @@ namespace PredictedAdaptedEncoding
         }
 
 
-        static bool CanCellBeConsumedForThisRegion(packed64_t packed_cell, APCPagedNodeSegmentClasses region_kind) noexcept
+        static constexpr bool CanCellBeConsumedForThisRegion(packed64_t packed_cell, APCPagedNodeSegmentClasses region_kind) noexcept
         {
-            return PackedCell64_t::ExtractLocalityFromPacked(packed_cell) == LocalityPolicy::PUBLISHED &&
-                ExtractPagedRelMaskFromPacked(packed_cell) == region_kind &&
-                PackedCell64_t::ExtractRelOffset32FromPacked(packed_cell) == Model32Subclass::SELF_CLASS;
-        }
+            return PackedCell64_t::ExtractLocalityPolicy(packed_cell) == LocalityPolicy::PUBLISHED &&
+                ExtractPagedRelMaskFromPacked(packed_cell) == region_kind;        
+            }
 
         static constexpr MetaIndexOfAPCNode GetOccupancyMetIndexByRegionClass(
             APCPagedNodeSegmentClasses desired_region_class
@@ -76,7 +106,7 @@ namespace PredictedAdaptedEncoding
                 );
         }
 
-        static  bool IsEmbededControlCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        static constexpr bool IsEmbededControlCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
             if (a_cell_view.PageClass == APCPagedNodeSegmentClasses::CONTROL_SLOT)
             {
@@ -86,27 +116,30 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-        static  bool IsEmbededTimerCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        static constexpr bool IsEmbededTimerCell(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
         {
             return a_cell_view.CellMode == PackedMode::MODEL48 && 
-                a_cell_view.SubClassOfModel48.has_value() &&
-                *a_cell_view.SubClassOfModel48 == Model48Subclass::PURE_TIMER_48;
+                a_cell_view.SubClassOfModel48 == Model48Subclass::PURE_TIMER_48;
         }
 
-        static  bool IsThisCellAppropriateAndGenericToConsume(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        static constexpr bool IsThisCellAppropriateAndGenericToConsume(const PackedCell64_t::AuthoritiveCellView& a_cell_view, APCPagedNodeSegmentClasses page_class) noexcept
         {
 
-
-            if (!IsGenericPayloadOffset(a_cell_view))
+            if (!a_cell_view.IsCellValid)
             {
                 return false;
             }
-
+            
             if (a_cell_view.LocalityOfCell != LocalityPolicy::PUBLISHED)
             {
                 return false;
             }
 
+            if (page_class != a_cell_view.PageClass)
+            {
+                return false;
+            }
+            
             if (!IsDataConsumablePageClass(a_cell_view.PageClass))
             {
                 return false;
@@ -120,16 +153,8 @@ namespace PredictedAdaptedEncoding
             return true;
         }
 
-        static  bool IsCellAppropriatelyPagedAndPublishedAsGeneric(
-            const PackedCell64_t::AuthoritiveCellView& view,
-            APCPagedNodeSegmentClasses region_kind
-        ) noexcept
-        {
-            return IsThisCellAppropriateAndGenericToConsume(view) &&
-                view.PageClass == region_kind;
-        }    
 
-        static  bool IsTrackedOccupancyPageClass(APCPagedNodeSegmentClasses page_class) noexcept
+        static constexpr bool IsTrackedOccupancyPageClass(APCPagedNodeSegmentClasses page_class) noexcept
         {
             /*
                 Occupancy-tracked means:
@@ -145,7 +170,7 @@ namespace PredictedAdaptedEncoding
                 page_class != APCPagedNodeSegmentClasses::NULLNAN;
         }
 
-        static  bool IsDataConsumablePageClass(APCPagedNodeSegmentClasses page_class) noexcept
+        static constexpr bool IsDataConsumablePageClass(APCPagedNodeSegmentClasses page_class) noexcept
         {
             /*
                 These regions may contain normal user/runtime data.
@@ -159,25 +184,7 @@ namespace PredictedAdaptedEncoding
                 page_class != APCPagedNodeSegmentClasses::FREE_SLOT;
         }
 
-        static  bool IsGenericPayloadOffset(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
-        {
-            if (!a_cell_view.IsCellValid)
-            {
-                return false;
-            }
-            
-            if (a_cell_view.CellMode == PackedMode::MODEL32)
-            {
-                return a_cell_view.SubClassOfModel32.has_value() && *a_cell_view.SubClassOfModel32 == Model32Subclass::SELF_CLASS;
-            }
-            if (a_cell_view.CellMode == PackedMode::MODEL48)
-            {
-                return a_cell_view.SubClassOfModel48.has_value() && *a_cell_view.SubClassOfModel48 == Model48Subclass::SELF_CLASS;
-            }
-            return false;
-        }
-
-        static  bool DoseThisCellUpdateableAsOccupancy16x3(
+        static constexpr bool DoseThisCellUpdateableAsOccupancy16x3(
             const PackedCell64_t::AuthoritiveCellView& occupancy_cell_view,
             LocalityPolicy desired_cell_locality = LocalityPolicy::PUBLISHED
         ) noexcept
@@ -186,14 +193,61 @@ namespace PredictedAdaptedEncoding
                 !occupancy_cell_view.IsCellValid || occupancy_cell_view.PageClass != APCPagedNodeSegmentClasses::CONTROL_SLOT ||
                 occupancy_cell_view.CellMode != PackedMode::MODEL48 ||
                 occupancy_cell_view.LocalityOfCell != desired_cell_locality ||
-                !occupancy_cell_view.SubClassOfModel48.has_value() ||
-                *occupancy_cell_view.SubClassOfModel48 != Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL
+                occupancy_cell_view.SubClassOfModel48 != Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL
             )
             {
                 return false;
             }
             return true;
         }
+
+    static constexpr packed64_t TryToSwitchPageClassRuntime(
+        packed64_t packed_cell,
+        APCPagedNodeSegmentClasses page_class
+    ) noexcept
+    {
+        const PackedCell64_t::AuthoritiveCellView desired_cell_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
+        if (!desired_cell_view.IsCellValid)
+        {
+            return PackedCell64_t::MakeFaultyCell();
+        }
+
+        if (desired_cell_view.CellOwnership != OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER)
+        {
+            return packed_cell;
+        }
+
+        if (desired_cell_view.ContractOfValue == AccessContractOfValue::CAS_RMW)
+        {
+            return packed_cell;
+        }
+
+        if (desired_cell_view.LocalityOfCell == LocalityPolicy::CLAIMED)
+        {
+            switch (desired_cell_view.ContractOfValue)
+            {
+
+            case AccessContractOfValue::ATOMIC_SLNAPSHOT:
+                return packed_cell;
+
+            case AccessContractOfValue::CLAIMED_GURDED:
+                return packed_cell;
+            
+            default:
+                break;
+            }
+        }
+        
+        if (desired_cell_view.PageClass == APCPagedNodeSegmentClasses::CONTROL_SLOT)
+        {
+            return packed_cell;
+        }
+
+        packed_cell = PackedCell64_t::SetPageClassInPacked(packed_cell, page_class);
+        
+        return packed_cell;
+        
+    }
 
 };
     
@@ -205,7 +259,7 @@ namespace PredictedAdaptedEncoding
         float InitialOrCurrentPercentage = 0u;
         uint16_t VersionNumber = 0u;
 
-        static  MetaIndexOfAPCNode GetLayoutCellMetaIndexForPageClass(
+        static constexpr MetaIndexOfAPCNode GetLayoutCellMetaIndexForPageClass(
             APCPagedNodeSegmentClasses page_class
         ) noexcept
         {
@@ -266,12 +320,12 @@ namespace PredictedAdaptedEncoding
             return BeginIndex >= payload_begain && EndIndex >= BeginIndex && EndIndex <= payload_end && PAGE_LAYOUT_CLASS!= APCPagedNodeSegmentClasses::NULLNAN;
         }
 
-        bool IsEmpty() const noexcept
+        constexpr bool IsEmpty() const noexcept
         {
             return EndIndex <= BeginIndex || PAGE_LAYOUT_CLASS == APCPagedNodeSegmentClasses::NULLNAN;
         }
 
-        uint32_t GetPayloadSpan() const noexcept
+        constexpr uint32_t GetPayloadSpan() const noexcept
         {
             return (EndIndex > BeginIndex) ? (EndIndex - BeginIndex) : 0u;
         }
@@ -286,7 +340,7 @@ namespace PredictedAdaptedEncoding
             return BeginIndex == left.EndIndex && left.GetPayloadSpan() > 0u && left.PAGE_LAYOUT_CLASS != APCPagedNodeSegmentClasses::NULLNAN;
         }
 
-        bool TryGrowRight(uint32_t amount, LayoutBoundsOfSingleRelNodeClass& right) noexcept
+        constexpr bool TryGrowRight(uint32_t amount, LayoutBoundsOfSingleRelNodeClass& right) noexcept
         {
             if (!CanBorrowRightFrom(right) || amount == 0u || right.GetPayloadSpan() < amount)
             {
@@ -297,7 +351,7 @@ namespace PredictedAdaptedEncoding
             return true;            
         }
 
-        bool TryGrowLeft(uint32_t amount, LayoutBoundsOfSingleRelNodeClass& left) noexcept
+        constexpr bool TryGrowLeft(uint32_t amount, LayoutBoundsOfSingleRelNodeClass& left) noexcept
         {
             if (!CanBorrowLeftFrom(left) || amount == 0u || left.GetPayloadSpan() < amount)
             {
@@ -308,7 +362,7 @@ namespace PredictedAdaptedEncoding
             return true;
         }
 
-        uint32_t ClampOrNormalize(uint32_t idx) const noexcept
+        constexpr uint32_t ClampOrNormalize(uint32_t idx) const noexcept
         {
             if (IsEmpty())
             {
@@ -357,8 +411,13 @@ namespace PredictedAdaptedEncoding
             {
                 return false;
             }
+
+            if (!APCAndPagedNodeHelpers::IsDataConsumablePageClass(a_cell_view.PageClass))
+            {
+                return false;
+            }
             
-            return APCAndPagedNodeHelpers::IsCellAppropriatelyPagedAndPublishedAsGeneric(a_cell_view, PAGE_LAYOUT_CLASS);
+            return true;
         }
 
     };
@@ -405,7 +464,7 @@ namespace PredictedAdaptedEncoding
                     FreeLayout.InitialOrCurrentPercentage;
         }
 
-        bool DoseAllPhysicalLayoutCarrySameVersionNumberAsGlobal(
+        constexpr bool DoseAllPhysicalLayoutCarrySameVersionNumberAsGlobal(
             uint16_t global_version_number
         ) noexcept
         {
@@ -431,7 +490,7 @@ namespace PredictedAdaptedEncoding
                 FreeLayout.VersionNumber == global_version_number;
         }
         
-        bool NormalizePercentagesIfNeeded() noexcept
+        constexpr bool NormalizePercentagesIfNeeded() noexcept
         {
             const float sum_of_default = SumOfPercentage();
             if (sum_of_default == 100.00)
@@ -470,7 +529,7 @@ namespace PredictedAdaptedEncoding
             return true;
         }
 
-        LayoutBoundsOfSingleRelNodeClass* GetALayoutByRelMask(APCPagedNodeSegmentClasses desired_rel_mask) noexcept
+        constexpr LayoutBoundsOfSingleRelNodeClass* GetALayoutByRelMask(APCPagedNodeSegmentClasses desired_rel_mask) noexcept
         {
             switch (desired_rel_mask)
             {

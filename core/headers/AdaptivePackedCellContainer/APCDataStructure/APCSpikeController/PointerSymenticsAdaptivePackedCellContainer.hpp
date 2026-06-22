@@ -1,8 +1,8 @@
 #pragma once
 #include <array>
 #include <utility>
-#include "AdaptivePackedCellContainer.hpp"
-#include "PackedCellContainerManager.hpp"
+#include "../../AdaptivePackedCellContainer.hpp"
+#include "../../PackedCellContainerManager.hpp"
 
 namespace PredictedAdaptedEncoding
 {

@@ -2,8 +2,8 @@
 #pragma once 
 #include <array>
 #include <utility>
-#include "../PackedCell/InternalCellModes/Mode48CellModels.hpp"
-#include "../PackedCell/InternalCellModes/Mode32CellModels.hpp"
+#include "../../PackedCell/InternalCellModes/Mode48CellModels.hpp"
+#include "../../PackedCell/InternalCellModes/Mode32CellModels.hpp"
 
 namespace PredictedAdaptedEncoding
 {
@@ -134,30 +134,34 @@ namespace PredictedAdaptedEncoding
         static constexpr uint32_t FABRIC_META_EOF = 0x41474946u;
 
 
-        /// @brief Only functions responsible for storing value or retriving value vhecks validity of Packed Cell
-        /// @return UNCHECKED: packed64_t -> Packed Cell
+        /// @brief USES: Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL & CREATS: Occupancy cell OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER  [LocalityPolicy::PUBLISHED | LocalityPolicy::CLAIMED | LocalityPolicy::FAULTY]
+        /// @param published_count LOWEST: uint16_t in PackUnsigned16x3ToMode48_
+        /// @param claimed_count MID: uint16_t in PackUnsigned16x3ToMode48_
+        /// @param faulty_count HIGHIEST: uint16_t in PackUnsigned16x3ToMode48_
+        /// @return 
         static constexpr packed64_t ComposeAPCOwned16x3Model_48t(
             uint16_t published_count,
             uint16_t claimed_count,
             uint16_t faulty_count,
             APCPagedNodeSegmentClasses page_class,
-            LocalityPolicy locality = LocalityPolicy::PUBLISHED,
-            PriorityPolicy priority = PriorityPolicy::VERSIONED,
-            InternalDataTypePolicy dtype = InternalDataTypePolicy::UnsignedPCellDataType
+            LocalityPolicy locality = LocalityPolicy::PUBLISHED
         ) noexcept
-        {
-            const meta16_t meta16 = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_48t(
-                OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
-                static_cast<tag8_t>(page_class),
-                Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL, 
-                priority, locality, dtype
-            );
+        {   
 
-            return Subdevision16x3InternalMode48CellModel::Compose3Unsigned16bitIndependentInMode48(
+            const uint64_t raw_48 =  Subdevision16x3InternalMode48CellModel::PackUnsigned16x3ToMode48_(
                 published_count,
                 claimed_count,
-                faulty_count,
-                meta16
+                faulty_count
+            );
+
+            return PackedCell64_t::MakeModeledAPCValidPackedCell(
+                ModelFamily::MODEL48,
+                static_cast<tag8_t>(Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL),
+                page_class,
+                locality,
+                InternalDataTypePolicy ::UnsignedPCellDataType,
+                AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
+                raw_48
             );
         }
 
@@ -171,7 +175,7 @@ namespace PredictedAdaptedEncoding
             {
                 return std::nullopt;
             }
-            const uint64_t raw48 = PackedCell64_t::ExtractClk48(packed_cell);
+            const uint64_t raw48 = PackedCell64_t::ExtractRaw48FamilyBits(packed_cell);
             if (raw48 == PackedCell64_t::PACKED_CELL_SENTINAL)
             {
                 return std::nullopt;
@@ -198,7 +202,7 @@ namespace PredictedAdaptedEncoding
             {
                 return UNSIGNED_ZERO;
             }
-            const uint64_t raw48 = PackedCell64_t::ExtractClk48(packed_cell);
+            const uint64_t raw48 = PackedCell64_t::ExtractRaw48FamilyBits(packed_cell);
             uint16_t published = UNSIGNED_ZERO;
             uint16_t claimed = UNSIGNED_ZERO;
             uint16_t faulty = UNSIGNED_ZERO;
@@ -209,20 +213,6 @@ namespace PredictedAdaptedEncoding
             return published + claimed + faulty;
         }
 
-        static constexpr packed64_t ComposeLayoutModelof16x3(
-            uint16_t begin_low,
-            uint16_t end_mid,
-            uint16_t version_high,
-            APCPagedNodeSegmentClasses page_class,
-            LocalityPolicy locality = LocalityPolicy::PUBLISHED,
-            PriorityPolicy priority = PriorityPolicy::VERSIONED,
-            OwnershipPolicy authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
-        ) noexcept
-        {
-            const meta16_t meta16 = PackedCell64_t::MakeInCellMetaForMode_48t(StructureFamily48::MODEL48, priority, authority, locality, page_class, Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL, InternalDataTypePolicy::UnsignedPCellDataType);
-            return Subdevision16x3InternalMode48CellModel::Compose3Unsigned16bitIndependentInMode48(begin_low, end_mid, version_high, meta16);
-        }
-
         static constexpr bool ExtractLayoutModel_BegainL_EndM_VersionH(packed64_t packed_cell, uint16_t& begin_index, uint16_t& end_index, uint16_t& version_count) noexcept
         {
             if (!Subdevision16x3InternalMode48CellModel::IsThisCellASubdevision_3x16_48t(packed_cell))
@@ -230,7 +220,7 @@ namespace PredictedAdaptedEncoding
                 return false;
             }
 
-            const uint64_t raw48 = PackedCell64_t::ExtractClk48(packed_cell);
+            const uint64_t raw48 = PackedCell64_t::ExtractRaw48FamilyBits(packed_cell);
             
             return Subdevision16x3InternalMode48CellModel::ExtractLowMidHighFromMode48_(raw48, begin_index, end_index, version_count);
         }
@@ -239,7 +229,6 @@ namespace PredictedAdaptedEncoding
         {
             return total_capacity > METACELL_COUNT && total_capacity <= APC_MAX_LENGTH_OR_COUNTER;
         }
-
 
     protected:
 
@@ -258,7 +247,7 @@ namespace PredictedAdaptedEncoding
 
         static constexpr uint16_t DerivedIdleFromPackedCell48(packed64_t packed_cell, uint16_t physical_capacity) noexcept
         {
-            const uint64_t raw48 = PackedCell64_t::ExtractClk48(packed_cell);
+            const uint64_t raw48 = PackedCell64_t::ExtractRaw48FamilyBits(packed_cell);
             if (raw48 == PackedCell64_t::PACKED_CELL_SENTINAL)
             {
                 return UNSIGNED_ZERO;
@@ -271,38 +260,39 @@ namespace PredictedAdaptedEncoding
             return value <= APC_MAX_LENGTH_OR_COUNTER;
         }
 
-        static std::atomic<packed64_t>* AllocateAlignedAtomicCells_(size_t count)
+        static packed64_t* AllocateAlignedRawPackedCells_(size_t count)
         {
-            const size_t bytes = sizeof(std::atomic<packed64_t>) * count;
-            void* raw_ptr = ::operator new[](
-                bytes,
-                std::align_val_t{APC_CACHELINE_SIZE}
-            );
-            auto* cells_ptr = static_cast<std::atomic<packed64_t>*>(raw_ptr);
+            if (count == UNSIGNED_ZERO)
+            {
+                return nullptr;
+            }
+
+            void* raw_ptr = nullptr;
+
+            try
+            {
+                raw_ptr = ::operator new[](sizeof(packed64_t) * count, std::align_val_t{APC_CACHELINE_SIZE});
+            }
+            catch(...)
+            {
+                return nullptr;
+            }
+            
+            auto* packed_cells = static_cast<packed64_t*>(raw_ptr);
             for (size_t i = 0; i < count; i++)
             {
-                new(&cells_ptr[i]) std::atomic<packed64_t>{};
+                packed_cells[i] = PackedCell64_t::PACKED_CELL_SENTINAL;
             }
-            return cells_ptr;
+            return packed_cells;
         }
 
-        static constexpr void FreeAlignedAtomicCells_(
-            std::atomic<packed64_t>* backing_ptr,
-            size_t count
-        ) noexcept
+        static constexpr void FreeAlignedRawPackedCells_(packed64_t* backing_ptr) noexcept
         {
             if (!backing_ptr)
             {
                 return;
             }
-            for (size_t i = 0; i < count; i++)
-            {
-                backing_ptr[i].~atomic<packed64_t>();
-            }
-            ::operator delete[](
-                static_cast<void*>(backing_ptr),
-                std ::align_val_t{APC_CACHELINE_SIZE}
-            );
+            ::operator delete[](static_cast<void*>(backing_ptr), std::align_val_t{APC_CACHELINE_SIZE});
         }
 
 

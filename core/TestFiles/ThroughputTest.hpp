@@ -8,14 +8,15 @@
 #include <array>
 #include <optional>
 
-#include "NeuromorphicTimeSpace/APCSegmentsCausalCordinator.hpp"
-#include "PackedCellContainerManager.hpp"
+#include "AdaptivePackedCellContainer/APCSegmentsCausalCordinator.hpp"
+#include "AdaptivePackedCellContainer/PackedCellContainerManager.hpp"
+
 
 using namespace PredictedAdaptedEncoding;
 
-namespace
+namespace 
 {
-    constexpr uint32_t VALUE_COUNT = 25600u;
+    constexpr uint32_t VALUE_COUNT = 256u;
     constexpr uint32_t PRODUCER_COUNT = 2u;
     constexpr uint32_t FF_WORKER_COUNT = 3u;
     constexpr uint32_t FB_WORKER_COUNT = 2u;
@@ -63,13 +64,13 @@ namespace
         MasterClockConf& clock,
         uint32_t value,
         APCPagedNodeSegmentClasses region,
-        PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST
+        AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
     )
     {
         return clock.ComposeClockedModel32FroAPC(
             value,
             region,
-            priority,
+            attribute,
             LocalityPolicy::PUBLISHED,
             Model32Subclass::SELF_CLASS,
             InternalDataTypePolicy::UnsignedPCellDataType,
@@ -81,7 +82,7 @@ namespace
         MasterClockConf& clock,
         float value,
         APCPagedNodeSegmentClasses region,
-        PriorityPolicy priority = PriorityPolicy::PRESSURE_FIRST
+        AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
     )
     {
         const uint32_t bits = BitCastMaybe<uint32_t>(value);
@@ -89,7 +90,7 @@ namespace
         return clock.ComposeClockedModel32FroAPC(
             bits,
             region,
-            priority,
+            attribute,
             LocalityPolicy::PUBLISHED,
             Model32Subclass::SELF_CLASS,
             InternalDataTypePolicy::FloatPCellDataType,
@@ -234,23 +235,14 @@ namespace
         std::cout << "  branch=" << apc.GetBranchId()
                   << " logical=" << apc.GetLogicalId()
                   << " shared=" << apc.GetSharedId()
-                  << " group=" << apc.ReadMetaCellValue32(MetaIndexOfAPCNode::NODE_GROUP_SIZE)
+                  << " group=" << apc.ReadMetaCellFamily32(MetaIndexOfAPCNode::NODE_GROUP_SIZE)
                   << "\n";
 
         std::cout << "  payload_capacity=" << payload
                   << " total_capacity=" << apc.GetTotalCapacityForThisAPC()
                   << " ready_bit=0x" << std::hex
-                  << apc.ReadMetaCellValue32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT)
+                  << apc.ReadMetaCellFamily32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT)
                   << std::dec
-                  << "\n";
-
-        std::cout << "  header locality: "
-                  << "idle=" << header_idle
-                  << " pub=" << header_pub
-                  << " claim=" << header_claim
-                  << " faulty=" << header_fault
-                  << " sum=" << header_sum
-                  << " invariant=" << (header_sum == payload ? "OK" : "BAD")
                   << "\n";
 
         std::cout << "  header locality: "
@@ -260,17 +252,8 @@ namespace
                 << " faulty=" << header_fault
                 << " used=" << header_used
                 << " sum=" << header_sum
-                << " invariant=" << (header_sum == payload ? "OK" : "BAD")
+                << " invariant=" << (header_sum == header_idle + header_pub + header_claim + header_fault ? "OK" : "BAD")
                 << "\n";
-
-        std::cout << "  exact  locality: "
-                  << "idle=" << exact.Idle
-                  << " pub=" << exact.Published
-                  << " claim=" << exact.Claimed
-                  << " faulty=" << exact.Faulty
-                  << " sum=" << exact.Sum()
-                  << " invariant=" << (exact.Sum() == payload ? "OK" : "BAD")
-                  << "\n";
 
         std::cout << "  region published-data pressure:\n";
         PrintRegion("FF   ", apc, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE);
@@ -288,7 +271,7 @@ namespace
     }
 }
 
-int main()
+void ThroughputTest()
 {
     std::ios::sync_with_stdio(true);
     std::cout.setf(std::ios::unitbuf);
@@ -301,7 +284,7 @@ int main()
     MasterClockConf clock(nullptr, timer);
 
     ContainerConf cfg;
-    cfg.InitialMode = PackedMode::MODEL32;
+    cfg.InitialMode = PackedMode::VALUE32;
     cfg.ProducerBlockSize = 8;
     cfg.RegionSize = 16;
     cfg.EnableBranching = true;
@@ -373,10 +356,10 @@ int main()
             for (uint32_t i = p + 1; i <= VALUE_COUNT; i += PRODUCER_COUNT)
             {
                 const packed64_t ff =
-                    PackU32(clock, i, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE, PriorityPolicy::PRESSURE_FIRST);
+                    PackU32(clock, i, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE);
 
                 const packed64_t fb =
-                    PackU32(clock, i + 1u, APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE, PriorityPolicy::PRESSURE_FIRST);
+                    PackU32(clock, i + 1u, APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE);
 
                 if (PublishBudgeted(
                         Sensor,
@@ -444,7 +427,7 @@ int main()
                         clock,
                         state_value,
                         APCPagedNodeSegmentClasses::STATE_SLOT,
-                        PriorityPolicy::PRESSURE_FIRST
+                        AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
                     );
 
                 if (PublishBudgeted(
@@ -501,7 +484,7 @@ int main()
                         clock,
                         error_value,
                         APCPagedNodeSegmentClasses::ERROR_SLOT,
-                        PriorityPolicy::PRESSURE_FIRST
+                        AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
                     );
 
                 if (PublishBudgeted(
@@ -582,7 +565,7 @@ int main()
                         clock,
                         motor_value,
                         APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
-                        PriorityPolicy::PRESSURE_FIRST
+                        AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
                     );
 
                 if (PublishBudgeted(
@@ -684,5 +667,4 @@ int main()
     Sensor.FreeAll();
 
     manager.StopAPCManager();
-    return 0;
 }

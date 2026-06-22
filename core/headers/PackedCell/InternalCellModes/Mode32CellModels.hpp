@@ -60,8 +60,7 @@ namespace PredictedAdaptedEncoding
         {
             const PackedCell64_t::AuthoritiveCellView this_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
             return this_cell_auth_view.CellMode == PackedMode::MODEL32 &&
-                this_cell_auth_view.SubClassOfModel32.has_value() &&
-                this_cell_auth_view.SubClassOfModel32.value() == Model32Subclass::SUBDEVISION_NO_CLOCK16_32BIT_META_1x8PLUS2x4 &&
+                this_cell_auth_view.SubClassOfModel32 == Model32Subclass::UNCLOCKED_1x8_PLUS_2x4 &&
                 this_cell_auth_view.CellValueDataType == InternalDataTypePolicy::UnsignedPCellDataType &&
                 this_cell_auth_view.LocalityOfCell != LocalityPolicy::FAULTY;
         }
@@ -72,13 +71,19 @@ namespace PredictedAdaptedEncoding
     {
         //In paired cell Ideology clk16 is a version count-> CLOCK is unnecessery because it will be mostly used for contron / paired pointers
         static constexpr std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64ForAPC(
-            uint64_t value, clk16_t version,
+            uint64_t value, 
+            clk16_t version,
             LocalityPolicy locality = LocalityPolicy::IDLE,
-            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT
+            APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT,
+            AttributePolicy attribute_policy = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
         ) noexcept
         {
             const std::pair<packed64_t, packed64_t> lowf_highs = GetPairOfLow32FAndHigh32SFromUnsigned64_(
-                value, version, locality, OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, static_cast<tag8_t>(page_class)
+                value, version, 
+                locality, 
+                OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER, 
+                static_cast<tag8_t>(page_class),
+                attribute_policy
             );
 
             if (page_class == APCPagedNodeSegmentClasses::CONTROL_SLOT && value <= IN_CELL_VALUE_MODE32_SENTINAL)
@@ -91,11 +96,16 @@ namespace PredictedAdaptedEncoding
         static constexpr std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64ForFabric(
             uint64_t value, clk16_t version,
             LocalityPolicy locality = LocalityPolicy::IDLE,
-            FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GENERIC_CONTROL
+            FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
+            AttributePolicy attribute_policy = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
         ) noexcept
         {
             const std::pair<packed64_t, packed64_t> lowf_highs = GetPairOfLow32FAndHigh32SFromUnsigned64_(
-                value, version, locality, OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC, static_cast<tag8_t>(fabric_segment_class)
+                value, version, 
+                locality, 
+                OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC, 
+                static_cast<tag8_t>(fabric_segment_class), 
+                attribute_policy
             );
 
             if (fabric_segment_class != FabricTableSegmentClasses::GLOBAL_AND_CONFIG && value <= IN_CELL_VALUE_MODE32_SENTINAL)
@@ -108,12 +118,22 @@ namespace PredictedAdaptedEncoding
     
         static constexpr std::optional<uint64_t> GetFullUnsigned64FromPairedVersionedCell(
             packed64_t low_half, packed64_t high_half,
-            const PackedCell64_t::AuthoritiveCellView* low_half_view_ptr = nullptr,
-            const PackedCell64_t::AuthoritiveCellView* high_half_view_ptr = nullptr
+            PackedCell64_t::AuthoritiveCellView* low_half_view_ptr = nullptr,
+            PackedCell64_t::AuthoritiveCellView* high_half_view_ptr = nullptr
         ) noexcept
         {
             const PackedCell64_t::AuthoritiveCellView low_half_view = PackedCell64_t::GetAuthoritiveViewsForACell(low_half);
-            PackedCell64_t::AuthoritiveCellView high_half_view = PackedCell64_t::GetAuthoritiveViewsForACell(high_half);
+            const PackedCell64_t::AuthoritiveCellView high_half_view = PackedCell64_t::GetAuthoritiveViewsForACell(high_half);
+
+            if (low_half_view_ptr)
+            {
+                *low_half_view_ptr = low_half_view;
+            }
+
+            if (high_half_view_ptr)
+            {
+                *high_half_view_ptr = high_half_view;
+            }
 
             if (low_half_view.RawCell == PackedCell64_t::PACKED_CELL_SENTINAL && high_half_view.RawCell == PackedCell64_t::PACKED_CELL_SENTINAL)
             {
@@ -126,7 +146,7 @@ namespace PredictedAdaptedEncoding
                 low_half_view.SubClassOfModel32 == Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL 
             )
             {
-                return static_cast<uint64_t>(*low_half_view.CellValue32);
+                return static_cast<uint64_t>(low_half_view.Raw32BitInCellData);
             }
 
             if (
@@ -135,18 +155,8 @@ namespace PredictedAdaptedEncoding
                 high_half_view.SubClassOfModel32 == Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL
             )
             {
-                return static_cast<packed64_t>(*low_half_view.CellValue32) | 
-                        (static_cast<packed64_t>(*high_half_view.CellValue32 ) << VALBITS);
-            }
-
-            if (low_half_view_ptr)
-            {
-                low_half_view_ptr = &low_half_view;
-            }
-
-            if (high_half_view_ptr)
-            {
-                high_half_view_ptr = &high_half_view;
+                return static_cast<packed64_t>(low_half_view.Raw32BitInCellData) | 
+                        (static_cast<packed64_t>(high_half_view.Raw32BitInCellData ) << VALBITS);
             }
 
             return std::nullopt;            
@@ -158,7 +168,8 @@ private:
             uint64_t value, clk16_t version,
             LocalityPolicy locality,
             OwnershipPolicy ownership,
-            tag8_t page_class
+            tag8_t page_class,
+            AttributePolicy attribute_policy = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
         ) noexcept
         {
             const uint32_t low_half32 = static_cast<uint32_t>(value & MaskLowNBits(VALBITS));
@@ -167,14 +178,14 @@ private:
             const packed64_t low_half_packed_cell = PackedCell64_t::MakeInitialValidGeneralPackedCell(
                 PackedMode::MODEL32, locality, ownership, page_class,
                 InternalDataTypePolicy::UnsignedPCellDataType, low_half32, version,
-                PriorityPolicy::VERSIONED, 
+                attribute_policy, 
                 static_cast<tag8_t>(Model32Subclass::LOW_OF_PAIRED_VERSIONED_CELL)
             );
     
             const packed64_t high_half_packed_cell = PackedCell64_t::MakeInitialValidGeneralPackedCell(
                 PackedMode::MODEL32, locality, ownership, page_class,
                 InternalDataTypePolicy::UnsignedPCellDataType, high_half32, version,
-                PriorityPolicy::VERSIONED, 
+                attribute_policy, 
                 static_cast<tag8_t>(Model32Subclass::HIGH_OF_PAIRED_VERSIONED_CELL)
             );
 
