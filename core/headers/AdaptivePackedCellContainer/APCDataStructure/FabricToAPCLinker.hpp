@@ -95,6 +95,47 @@ namespace PredictedAdaptedEncoding
     #endif
         }
 
+        static constexpr APCBackingCellAtomicRefViewTemp* BuildBackingViewOverCells_(packed64_t* raw_ptr, size_t count) noexcept
+        {
+            if (!raw_ptr || count == UNSIGNED_ZERO)
+            {
+                return nullptr;
+            };
+
+            void* raw_view = nullptr;
+            try
+            {
+                raw_view = ::operator new[](sizeof(APCBackingCellAtomicRefViewTemp) * count, std::align_val_t{alignof(APCBackingCellAtomicRefViewTemp)});
+            }
+            catch(...)
+            {
+                return nullptr;
+            }
+            
+            auto* view = static_cast<APCBackingCellAtomicRefViewTemp*>(raw_view);
+            for (size_t i = 0; i < count; i++)
+            {
+                new(&view[i]) APCBackingCellAtomicRefViewTemp(&raw_ptr[i]);
+            }
+            return view;
+        }
+
+        static constexpr void FreeBackingView_(APCBackingCellAtomicRefViewTemp* view, size_t count) noexcept
+        {
+            if (!view)
+            {
+                return;
+            }
+
+            for (size_t i = 0; i < count; i++)
+            {
+                view[i].~APCBackingCellAtomicRefViewTemp();
+            }
+            ::operator delete[](
+                static_cast<void*>(view), std::align_val_t{alignof(APCBackingCellAtomicRefViewTemp)}
+            );
+        }
+
     };
 
 static_assert(sizeof(APCBackingCellAtomicRefViewTemp) == sizeof(packed64_t));
@@ -111,72 +152,28 @@ protected:
     SlabToFabricConverterAndCordinator* FabricOwnerPtr_{nullptr};
     uint64_t FabricSlotIndex_{APCDataStructure::APC_SIZE_SENTINAL};
     bool FabricBackend_{false};
-    bool FabricObjectOwnedByFabric{false};
+    bool FabricObjectOwnedByFabric_{false};
 
 /// remove candidate 
     PackedCellContainerManager* APCManagerPtr_{nullptr};
     AtomicAdaptiveBackoff* AdaptiveBackoffOfAPCPtr_{nullptr};
 ////
+/// UPDATE
+    size_t CapacityOfThisAPC_{UNSIGNED_ZERO};
+///
 
-    // bool BindExternalRawFabricBacking_(
-    //     packed64_t* raw_cells_ptr,
-    //     size_t cell_count,
-    //     SlabToFabricConverterAndCordinator* fabric_owner,
-    //     uint64_t fabric_slot_idx,
-    //     bool object_owned_by_fabric
-    // ) noexcept
-    // {
-    //     if (!raw_cells_ptr || cell_count < MINIMUM_BRANCH_CAPACITY || !fabric_owner)
-    //     {
-    //         return false;
-    //     }
-        
-    // }
+    bool BindExternalRawFabricBacking_(
+        packed64_t* raw_cells_ptr,
+        size_t cell_count,
+        SlabToFabricConverterAndCordinator* fabric_owner,
+        uint64_t fabric_slot_idx,
+        bool object_owned_by_fabric
+    ) noexcept;
+
+    void ReleseFabricBindingOnly_() noexcept;
 
 public:
     APCBackingCellAtomicRefViewTemp* BackingPtr{nullptr};
-
-
-    static APCBackingCellAtomicRefViewTemp* BuildBackingViewOverCells_(packed64_t* raw_ptr, size_t count) noexcept
-    {
-        if (!raw_ptr || count == UNSIGNED_ZERO)
-        {
-            return nullptr;
-        };
-
-        void* raw_view = nullptr;
-        try
-        {
-            raw_view = ::operator new[](sizeof(APCBackingCellAtomicRefViewTemp) * count, std::align_val_t{alignof(APCBackingCellAtomicRefViewTemp)});
-        }
-        catch(...)
-        {
-            return nullptr;
-        }
-        
-        auto* view = static_cast<APCBackingCellAtomicRefViewTemp*>(raw_view);
-        for (size_t i = 0; i < count; i++)
-        {
-            new(&view[i]) APCBackingCellAtomicRefViewTemp(&raw_ptr[i]);
-        }
-        return view;
-    }
-
-    static void FreeBackingView_(APCBackingCellAtomicRefViewTemp* view, size_t count) noexcept
-    {
-        if (!view)
-        {
-            return;
-        }
-
-        for (size_t i = 0; i < count; i++)
-        {
-            view[i].~APCBackingCellAtomicRefViewTemp();
-        }
-        ::operator delete[](
-            static_cast<void*>(view), std::align_val_t{alignof(APCBackingCellAtomicRefViewTemp)}
-        );
-    }
 
     bool IsFabricBackend() const noexcept
     {
@@ -193,17 +190,7 @@ public:
         return FabricOwnerPtr_;
     }
 
-
-    void SetFabricOwnerForGlobalAPC(SlabToFabricConverterAndCordinator* fabric_owner) noexcept
-    {
-        FabricOwnerPtr_ = fabric_owner;
-        if (fabric_owner)
-        {
-            APCManagerPtr_ = nullptr;
-            AdaptiveBackoffOfAPCPtr_ = nullptr;
-        }
-    }
-
+    void SetFabricOwnerForGlobalAPC(SlabToFabricConverterAndCordinator* fabric_owner) noexcept;
 
 
     

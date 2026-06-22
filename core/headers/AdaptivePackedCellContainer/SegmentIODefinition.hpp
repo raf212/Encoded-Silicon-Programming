@@ -43,7 +43,7 @@ public:
 
     bool ValidMetaIdx(MetaIndexOfAPCNode idx) noexcept
     {
-        return BackingPtr && static_cast<size_t>(idx) < BranchCapacity_ && static_cast<size_t>(idx) < METACELL_COUNT;
+        return BackingPtr && static_cast<size_t>(idx) < CapacityOfThisAPC_ && static_cast<size_t>(idx) < METACELL_COUNT;
     }
 
     packed64_t ReadFullMetaCell(MetaIndexOfAPCNode idx) noexcept
@@ -59,7 +59,6 @@ protected:
 
     Timer48 LocalTimer48_;
     std::unique_ptr<MasterClockConf> OwnedMasterClockConfPtr_;
-    size_t BranchCapacity_{0};
 
     bool TurnOnMultipleSegmentFlagsAtOnce_(uint32_t use_or_between_flags = UNSIGNED_ZERO) noexcept
     {
@@ -200,12 +199,12 @@ public:
 
     bool IsBound() const noexcept
     {
-        return BackingPtr != nullptr && BranchCapacity_ >= METACELL_COUNT;
+        return BackingPtr != nullptr && CapacityOfThisAPC_ >= METACELL_COUNT;
     }
 
     size_t PayloadCapacity() const noexcept
     {
-        return BranchCapacity_ > METACELL_COUNT ? (BranchCapacity_ - METACELL_COUNT) : 0u;
+        return CapacityOfThisAPC_ > METACELL_COUNT ? (CapacityOfThisAPC_ - METACELL_COUNT) : 0u;
     }
 
     void InitLogicalNodeIdentity(
@@ -432,13 +431,13 @@ public:
     void BindExternalStorage_(packed64_t* packed_ptr, size_t cell_count) noexcept
     {
         BackingPtr->CellPtr = packed_ptr;
-        BranchCapacity_ = cell_count;
+        CapacityOfThisAPC_ = cell_count;
     }
 
     void UnbindExternalStorage_() noexcept
     {
         BackingPtr = nullptr;
-        BranchCapacity_ = UNSIGNED_ZERO;
+        CapacityOfThisAPC_ = UNSIGNED_ZERO;
     }
 
 };

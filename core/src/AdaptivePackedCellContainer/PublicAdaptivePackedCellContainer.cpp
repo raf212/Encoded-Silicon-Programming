@@ -113,7 +113,7 @@ namespace PredictedAdaptedEncoding
         }
         
         BackingPtr->CellPtr = AllocateAlignedRawPackedCells_(container_capacity);
-        BranchCapacity_ = container_capacity;        
+        CapacityOfThisAPC_ = container_capacity;        
         packed64_t idle_cell = PackedCell64_t::MakeDefaultAPCPayloadCellOnMode(container_cfg.InitialMode);
         for (size_t i = 0; i < container_capacity; i++)
         {
@@ -797,7 +797,7 @@ namespace PredictedAdaptedEncoding
         // const uint32_t capacity = GetTotalCapacityForThisAPC();
         FreeAlignedRawPackedCells_(BackingPtr->CellPtr);
         BackingPtr = nullptr;
-        BranchCapacity_ = 0;
+        CapacityOfThisAPC_ = 0;
         RegionRelArray_.reset();
         RegionEpochArray_.reset();
         RelBitmaps_.clear();
