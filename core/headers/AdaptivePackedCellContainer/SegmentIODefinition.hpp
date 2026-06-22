@@ -59,7 +59,6 @@ public:
 protected:
 
     Timer48 LocalTimer48_;
-    AtomicAdaptiveBackoff* AdaptiveBackoffOfAPCPtr_{nullptr};
     std::unique_ptr<MasterClockConf> OwnedMasterClockConfPtr_;
     size_t BranchCapacity_{0};
 

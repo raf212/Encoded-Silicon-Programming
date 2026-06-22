@@ -1,5 +1,5 @@
 #include "NeuromorphicTimeSpace/APCSegmentsCausalCordinator.hpp"
-#include "AdaptivePackedCellContainer/PointerSymenticsAdaptivePackedCellContainer.hpp"
+#include "AdaptivePackedCellContainer/APCDataStructure/APCSpikeController/PointerSymenticsAdaptivePackedCellContainer.hpp"
 #include <iostream>
 
 namespace PredictedAdaptedEncoding

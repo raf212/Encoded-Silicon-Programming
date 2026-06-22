@@ -1,9 +1,11 @@
 #pragma once
-#include "../APCSpikeController/AtomicAdaptiveBackoff.hpp"
+#include "APCSpikeController/AtomicAdaptiveBackoff.hpp"
 
 namespace PredictedAdaptedEncoding
 {
     class SlabToFabricConverterAndCordinator;
+
+    class PackedCellContainerManager;
 
     struct APCBackingCellAtomicRefViewTemp
     {
@@ -105,9 +107,17 @@ class FabricToAPCLinker : public APCDataStructure
 protected:
     packed64_t* OwnedRawBackingCells_{nullptr};
     APCBackingCellAtomicRefViewTemp* OwnedBackingView_{nullptr};
+    SlabToFabricConverterAndCordinator* FabricOwnerPtr_{nullptr};
     uint64_t FabricSlotIndex_{APCDataStructure::APC_SIZE_SENTINAL};
     bool FabricBackend_{false};
     bool FabricObjectOwnedByFabric{false};
+
+/// remove candidate 
+    PackedCellContainerManager* APCManagerPtr_{nullptr};
+    AtomicAdaptiveBackoff* AdaptiveBackoffOfAPCPtr_{nullptr};
+
+
+
 
 public:
 
@@ -151,6 +161,33 @@ public:
             static_cast<void*>(view), std::align_val_t{alignof(APCBackingCellAtomicRefViewTemp)}
         );
     }
+
+    bool IsFabricBackend() const noexcept
+    {
+        return FabricBackend_;
+    }
+
+    uint64_t GetFabricSlotIndex() const noexcept
+    {
+        return FabricSlotIndex_;
+    }
+
+    SlabToFabricConverterAndCordinator* GetFabricOwner() noexcept
+    {
+        return FabricOwnerPtr_;
+    }
+
+
+    void SetFabricOwnerForGlobalAPC(SlabToFabricConverterAndCordinator* fabric_owner) noexcept
+    {
+        FabricOwnerPtr_ = fabric_owner;
+        if (fabric_owner)
+        {
+            APCManagerPtr_ = nullptr;
+            AdaptiveBackoffOfAPCPtr_ = nullptr;
+        }
+    }
+
 
 
     

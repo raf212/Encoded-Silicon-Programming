@@ -5,20 +5,18 @@
 #include <cstdio>
 #include <iostream>
 #include "SegmentIODefinition.hpp"
-#include "../PackedCellContainerManager.hpp"
+#include "PackedCellContainerManager.hpp"
 
 namespace PredictedAdaptedEncoding
 {
 static_assert(__cpp_lib_atomic_wait, "C++ must suppoet atomic wait/notify");
 
-class PackedCellContainerManager;
 
 class AdaptivePackedCellContainer : public SegmentIODefinition
 {
 
     protected:
 
-        PackedCellContainerManager* APCManagerPtr_{nullptr};
         static inline std::atomic<uint32_t> GlobalBranchIdAlloc_{1};
         static inline thread_local PackedCellContainerManager::ThreadHandlePCCM  ThreadHandleAPCTL_ = {};
         

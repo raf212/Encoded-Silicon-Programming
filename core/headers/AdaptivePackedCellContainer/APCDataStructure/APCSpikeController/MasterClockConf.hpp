@@ -1,5 +1,5 @@
 #pragma once 
-#include "../APCDataStructure/APCGenerics.hpp"
+#include "../APCGenerics.hpp"
 
 
 namespace PredictedAdaptedEncoding

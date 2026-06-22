@@ -9,7 +9,7 @@
 #include <optional>
 
 #include "NeuromorphicTimeSpace/APCSegmentsCausalCordinator.hpp"
-#include "PackedCellContainerManager.hpp"
+#include "AdaptivePackedCellContainer/PackedCellContainerManager.hpp"
 
 
 using namespace PredictedAdaptedEncoding;

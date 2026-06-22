@@ -1,6 +1,6 @@
 
 #pragma once 
-#include "AdaptivePackedCellContainer/SegmentIODefinition.hpp"
+#include "SegmentIODefinition.hpp"
 # include <functional>
 
 namespace PredictedAdaptedEncoding
