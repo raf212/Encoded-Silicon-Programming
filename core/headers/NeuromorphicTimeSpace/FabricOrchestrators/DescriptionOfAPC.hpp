@@ -1,5 +1,5 @@
 #pragma once 
-#include "../CoreOfFabricCoordinator.hpp"
+#include "CoreOfFabricCoordinator.hpp"
 
 namespace PredictedAdaptedEncoding
 {
@@ -10,7 +10,7 @@ struct APCDescriptorRange
     size_t EndIndex = UNSIGNED_ZERO;
     bool IsVAlid = false;
 };
-static_assert(sizeof(APCDescriptorRange) == RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC * sizeof(packed64_t));
+static_assert(sizeof(APCDescriptorRange) == RECORD_BOOK_WIDTH * sizeof(packed64_t));
 static_assert(alignof(APCDescriptorRange) == alignof(packed64_t));
 
 
@@ -20,7 +20,7 @@ struct DescriptionOfAPC
 
     static constexpr uint64_t VALID_BUFFER_MARK = 1111111111111;
 
-    using SingleAPCDescriptionCellBuffer = std::array<uint64_t, APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX + 1>;
+    using SingleAPCDescriptionCellBuffer = std::array<packed64_t, APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX + 1>;
 
     /// @brief Assignes UINT64_MAX  UPTO:INDEX: APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX - 1 and Next 2 INDEX: UNSIGNED_ZERO
     /// @param default_array 
@@ -153,7 +153,7 @@ struct DescriptionOfAPC
 
     /// @brief 
     /// @param state_of_apc MUST PACKEDMODE:MODEL32 -> AND Model32Subclass::UNCLOCKED_1x8_PLUS_2x4 -> [LOWEST16-> VERSION | MID16 -> State Of APC | HIGHIEST16 -> Ownership Of APC] 
-    /// @return CELL INVALID: std::nullopt / HashKeyValueDistanceTriplet with Validity flag
+    /// @return CELL INVALID: std::nullopt / HashFilesCarrier with Validity flag
     static constexpr packed64_t MakeStateandSaftyCellOfSingleAPCDescriptor(
         size_t segment_pool_begin, 
         size_t segment_pool_end,
@@ -350,10 +350,12 @@ struct DescriptionOfAPC
         SetADescriptionInCellBuffer(apc_description_buffer, APCDescriptorCellType::RETIRE_EPOCH48, UNSIGNED_ZERO, cell_locality);
         SetADescriptionInCellBuffer(apc_description_buffer, APCDescriptorCellType::APC_FLAGS_FOR_THIS, UNSIGNED_ZERO, cell_locality);
         SetOccupancyInBuffer(apc_description_buffer, UNSIGNED_ZERO, UNSIGNED_ZERO, UNSIGNED_ZERO, cell_locality);
-        MakeStateandSaftyCellOfSingleAPCDescriptor(
+        const packed64_t state_ownership_version_cell =  MakeStateandSaftyCellOfSingleAPCDescriptor(
             segment_pool_begin, segment_pool_end, StateOfSingleAPCDescription::RECORD_WITH_SEGMENT_POOL, 
             version, cell_locality, OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC
         );
+
+        apc_description_buffer[static_cast<size_t>(APCDescriptorCellType::STATE_OWNERSHIP_VESION_SAFTY)] = state_ownership_version_cell;
 
         apc_description_buffer[APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX] = UNSIGNED_ZERO;
 

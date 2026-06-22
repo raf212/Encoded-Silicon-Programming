@@ -1,5 +1,5 @@
 #pragma once 
-#include "../AdaptivePackedCellContainer/SegmentIODefinition.hpp"
+#include "../../AdaptivePackedCellContainer/SegmentIODefinition.hpp"
 
 namespace PredictedAdaptedEncoding
 {
@@ -14,10 +14,13 @@ namespace PredictedAdaptedEncoding
     static constexpr size_t WORK_RECORD_WIDTH_OF_FABRIC = 4u;
     static constexpr size_t DEVICE_VIEW_WIDTH_OF_APC_FABRIC = 8u;
     static constexpr size_t THREAD_TABLE_RECORD_WIDTH = 4u;
-    static constexpr size_t DEFAULT_THREAD_SLOT_OF_FABRIC = 256u;
+    static constexpr size_t DEFAULT_THREAD_TABLE_CAPACITY = 256u;
 
     static constexpr size_t DEFAULT_FABRIC_CONTROLIO_LENGTH = 1024u;
     ///--------------------------
+
+    static constexpr uint8_t MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY = 32u;
+    static_assert(MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY <= UINT8_MAX);
 
     enum class RecordBookInternalIndexing : tag8_t
     {
@@ -26,7 +29,7 @@ namespace PredictedAdaptedEncoding
         META32 = 2,
         UNASSIGNED_UNUSED_NANNULL = 3
     };
-    static constexpr size_t RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC = static_cast<size_t>(RecordBookInternalIndexing::UNASSIGNED_UNUSED_NANNULL);
+    static constexpr size_t RECORD_BOOK_WIDTH = static_cast<size_t>(RecordBookInternalIndexing::UNASSIGNED_UNUSED_NANNULL);
 
     enum class HashTableInternalIndexing : tag8_t
     {
@@ -166,7 +169,7 @@ namespace PredictedAdaptedEncoding
 
         static constexpr bool IsQueueTable(FabricTableSegmentClasses table_class) noexcept
         {
-            return table_class == FabricTableSegmentClasses::FREE_RETIRE_TABLE ||
+            return table_class == FabricTableSegmentClasses::FREE_APC_LIST ||
                 table_class == FabricTableSegmentClasses::READY_QUEUE ||
                 table_class == FabricTableSegmentClasses::WORK_QUEUE;
         }
@@ -198,7 +201,7 @@ namespace PredictedAdaptedEncoding
             switch (table_idintity)
             {
             case FabricTableSegmentClasses::RECORD_BOOK_OF_TABLE_SEGMENT_CLASSES:
-                return static_cast<uint8_t>(RECORD_BOOK_OF_TABLE_SEGMENT_CLASS_WIDTH_OF_FABRIC);
+                return static_cast<uint8_t>(RECORD_BOOK_WIDTH);
             
             case FabricTableSegmentClasses::APC_HANDLE_DESCRIPTOR:
                 return static_cast<uint8_t>(APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX);
@@ -211,7 +214,7 @@ namespace PredictedAdaptedEncoding
             case FabricTableSegmentClasses::EDGE_TABLE:
                 return static_cast<uint8_t>(RELATION_WIDTH_OF_FABRIC);
 
-            case FabricTableSegmentClasses::FREE_RETIRE_TABLE:
+            case FabricTableSegmentClasses::FREE_APC_LIST:
             case FabricTableSegmentClasses::READY_QUEUE:
                 return static_cast<uint8_t>(QUEUE_RECORD_WIDTH_OF_FABRIC);
 
@@ -276,6 +279,43 @@ namespace PredictedAdaptedEncoding
             }
         }
 
+        using DefaultMemCopyBuffer = std::array<packed64_t, MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY>;
+
+        static constexpr void BuildDefaultMemCopyBuffer(DefaultMemCopyBuffer& a_default_buffer) noexcept
+        {
+            for (size_t i = 0; i < MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY; i++)
+            {
+                a_default_buffer[i] = PackedCell64_t::PACKED_CELL_SENTINAL;
+            }
+        }
+
+
+        static constexpr bool IsCellValidFabricMetaIndecies(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept
+        {
+            if (
+                !a_cell_view.IsCellValid ||
+                a_cell_view.CellOwnership != OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC ||
+                a_cell_view.FabricTableSegmentClass != FabricTableSegmentClasses::GENERIC_CONTROL
+            )
+            {
+                return false;
+            }
+
+            switch (a_cell_view.CellMode)
+            {
+
+            case PackedMode::MODEL48:
+                return a_cell_view.SubClassOfModel48 == Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL;
+            
+            case PackedMode::VALUE48:
+                return true;
+
+            default:
+                return false;
+            }
+            
+        }
+    
     };
 
 
@@ -350,5 +390,6 @@ namespace PredictedAdaptedEncoding
 #endif
         }
     };
-    
+
+
 }

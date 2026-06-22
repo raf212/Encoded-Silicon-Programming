@@ -118,12 +118,22 @@ namespace PredictedAdaptedEncoding
     
         static constexpr std::optional<uint64_t> GetFullUnsigned64FromPairedVersionedCell(
             packed64_t low_half, packed64_t high_half,
-            const PackedCell64_t::AuthoritiveCellView* low_half_view_ptr = nullptr,
-            const PackedCell64_t::AuthoritiveCellView* high_half_view_ptr = nullptr
+            PackedCell64_t::AuthoritiveCellView* low_half_view_ptr = nullptr,
+            PackedCell64_t::AuthoritiveCellView* high_half_view_ptr = nullptr
         ) noexcept
         {
             const PackedCell64_t::AuthoritiveCellView low_half_view = PackedCell64_t::GetAuthoritiveViewsForACell(low_half);
-            PackedCell64_t::AuthoritiveCellView high_half_view = PackedCell64_t::GetAuthoritiveViewsForACell(high_half);
+            const PackedCell64_t::AuthoritiveCellView high_half_view = PackedCell64_t::GetAuthoritiveViewsForACell(high_half);
+
+            if (low_half_view_ptr)
+            {
+                *low_half_view_ptr = low_half_view;
+            }
+
+            if (high_half_view_ptr)
+            {
+                *high_half_view_ptr = high_half_view;
+            }
 
             if (low_half_view.RawCell == PackedCell64_t::PACKED_CELL_SENTINAL && high_half_view.RawCell == PackedCell64_t::PACKED_CELL_SENTINAL)
             {
@@ -147,16 +157,6 @@ namespace PredictedAdaptedEncoding
             {
                 return static_cast<packed64_t>(low_half_view.Raw32BitInCellData) | 
                         (static_cast<packed64_t>(high_half_view.Raw32BitInCellData ) << VALBITS);
-            }
-
-            if (low_half_view_ptr)
-            {
-                low_half_view_ptr = &low_half_view;
-            }
-
-            if (high_half_view_ptr)
-            {
-                high_half_view_ptr = &high_half_view;
             }
 
             return std::nullopt;            

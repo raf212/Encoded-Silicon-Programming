@@ -4,8 +4,6 @@ namespace PredictedAdaptedEncoding
 {
     //packedCell
     #define ID_HASH_GOLDEN_CONST 0x9E3779B97F4A7C15ull 
-    #define DEFAULT_PAIRED_HEAD_HALF_PRIORITY 10u
-    #define SIZE_OF_MODE_48 6u // 6 * 8 = 48
     //runtime
     #define MIN_PRODUCER_BLOCK_SIZE 96
     #define MIN_REGION_SIZE 4
@@ -44,6 +42,9 @@ namespace PredictedAdaptedEncoding
     static constexpr unsigned MINIMUM_BRANCH_CAPACITY = 256u;
     static constexpr uint32_t IN_CELL_VALUE_MODE32_SENTINAL = UINT32_MAX;
     static constexpr uint16_t META_16_SENTINAL = UINT16_MAX;
+
+    static constexpr uint8_t SIZE_OF_MODE_48 = 6u;
+
     
     
 }
