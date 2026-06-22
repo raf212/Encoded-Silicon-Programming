@@ -1,17 +1,16 @@
 #pragma once
-#include "PackedCell/CoreCellDefination.hpp"
-#include "APCSpikeController/AtomicAdaptiveBackoff.hpp"
+#include "APCDataStructure/FabricToAPCLinker.hpp"
 
 namespace PredictedAdaptedEncoding
 {
 
 
-class SegmentIODefinition : public APCDataStructure
+class SegmentIODefinition : public FabricToAPCLinker
 {
 public:
     SegmentIODefinition() noexcept = default;
     
-    std::atomic<packed64_t>* BackingPtr{nullptr};
+    APCBackingCellAtomicRefViewTemp* BackingPtr{nullptr};
 
     enum class ControlEnumOfAPCSegment : uint32_t
     {
@@ -58,6 +57,7 @@ public:
     }
     
 protected:
+
     Timer48 LocalTimer48_;
     AtomicAdaptiveBackoff* AdaptiveBackoffOfAPCPtr_{nullptr};
     std::unique_ptr<MasterClockConf> OwnedMasterClockConfPtr_;

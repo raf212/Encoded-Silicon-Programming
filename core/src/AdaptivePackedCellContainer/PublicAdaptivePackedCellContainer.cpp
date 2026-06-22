@@ -112,8 +112,8 @@ namespace PredictedAdaptedEncoding
             throw std::invalid_argument("Capacity is unbounded and not acceptable must be > METACELL_COUNT(95) && <= APC_MAX_LENGTH_OR_COUNTER ");
         }
         
-        BackingPtr = AllocateAlignedAtomicCells_(container_capacity);
-        BranchCapacity_ = container_capacity;
+        BackingPtr = AllocateAlignedRawPackedCells_(container_capacity);
+        BranchCapacity_ = container_capacity;        
         packed64_t idle_cell = PackedCell64_t::MakeDefaultAPCPayloadCellOnMode(container_cfg.InitialMode);
         for (size_t i = 0; i < container_capacity; i++)
         {
@@ -141,7 +141,7 @@ namespace PredictedAdaptedEncoding
         {
             AdaptiveBackoffOfAPCPtr_ = nullptr;
             OwnedMasterClockConfPtr_.reset();
-            FreeAlignedAtomicCells_(BackingPtr, container_capacity);
+            FreeAlignedRawPackedCells_(BackingPtr, container_capacity);
             BackingPtr = nullptr;
             throw;
         }
@@ -795,7 +795,7 @@ namespace PredictedAdaptedEncoding
         AdaptiveBackoffOfAPCPtr_ = nullptr;
         OwnedMasterClockConfPtr_.reset();   
         // const uint32_t capacity = GetTotalCapacityForThisAPC();
-        FreeAlignedAtomicCells_(BackingPtr, BranchCapacity_);
+        FreeAlignedRawPackedCells_(BackingPtr, BranchCapacity_);
         BackingPtr = nullptr;
         BranchCapacity_ = 0;
         RegionRelArray_.reset();

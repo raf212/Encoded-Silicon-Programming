@@ -260,38 +260,39 @@ namespace PredictedAdaptedEncoding
             return value <= APC_MAX_LENGTH_OR_COUNTER;
         }
 
-        static std::atomic<packed64_t>* AllocateAlignedAtomicCells_(size_t count)
+        static packed64_t* AllocateAlignedRawPackedCells_(size_t count)
         {
-            const size_t bytes = sizeof(std::atomic<packed64_t>) * count;
-            void* raw_ptr = ::operator new[](
-                bytes,
-                std::align_val_t{APC_CACHELINE_SIZE}
-            );
-            auto* cells_ptr = static_cast<std::atomic<packed64_t>*>(raw_ptr);
+            if (count == UNSIGNED_ZERO)
+            {
+                return nullptr;
+            }
+
+            void* raw_ptr = nullptr;
+
+            try
+            {
+                raw_ptr = ::operator new[](sizeof(packed64_t) * count, std::align_val_t{APC_CACHELINE_SIZE});
+            }
+            catch(...)
+            {
+                return nullptr;
+            }
+            
+            auto* packed_cells = static_cast<packed64_t*>(raw_ptr);
             for (size_t i = 0; i < count; i++)
             {
-                new(&cells_ptr[i]) std::atomic<packed64_t>{};
+                packed_cells[i] = PackedCell64_t::PACKED_CELL_SENTINAL;
             }
-            return cells_ptr;
+            return packed_cells;
         }
 
-        static constexpr void FreeAlignedAtomicCells_(
-            std::atomic<packed64_t>* backing_ptr,
-            size_t count
-        ) noexcept
+        static constexpr void FreeAlignedRawPackedCells_(packed64_t* backing_ptr) noexcept
         {
             if (!backing_ptr)
             {
                 return;
             }
-            for (size_t i = 0; i < count; i++)
-            {
-                backing_ptr[i].~atomic<packed64_t>();
-            }
-            ::operator delete[](
-                static_cast<void*>(backing_ptr),
-                std ::align_val_t{APC_CACHELINE_SIZE}
-            );
+            ::operator delete[](static_cast<void*>(backing_ptr), std::align_val_t{APC_CACHELINE_SIZE});
         }
 
 
