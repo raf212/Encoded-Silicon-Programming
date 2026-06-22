@@ -8,7 +8,7 @@
 #include <array>
 #include <optional>
 
-#include "NeuromorphicTimeSpace/APCSegmentsCausalCordinator.hpp"
+#include "AdaptivePackedCellContainer/APCSegmentsCausalCordinator.hpp"
 #include "AdaptivePackedCellContainer/PackedCellContainerManager.hpp"
 
 

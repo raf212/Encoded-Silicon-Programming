@@ -10,7 +10,6 @@ class SegmentIODefinition : public FabricToAPCLinker
 public:
     SegmentIODefinition() noexcept = default;
     
-    APCBackingCellAtomicRefViewTemp* BackingPtr{nullptr};
 
     enum class ControlEnumOfAPCSegment : uint32_t
     {
@@ -364,11 +363,11 @@ public:
         return JustUpdateValueOfMeta32(MetaIndexOfAPCNode::SEGMENT_KIND, current_segment_kind, static_cast<uint32_t>(region_kind));
     }
 
-    std::atomic<packed64_t>* GetAPCBackinghPtr() noexcept
+    packed64_t* GetAPCBackinghPtr() noexcept
     {
-        if (BackingPtr)
+        if (BackingPtr && BackingPtr->CellPtr)
         {
-            return BackingPtr;
+            return BackingPtr->CellPtr;
         }
         return nullptr;
     }
@@ -430,9 +429,9 @@ public:
             ReadFaultyOccupancyOfAPAgeClass(page_class);
     }
 
-    void BindExternalStorage_(std::atomic<packed64_t>* packed_ptr, size_t cell_count) noexcept
+    void BindExternalStorage_(packed64_t* packed_ptr, size_t cell_count) noexcept
     {
-        BackingPtr = packed_ptr;
+        BackingPtr->CellPtr = packed_ptr;
         BranchCapacity_ = cell_count;
     }
 

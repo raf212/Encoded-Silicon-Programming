@@ -11,7 +11,7 @@
 #include <algorithm>
 #include <string>
 
-#include "NeuromorphicTimeSpace/APCSegmentsCausalCordinator.hpp"
+#include "AdaptivePackedCellContainer/APCSegmentsCausalCordinator.hpp"
 #include "AdaptivePackedCellContainer/PackedCellContainerManager.hpp"
 
 

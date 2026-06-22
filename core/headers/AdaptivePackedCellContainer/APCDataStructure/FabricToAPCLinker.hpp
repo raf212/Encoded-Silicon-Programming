@@ -105,6 +105,7 @@ class FabricToAPCLinker : public APCDataStructure
 {
 
 protected:
+
     packed64_t* OwnedRawBackingCells_{nullptr};
     APCBackingCellAtomicRefViewTemp* OwnedBackingView_{nullptr};
     SlabToFabricConverterAndCordinator* FabricOwnerPtr_{nullptr};
@@ -115,11 +116,26 @@ protected:
 /// remove candidate 
     PackedCellContainerManager* APCManagerPtr_{nullptr};
     AtomicAdaptiveBackoff* AdaptiveBackoffOfAPCPtr_{nullptr};
+////
 
-
-
+    // bool BindExternalRawFabricBacking_(
+    //     packed64_t* raw_cells_ptr,
+    //     size_t cell_count,
+    //     SlabToFabricConverterAndCordinator* fabric_owner,
+    //     uint64_t fabric_slot_idx,
+    //     bool object_owned_by_fabric
+    // ) noexcept
+    // {
+    //     if (!raw_cells_ptr || cell_count < MINIMUM_BRANCH_CAPACITY || !fabric_owner)
+    //     {
+    //         return false;
+    //     }
+        
+    // }
 
 public:
+    APCBackingCellAtomicRefViewTemp* BackingPtr{nullptr};
+
 
     static APCBackingCellAtomicRefViewTemp* BuildBackingViewOverCells_(packed64_t* raw_ptr, size_t count) noexcept
     {
