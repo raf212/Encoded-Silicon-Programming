@@ -33,6 +33,37 @@ namespace PredictedAdaptedEncoding
         static constexpr uint8_t HIGH_ALL_EIGHT_NIBBLE = 0xFFu;
         static constexpr size_t SIZE_OF_APCPagedNodeRelMaskClasses = 16u;
 
+
+        enum class ControlEnumOfAPCSegment : uint32_t
+        {
+            NONE = 0u,
+            ENABLE_BRANCHING = 1u << 0,
+            HAS_REGION_INDEX =  1u << 1,
+            SATURATED = 1u << 2,
+            SPLIT_INFLIGHT = 1u << 3,
+            IS_GRAPH_NODE = 1u << 4,
+            IS_SHARED_ROOT = 1u << 5,
+            IS_SHARED_MAMBER = 1u << 6,
+            HAS_SHARED_NEXT = 1u << 7,
+            HAS_SHARED_PREVIOUS = 1u << 8,
+            HAS_LAYOUT_DIR = 1u << 9,
+            HAS_EDGE_TABLE = 1u << 10,
+            HAS_WEIGHT_TABLE = 1u << 11,
+            LAYOUT_MUTATION_INFLIGHT = 1u << 12
+        };
+
+        enum class ManagerControlFlagBits : uint32_t
+        {
+            NONE = 0u,
+            REGISTERED_APC = 1U << 0,
+            DEAD_APC = 1U << 1,
+            RECLAIMATION_REQUST_FOR_JUST_THIS_APC = 1u << 2,
+            RECLAIMATION_REQUEST_FOR_WHOLE_CHAIN = 1u << 3,
+            REQUEST_NEW_SEGMENTATION = 1u << 4,
+            IN_WORK_STACK = 1u << 5,
+            IN_CLEANUP_STACK = 1u << 6
+        };
+
         static constexpr bool INewerClock16(clk16_t candidate, clk16_t baseline) noexcept
         {
             if (candidate == baseline)

@@ -122,7 +122,6 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         );
 
-        void FreeAll() noexcept;
 
         void InitRegionIdx(size_t region_size) noexcept;
 
@@ -165,13 +164,6 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
         uint32_t CountExactTotalChainOccupancy(APCPagedNodeSegmentClasses desired_region_class) noexcept;
         
         bool RebuildExectReadyMask() noexcept;
-
-
-
-        static constexpr uint32_t PayloadBegin() noexcept
-        {
-            return SegmentIODefinition::METACELL_COUNT;
-        }
         
          bool IfAPCBranchValid() noexcept
         {
@@ -229,21 +221,6 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
             return false;        
         }
 
-         AtomicAdaptiveBackoff* GetAtomicAdaptiveBackoffPtr() noexcept
-        {
-            return AdaptiveBackoffOfAPCPtr_;
-        }
-
-
-        PackedCellContainerManager* GetAPCManager() noexcept
-        {
-            if (!APCManagerPtr_)
-            {
-                return nullptr;
-            }
-            return APCManagerPtr_;
-        }
-
          AdaptivePackedCellContainer* LoadRegistryNextAPC() const noexcept
         {
             return RegistryNextAPCPtr_.load(MoLoad_);
@@ -273,6 +250,68 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
         {
             CleanupNextAPCPtr_.store(apc_ptr, MoStoreSeq_);
         }
+
+        bool InitOnFabricBackingAfterBind(
+            size_t capacity,
+            ContainerConf container_cfg,
+            uint64_t branch_id,
+            uint64_t logical_id,
+            uint64_t shared_id,
+            bool is_shared_root,
+            uint64_t aux_param48 = UNSIGNED_ZERO,
+            uint64_t branch_depth = UNSIGNED_ZERO,
+            uint8_t branch_priority = UNSIGNED_ZERO
+        ) noexcept
+        {
+            if (
+                !FabricBackend_ || 
+                !BackingPtr || 
+                capacity != CapacityOfThisAPC_ || 
+                !IsCapacityOfAPCLegal(capacity)
+            )
+            {
+                return false;
+            }
+            
+            const packed64_t default_idle_cell = PackedCell64_t::MakeDefaultAPCPayloadCellOnMode(container_cfg.InitialMode);
+
+            for (size_t i = 0; i < capacity; i++)
+            {
+                BackingPtr[i].store(default_idle_cell, MoStoreSeq_);
+            }
+
+            try
+            {
+                OwnedMasterClockConfPtr_ = std::make_unique<MasterClockConf>(this, LocalTimer48_);
+            }
+            catch(...)
+            {
+                OwnedMasterClockConfPtr_.reset();
+                return false;
+            }
+
+            InitRootOrChildBranch(
+                branch_id,
+                logical_id,
+                shared_id,
+                capacity,
+                container_cfg,
+                is_shared_root,
+                aux_param48,
+                branch_depth,
+                branch_priority
+            );
+
+            container_cfg.NodeGroupSize = 1u;
+            InitZeroState_();
+            if (container_cfg.RegionSize > UNSIGNED_ZERO)
+            {
+                InitRegionIdx(container_cfg.RegionSize);
+            }
+            RefreshAPCMeta_();
+            return true;
+        }
+
 
 
 };

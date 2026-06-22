@@ -307,7 +307,7 @@ namespace PredictedAdaptedEncoding
                 backoff.AdaptiveBackOffPacked(observed);
             }
             if (
-                HasThisControlEnumFlag(SegmentIODefinition::ControlEnumOfAPCSegment::ENABLE_BRANCHING) && 
+                HasThisControlEnumFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::ENABLE_BRANCHING) && 
                 ShouldSplitNow() && APCManagerPtr_
             )
             {

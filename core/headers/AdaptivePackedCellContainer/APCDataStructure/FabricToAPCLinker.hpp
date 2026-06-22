@@ -158,8 +158,10 @@ protected:
     PackedCellContainerManager* APCManagerPtr_{nullptr};
     AtomicAdaptiveBackoff* AdaptiveBackoffOfAPCPtr_{nullptr};
 ////
-/// UPDATE
+/// UPDATE Candidates
     size_t CapacityOfThisAPC_{UNSIGNED_ZERO};
+    Timer48 LocalTimer48_;
+    std::unique_ptr<MasterClockConf> OwnedMasterClockConfPtr_;
 ///
 
     bool BindExternalRawFabricBacking_(
@@ -174,6 +176,11 @@ protected:
 
 public:
     APCBackingCellAtomicRefViewTemp* BackingPtr{nullptr};
+
+    void FreeAll() noexcept;
+
+    void SetFabricOwnerForGlobalAPC(SlabToFabricConverterAndCordinator* fabric_owner) noexcept;
+
 
     bool IsFabricBackend() const noexcept
     {
@@ -190,10 +197,74 @@ public:
         return FabricOwnerPtr_;
     }
 
-    void SetFabricOwnerForGlobalAPC(SlabToFabricConverterAndCordinator* fabric_owner) noexcept;
+    bool IsBound() const noexcept
+    {
+        return BackingPtr != nullptr && CapacityOfThisAPC_ >= METACELL_COUNT;
+    }
+
+    size_t PayloadCapacity() const noexcept
+    {
+        return CapacityOfThisAPC_ > METACELL_COUNT ? (CapacityOfThisAPC_ - METACELL_COUNT) : 0u;
+    }
+
+    bool ValidMetaIdx(MetaIndexOfAPCNode idx) noexcept
+    {
+        return BackingPtr && static_cast<size_t>(idx) < CapacityOfThisAPC_ && static_cast<size_t>(idx) < METACELL_COUNT;
+    }
+
+    packed64_t ReadFullMetaCell(MetaIndexOfAPCNode idx) noexcept
+    {
+        if (ValidMetaIdx(idx))
+        {
+            return BackingPtr[static_cast<size_t>(idx)].load(MoLoad_);
+        }
+        return PACKED_CELL_SENTENAL;
+    }
 
 
-    
+    /// REMOVE CANDIDATES
+    packed64_t* GetAPCBackinghPtr() noexcept
+    {
+        if (BackingPtr && BackingPtr->CellPtr)
+        {
+            return BackingPtr->CellPtr;
+        }
+        return nullptr;
+    }
+
+
+    void BindExternalStorage_(packed64_t* packed_ptr, size_t cell_count) noexcept
+    {
+        BackingPtr->CellPtr = packed_ptr;
+        CapacityOfThisAPC_ = cell_count;
+    }
+
+    void UnbindExternalStorage_() noexcept
+    {
+        BackingPtr = nullptr;
+        CapacityOfThisAPC_ = UNSIGNED_ZERO;
+    }
+
+    static constexpr uint32_t PayloadBegin() noexcept
+    {
+        return METACELL_COUNT;
+    }
+
+        AtomicAdaptiveBackoff* GetAtomicAdaptiveBackoffPtr() noexcept
+    {
+        return AdaptiveBackoffOfAPCPtr_;
+    }
+
+
+    PackedCellContainerManager* GetAPCManager() noexcept
+    {
+        if (!APCManagerPtr_)
+        {
+            return nullptr;
+        }
+        return APCManagerPtr_;
+    }
+    /// END: REMOVE CANDIDATES
 
 };
     

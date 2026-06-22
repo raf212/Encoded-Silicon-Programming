@@ -5,6 +5,59 @@
 namespace PredictedAdaptedEncoding
 {
 
+    void SegmentIODefinition::WriteTypedValue48MetaCellAPC_(
+        MetaIndexOfAPCNode idx,
+        uint64_t value48,
+        AttributePolicy attribute,
+        APCPagedNodeSegmentClasses page_class
+    ) noexcept
+    {
+        size_t index = static_cast<size_t>(idx);
+        if (!ValidMetaIdx(idx))
+        {
+            return;
+        }
+
+        const packed64_t packed_cell = PackedCell64_t::MakeTypedAPCValidPackedCell(
+            TypeFamily::VALUE48,
+            AccessContractOfValue::CAS_RMW,
+            page_class,
+            LocalityPolicy::PUBLISHED,
+            InternalDataTypePolicy::UnsignedPCellDataType,
+            attribute,
+            value48,
+            UNSIGNED_ZERO
+        );
+
+
+        BackingPtr[index].store(packed_cell, MoStoreSeq_);
+        BackingPtr[index].notify_all();
+    }
+
+    void SegmentIODefinition::WrireAPCMetaModel_48t(
+        MetaIndexOfAPCNode idx,
+        uint64_t raw48_value,
+        Model48Subclass sub_class,
+        LocalityPolicy locality,
+        InternalDataTypePolicy dtype,
+        AttributePolicy attribute 
+    ) noexcept
+    {
+        size_t index = static_cast<size_t>(idx);
+        if (!ValidMetaIdx(idx))
+        {
+            return;
+        }
+        const meta16_t meta16 = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_48t(
+            OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+            static_cast<tag8_t>(APCPagedNodeSegmentClasses::CONTROL_SLOT),
+            sub_class, attribute, locality, dtype
+        );
+        const packed64_t packed_cell = PackedCell64_t::Compose48BitFamilyPackedCell(raw48_value & MaskLowNBits(FAMILY_48_BIT_LEN), meta16);
+        BackingPtr[index].store(packed_cell, MoStoreSeq_);
+        BackingPtr[index].notify_all();
+    }
+
     void SegmentIODefinition::InitDefaultAPCSegmentedNodeLayout_() noexcept
     {
         const uint32_t payload_begain = METACELL_COUNT;
@@ -27,9 +80,9 @@ namespace PredictedAdaptedEncoding
                 return;
         }
 
-        WriteTypedValue32MetaCEll_(MetaIndexOfAPCNode::REGION_DIR_COUNT, static_cast<val32_t>(APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses));
-        WriteTypedValue32MetaCEll_(MetaIndexOfAPCNode::EDGE_TABLE_COUNT, UNSIGNED_ZERO);
-        WriteTypedValue32MetaCEll_(MetaIndexOfAPCNode::WEIGHT_TABLE_COUNT, UNSIGNED_ZERO);
+        WriteTypedValue48MetaCellAPC_(MetaIndexOfAPCNode::REGION_DIR_COUNT, static_cast<val32_t>(APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses));
+        WriteTypedValue48MetaCellAPC_(MetaIndexOfAPCNode::EDGE_TABLE_COUNT, UNSIGNED_ZERO);
+        WriteTypedValue48MetaCellAPC_(MetaIndexOfAPCNode::WEIGHT_TABLE_COUNT, UNSIGNED_ZERO);
         #ifndef NDEBUG
             auto layout = ReadAndGetFullRegionLayout_(false);
             if (!layout)
@@ -300,7 +353,7 @@ namespace PredictedAdaptedEncoding
         {
             if (owns_layout_flag)
             {
-                ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
+                ClearOneControlEnumFlagOfAPC(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
             }
         };
 
@@ -382,7 +435,7 @@ namespace PredictedAdaptedEncoding
         {
             return FailedWrite();
         }
-        TurnOnASegmentFlag(ControlEnumOfAPCSegment::HAS_LAYOUT_DIR);
+        TurnOnASegmentFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::HAS_LAYOUT_DIR);
         ClearIfOwned();
         return true;
     }

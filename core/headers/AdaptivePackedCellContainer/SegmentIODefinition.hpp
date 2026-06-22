@@ -10,55 +10,7 @@ class SegmentIODefinition : public FabricToAPCLinker
 public:
     SegmentIODefinition() noexcept = default;
     
-
-    enum class ControlEnumOfAPCSegment : uint32_t
-    {
-        NONE = 0u,
-        ENABLE_BRANCHING = 1u << 0,
-        HAS_REGION_INDEX =  1u << 1,
-        SATURATED = 1u << 2,
-        SPLIT_INFLIGHT = 1u << 3,
-        IS_GRAPH_NODE = 1u << 4,
-        IS_SHARED_ROOT = 1u << 5,
-        IS_SHARED_MAMBER = 1u << 6,
-        HAS_SHARED_NEXT = 1u << 7,
-        HAS_SHARED_PREVIOUS = 1u << 8,
-        HAS_LAYOUT_DIR = 1u << 9,
-        HAS_EDGE_TABLE = 1u << 10,
-        HAS_WEIGHT_TABLE = 1u << 11,
-        LAYOUT_MUTATION_INFLIGHT = 1u << 12
-    };
-
-    enum class ManagerControlFlagBits : uint32_t
-    {
-        NONE = 0u,
-        REGISTERED_APC = 1U << 0,
-        DEAD_APC = 1U << 1,
-        RECLAIMATION_REQUST_FOR_JUST_THIS_APC = 1u << 2,
-        RECLAIMATION_REQUEST_FOR_WHOLE_CHAIN = 1u << 3,
-        REQUEST_NEW_SEGMENTATION = 1u << 4,
-        IN_WORK_STACK = 1u << 5,
-        IN_CLEANUP_STACK = 1u << 6
-    };
-
-    bool ValidMetaIdx(MetaIndexOfAPCNode idx) noexcept
-    {
-        return BackingPtr && static_cast<size_t>(idx) < CapacityOfThisAPC_ && static_cast<size_t>(idx) < METACELL_COUNT;
-    }
-
-    packed64_t ReadFullMetaCell(MetaIndexOfAPCNode idx) noexcept
-    {
-        if (ValidMetaIdx(idx))
-        {
-            return BackingPtr[static_cast<size_t>(idx)].load(MoLoad_);
-        }
-        return PACKED_CELL_SENTENAL;
-    }
-    
 protected:
-
-    Timer48 LocalTimer48_;
-    std::unique_ptr<MasterClockConf> OwnedMasterClockConfPtr_;
 
     bool TurnOnMultipleSegmentFlagsAtOnce_(uint32_t use_or_between_flags = UNSIGNED_ZERO) noexcept
     {
@@ -114,34 +66,12 @@ protected:
     /// @param value32 
     /// @param attribute 
     /// @param page_class 
-    void WriteTypedValue32MetaCEll_(
+    void WriteTypedValue48MetaCellAPC_(
         MetaIndexOfAPCNode idx,
-        uint32_t value32,
+        uint64_t value48,
         AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
         APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT
-    ) noexcept
-    {
-        size_t index = static_cast<size_t>(idx);
-        if (!ValidMetaIdx(idx))
-        {
-            return;
-        }
-
-        const packed64_t packed_cell = PackedCell64_t::MakeTypedAPCValidPackedCell(
-            TypeFamily::VALUE32,
-            AccessContractOfValue::CAS_RMW,
-            page_class,
-            LocalityPolicy::PUBLISHED,
-            InternalDataTypePolicy::UnsignedPCellDataType,
-            attribute,
-            value32,
-            UNSIGNED_ZERO
-        );
-
-
-        BackingPtr[index].store(packed_cell, MoStoreSeq_);
-        BackingPtr[index].notify_all();
-    }
+    ) noexcept;
 
     void WrireAPCMetaModel_48t(
         MetaIndexOfAPCNode idx,
@@ -150,23 +80,7 @@ protected:
         LocalityPolicy locality = LocalityPolicy::PUBLISHED,
         InternalDataTypePolicy dtype = InternalDataTypePolicy::UnsignedPCellDataType,
         AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
-    ) noexcept
-    {
-        size_t index = static_cast<size_t>(idx);
-        if (!ValidMetaIdx(idx))
-        {
-            return;
-        }
-        const meta16_t meta16 = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_48t(
-            OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
-            static_cast<tag8_t>(APCPagedNodeSegmentClasses::CONTROL_SLOT),
-            sub_class, attribute, locality, dtype
-        );
-        const packed64_t packed_cell = PackedCell64_t::Compose48BitFamilyPackedCell(raw48_value & MaskLowNBits(FAMILY_48_BIT_LEN), meta16);
-        BackingPtr[index].store(packed_cell, MoStoreSeq_);
-        BackingPtr[index].notify_all();
-    }
-
+    ) noexcept;
 
 private:
 
@@ -197,39 +111,28 @@ public:
     ) noexcept;
 
 
-    bool IsBound() const noexcept
-    {
-        return BackingPtr != nullptr && CapacityOfThisAPC_ >= METACELL_COUNT;
-    }
-
-    size_t PayloadCapacity() const noexcept
-    {
-        return CapacityOfThisAPC_ > METACELL_COUNT ? (CapacityOfThisAPC_ - METACELL_COUNT) : 0u;
-    }
-
     void InitLogicalNodeIdentity(
-        uint32_t logical_node_id,
-        uint32_t shared_id,
+        uint64_t logical_node_id,
+        uint64_t shared_id,
         bool is_root_shared
     ) noexcept;
 
     void InitNodeSemantics(
-        uint32_t aux_param_uint32 = UNSIGNED_ZERO
+        uint64_t aux_param_uint48 = UNSIGNED_ZERO
     ) noexcept;
 
 
     void InitRootOrChildBranch(
-        uint32_t branch_id,
-        uint32_t logical_node_id,
-        uint32_t shared_id,
+        uint64_t branch_id,
+        uint64_t logical_node_id,
+        uint64_t shared_id,
         size_t total_capacity,
         const ContainerConf& container_configuration,
         bool is_root_shared = true,
-        uint32_t aux_param_uint32 = UNSIGNED_ZERO,
-        uint32_t branch_depth = UNSIGNED_ZERO,
-        uint8_t branch_priority = UNSIGNED_ZERO,
+        uint64_t aux_param_uint48 = UNSIGNED_ZERO,
+        uint64_t branch_depth = UNSIGNED_ZERO,
+        uint64_t branch_priority = UNSIGNED_ZERO,
         AttributePolicy write_cell_priority = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
-
     ) noexcept;
 
     val32_t ReadMetaCellFamily32(MetaIndexOfAPCNode idx) noexcept;
@@ -290,44 +193,44 @@ public:
         return TryBindPortTarget(MetaIndexOfAPCNode::SHARED_PREVIOUS_ID, shared_previous_id);
     }
 
-    bool TurnOnASegmentFlag(ControlEnumOfAPCSegment desired_segment_flag) noexcept
+    bool TurnOnASegmentFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment desired_segment_flag) noexcept
     {
         return UpdateAPCModeFlagsInHeader_(static_cast<uint32_t>(desired_segment_flag), UNSIGNED_ZERO, MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
     }
 
-    bool HasThisControlEnumFlag(ControlEnumOfAPCSegment flag) noexcept
+    bool HasThisControlEnumFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment flag) noexcept
     {
         return (ReadMetaCellFamily32(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS) & static_cast<uint32_t>(flag)) != 0u;
     }
 
-    bool ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment desired_control_flag) noexcept
+    bool ClearOneControlEnumFlagOfAPC(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment desired_control_flag) noexcept
     {
         return UpdateAPCModeFlagsInHeader_(UNSIGNED_ZERO, static_cast<uint32_t>(desired_control_flag), MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
     }
 
-    bool TurnOnAManagerControlFlag(ManagerControlFlagBits desired_manager_control_flag) noexcept
+    bool TurnOnAManagerControlFlag(APCAndPagedNodeHelpers::ManagerControlFlagBits desired_manager_control_flag) noexcept
     {
         return UpdateAPCModeFlagsInHeader_(static_cast<uint32_t>(desired_manager_control_flag), UNSIGNED_ZERO, MetaIndexOfAPCNode::MANAGER_CONTROL_FLAGS);
     }
 
-    bool ClearOneManagerControlFlag(ManagerControlFlagBits desired_manager_control_flag) noexcept
+    bool ClearOneManagerControlFlag(APCAndPagedNodeHelpers::ManagerControlFlagBits desired_manager_control_flag) noexcept
     {
         return UpdateAPCModeFlagsInHeader_(UNSIGNED_ZERO, static_cast<uint32_t>(desired_manager_control_flag), MetaIndexOfAPCNode::MANAGER_CONTROL_FLAGS);
     }
 
-    bool HasThisManageControlFlag(ManagerControlFlagBits desired_manager_contgrol_flag) noexcept
+    bool HasThisManageControlFlag(APCAndPagedNodeHelpers::ManagerControlFlagBits desired_manager_contgrol_flag) noexcept
     {
         return (ReadMetaCellFamily32(MetaIndexOfAPCNode::MANAGER_CONTROL_FLAGS) & static_cast<uint32_t>(desired_manager_contgrol_flag)) != UNSIGNED_ZERO;
     }
 
     bool IsLayoutMutationFlagActive() noexcept
     {
-        return HasThisControlEnumFlag(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
+        return HasThisControlEnumFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
     }
     
     void SetGraphNodeFlag() noexcept
     {
-        TurnOnASegmentFlag(ControlEnumOfAPCSegment::IS_GRAPH_NODE);
+        TurnOnASegmentFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::IS_GRAPH_NODE);
     }
 
     uint32_t GetTotalCapacityForThisAPC() noexcept
@@ -347,28 +250,19 @@ public:
 
     void MakeAPCBranchOwned() noexcept
     {
-        WriteTypedValue32MetaCEll_(MetaIndexOfAPCNode::CURRENTLY_OWNED, 1u);
+        WriteTypedValue48MetaCellAPC_(MetaIndexOfAPCNode::CURRENTLY_OWNED, 1u);
     }
 
 
     void ResetTotalCASFailureForThisBranch(AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL) noexcept
     {
-        WriteTypedValue32MetaCEll_(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH, UNSIGNED_ZERO, attribute);
+        WriteTypedValue48MetaCellAPC_(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH, UNSIGNED_ZERO, attribute);
     }
 
     bool SetSegmentRegionKind(APCPagedNodeSegmentClasses region_kind) noexcept
     {
         const uint32_t current_segment_kind = ReadMetaCellFamily32(MetaIndexOfAPCNode::SEGMENT_KIND);
         return JustUpdateValueOfMeta32(MetaIndexOfAPCNode::SEGMENT_KIND, current_segment_kind, static_cast<uint32_t>(region_kind));
-    }
-
-    packed64_t* GetAPCBackinghPtr() noexcept
-    {
-        if (BackingPtr && BackingPtr->CellPtr)
-        {
-            return BackingPtr->CellPtr;
-        }
-        return nullptr;
     }
 
     packed64_t ReadCentralAPCOccupancyCellForThisPagedNode() noexcept
@@ -428,18 +322,7 @@ public:
             ReadFaultyOccupancyOfAPAgeClass(page_class);
     }
 
-    void BindExternalStorage_(packed64_t* packed_ptr, size_t cell_count) noexcept
-    {
-        BackingPtr->CellPtr = packed_ptr;
-        CapacityOfThisAPC_ = cell_count;
-    }
-
-    void UnbindExternalStorage_() noexcept
-    {
-        BackingPtr = nullptr;
-        CapacityOfThisAPC_ = UNSIGNED_ZERO;
-    }
-
+    
 };
 
 }
