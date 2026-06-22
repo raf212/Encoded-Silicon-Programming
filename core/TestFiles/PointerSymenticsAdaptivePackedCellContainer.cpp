@@ -84,10 +84,6 @@ namespace PredictedAdaptedEncoding
             packed64_t expected_head = head_screenshot;
             if (!BackingPtr[head_idx].compare_exchange_strong(expected_head, want_head, OnExchangeSuccess, OnExchangeFailure))
             {
-                if (APCManagerPtr_)
-                {
-                    APCManagerPtr_->GetCellsAdaptiveBackoffFromManager(expected_head);
-                }
                 continue;
             }
             packed64_t expected_tail = tail_screenshot;
@@ -95,10 +91,6 @@ namespace PredictedAdaptedEncoding
             {
                 BackingPtr[head_idx].compare_exchange_strong(want_head, head_screenshot, OnExchangeSuccess, OnExchangeFailure);
                 BackingPtr[head_idx].notify_all();
-                if (APCManagerPtr_)
-                {
-                    APCManagerPtr_->GetCellsAdaptiveBackoffFromManager(expected_tail);
-                }
                 continue;
             }
             
@@ -282,42 +274,37 @@ namespace PredictedAdaptedEncoding
         }
     }
 
-    bool PointerSymenticsAdaptivePackedCellContainer::PublishHeapPtrWithAdaptiveBackoff(void* target_publishable_ptr, uint16_t max_retries)
-    {
-        int publish_attempt = 0;
+    // bool PointerSymenticsAdaptivePackedCellContainer::PublishHeapPtrWithAdaptiveBackoff(void* target_publishable_ptr, uint16_t max_retries)
+    // {
+    //     int publish_attempt = 0;
 
-        while (publish_attempt <= max_retries)
-        {
-            PublishResult publish_result = PublishHeapPtrPair_(target_publishable_ptr, APCPagedNodeSegmentClasses::FREE_SLOT);
-            if (publish_result.ResultStatus == PublishStatus::OK)
-            {
-                return true;
-            }
-            packed64_t observed = 0;
-            if (BackingPtr && PayloadCapacityFromHeader() > 0)
-            {
-                size_t idx = ( PayloadBegin() +
-                    (std::hash<std::thread::id>{}(std::this_thread::get_id()) % PayloadCapacityFromHeader())
-                );
-                observed = BackingPtr[idx].load(MoLoad_);
-            }
-            if (APCManagerPtr_)
-            {
-                auto& backoff = APCManagerPtr_->GetManagersAdaptiveBackoff();
-                backoff.AdaptiveBackOffPacked(observed);
-            }
-            if (
-                HasThisControlEnumFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::ENABLE_BRANCHING) && 
-                ShouldSplitNow() && APCManagerPtr_
-            )
-            {
-                APCManagerPtr_->RequestAPCSegmentCreationFromManager_(this);
-            }
+    //     while (publish_attempt <= max_retries)
+    //     {
+    //         PublishResult publish_result = PublishHeapPtrPair_(target_publishable_ptr, APCPagedNodeSegmentClasses::FREE_SLOT);
+    //         if (publish_result.ResultStatus == PublishStatus::OK)
+    //         {
+    //             return true;
+    //         }
+    //         packed64_t observed = 0;
+    //         if (BackingPtr && PayloadCapacityFromHeader() > 0)
+    //         {
+    //             size_t idx = ( PayloadBegin() +
+    //                 (std::hash<std::thread::id>{}(std::this_thread::get_id()) % PayloadCapacityFromHeader())
+    //             );
+    //             observed = BackingPtr[idx].load(MoLoad_);
+    //         }
+    //         if (
+    //             HasThisControlEnumFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::ENABLE_BRANCHING) && 
+    //             ShouldSplitNow() && APCManagerPtr_
+    //         )
+    //         {
+    //             APCManagerPtr_->RequestAPCSegmentCreationFromManager_(this);
+    //         }
             
-            ++publish_attempt;
-        }
-        return false;
-    }
+    //         ++publish_attempt;
+    //     }
+    //     return false;
+    // }
 
 
 }

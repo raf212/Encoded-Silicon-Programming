@@ -359,14 +359,6 @@ namespace PredictedAdaptedEncoding
             {
                 return true;
             }
-            if (AdaptiveBackoffOfAPCPtr_)
-            {
-                AdaptiveBackoffOfAPCPtr_->AdaptiveBackOffPacked(
-                    ReadFullMetaCell(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS)
-                );
-            }
-            
-            
         }
         
     }
@@ -563,10 +555,6 @@ namespace PredictedAdaptedEncoding
                 return true;
             }
             observed_layout = expected_layout_cell;
-            if (AdaptiveBackoffOfAPCPtr_)
-            {
-                AdaptiveBackoffOfAPCPtr_->AdaptiveBackOffPacked(observed_layout);
-            }
         }
         
         
@@ -597,12 +585,6 @@ namespace PredictedAdaptedEncoding
             ))
             {
                 return true;
-            }
-            if (AdaptiveBackoffOfAPCPtr_)
-            {
-                AdaptiveBackoffOfAPCPtr_->AdaptiveBackOffPacked(
-                    ReadFullMetaCell(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS)
-                );
             }
         }
     }
@@ -1020,14 +1002,7 @@ namespace PredictedAdaptedEncoding
             }
             observed_cell = expected_cell;
 
-            if (AdaptiveBackoffOfAPCPtr_)
-            {
-                AdaptiveBackoffOfAPCPtr_->AdaptiveBackOffPacked(observed_cell);
-            }
-            else
-            {
-                std::this_thread::yield();
-            }
+            std::this_thread::yield();
             
         }
         

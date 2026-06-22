@@ -219,10 +219,6 @@ namespace PredictedAdaptedEncoding
             packed64_t expected_cell = current_cell;
             if (!BackingPtr[idx].compare_exchange_strong(expected_cell, idle_cell, OnExchangeSuccess, OnExchangeFailure))
             {
-                if (APCManagerPtr_)
-                {
-                    APCManagerPtr_->GetCellsAdaptiveBackoffFromManager(expected_cell);
-                }
                 TotalCASFailForThisBranchIncreaseAndGet(1);
                 continue;
             }
@@ -348,10 +344,6 @@ namespace PredictedAdaptedEncoding
             packed64_t expected_cell = observed_cell;
             if (!BackingPtr[current_index].compare_exchange_strong(expected_cell, claimd_local_inplace_cell, OnExchangeSuccess, OnExchangeFailure))
             {
-                if (AdaptiveBackoffOfAPCPtr_)
-                {
-                    AdaptiveBackoffOfAPCPtr_->AdaptiveBackOffPacked(expected_cell);
-                }
                 TotalCASFailForThisBranchIncreaseAndGet(1);
                 continue;
             }

@@ -155,8 +155,8 @@ protected:
     bool FabricObjectOwnedByFabric_{false};
 
 /// remove candidate 
-    PackedCellContainerManager* APCManagerPtr_{nullptr};
-    AtomicAdaptiveBackoff* AdaptiveBackoffOfAPCPtr_{nullptr};
+    // PackedCellContainerManager* APCManagerPtr_{nullptr};
+    // AtomicAdaptiveBackoff* AdaptiveBackoffOfAPCPtr_{nullptr};
 ////
 /// UPDATE Candidates
     size_t CapacityOfThisAPC_{UNSIGNED_ZERO};
@@ -250,20 +250,20 @@ public:
         return METACELL_COUNT;
     }
 
-        AtomicAdaptiveBackoff* GetAtomicAdaptiveBackoffPtr() noexcept
-    {
-        return AdaptiveBackoffOfAPCPtr_;
-    }
+    // AtomicAdaptiveBackoff* GetAtomicAdaptiveBackoffPtr() noexcept
+    // {
+    //     return AdaptiveBackoffOfAPCPtr_;
+    // }
 
 
-    PackedCellContainerManager* GetAPCManager() noexcept
-    {
-        if (!APCManagerPtr_)
-        {
-            return nullptr;
-        }
-        return APCManagerPtr_;
-    }
+    // PackedCellContainerManager* GetAPCManager() noexcept
+    // {
+    //     if (!APCManagerPtr_)
+    //     {
+    //         return nullptr;
+    //     }
+    //     return APCManagerPtr_;
+    // }
     /// END: REMOVE CANDIDATES
 
 };

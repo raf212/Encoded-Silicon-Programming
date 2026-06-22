@@ -74,33 +74,15 @@ namespace PredictedAdaptedEncoding
             {
                 return static_cast<size_t>(current_producer_cursor);
             }
-            if (AdaptiveBackoffOfAPCPtr_)
-            {
-                AdaptiveBackoffOfAPCPtr_->AdaptiveBackOffPacked(
-                    ReadFullMetaCell(MetaIndexOfAPCNode::PRODUCER_CURSOR_PLACEMENT)
-                );
-            }
-            else
-            {
-                std::this_thread::yield();
-            }
+            std::this_thread::yield();
+
         }
 
         TotalCASFailForThisBranchIncreaseAndGet(1);
         return APCDataStructure::APC_SIZE_SENTINAL;
     }
 
-    void AdaptivePackedCellContainer::SetManagerForGlobalAPC(PackedCellContainerManager* pointer_of_global_apc_manager) noexcept
-    {
-        APCManagerPtr_ = pointer_of_global_apc_manager;
-        if (AdaptiveBackoffOfAPCPtr_ == nullptr && APCManagerPtr_ != nullptr)
-        {
-            AdaptiveBackoffOfAPCPtr_ = &APCManagerPtr_->GetManagersAdaptiveBackoff();
-        }
-    }
 
-
-    
     void AdaptivePackedCellContainer::InitOwned(size_t container_capacity,
         ContainerConf container_cfg
     )
@@ -133,36 +115,6 @@ namespace PredictedAdaptedEncoding
         {
             BackingPtr[i].store(idle_cell, MoStoreUnSeq_);
         }
-
-        try
-        {
-            if (APCManagerPtr_)
-            {
-                APCManagerPtr_->StartAPCManager();
-                AdaptiveBackoffOfAPCPtr_ = &APCManagerPtr_->GetManagersAdaptiveBackoff();
-            }
-            else
-            {
-                AdaptiveBackoffOfAPCPtr_ = nullptr;
-            }
-            OwnedMasterClockConfPtr_ = std::make_unique<MasterClockConf>(this, LocalTimer48_);
-            if (AdaptiveBackoffOfAPCPtr_ )
-            {
-                AdaptiveBackoffOfAPCPtr_->AttachMasterClockToAadaptiveBackOff(OwnedMasterClockConfPtr_.get());
-            }
-        }
-        catch(...)
-        {
-            AdaptiveBackoffOfAPCPtr_ = nullptr;
-            OwnedMasterClockConfPtr_.reset();
-            APCBackingCellAtomicRefViewTemp::FreeBackingView_(OwnedBackingView_, container_capacity);
-            FreeAlignedRawPackedCells_(OwnedRawBackingCells_);
-            OwnedBackingView_ = nullptr;
-            OwnedRawBackingCells_ = nullptr;
-            BackingPtr = nullptr;
-            CapacityOfThisAPC_ = UNSIGNED_ZERO;
-            throw;
-        }
         
         const uint32_t new_branch_id = GlobalBranchIdAlloc_.fetch_add(1, std::memory_order_acq_rel);
         const uint32_t logical_node_id = new_branch_id;
@@ -183,10 +135,6 @@ namespace PredictedAdaptedEncoding
         if (container_cfg.RegionSize > 0)
         {
             InitRegionIdx(container_cfg.RegionSize);
-        }
-        if (APCManagerPtr_)
-        {
-            APCManagerPtr_->RegisterAPCFromManager_(this);
         }
         RefreshAPCMeta_();
     }
@@ -291,7 +239,7 @@ namespace PredictedAdaptedEncoding
 
     void AdaptivePackedCellContainer::TryCreateBranchIfNeeded(APCPagedNodeSegmentClasses rel_mask_hint) noexcept
     {
-        if (!IfAPCBranchValid() || !APCManagerPtr_)
+        if (!IfAPCBranchValid())
         {
             return;
         }
@@ -315,7 +263,7 @@ namespace PredictedAdaptedEncoding
 
     AdaptivePackedCellContainer* AdaptivePackedCellContainer::FindSharedRootOrThis() noexcept
     {
-        if (!IfAPCBranchValid() || !APCManagerPtr_)
+        if (!IfAPCBranchValid())
         {
             return this;
         }
@@ -344,7 +292,7 @@ namespace PredictedAdaptedEncoding
 
     AdaptivePackedCellContainer* AdaptivePackedCellContainer::GetNextSharedSegment() noexcept
     {
-        if (!IfAPCBranchValid() || !APCManagerPtr_)
+        if (!IfAPCBranchValid())
         {
             return nullptr;
         }
@@ -365,7 +313,7 @@ namespace PredictedAdaptedEncoding
 
     bool AdaptivePackedCellContainer::IsAPCSharedChainEmpty() noexcept
     {
-        if (!IfAPCBranchValid() || !APCManagerPtr_)
+        if (!IfAPCBranchValid())
         {
             return true;
         }
@@ -541,7 +489,7 @@ namespace PredictedAdaptedEncoding
 
     AdaptivePackedCellContainer* AdaptivePackedCellContainer::GrowSharedNodeByRegionKind(APCPagedNodeSegmentClasses desired_region_kind, bool enable_recursive_branching) noexcept
     {
-        if (!IfAPCBranchValid() || !APCManagerPtr_)
+        if (!IfAPCBranchValid())
         {
             return nullptr;
         }
@@ -597,7 +545,6 @@ namespace PredictedAdaptedEncoding
         try
         {
             new_child_segment_ptr = new AdaptivePackedCellContainer();
-            new_child_segment_ptr->SetManagerForGlobalAPC(APCManagerPtr_);
             new_child_segment_ptr->InitOwned(child_configuration.BranchMinChildCapacity, child_configuration);
         }
         catch(...)
@@ -803,7 +750,6 @@ namespace PredictedAdaptedEncoding
             return;
         }
 
-        AdaptiveBackoffOfAPCPtr_ = nullptr;
         OwnedMasterClockConfPtr_.reset();   
         // const uint32_t capacity = GetTotalCapacityForThisAPC();
         FreeAlignedRawPackedCells_(BackingPtr->CellPtr);

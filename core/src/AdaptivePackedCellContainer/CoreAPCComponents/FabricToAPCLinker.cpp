@@ -30,8 +30,7 @@ namespace PredictedAdaptedEncoding
         FabricOwnerPtr_ = fabric_owner;
         FabricSlotIndex_ = fabric_slot_idx;
         FabricBackend_ = true;
-        FabricObjectOwnedByFabric_ = object_owned_by_fabric,
-        APCManagerPtr_ = nullptr;
+        FabricObjectOwnedByFabric_ = object_owned_by_fabric;
         return true;
     }
 
@@ -56,11 +55,6 @@ namespace PredictedAdaptedEncoding
     void FabricToAPCLinker::SetFabricOwnerForGlobalAPC(SlabToFabricConverterAndCordinator* fabric_owner) noexcept
     {
         FabricOwnerPtr_ = fabric_owner;
-        if (fabric_owner)
-        {
-            APCManagerPtr_ = nullptr;
-            AdaptiveBackoffOfAPCPtr_ = nullptr;
-        }
     }
 
 
