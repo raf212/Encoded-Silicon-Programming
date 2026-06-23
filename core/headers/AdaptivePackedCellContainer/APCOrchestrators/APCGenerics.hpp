@@ -2,29 +2,27 @@
 #pragma once 
 #include <array>
 #include <utility>
-#include "APCDataStructure.hpp"
+#include "OccupancyOrchestrator.hpp"
 
 namespace PredictedAdaptedEncoding
 {
-    struct ContainerConf
-    {
-        PackedMode InitialMode = PackedMode::MODEL32;
-        size_t ProducerBlockSize = MIN_PRODUCER_BLOCK_SIZE;
-        size_t RegionSize = MIN_REGION_SIZE;
-        uint32_t RetireBatchThreshold = MIN_RETIRE_BATCH_THRESHOLD;
-        uint32_t BackgroundEpochAdvanceMS = MIN_BACKGROUND_EPOCH_MS;
-        bool EnableBranching = true;
-        uint32_t BranchSplitThresholdPercentage = INITIAL_BRANCH_SPLIT_THRESHOLD_PERCENTAGE;
-        uint32_t BranchMaxDepth = MAX_BRANCH_DEPTH;
-        size_t BranchMinChildCapacity = MINIMUM_BRANCH_CAPACITY;
-        uint32_t NodeGroupSize = 1u;
 
-        enum class APCSegmentExtendOrder : uint8_t
+    struct Timer48
+    {
+        static constexpr uint64_t TicksPerSec_ = A_BILLION;
+
+        static constexpr uint64_t NowTicks() noexcept
         {
-            FIFO = 0,
-            PRIORITY = 1,
-            RANDOM = 2
-        };
+            using  cns = std::chrono::nanoseconds;
+            auto d = std::chrono::steady_clock::now().time_since_epoch();
+            uint64_t ns_count = static_cast<uint64_t>(std::chrono::duration_cast<cns>(d).count());
+            return ns_count & MaskLowNBits(FAMILY_48_BIT_LEN);
+        }
+
+        static constexpr uint16_t NowClock16() noexcept
+        {
+            return static_cast<uint16_t>(NowTicks() & MaskLowNBits(LOW16_BIT_LEN));
+        }
     };
 
     struct APCAndPagedNodeHelpers
@@ -420,10 +418,23 @@ namespace PredictedAdaptedEncoding
             return true;
         }
 
+        static constexpr bool ExtractLayoutModel_BegainL_EndM_VersionH(packed64_t packed_cell, uint16_t& begin_index, uint16_t& end_index, uint16_t& version_count) noexcept
+        {
+            if (!Subdevision16x3InternalMode48CellModel::IsThisCellASubdevision_3x16_48t(packed_cell))
+            {
+                return false;
+            }
+
+            const uint64_t raw48 = PackedCell64_t::ExtractRaw48FamilyBits(packed_cell);
+            
+            return Subdevision16x3InternalMode48CellModel::ExtractLowMidHighFromMode48_(raw48, begin_index, end_index, version_count);
+        }
+
     };
 
     struct CompleteAPCNodeRegionsLayout
     {
+
         static constexpr LayoutBoundsOfSingleRelNodeClass MakeDefaultDesiredLayout(
             APCPagedNodeSegmentClasses desired_layout_class,
             uint8_t initial_percentage
@@ -590,30 +601,5 @@ namespace PredictedAdaptedEncoding
         }
     };
 
-
-
-    struct AcquirePairedPointerStruct
-    {
-        uint64_t AssembeledPtr = 0;
-        size_t HeadIdx = APCDataStructure::APC_SIZE_SENTINAL;
-        size_t TailIdx = APCDataStructure::APC_SIZE_SENTINAL;
-        packed64_t HeadScreenshot = 0;
-        packed64_t TailScreenshot = 0;
-        Model32Subclass Position = Model32Subclass::SELF_CLASS;
-        bool Ownership = false;
-    };
-
-    enum class PublishStatus : uint8_t
-    {
-        OK = 0,
-        FULL = 1,
-        INVALID = 2
-    };
-
-    struct PublishResult
-    {
-        PublishStatus ResultStatus{PublishStatus::INVALID};
-        size_t Index{APCDataStructure::APC_SIZE_SENTINAL};
-    };
     
 }

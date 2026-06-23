@@ -194,7 +194,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
                 !FabricBackend_ || 
                 !BackingPtr || 
                 capacity != CapacityOfThisAPC_ || 
-                !IsCapacityOfAPCLegal(capacity)
+                !OccupancyOrchestrator::IsCapacityOfAPCLegal(capacity)
             )
             {
                 return false;

@@ -225,7 +225,7 @@ namespace PredictedAdaptedEncoding
             resolved_version = static_cast<uint16_t>(BRANCH_VERSION);
         }
         
-        const packed64_t desired_layout = ComposeAPCOwned16x3Model_48t(
+        const packed64_t desired_layout = OccupancyOrchestrator::ComposeAPCOwned16x3Model_48t(
             static_cast<uint16_t>(layout_bound.BeginIndex),
             static_cast<uint16_t>(layout_bound.EndIndex),
             resolved_version,
@@ -506,7 +506,7 @@ namespace PredictedAdaptedEncoding
             {
                 return false;
             }
-            const packed64_t wanted_cell = ComposeAPCOwned16x3Model_48t(
+            const packed64_t wanted_cell = OccupancyOrchestrator::ComposeAPCOwned16x3Model_48t(
                 published, claimed, faulty,
                 APCPagedNodeSegmentClasses ::CONTROL_SLOT,
                 LocalityPolicy::PUBLISHED

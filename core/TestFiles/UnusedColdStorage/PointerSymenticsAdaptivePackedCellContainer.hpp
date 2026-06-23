@@ -5,6 +5,18 @@
 
 namespace PredictedAdaptedEncoding
 {
+
+struct AcquirePairedPointerStruct
+{
+    uint64_t AssembeledPtr = 0;
+    size_t HeadIdx = APCDataStructure::APC_SIZE_SENTINAL;
+    size_t TailIdx = APCDataStructure::APC_SIZE_SENTINAL;
+    packed64_t HeadScreenshot = 0;
+    packed64_t TailScreenshot = 0;
+    Model32Subclass Position = Model32Subclass::SELF_CLASS;
+    bool Ownership = false;
+};
+
 class PointerSymenticsAdaptivePackedCellContainer : public AdaptivePackedCellContainer
 {
 private:

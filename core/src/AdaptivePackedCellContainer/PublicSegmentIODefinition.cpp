@@ -10,7 +10,7 @@ namespace PredictedAdaptedEncoding
             std::min<size_t>(GetTotalCapacityForThisAPC(), APC_MAX_LENGTH_OR_COUNTER)
         );
 
-        const std::optional<uint16_t> desired_occupancy =  GetOccuupancyFromPackedCellMode48(
+        const std::optional<uint16_t> desired_occupancy = OccupancyOrchestrator::GetOccuupancyFromPackedCellMode48(
                 ReadCentralAPCOccupancyCellForThisPagedNode(),
                 locality_type,
                 total_capacity
@@ -406,7 +406,7 @@ namespace PredictedAdaptedEncoding
         uint16_t end16 = UNSIGNED_ZERO;
         uint16_t version16 = UNSIGNED_ZERO;
 
-        if (!ExtractLayoutModel_BegainL_EndM_VersionH(
+        if (!LayoutBoundsOfSingleRelNodeClass::ExtractLayoutModel_BegainL_EndM_VersionH(
                 layout_cell,
                 begin16,
                 end16,
@@ -528,7 +528,7 @@ namespace PredictedAdaptedEncoding
                 return false;
             }
             
-            packed64_t desired_layout = ComposeAPCOwned16x3Model_48t(begain_index, end_index, resolved_version, page_class);
+            packed64_t desired_layout = OccupancyOrchestrator::ComposeAPCOwned16x3Model_48t(begain_index, end_index, resolved_version, page_class);
             packed64_t expected_layout_cell = observed_layout;
 
             if (BackingPtr[static_cast<size_t>(layout_idx)].compare_exchange_strong(
@@ -832,7 +832,7 @@ namespace PredictedAdaptedEncoding
             );
         }
         
-        const std::optional<uint16_t> desired_region_occupancy = GetOccuupancyFromPackedCellMode48(
+        const std::optional<uint16_t> desired_region_occupancy = OccupancyOrchestrator::GetOccuupancyFromPackedCellMode48(
             packed_cell,
             locality_type,
             max_for_a_page
@@ -975,7 +975,7 @@ namespace PredictedAdaptedEncoding
                 return false;
             }
 
-            const packed64_t desired_cell = ComposeAPCOwned16x3Model_48t(
+            const packed64_t desired_cell = OccupancyOrchestrator::ComposeAPCOwned16x3Model_48t(
                 published_count, claimed_count, faulty_count, 
                 APCPagedNodeSegmentClasses::CONTROL_SLOT,
                 control_or_meta_cells_own_locality
@@ -1073,7 +1073,7 @@ namespace PredictedAdaptedEncoding
         const packed64_t packed_cell = page_class != APCPagedNodeSegmentClasses::NULLNAN ?
             ReadRegionOccupancyCombinedCell(page_class) : ReadCentralAPCOccupancyCellForThisPagedNode();
 
-        const uint16_t full_combined_occupancy = GetTootalOccupancyFromPackedCell(packed_cell);
+        const uint16_t full_combined_occupancy = OccupancyOrchestrator::GetTootalOccupancyFromPackedCell(packed_cell);
         return full_combined_occupancy;
     }
 }

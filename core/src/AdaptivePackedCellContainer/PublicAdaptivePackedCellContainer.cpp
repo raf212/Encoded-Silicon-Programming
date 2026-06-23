@@ -88,7 +88,7 @@ namespace PredictedAdaptedEncoding
     {
         
         FreeAll();
-        if (!IsCapacityOfAPCLegal(container_capacity))
+        if (!OccupancyOrchestrator::IsCapacityOfAPCLegal(container_capacity))
         {
             throw std::invalid_argument("Capacity is unbounded and not acceptable must be > METACELL_COUNT(95) && <= APC_MAX_LENGTH_OR_COUNTER ");
         }
