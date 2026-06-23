@@ -1,6 +1,6 @@
 #pragma once
 #include <functional>
-#include "APCGenerics.hpp"
+#include "LayoutBoundsOrchestrator.hpp"
 
 namespace PredictedAdaptedEncoding
 {

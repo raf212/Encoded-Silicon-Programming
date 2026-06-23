@@ -1,5 +1,5 @@
 #pragma once
-#include "CoreOfAPC.hpp"
+#include "../CoreOFAPC/CoreOFAPC.hpp"
 
 namespace PredictedAdaptedEncoding
 {

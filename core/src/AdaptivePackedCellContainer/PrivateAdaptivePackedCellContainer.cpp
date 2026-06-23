@@ -33,11 +33,11 @@ namespace PredictedAdaptedEncoding
         }
         if (ShouldSplitNow())
         {
-            TurnOnASegmentFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::SATURATED);
+            TurnOnASegmentFlag(ControlEnumOfAPCSegment::SATURATED);
         }
         else
         {
-            ClearOneControlEnumFlagOfAPC(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::SATURATED);
+            ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::SATURATED);
         }
         TouchLocalMetaClock48();
 
@@ -175,7 +175,7 @@ namespace PredictedAdaptedEncoding
             return std::nullopt;
         }
 
-        if (HasThisControlEnumFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT))
+        if (HasThisControlEnumFlag(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT))
         {
             return std::nullopt;
         }
@@ -281,7 +281,7 @@ namespace PredictedAdaptedEncoding
         {
             return failed_result;
         }
-        if (HasThisControlEnumFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT))
+        if (HasThisControlEnumFlag(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT))
         {
             return {PublishStatus::FULL, APCDataStructure::APC_SIZE_SENTINAL};
         }

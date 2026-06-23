@@ -189,44 +189,44 @@ public:
         return TryBindPortTarget(MetaIndexOfAPCNode::SHARED_PREVIOUS_ID, shared_previous_id);
     }
 
-    bool TurnOnASegmentFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment desired_segment_flag) noexcept
+    bool TurnOnASegmentFlag(ControlEnumOfAPCSegment desired_segment_flag) noexcept
     {
         return UpdateAPCModeFlagsInHeader_(static_cast<uint32_t>(desired_segment_flag), UNSIGNED_ZERO, MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
     }
 
-    bool HasThisControlEnumFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment flag) noexcept
+    bool HasThisControlEnumFlag(ControlEnumOfAPCSegment flag) noexcept
     {
         return (ReadMetaCellFamily32(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS) & static_cast<uint32_t>(flag)) != 0u;
     }
 
-    bool ClearOneControlEnumFlagOfAPC(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment desired_control_flag) noexcept
+    bool ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment desired_control_flag) noexcept
     {
         return UpdateAPCModeFlagsInHeader_(UNSIGNED_ZERO, static_cast<uint32_t>(desired_control_flag), MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
     }
 
-    bool TurnOnAManagerControlFlag(APCAndPagedNodeHelpers::ManagerControlFlagBits desired_manager_control_flag) noexcept
+    bool TurnOnAManagerControlFlag(ManagerControlFlagBits desired_manager_control_flag) noexcept
     {
         return UpdateAPCModeFlagsInHeader_(static_cast<uint32_t>(desired_manager_control_flag), UNSIGNED_ZERO, MetaIndexOfAPCNode::MANAGER_CONTROL_FLAGS);
     }
 
-    bool ClearOneManagerControlFlag(APCAndPagedNodeHelpers::ManagerControlFlagBits desired_manager_control_flag) noexcept
+    bool ClearOneManagerControlFlag(ManagerControlFlagBits desired_manager_control_flag) noexcept
     {
         return UpdateAPCModeFlagsInHeader_(UNSIGNED_ZERO, static_cast<uint32_t>(desired_manager_control_flag), MetaIndexOfAPCNode::MANAGER_CONTROL_FLAGS);
     }
 
-    bool HasThisManageControlFlag(APCAndPagedNodeHelpers::ManagerControlFlagBits desired_manager_contgrol_flag) noexcept
+    bool HasThisManageControlFlag(ManagerControlFlagBits desired_manager_contgrol_flag) noexcept
     {
         return (ReadMetaCellFamily32(MetaIndexOfAPCNode::MANAGER_CONTROL_FLAGS) & static_cast<uint32_t>(desired_manager_contgrol_flag)) != UNSIGNED_ZERO;
     }
 
     bool IsLayoutMutationFlagActive() noexcept
     {
-        return HasThisControlEnumFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
+        return HasThisControlEnumFlag(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
     }
     
     void SetGraphNodeFlag() noexcept
     {
-        TurnOnASegmentFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::IS_GRAPH_NODE);
+        TurnOnASegmentFlag(ControlEnumOfAPCSegment::IS_GRAPH_NODE);
     }
 
     uint32_t GetTotalCapacityForThisAPC() noexcept

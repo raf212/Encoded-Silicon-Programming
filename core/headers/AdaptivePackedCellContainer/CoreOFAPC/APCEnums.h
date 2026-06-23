@@ -7,6 +7,7 @@
 
 namespace PredictedAdaptedEncoding
 {
+
     enum class MetaIndexOfAPCNode : size_t
     {
         // identity
@@ -115,97 +116,41 @@ namespace PredictedAdaptedEncoding
         EOF_APC_HEADER = 95
     };
 
-    struct APCDataStructure 
+    enum class ControlEnumOfAPCSegment : uint32_t
     {
-        static constexpr size_t METACELL_COUNT = 96;
-        static constexpr uint32_t BRANCH_MAGIC = 0x41504342u;//big-endian
-        static constexpr uint32_t EOF_HEADER = 0x72616600;//big-endian
-        static constexpr uint16_t BRANCH_VERSION = 1u;
-        static constexpr packed64_t PACKED_CELL_SENTENAL = UINT64_MAX;
-        static constexpr uint32_t APC_MAX_LENGTH_OR_COUNTER = UINT16_MAX - 1;
-        static constexpr uint32_t APC_INDEX_SENTINAL = UINT16_MAX;
-        static constexpr uint32_t BRANCH_SENTINAL = IN_CELL_VALUE_MODE32_SENTINAL;
-        static constexpr size_t APC_CACHELINE_SIZE = 64u;
-        static constexpr size_t APC_SIZE_SENTINAL = SIZE_MAX;
-
-        static constexpr uint32_t FABRIC_MAGIC = 0x41504643u;
-        static constexpr uint32_t FABRIC_META_EOF = 0x41474946u;
-
-protected:
-        static constexpr bool DoseU32FitsInU16_(uint32_t value) noexcept
-        {
-            return value <= APC_MAX_LENGTH_OR_COUNTER;
-        }
-
-        static packed64_t* AllocateAlignedRawPackedCells_(size_t count)
-        {
-            if (count == UNSIGNED_ZERO)
-            {
-                return nullptr;
-            }
-
-            void* raw_ptr = nullptr;
-
-            try
-            {
-                raw_ptr = ::operator new[](sizeof(packed64_t) * count, std::align_val_t{APC_CACHELINE_SIZE});
-            }
-            catch(...)
-            {
-                return nullptr;
-            }
-            
-            auto* packed_cells = static_cast<packed64_t*>(raw_ptr);
-            for (size_t i = 0; i < count; i++)
-            {
-                packed_cells[i] = PackedCell64_t::PACKED_CELL_SENTINAL;
-            }
-            return packed_cells;
-        }
-
-        static constexpr void FreeAlignedRawPackedCells_(packed64_t* backing_ptr) noexcept
-        {
-            if (!backing_ptr)
-            {
-                return;
-            }
-            ::operator delete[](static_cast<void*>(backing_ptr), std::align_val_t{APC_CACHELINE_SIZE});
-        }
+        NONE = 0u,
+        ENABLE_BRANCHING = 1u << 0,
+        HAS_REGION_INDEX =  1u << 1,
+        SATURATED = 1u << 2,
+        SPLIT_INFLIGHT = 1u << 3,
+        IS_GRAPH_NODE = 1u << 4,
+        IS_SHARED_ROOT = 1u << 5,
+        IS_SHARED_MAMBER = 1u << 6,
+        HAS_SHARED_NEXT = 1u << 7,
+        HAS_SHARED_PREVIOUS = 1u << 8,
+        HAS_LAYOUT_DIR = 1u << 9,
+        HAS_EDGE_TABLE = 1u << 10,
+        HAS_WEIGHT_TABLE = 1u << 11,
+        LAYOUT_MUTATION_INFLIGHT = 1u << 12
     };
 
-    struct ContainerConf
+    enum class ManagerControlFlagBits : uint32_t
     {
-        PackedMode InitialMode = PackedMode::MODEL32;
-        size_t ProducerBlockSize = MIN_PRODUCER_BLOCK_SIZE;
-        size_t RegionSize = MIN_REGION_SIZE;
-        uint32_t RetireBatchThreshold = MIN_RETIRE_BATCH_THRESHOLD;
-        uint32_t BackgroundEpochAdvanceMS = MIN_BACKGROUND_EPOCH_MS;
-        bool EnableBranching = true;
-        uint32_t BranchSplitThresholdPercentage = INITIAL_BRANCH_SPLIT_THRESHOLD_PERCENTAGE;
-        uint32_t BranchMaxDepth = MAX_BRANCH_DEPTH;
-        size_t BranchMinChildCapacity = MINIMUM_BRANCH_CAPACITY;
-        uint32_t NodeGroupSize = 1u;
-
-        enum class APCSegmentExtendOrder : uint8_t
-        {
-            FIFO = 0,
-            PRIORITY = 1,
-            RANDOM = 2
-        };
+        NONE = 0u,
+        REGISTERED_APC = 1U << 0,
+        DEAD_APC = 1U << 1,
+        RECLAIMATION_REQUST_FOR_JUST_THIS_APC = 1u << 2,
+        RECLAIMATION_REQUEST_FOR_WHOLE_CHAIN = 1u << 3,
+        REQUEST_NEW_SEGMENTATION = 1u << 4,
+        IN_WORK_STACK = 1u << 5,
+        IN_CLEANUP_STACK = 1u << 6
     };
-
 
     enum class PublishStatus : uint8_t
     {
         OK = 0,
         FULL = 1,
         INVALID = 2
-    };
-
-    struct PublishResult
-    {
-        PublishStatus ResultStatus{PublishStatus::INVALID};
-        size_t Index{APCDataStructure::APC_SIZE_SENTINAL};
     };
 
 }

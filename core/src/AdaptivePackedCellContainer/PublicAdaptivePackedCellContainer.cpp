@@ -176,7 +176,7 @@ namespace PredictedAdaptedEncoding
             return;
         }
         RebuildRegionIndexFromPayload_();
-        TurnOnASegmentFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::HAS_REGION_INDEX);
+        TurnOnASegmentFlag(ControlEnumOfAPCSegment::HAS_REGION_INDEX);
     }
 
     size_t AdaptivePackedCellContainer::NextProducerSequence() noexcept
@@ -244,7 +244,7 @@ namespace PredictedAdaptedEncoding
         }
         
         if (!HasThisControlEnumFlag(
-            APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::ENABLE_BRANCHING
+            ControlEnumOfAPCSegment::ENABLE_BRANCHING
         ))
         {
             return;
@@ -330,8 +330,8 @@ namespace PredictedAdaptedEncoding
     //         }
 
     //         if (
-    //             current_apc_ptr->HasThisControlEnumFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT) ||
-    //             current_apc_ptr->HasThisControlEnumFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::SPLIT_INFLIGHT)
+    //             current_apc_ptr->HasThisControlEnumFlag(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT) ||
+    //             current_apc_ptr->HasThisControlEnumFlag(ControlEnumOfAPCSegment::SPLIT_INFLIGHT)
     //         )
     //         {
     //             return false;
@@ -493,7 +493,7 @@ namespace PredictedAdaptedEncoding
             return nullptr;
         }
 
-        if (!HasThisControlEnumFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::ENABLE_BRANCHING))
+        if (!HasThisControlEnumFlag(ControlEnumOfAPCSegment::ENABLE_BRANCHING))
         {
             return nullptr;
         }
@@ -506,7 +506,7 @@ namespace PredictedAdaptedEncoding
         auto ClearSplitFlag = [this]() noexcept
         {
             ClearOneControlEnumFlagOfAPC(
-                APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::SPLIT_INFLIGHT
+                ControlEnumOfAPCSegment::SPLIT_INFLIGHT
             );
         };
 
@@ -632,10 +632,10 @@ namespace PredictedAdaptedEncoding
             return nullptr;
         }
         tail_apc_ptr->TurnOnASegmentFlag(
-            APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::HAS_SHARED_NEXT
+            ControlEnumOfAPCSegment::HAS_SHARED_NEXT
         );
         new_child_segment_ptr->TurnOnASegmentFlag(
-            APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::HAS_SHARED_PREVIOUS
+            ControlEnumOfAPCSegment::HAS_SHARED_PREVIOUS
         );
         if (!root_apc_ptr->RebuildSharedChainSegmentMetatdataFromRoot_())
         {
@@ -696,32 +696,32 @@ namespace PredictedAdaptedEncoding
 
             if (i == 0)
             {
-                current_chain_index_apc->TurnOnASegmentFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::IS_SHARED_ROOT);
-                current_chain_index_apc->ClearOneControlEnumFlagOfAPC(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::IS_SHARED_MAMBER);
+                current_chain_index_apc->TurnOnASegmentFlag(ControlEnumOfAPCSegment::IS_SHARED_ROOT);
+                current_chain_index_apc->ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::IS_SHARED_MAMBER);
             }
             else
             {
-                current_chain_index_apc->TurnOnASegmentFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::IS_SHARED_MAMBER);
-                current_chain_index_apc->ClearOneControlEnumFlagOfAPC(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::IS_SHARED_ROOT);
+                current_chain_index_apc->TurnOnASegmentFlag(ControlEnumOfAPCSegment::IS_SHARED_MAMBER);
+                current_chain_index_apc->ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::IS_SHARED_ROOT);
                 
             }
             
             if (previous_id == BRANCH_SENTINAL)
             {
-                current_chain_index_apc->ClearOneControlEnumFlagOfAPC(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::HAS_SHARED_PREVIOUS);
+                current_chain_index_apc->ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::HAS_SHARED_PREVIOUS);
             }
             else
             {
-                current_chain_index_apc->TurnOnASegmentFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::HAS_SHARED_PREVIOUS);
+                current_chain_index_apc->TurnOnASegmentFlag(ControlEnumOfAPCSegment::HAS_SHARED_PREVIOUS);
             }
 
             if (next_id == BRANCH_SENTINAL)
             {
-                current_chain_index_apc->ClearOneControlEnumFlagOfAPC(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::HAS_SHARED_NEXT);
+                current_chain_index_apc->ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::HAS_SHARED_NEXT);
             }
             else
             {
-                current_chain_index_apc->TurnOnASegmentFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::HAS_SHARED_NEXT);
+                current_chain_index_apc->TurnOnASegmentFlag(ControlEnumOfAPCSegment::HAS_SHARED_NEXT);
             }
         }
         return true;

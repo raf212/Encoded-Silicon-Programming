@@ -294,7 +294,7 @@ namespace PredictedAdaptedEncoding
     //             observed = BackingPtr[idx].load(MoLoad_);
     //         }
     //         if (
-    //             HasThisControlEnumFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::ENABLE_BRANCHING) && 
+    //             HasThisControlEnumFlag(ControlEnumOfAPCSegment::ENABLE_BRANCHING) && 
     //             ShouldSplitNow() && APCManagerPtr_
     //         )
     //         {

@@ -352,7 +352,7 @@ namespace PredictedAdaptedEncoding
         {
             if (owns_layout_flag)
             {
-                ClearOneControlEnumFlagOfAPC(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
+                ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
             }
         };
 
@@ -434,7 +434,7 @@ namespace PredictedAdaptedEncoding
         {
             return FailedWrite();
         }
-        TurnOnASegmentFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::HAS_LAYOUT_DIR);
+        TurnOnASegmentFlag(ControlEnumOfAPCSegment::HAS_LAYOUT_DIR);
         ClearIfOwned();
         return true;
     }

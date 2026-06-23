@@ -113,13 +113,13 @@ namespace PredictedAdaptedEncoding
         WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::SHARED_NEXT_ID, BRANCH_SENTINAL);
         if (is_root_shared)
         {
-            TurnOnMultipleSegmentFlagsAtOnce_(static_cast<uint32_t>(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::IS_GRAPH_NODE) | static_cast<uint32_t>(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::IS_SHARED_ROOT));
-            ClearOneControlEnumFlagOfAPC(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::IS_SHARED_MAMBER);
+            TurnOnMultipleSegmentFlagsAtOnce_(static_cast<uint32_t>(ControlEnumOfAPCSegment::IS_GRAPH_NODE) | static_cast<uint32_t>(ControlEnumOfAPCSegment::IS_SHARED_ROOT));
+            ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::IS_SHARED_MAMBER);
         }
         else
         {
-            TurnOnMultipleSegmentFlagsAtOnce_(static_cast<uint32_t>(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::IS_GRAPH_NODE) | static_cast<uint32_t>(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::IS_SHARED_MAMBER));
-            ClearOneControlEnumFlagOfAPC(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::IS_SHARED_ROOT);    
+            TurnOnMultipleSegmentFlagsAtOnce_(static_cast<uint32_t>(ControlEnumOfAPCSegment::IS_GRAPH_NODE) | static_cast<uint32_t>(ControlEnumOfAPCSegment::IS_SHARED_MAMBER));
+            ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::IS_SHARED_ROOT);    
         }
         
     }
@@ -174,7 +174,7 @@ namespace PredictedAdaptedEncoding
 
         WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::BRANCH_DEPTH, branch_depth, write_cell_priority);
         WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::BRANCH_PRIORITY, branch_priority, write_cell_priority);
-        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS, container_configuration.EnableBranching ? static_cast<uint32_t>(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::ENABLE_BRANCHING) : static_cast<uint32_t>(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::NONE), write_cell_priority);
+        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS, container_configuration.EnableBranching ? static_cast<uint32_t>(ControlEnumOfAPCSegment::ENABLE_BRANCHING) : static_cast<uint32_t>(ControlEnumOfAPCSegment::NONE), write_cell_priority);
         WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::CURRENT_ACTIVE_THREADS, UNSIGNED_ZERO, write_cell_priority);
         WrireAPCMetaModel_48t(MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48, UNSIGNED_ZERO);
         WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE, container_configuration.BranchSplitThresholdPercentage, write_cell_priority);
@@ -329,7 +329,7 @@ namespace PredictedAdaptedEncoding
 
     bool SegmentIODefinition::TryMarkSplitInFlight() noexcept
     {
-        const uint32_t bit = static_cast<uint32_t>(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::SPLIT_INFLIGHT);
+        const uint32_t bit = static_cast<uint32_t>(ControlEnumOfAPCSegment::SPLIT_INFLIGHT);
         while (true)
         {
             const uint32_t current_flags = ReadMetaCellFamily32(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
@@ -504,7 +504,7 @@ namespace PredictedAdaptedEncoding
             if (owns_layout_flag)
             {
                 ClearOneControlEnumFlagOfAPC(
-                    APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT
+                    ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT
                 );            
             }
         };
@@ -551,7 +551,7 @@ namespace PredictedAdaptedEncoding
 
     bool SegmentIODefinition::TrySetLayoutMutationInFlight() noexcept
     {
-        const uint32_t bit = static_cast<uint32_t>(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
+        const uint32_t bit = static_cast<uint32_t>(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
 
         while (true)
         {
@@ -594,7 +594,7 @@ namespace PredictedAdaptedEncoding
 
         auto ClearIfOwned = [this]() noexcept
         {
-            ClearOneControlEnumFlagOfAPC(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
+            ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
         };
 
         auto FailedWrite = [&]()noexcept -> bool
