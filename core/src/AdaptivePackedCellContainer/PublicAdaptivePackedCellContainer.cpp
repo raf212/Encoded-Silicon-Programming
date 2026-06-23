@@ -731,11 +731,6 @@ namespace PredictedAdaptedEncoding
 
     void FabricToAPCLinker::FreeAll() noexcept
     {
-        if (!BackingPtr && !OwnedMasterClockConfPtr_)
-        {
-            return;
-        }
-
         if (FabricOwnerPtr_ && FabricBackend_)
         {
 

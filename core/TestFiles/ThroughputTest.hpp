@@ -22,6 +22,25 @@ namespace
     constexpr uint32_t FB_WORKER_COUNT = 2u;
     constexpr uint32_t FINAL_WORKER_COUNT = 1u;
 
+    packed64_t ComposeClockedModel32FroAPC(
+    val32_t provided_cell_value32,
+    APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::UNDEFINED,
+    AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
+    LocalityPolicy locality = LocalityPolicy::PUBLISHED,
+    Model32Subclass sub_class = Model32Subclass::SELF_CLASS,
+    InternalDataTypePolicy dtype = InternalDataTypePolicy::UnsignedPCellDataType,
+    OwnershipPolicy ownership = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER
+)
+{
+    const clk16_t now_clock16 = Timer48::NowClock16();
+    const meta16_t desired_meta16 = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_32t(
+        ownership,
+        static_cast<tag8_t>(page_class),
+        sub_class, attribute, locality, dtype
+    );
+    return PackedCell64_t::Compose32BitFamilyPackedCell(provided_cell_value32, now_clock16, desired_meta16);
+}
+
     struct GraphStats
     {
         std::atomic<uint64_t> SensorFFProduced{0};
@@ -61,13 +80,12 @@ namespace
     };
 
     static packed64_t PackU32(
-        MasterClockConf& clock,
         uint32_t value,
         APCPagedNodeSegmentClasses region,
         AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
     )
     {
-        return clock.ComposeClockedModel32FroAPC(
+        return ComposeClockedModel32FroAPC(
             value,
             region,
             attribute,
@@ -79,7 +97,6 @@ namespace
     }
 
     static packed64_t PackFloat32(
-        MasterClockConf& clock,
         float value,
         APCPagedNodeSegmentClasses region,
         AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
@@ -87,7 +104,7 @@ namespace
     {
         const uint32_t bits = BitCastMaybe<uint32_t>(value);
 
-        return clock.ComposeClockedModel32FroAPC(
+        return ComposeClockedModel32FroAPC(
             bits,
             region,
             attribute,
@@ -276,8 +293,7 @@ void ThroughputTest()
     std::cerr.setf(std::ios::unitbuf);
 
 
-    Timer48 timer;
-    MasterClockConf clock(nullptr, timer);
+    // Timer48 timer;
 
     ContainerConf cfg;
     cfg.InitialMode = PackedMode::VALUE32;
@@ -346,10 +362,10 @@ void ThroughputTest()
             for (uint32_t i = p + 1; i <= VALUE_COUNT; i += PRODUCER_COUNT)
             {
                 const packed64_t ff =
-                    PackU32(clock, i, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE);
+                    PackU32(i, APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE);
 
                 const packed64_t fb =
-                    PackU32(clock, i + 1u, APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE);
+                    PackU32(i + 1u, APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE);
 
                 if (PublishBudgeted(
                         Sensor,
@@ -409,7 +425,6 @@ void ThroughputTest()
 
                 const packed64_t state_cell =
                     PackU32(
-                        clock,
                         state_value,
                         APCPagedNodeSegmentClasses::STATE_SLOT,
                         AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
@@ -462,7 +477,6 @@ void ThroughputTest()
 
                 const packed64_t error_cell =
                     PackU32(
-                        clock,
                         error_value,
                         APCPagedNodeSegmentClasses::ERROR_SLOT,
                         AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
@@ -539,7 +553,6 @@ void ThroughputTest()
 
                 const packed64_t motor_cell =
                     PackFloat32(
-                        clock,
                         motor_value,
                         APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
                         AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL

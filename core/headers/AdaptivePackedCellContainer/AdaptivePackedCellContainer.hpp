@@ -207,16 +207,6 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
                 BackingPtr[i].store(default_idle_cell, MoStoreSeq_);
             }
 
-            try
-            {
-                OwnedMasterClockConfPtr_ = std::make_unique<MasterClockConf>(this, LocalTimer48_);
-            }
-            catch(...)
-            {
-                OwnedMasterClockConfPtr_.reset();
-                return false;
-            }
-
             InitRootOrChildBranch(
                 branch_id,
                 logical_id,

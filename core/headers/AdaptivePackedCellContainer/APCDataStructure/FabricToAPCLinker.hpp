@@ -1,6 +1,6 @@
 #pragma once
 #include <functional>
-#include "APCSpikeController/AtomicAdaptiveBackoff.hpp"
+#include "APCGenerics.hpp"
 
 namespace PredictedAdaptedEncoding
 {
@@ -158,12 +158,8 @@ protected:
 /// UPDATE Candidates
     size_t CapacityOfThisAPC_{UNSIGNED_ZERO};
     Timer48 LocalTimer48_;
-    std::unique_ptr<MasterClockConf> OwnedMasterClockConfPtr_;
-    //logging hook
     std::function<void(const char*, const char*)> APCLogger_;
-    //region/index
     std::vector<std::vector<uint64_t>> SOABitmapForAPC_;
-    //--??
     static inline std::atomic<uint32_t> GlobalBranchIdAlloc_{1};
 ///
 

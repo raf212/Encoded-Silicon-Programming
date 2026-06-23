@@ -115,6 +115,24 @@ namespace PredictedAdaptedEncoding
         EOF_APC_HEADER = 95
     };
 
+    struct Timer48
+    {
+        static constexpr uint64_t TicksPerSec_ = A_BILLION;
+
+        static constexpr uint64_t NowTicks() noexcept
+        {
+            using  cns = std::chrono::nanoseconds;
+            auto d = std::chrono::steady_clock::now().time_since_epoch();
+            uint64_t ns_count = static_cast<uint64_t>(std::chrono::duration_cast<cns>(d).count());
+            return ns_count & MaskLowNBits(FAMILY_48_BIT_LEN);
+        }
+
+        static constexpr uint16_t NowClock16() noexcept
+        {
+            return static_cast<uint16_t>(NowTicks() & MaskLowNBits(LOW16_BIT_LEN));
+        }
+    };
+
 
     class APCDataStructure 
     {

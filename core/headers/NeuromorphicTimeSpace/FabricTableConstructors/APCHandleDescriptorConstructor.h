@@ -20,7 +20,7 @@ namespace PredictedAdaptedEncoding
         /// @return VALID: APCDescriptorRange::IsValid -> true || INVALID: APCDescriptorRange::IsValid -> true-> false
         APCDescriptorRange GetSegmentPoolBegainEndForSingleAPCDescription_(uint64_t single_description_index) noexcept;
 
-
+        
     };
 
 }

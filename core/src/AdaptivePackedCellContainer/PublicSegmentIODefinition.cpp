@@ -30,11 +30,7 @@ namespace PredictedAdaptedEncoding
 
     void SegmentIODefinition::TouchLocalMetaClock48() noexcept
     {
-        if (!OwnedMasterClockConfPtr_)
-        {
-            return;
-        }
-        OwnedMasterClockConfPtr_->TouchSegmentLocalClock48HighPriority();
+        return;
     }
 
     packed64_t SegmentIODefinition::PackPureClock48AsPackedCell(
@@ -44,11 +40,6 @@ namespace PredictedAdaptedEncoding
         APCPagedNodeSegmentClasses page_class
     ) noexcept
     {
-        
-        if (OwnedMasterClockConfPtr_)
-        {
-            return OwnedMasterClockConfPtr_->ComposePureClockCell48();
-        }
         
         const meta16_t meta16 = PackedCell64_t::MakeMeta16ForAnyOwnerAndItsClassModel_48t(
             OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
@@ -82,6 +73,8 @@ namespace PredictedAdaptedEncoding
         bool refresh_clock16
     ) noexcept
     {
+        (void) refresh_clock16;
+        
         if (!ValidMetaIdx(idx) || idx == MetaIndexOfAPCNode::LOCAL_CLOCK48)
         {
             return false;
@@ -98,10 +91,6 @@ namespace PredictedAdaptedEncoding
         }
         meta16_t current_strl = PackedCell64_t::ExtractMeta16fromPackedCell(expected_packed);
         clk16_t current_clock16 = PackedCell64_t::ExtractClk16(expected_packed);
-        if (refresh_clock16 && OwnedMasterClockConfPtr_)
-        {
-            current_clock16 = OwnedMasterClockConfPtr_->NowClock16();
-        }
         const packed64_t desired_packed = PackedCell64_t::Compose32BitFamilyPackedCell(desired_value, current_clock16, current_strl);
         return BackingPtr[index].compare_exchange_strong(
             expected_packed,

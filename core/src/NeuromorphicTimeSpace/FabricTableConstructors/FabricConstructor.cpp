@@ -268,7 +268,6 @@ namespace PredictedAdaptedEncoding
 
                 return JustifyClaimCas::SUCCESS;
             }
-            AdaptiveBackoffCentral_.AdaptiveBackOffPacked(currennt_expected_cell);
         }
 
         return JustifyClaimCas::CAS_LOOP_RANOUT;

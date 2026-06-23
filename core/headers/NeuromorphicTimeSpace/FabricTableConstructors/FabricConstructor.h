@@ -29,7 +29,6 @@ namespace PredictedAdaptedEncoding
         std::atomic<bool> FabricInitialized_{false};
         std::atomic<bool> InitializationInProgress_{false};
         RawPackedCellAllocator AllocatorOfFabric_{};
-        AtomicAdaptiveBackoff AdaptiveBackoffCentral_;
         static constexpr uint32_t DEFAULT_MAX_TRIES = 128;
 
         static constexpr size_t DefaultFabricAlignment16Cell_(size_t value) noexcept
