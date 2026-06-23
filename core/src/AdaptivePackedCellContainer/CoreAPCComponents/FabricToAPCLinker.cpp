@@ -7,7 +7,7 @@ namespace PredictedAdaptedEncoding
     bool FabricToAPCLinker::BindExternalRawFabricBacking_(
         packed64_t* raw_cells_ptr,
         size_t cell_count,
-        SlabToFabricConverterAndCordinator* fabric_owner,
+        VagueTemoraryPremativeFabric* fabric_owner,
         uint64_t fabric_slot_idx,
         bool object_owned_by_fabric
     ) noexcept
@@ -52,7 +52,7 @@ namespace PredictedAdaptedEncoding
         FabricObjectOwnedByFabric_ = false;
     }
 
-    void FabricToAPCLinker::SetFabricOwnerForGlobalAPC(SlabToFabricConverterAndCordinator* fabric_owner) noexcept
+    void FabricToAPCLinker::SetFabricOwnerForGlobalAPC(VagueTemoraryPremativeFabric* fabric_owner) noexcept
     {
         FabricOwnerPtr_ = fabric_owner;
     }

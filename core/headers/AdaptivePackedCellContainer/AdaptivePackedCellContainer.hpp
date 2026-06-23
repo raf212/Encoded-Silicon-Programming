@@ -72,12 +72,9 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         );
 
-
         void InitRegionIdx(size_t region_size) noexcept;
 
         void TryCreateBranchIfNeeded(APCPagedNodeSegmentClasses rel_mask_hint = APCPagedNodeSegmentClasses::FREE_SLOT) noexcept;
-
-        void SetManagerForGlobalAPC(PackedCellContainerManager* pointer_of_global_apc_manager) noexcept;
 
         bool TryPublishRegionalSharedGrowthOnce(APCPagedNodeSegmentClasses region_kind, packed64_t packed_cell, std::atomic<uint64_t>* growth_counter = nullptr) noexcept;
 
