@@ -2,7 +2,6 @@
 #include <array>
 #include <utility>
 #include "AdaptivePackedCellContainer.hpp"
-#include "PackedCellContainerManager.hpp"
 
 namespace PredictedAdaptedEncoding
 {

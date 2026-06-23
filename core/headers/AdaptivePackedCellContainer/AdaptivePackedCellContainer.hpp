@@ -5,7 +5,6 @@
 #include <cstdio>
 #include <iostream>
 #include "SegmentIODefinition.hpp"
-#include "PackedCellContainerManager.hpp"
 
 namespace PredictedAdaptedEncoding
 {
@@ -18,7 +17,6 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
     protected:
 
         static inline std::atomic<uint32_t> GlobalBranchIdAlloc_{1};
-        static inline thread_local PackedCellContainerManager::ThreadHandlePCCM  ThreadHandleAPCTL_ = {};
         
         //logging hook
         std::function<void(const char*, const char*)> APCLogger_;
@@ -27,11 +25,6 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
         std::vector<std::vector<uint64_t>> RelBitmaps_;
         std::unique_ptr<std::atomic<uint64_t>[]> RegionEpochArray_{nullptr};
         //--??
-
-        std::atomic<AdaptivePackedCellContainer*> RegistryNextAPCPtr_{nullptr};
-        std::atomic<AdaptivePackedCellContainer*> WorkNextAPCPtr_{nullptr};
-        std::atomic<AdaptivePackedCellContainer*> CleanupNextAPCPtr_{nullptr};
-
         
         size_t GetHashedRendomizedStep_(size_t sequense_number) noexcept;
 
@@ -71,34 +64,6 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
          bool IfValidPayloadIndex_(size_t idx) noexcept
         {
             return (BackingPtr && idx >= PayloadBegin() && idx < GetTotalCapacityForThisAPC());
-        }
-
-         void QSBRCurThreadRegisterIfNeed_() noexcept
-        {
-            if (ThreadHandleAPCTL_.QSBRIdx != APCDataStructure::APC_SIZE_SENTINAL && ThreadHandleAPCTL_.WaitSlotPtr != nullptr)
-            {
-                return;
-            }
-            ThreadHandleAPCTL_ = PackedCellContainerManager::Instance().RegisterAPCThread();
-        }
-
-         void QSBREnterCritical_() noexcept
-        {
-            QSBRCurThreadRegisterIfNeed_();
-            if (ThreadHandleAPCTL_.QSBRIdx == APCDataStructure::APC_SIZE_SENTINAL)
-            {
-                return;
-            }
-            PackedCellContainerManager::Instance().EnterCriticalContainer(ThreadHandleAPCTL_);
-        }
-
-         void QSBRExitCritical_() noexcept
-        {
-            if (ThreadHandleAPCTL_.QSBRIdx == APCDataStructure::APC_SIZE_SENTINAL)
-            {
-                return;
-            }
-            PackedCellContainerManager::Instance().ExtitCriticalContainer(ThreadHandleAPCTL_);
         }
 
     public:
@@ -156,8 +121,6 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
         size_t ReserveProducerSlots(size_t number_of_slots) noexcept;
 
         size_t NextProducerSequence() noexcept;
-
-        void ClearAllManagerLinksAndFlags() noexcept;
 
         uint32_t CountExactLocalRegionalOccupancy(APCPagedNodeSegmentClasses desired_region_class) noexcept;
 
@@ -219,36 +182,6 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
                 return true;
             }
             return false;        
-        }
-
-         AdaptivePackedCellContainer* LoadRegistryNextAPC() const noexcept
-        {
-            return RegistryNextAPCPtr_.load(MoLoad_);
-        }
-
-         void StoreRegistryNextAPC(AdaptivePackedCellContainer* apc_ptr) noexcept
-        {
-            RegistryNextAPCPtr_.store(apc_ptr, MoStoreSeq_);
-        }
-
-         AdaptivePackedCellContainer* LoadWorkNextAPC() const noexcept
-        {
-            return WorkNextAPCPtr_.load(MoLoad_);
-        }
-
-         void StoreWorkNextAPC(AdaptivePackedCellContainer* apc_ptr) noexcept
-        {
-            WorkNextAPCPtr_.store(apc_ptr, MoStoreSeq_);
-        }
-
-         AdaptivePackedCellContainer* LoadCleanupNextAPC() const noexcept
-        {
-            return CleanupNextAPCPtr_.load(MoLoad_);
-        }
-
-         void StoreCleanupNextAPC(AdaptivePackedCellContainer* apc_ptr) noexcept
-        {
-            CleanupNextAPCPtr_.store(apc_ptr, MoStoreSeq_);
         }
 
         bool InitOnFabricBackingAfterBind(
@@ -316,38 +249,5 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
 };
 
-
-struct AdaptivePackedCellContainer::QSBRGuard
-{
-    bool IsQSBRGuardActive{false};
-    AdaptivePackedCellContainer* ParentContainer{nullptr};
-
-    QSBRGuard(AdaptivePackedCellContainer* apc_ptr = nullptr) noexcept :
-        ParentContainer(apc_ptr)
-    {
-        if (ParentContainer)
-        {
-            ParentContainer ->QSBREnterCritical_();
-            IsQSBRGuardActive = true;
-        }
-        
-    }
-
-    ~QSBRGuard() noexcept 
-    {
-        if (IsQSBRGuardActive)
-        {
-            ParentContainer->QSBRExitCritical_();
-        }
-    }
-    QSBRGuard(const QSBRGuard&) = delete;
-    QSBRGuard& operator = (const QSBRGuard&) = delete;
-    QSBRGuard(QSBRGuard&& oprtr) noexcept :
-        ParentContainer(oprtr.ParentContainer), IsQSBRGuardActive(oprtr.IsQSBRGuardActive)
-    {
-        oprtr.IsQSBRGuardActive = false;//1
-        oprtr.ParentContainer = nullptr;//2
-    }
-};
 
 }  

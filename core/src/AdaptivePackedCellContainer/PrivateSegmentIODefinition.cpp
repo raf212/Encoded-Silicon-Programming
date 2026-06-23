@@ -1,5 +1,4 @@
 #include "AdaptivePackedCellContainer/APCSegmentsCausalCordinator.hpp"
-#include "AdaptivePackedCellContainer/PackedCellContainerManager.hpp"
 #include <iostream>
 
 namespace PredictedAdaptedEncoding

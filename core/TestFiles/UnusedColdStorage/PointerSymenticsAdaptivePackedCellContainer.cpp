@@ -1,5 +1,5 @@
-#include "AdaptivePackedCellContainer/APCSegmentsCausalCordinator.hpp"
-#include "AdaptivePackedCellContainer/APCDataStructure/APCSpikeController/PointerSymenticsAdaptivePackedCellContainer.hpp"
+#include "../AdaptivePackedCellContainer/APCSegmentsCausalCordinator.hpp"
+#include "PointerSymenticsAdaptivePackedCellContainer.hpp"
 #include <iostream>
 
 namespace PredictedAdaptedEncoding

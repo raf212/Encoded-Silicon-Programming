@@ -1,5 +1,4 @@
 #include "AdaptivePackedCellContainer/APCSegmentsCausalCordinator.hpp"
-#include "AdaptivePackedCellContainer/PackedCellContainerManager.hpp"
 #include <iostream>
 
 namespace PredictedAdaptedEncoding
@@ -728,19 +727,6 @@ namespace PredictedAdaptedEncoding
         return true;
     }
 
-    void AdaptivePackedCellContainer::ClearAllManagerLinksAndFlags() noexcept
-    {
-        RegistryNextAPCPtr_.store(nullptr, MoStoreSeq_);
-        WorkNextAPCPtr_.store(nullptr, MoStoreSeq_);
-        CleanupNextAPCPtr_.store(nullptr, MoStoreSeq_);
-        if (!BackingPtr || !OwnedMasterClockConfPtr_)
-        {
-            return;
-        }
-        
-        const packed64_t idle = PackedCell64_t::MakeTypedAPCValidPackedCell(TypeFamily::VALUE32, AccessContractOfValue::CAS_RMW);
-        BackingPtr[static_cast<size_t>(MetaIndexOfAPCNode::MANAGER_CONTROL_FLAGS)].store(idle, MoStoreSeq_);
-    }
 
 
     void FabricToAPCLinker::FreeAll() noexcept
@@ -750,14 +736,11 @@ namespace PredictedAdaptedEncoding
             return;
         }
 
-        OwnedMasterClockConfPtr_.reset();   
-        // const uint32_t capacity = GetTotalCapacityForThisAPC();
-        FreeAlignedRawPackedCells_(BackingPtr->CellPtr);
-        BackingPtr = nullptr;
-        CapacityOfThisAPC_ = 0;
-        // RegionRelArray_.reset();
-        // RegionEpochArray_.reset();
-        // RelBitmaps_.clear();
+        if (FabricOwnerPtr_ && FabricBackend_)
+        {
+
+        }
+                
     }
 
 
