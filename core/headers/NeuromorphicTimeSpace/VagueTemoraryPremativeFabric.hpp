@@ -68,6 +68,22 @@ private:
 
 public:
 
+    // AdaptivePackedCellContainer* GetDeafultInitializedAPCFromFabric(
+    //     const ContainerConf& container_conf,
+    //     std::optional<uint64_t> shared_id = std::nullopt,
+    //     std::optional<uint64_t>logical_id = std::nullopt
+    // )
+    // {
+    //     if (
+    //         !SlabBasePtr_ || 
+    //         PerAPCRuntimeCellCount_ < MINIMUM_BRANCH_CAPACITY ||
+    //         CountOfAPC_ == UNSIGNED_ZERO
+    //     )
+    //     {
+    //         return nullptr;
+    //     }
+        
+    // }
 };
 
 

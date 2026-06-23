@@ -47,7 +47,8 @@ struct DescriptionOfAPC
         RECORD_WITH_SEGMENT_POOL = 1,
         OWNED_BY_APC = 2,
         RETIREMENT_REQUEST = 3,
-        LOGICALY_RETIRED = 4
+        LOGICALY_RETIRED = 4,
+        UNASSIGNED_UNUSED_NANNULL = 5
     };
 
     static constexpr bool IsValidValue48APCDescription(APCDescriptorCellType descriptor_cell_type) noexcept

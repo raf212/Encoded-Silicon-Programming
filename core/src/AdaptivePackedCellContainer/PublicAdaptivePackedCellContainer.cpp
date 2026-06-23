@@ -5,7 +5,7 @@ namespace PredictedAdaptedEncoding
 {
     class PackedCellContainerManager;
     
-    uint32_t AdaptivePackedCellContainer::GetBranchId() noexcept
+    uint32_t AdaptivePackedCellContainer::GetSlabSlotID() noexcept
     {
 
         return ReadMetaCellFamily32(MetaIndexOfAPCNode::BRANCH_ID);
@@ -195,7 +195,7 @@ namespace PredictedAdaptedEncoding
         };
 
         thread_local ProducerBlockCacheTLS cache{};
-        const uint32_t branch_id = GetBranchId();
+        const uint32_t branch_id = GetSlabSlotID();
 
         if (cache.OwnerOfNode != this || cache.OwnerBranchId != branch_id)
         {
@@ -516,7 +516,7 @@ namespace PredictedAdaptedEncoding
             ClearSplitFlag();
             return nullptr;
         }
-        const uint32_t root_branch_id = root_apc_ptr->GetBranchId();
+        const uint32_t root_branch_id = root_apc_ptr->GetSlabSlotID();
         const uint32_t root_logical_id = root_apc_ptr->GetLogicalId();
         const uint32_t shared_group_id = (root_apc_ptr->GetSharedId() == UNSIGNED_ZERO || root_apc_ptr->GetSharedId() == BRANCH_SENTINAL) ?
                                             root_branch_id : root_apc_ptr->GetSharedId();
@@ -559,7 +559,7 @@ namespace PredictedAdaptedEncoding
 
 
         
-        const uint32_t new_child_branch_id = new_child_segment_ptr->GetBranchId();
+        const uint32_t new_child_branch_id = new_child_segment_ptr->GetSlabSlotID();
         if (new_child_branch_id == UNSIGNED_ZERO || new_child_branch_id == BRANCH_SENTINAL || new_child_branch_id == root_branch_id)
         {
             new_child_segment_ptr->FreeAll();
@@ -623,7 +623,7 @@ namespace PredictedAdaptedEncoding
         }
         if (
             !tail_apc_ptr->TryBindShareNext(new_child_branch_id) || 
-            !new_child_segment_ptr->TryBindSharedPrevious(tail_apc_ptr->GetBranchId())
+            !new_child_segment_ptr->TryBindSharedPrevious(tail_apc_ptr->GetSlabSlotID())
         )
         {
             new_child_segment_ptr->FreeAll();
@@ -656,7 +656,7 @@ namespace PredictedAdaptedEncoding
         
         const uint32_t shared_group_id = (
             root_apc_ptr->GetSharedId() == UNSIGNED_ZERO || root_apc_ptr->GetSharedId() == BRANCH_SENTINAL
-        ) ? root_apc_ptr->GetBranchId() : root_apc_ptr->GetSharedId();
+        ) ? root_apc_ptr->GetSlabSlotID() : root_apc_ptr->GetSharedId();
         std::vector<AdaptivePackedCellContainer*> apc_chain;
         AdaptivePackedCellContainer* current_apc = root_apc_ptr;
 
@@ -683,8 +683,8 @@ namespace PredictedAdaptedEncoding
             const uint32_t expected_shared_id = current_chain_index_apc->ReadMetaCellFamily32(MetaIndexOfAPCNode::SHARED_ID);
             current_chain_index_apc->JustUpdateValueOfMeta32(MetaIndexOfAPCNode::SHARED_ID, expected_shared_id, shared_group_id);
 
-            const uint32_t previous_id = (i == 0) ? BRANCH_SENTINAL : apc_chain[i - 1]->GetBranchId();
-            const uint32_t next_id = (i + 1 < apc_chain.size()) ? apc_chain[i + 1]->GetBranchId() : BRANCH_SENTINAL;
+            const uint32_t previous_id = (i == 0) ? BRANCH_SENTINAL : apc_chain[i - 1]->GetSlabSlotID();
+            const uint32_t next_id = (i + 1 < apc_chain.size()) ? apc_chain[i + 1]->GetSlabSlotID() : BRANCH_SENTINAL;
             current_chain_index_apc->WriteExactMetaCellJustNewValue(
                 MetaIndexOfAPCNode::SHARED_PREVIOUS_ID,
                 previous_id

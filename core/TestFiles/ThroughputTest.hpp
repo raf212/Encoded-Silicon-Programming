@@ -247,7 +247,7 @@ namespace
         const uint32_t payload = static_cast<uint32_t>(apc.PayloadCapacityFromHeader());
 
         std::cout << "\n[" << name << "]\n";
-        std::cout << "  branch=" << apc.GetBranchId()
+        std::cout << "  branch=" << apc.GetSlabSlotID()
                   << " logical=" << apc.GetLogicalId()
                   << " shared=" << apc.GetSharedId()
                   << " group=" << apc.ReadMetaCellFamily32(MetaIndexOfAPCNode::NODE_GROUP_SIZE)

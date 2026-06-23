@@ -439,7 +439,7 @@
 
 //         std::cout
 //             << prefix
-//             << "branch=" << seg.GetBranchId()
+//             << "branch=" << seg.GetSlabSlotID()
 //             << " logical=" << seg.GetLogicalId()
 //             << " shared=" << seg.GetSharedId()
 //             << " group=" << seg.ReadMetaCellFamily32(MetaIndexOfAPCNode::NODE_GROUP_SIZE)

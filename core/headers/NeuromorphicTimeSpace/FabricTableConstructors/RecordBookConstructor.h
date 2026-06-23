@@ -36,6 +36,12 @@ namespace PredictedAdaptedEncoding
 
     public:
 
+        /// @brief Uses -> GetValidSlabRangeTripletFromRecordBookOfFTSC to get record and packs into -> APCDescriptorRange
+        /// @return VALID::APCDescriptorRange.IsVAlid = true || INVALID:: APCDescriptorRange.IsVAlid = false
+        bool ReadAPCDescriptorTableBeginEndFromRecordBook(
+            APCDescriptorRange& return_APC_handle_description_range
+        ) noexcept;
+
     };
 
 }

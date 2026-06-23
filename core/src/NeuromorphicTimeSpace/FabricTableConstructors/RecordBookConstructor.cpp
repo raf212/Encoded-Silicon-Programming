@@ -153,5 +153,26 @@ namespace PredictedAdaptedEncoding
         return static_cast<size_t>(base_idx_record_book_view.Raw48BitInCellData + (static_cast<size_t>(table_class) * RECORD_BOOK_WIDTH));        
 
     }
+
+    bool RecordBookConstructor::ReadAPCDescriptorTableBeginEndFromRecordBook(
+        APCDescriptorRange& return_APC_handle_description_range
+    ) noexcept
+    {
+        RecordBookTablesBoundsCarrier return_bounds{};
+
+        bool bounds_ok = GetValidSlabRangeTripletFromRecordBookOfFTSC(FabricTableSegmentClasses::APC_HANDLE_DESCRIPTOR, return_bounds);
+
+        if (!bounds_ok)
+        {
+            return_APC_handle_description_range.IsVAlid = false;
+            return false;
+        }
+
+        return_APC_handle_description_range.BeginIndex = return_bounds.BeginIndex;
+        return_APC_handle_description_range.EndIndex = return_bounds.EndIndex;
+        return_APC_handle_description_range.IsVAlid = return_bounds.IsValid;
+
+        return return_bounds.IsValid;
+    }
         
 }

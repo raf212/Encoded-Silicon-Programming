@@ -103,7 +103,7 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
             return false;
         }
 
-        uint32_t GetBranchId() noexcept;
+        uint32_t GetSlabSlotID() noexcept;
 
         uint32_t GetLogicalId() noexcept;
 

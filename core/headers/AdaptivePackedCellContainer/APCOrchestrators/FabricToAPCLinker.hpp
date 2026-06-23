@@ -84,30 +84,6 @@ public:
         return PACKED_CELL_SENTENAL;
     }
 
-
-    /// REMOVE CANDIDATES
-    packed64_t* GetAPCBackinghPtr() noexcept
-    {
-        if (BackingPtr && BackingPtr->CellPtr)
-        {
-            return BackingPtr->CellPtr;
-        }
-        return nullptr;
-    }
-
-
-    void BindExternalStorage_(packed64_t* packed_ptr, size_t cell_count) noexcept
-    {
-        BackingPtr->CellPtr = packed_ptr;
-        CapacityOfThisAPC_ = cell_count;
-    }
-
-    void UnbindExternalStorage_() noexcept
-    {
-        BackingPtr = nullptr;
-        CapacityOfThisAPC_ = UNSIGNED_ZERO;
-    }
-
     static constexpr uint32_t PayloadBegin() noexcept
     {
         return METACELL_COUNT;
