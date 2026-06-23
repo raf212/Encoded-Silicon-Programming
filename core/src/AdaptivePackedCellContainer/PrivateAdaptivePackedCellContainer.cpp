@@ -430,17 +430,13 @@ namespace PredictedAdaptedEncoding
         const size_t region_size = static_cast<size_t>(ReadMetaCellFamily32(MetaIndexOfAPCNode::REGION_SIZE));
         if (region_size == 0)
         {
-            RegionRelArray_.reset();
-            RegionEpochArray_.reset();
-            RelBitmaps_.clear();
+            SOABitmapForAPC_.clear();
             return true;
         }
 
         const size_t number_of_regions = (PayloadCapacityFromHeader() + region_size - 1u) / region_size;
-        RegionRelArray_.reset(new std::atomic<uint8_t>[number_of_regions]);
-        RegionEpochArray_.reset(new std::atomic<uint64_t>[number_of_regions]);
         const size_t words = (number_of_regions + BIT_LENGTH_OF_A_PACKED_CELL - 1) / BIT_LENGTH_OF_A_PACKED_CELL;
-        RelBitmaps_.assign(APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses, std::vector<uint64_t>(words, 0ull));
+        SOABitmapForAPC_.assign(APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses, std::vector<uint64_t>(words, 0ull));
         uint32_t global_ready_mask = UNSIGNED_ZERO;
         for (size_t region = 0; region < number_of_regions; region++)
         {
@@ -470,13 +466,11 @@ namespace PredictedAdaptedEncoding
                     {
                         if (region_ready_mask & (1u << rel_class))
                         {
-                            RelBitmaps_[rel_class][word] |= region_mask;
+                            SOABitmapForAPC_[rel_class][word] |= region_mask;
                         }
                     }
                 }
             }
-            RegionRelArray_[region].store(static_cast<uint8_t>(region_ready_mask & APCAndPagedNodeHelpers::HIGH_ALL_EIGHT_NIBBLE), MoStoreSeq_);
-            RegionEpochArray_[region].store(region_epoch, MoStoreSeq_);
         }
         const uint32_t expected_mask = ReadMetaCellFamily32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
 

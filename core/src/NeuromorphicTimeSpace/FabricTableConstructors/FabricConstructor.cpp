@@ -1,4 +1,4 @@
-#include "NeuromorphicTimeSpace/SlabToFabricConverterAndCordinator.hpp"
+#include "NeuromorphicTimeSpace/SlabToFabricConverterAndCordinator.h"
 
 namespace PredictedAdaptedEncoding
 {

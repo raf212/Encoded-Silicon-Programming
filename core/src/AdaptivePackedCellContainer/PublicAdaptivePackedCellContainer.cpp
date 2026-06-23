@@ -740,7 +740,20 @@ namespace PredictedAdaptedEncoding
         {
 
         }
-                
+
+        if (FabricBackend_)
+        {
+            ReleseFabricBindingOnly_();
+        }
+        else
+        {
+            APCBackingCellAtomicRefViewTemp::FreeBackingView_(OwnedBackingView_, CapacityOfThisAPC_);
+            FreeAlignedRawPackedCells_(OwnedRawBackingCells_);
+            OwnedBackingView_ = nullptr;
+            CapacityOfThisAPC_ = UNSIGNED_ZERO;
+        }
+        
+        SOABitmapForAPC_.clear();
     }
 
 

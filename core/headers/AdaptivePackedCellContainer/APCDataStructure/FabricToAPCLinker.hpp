@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 #include "APCSpikeController/AtomicAdaptiveBackoff.hpp"
 
 namespace PredictedAdaptedEncoding
@@ -154,14 +155,16 @@ protected:
     bool FabricBackend_{false};
     bool FabricObjectOwnedByFabric_{false};
 
-/// remove candidate 
-    // PackedCellContainerManager* APCManagerPtr_{nullptr};
-    // AtomicAdaptiveBackoff* AdaptiveBackoffOfAPCPtr_{nullptr};
-////
 /// UPDATE Candidates
     size_t CapacityOfThisAPC_{UNSIGNED_ZERO};
     Timer48 LocalTimer48_;
     std::unique_ptr<MasterClockConf> OwnedMasterClockConfPtr_;
+    //logging hook
+    std::function<void(const char*, const char*)> APCLogger_;
+    //region/index
+    std::vector<std::vector<uint64_t>> SOABitmapForAPC_;
+    //--??
+    static inline std::atomic<uint32_t> GlobalBranchIdAlloc_{1};
 ///
 
     bool BindExternalRawFabricBacking_(

@@ -61,11 +61,7 @@ protected:
         APCPagedNodeSegmentClasses destination_page_class
     ) noexcept;
 
-    /// @brief APC META USES TypeFamily::VALUE32 path WITH::AccessContractOfValue
-    /// @param idx 
-    /// @param value32 
-    /// @param attribute 
-    /// @param page_class 
+    /// @brief APC META USES TypeFamily::VALUE32 path WITH::AccessContractOfValue -> SYSTEM BROKES if anythhing else then32Bit family
     void WriteTypedValue32MetaCellAPC_(
         MetaIndexOfAPCNode idx,
         uint64_t value48,

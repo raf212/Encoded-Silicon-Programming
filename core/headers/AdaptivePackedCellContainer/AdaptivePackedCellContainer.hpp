@@ -1,9 +1,4 @@
 #pragma once 
-#include <functional>
-#include <mutex>
-#include <condition_variable>
-#include <cstdio>
-#include <iostream>
 #include "SegmentIODefinition.hpp"
 
 namespace PredictedAdaptedEncoding
@@ -14,17 +9,7 @@ static_assert(__cpp_lib_atomic_wait, "C++ must suppoet atomic wait/notify");
 class AdaptivePackedCellContainer : public SegmentIODefinition
 {
 
-    protected:
-
-        static inline std::atomic<uint32_t> GlobalBranchIdAlloc_{1};
-        
-        //logging hook
-        std::function<void(const char*, const char*)> APCLogger_;
-        //region/index
-        std::unique_ptr<std::atomic<uint8_t>[]> RegionRelArray_{nullptr};
-        std::vector<std::vector<uint64_t>> RelBitmaps_;
-        std::unique_ptr<std::atomic<uint64_t>[]> RegionEpochArray_{nullptr};
-        //--??
+    protected:        
         
         size_t GetHashedRendomizedStep_(size_t sequense_number) noexcept;
 
