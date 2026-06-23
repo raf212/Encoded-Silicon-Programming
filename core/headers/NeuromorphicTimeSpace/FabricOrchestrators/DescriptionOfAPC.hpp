@@ -13,6 +13,8 @@ struct APCDescriptorRange
 static_assert(sizeof(APCDescriptorRange) == RECORD_BOOK_WIDTH * sizeof(packed64_t));
 static_assert(alignof(APCDescriptorRange) == alignof(packed64_t));
 
+/// @brief Use THis To make the code more Readable
+using APCSegmentPoolRange = APCDescriptorRange;
 
 
 struct DescriptionOfAPC
@@ -284,6 +286,34 @@ struct DescriptionOfAPC
 
         single_apc_description_buffer[static_cast<size_t>(APCDescriptorCellType::OCCUPANCY_CELL16x3)] = desired_occupancy_cell;
     }
+
+
+    static constexpr std::optional<uint64_t> ReadADataValueFromADescriptionBuffer(
+        SingleAPCDescriptionCellBuffer& a_description_buffer, 
+        APCDescriptorCellType description_type, 
+        bool check_consumeablity = true
+    ) noexcept
+    {
+        if (!IsValidValue48APCDescription(description_type))
+        {
+            return std::nullopt;
+        }
+
+        if (!ValidateSingleAPCDescriptionBuffer(a_description_buffer, check_consumeablity))
+        {
+            return std::nullopt;
+        }
+
+        const packed64_t desired_value = PackedCell64_t::ExtractRaw48FamilyBits(a_description_buffer[static_cast<size_t>(description_type)]);
+
+        if (desired_value != PackedCell64_t::PACKED_CELL_SENTINAL)
+        {
+            return desired_value;
+        }
+
+        return std::nullopt;
+    }
+
 
     /// @brief VALIDATES: INDEX 0 <-> (single_apc_description_buffer.size() - 2) if valid sets VALID_BUFFER_MARK to index (APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX):: Means valid
     /// @param single_apc_description_buffer ADDRESS: OF: SingleAPCDescriptionCellBuffer to check

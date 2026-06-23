@@ -184,13 +184,13 @@ namespace PredictedAdaptedEncoding
 
         for (uint64_t desc_idx = 0; desc_idx < CountOfAPC_; desc_idx++)
         {
-            const APCDescriptorRange self_range = ReadRangeForASingleAPCSlotFromAPCDescriptor_(desc_idx);
-            const APCDescriptorRange segment_pool_range = GetSegmentPoolBegainEndForSingleAPCDescription_(desc_idx);
+            const APCDescriptorRange self_range = ReadARangeOfAPCDescriptorFromRecordBook_(desc_idx);
+            const APCSegmentPoolRange segment_pool_range = GetSegmentPoolBegainEndForSingleAPCDescription_(desc_idx);
             if (!self_range.IsVAlid || !segment_pool_range.IsVAlid)
             {
                 continue;
             }
-            const APCDescriptorRange next_segment_pool_range = GetSegmentPoolBegainEndForSingleAPCDescription_(desc_idx + 1);
+            const APCSegmentPoolRange next_segment_pool_range = GetSegmentPoolBegainEndForSingleAPCDescription_(desc_idx + 1);
 
             DescriptionOfAPC::SingleAPCDescriptionCellBuffer desired_buffer = DescriptionOfAPC::MakeADefaultAPCDescription(
                 desc_idx,
