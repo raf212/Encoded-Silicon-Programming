@@ -91,11 +91,20 @@ class AdaptivePackedCellContainer : public SegmentIODefinition
 
         std::optional<packed64_t> ConsumeCellByRegionMaskTraverseStartFromThisAPC(APCPagedNodeSegmentClasses region_kind, size_t& scan_cursor) noexcept;
 
-        AdaptivePackedCellContainer* FindSharedRootOrThis() noexcept;
+        AdaptivePackedCellContainer* FindSharedRootOrThis() noexcept
+        {
+            return this;
+        }
 
-        AdaptivePackedCellContainer* GetNextSharedSegment() noexcept;
+        AdaptivePackedCellContainer* GetNextSharedSegment() noexcept
+        {
+            return this;
+        }
 
-        bool IsAPCSharedChainEmpty() noexcept;
+        bool IsAPCSharedChainEmpty() noexcept
+        {
+            return false;
+        }
 
         uint32_t GetBranchId() noexcept;
 

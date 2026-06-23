@@ -4,7 +4,7 @@
 
 int main()
 {
-    APCTest();
-    // ThroughputTest();
+    // APCTest();
+    ThroughputTest();
     return 0;
 }

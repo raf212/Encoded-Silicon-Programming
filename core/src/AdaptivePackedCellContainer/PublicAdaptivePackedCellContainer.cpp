@@ -260,101 +260,101 @@ namespace PredictedAdaptedEncoding
     }
     
 
-    AdaptivePackedCellContainer* AdaptivePackedCellContainer::FindSharedRootOrThis() noexcept
-    {
-        if (!IfAPCBranchValid())
-        {
-            return this;
-        }
-        AdaptivePackedCellContainer* current_apc_ptr = this;
-        while (current_apc_ptr)
-        {
-            if (!current_apc_ptr)
-            {
-                break;
-            }
-            const uint32_t previous_id = current_apc_ptr->ReadMetaCellFamily32(MetaIndexOfAPCNode::SHARED_PREVIOUS_ID);
-            if (previous_id == UNSIGNED_ZERO || previous_id == BRANCH_SENTINAL)
-            {
-                break;
-            }
-            AdaptivePackedCellContainer* previous_apc_ptr = APCManagerPtr_->GetAPCPtrFromBranchId(previous_id);
-            if (!previous_apc_ptr || previous_apc_ptr == current_apc_ptr || !previous_apc_ptr->IfAPCBranchValid())
-            {
-                break;
-            }
-            current_apc_ptr = previous_apc_ptr;
-        }
-        return current_apc_ptr ? current_apc_ptr : this;
+    // AdaptivePackedCellContainer* AdaptivePackedCellContainer::FindSharedRootOrThis() noexcept
+    // {
+    //     if (!IfAPCBranchValid())
+    //     {
+    //         return this;
+    //     }
+    //     AdaptivePackedCellContainer* current_apc_ptr = this;
+    //     while (current_apc_ptr)
+    //     {
+    //         if (!current_apc_ptr)
+    //         {
+    //             break;
+    //         }
+    //         const uint32_t previous_id = current_apc_ptr->ReadMetaCellFamily32(MetaIndexOfAPCNode::SHARED_PREVIOUS_ID);
+    //         if (previous_id == UNSIGNED_ZERO || previous_id == BRANCH_SENTINAL)
+    //         {
+    //             break;
+    //         }
+    //         AdaptivePackedCellContainer* previous_apc_ptr = APCManagerPtr_->GetAPCPtrFromBranchId(previous_id);
+    //         if (!previous_apc_ptr || previous_apc_ptr == current_apc_ptr || !previous_apc_ptr->IfAPCBranchValid())
+    //         {
+    //             break;
+    //         }
+    //         current_apc_ptr = previous_apc_ptr;
+    //     }
+    //     return current_apc_ptr ? current_apc_ptr : this;
         
-    }
+    // }
 
-    AdaptivePackedCellContainer* AdaptivePackedCellContainer::GetNextSharedSegment() noexcept
-    {
-        if (!IfAPCBranchValid())
-        {
-            return nullptr;
-        }
+    // AdaptivePackedCellContainer* AdaptivePackedCellContainer::GetNextSharedSegment() noexcept
+    // {
+    //     if (!IfAPCBranchValid())
+    //     {
+    //         return nullptr;
+    //     }
 
-        const uint32_t next_apc_id = ReadMetaCellFamily32(MetaIndexOfAPCNode::SHARED_NEXT_ID);
+    //     const uint32_t next_apc_id = ReadMetaCellFamily32(MetaIndexOfAPCNode::SHARED_NEXT_ID);
 
-        if (next_apc_id == UNSIGNED_ZERO || next_apc_id == BRANCH_SENTINAL)
-        {
-            return nullptr;
-        }
-        AdaptivePackedCellContainer* next_apc_ptr = APCManagerPtr_->GetAPCPtrFromBranchId(next_apc_id);
-        if (!next_apc_ptr || next_apc_ptr == this)
-        {
-            return nullptr;
-        }
-        return next_apc_ptr;
-    }
+    //     if (next_apc_id == UNSIGNED_ZERO || next_apc_id == BRANCH_SENTINAL)
+    //     {
+    //         return nullptr;
+    //     }
+    //     AdaptivePackedCellContainer* next_apc_ptr = APCManagerPtr_->GetAPCPtrFromBranchId(next_apc_id);
+    //     if (!next_apc_ptr || next_apc_ptr == this)
+    //     {
+    //         return nullptr;
+    //     }
+    //     return next_apc_ptr;
+    // }
 
-    bool AdaptivePackedCellContainer::IsAPCSharedChainEmpty() noexcept
-    {
-        if (!IfAPCBranchValid())
-        {
-            return true;
-        }
-        AdaptivePackedCellContainer* current_apc_ptr = FindSharedRootOrThis();
-        while (current_apc_ptr)
-        {
-            uint16_t published_occupancy = UNSIGNED_ZERO;
-            uint16_t claimed_occupancy = UNSIGNED_ZERO;
-            uint16_t faulty_occupancy = UNSIGNED_ZERO;
-            const bool ok = current_apc_ptr->GetPublishedClaimedFaultyFromCentral(published_occupancy, claimed_occupancy, faulty_occupancy);
+    // bool AdaptivePackedCellContainer::IsAPCSharedChainEmpty() noexcept
+    // {
+    //     if (!IfAPCBranchValid())
+    //     {
+    //         return true;
+    //     }
+    //     AdaptivePackedCellContainer* current_apc_ptr = FindSharedRootOrThis();
+    //     while (current_apc_ptr)
+    //     {
+    //         uint16_t published_occupancy = UNSIGNED_ZERO;
+    //         uint16_t claimed_occupancy = UNSIGNED_ZERO;
+    //         uint16_t faulty_occupancy = UNSIGNED_ZERO;
+    //         const bool ok = current_apc_ptr->GetPublishedClaimedFaultyFromCentral(published_occupancy, claimed_occupancy, faulty_occupancy);
 
-            if (!ok || published_occupancy > UNSIGNED_ZERO || claimed_occupancy > UNSIGNED_ZERO || faulty_occupancy > UNSIGNED_ZERO)
-            {
-                return false;
-            }
+    //         if (!ok || published_occupancy > UNSIGNED_ZERO || claimed_occupancy > UNSIGNED_ZERO || faulty_occupancy > UNSIGNED_ZERO)
+    //         {
+    //             return false;
+    //         }
 
-            if (
-                current_apc_ptr->HasThisControlEnumFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT) ||
-                current_apc_ptr->HasThisControlEnumFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::SPLIT_INFLIGHT)
-            )
-            {
-                return false;
-            }
-            if (!current_apc_ptr->IfAPCBranchValid())
-            {
-                break;
-            }
+    //         if (
+    //             current_apc_ptr->HasThisControlEnumFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT) ||
+    //             current_apc_ptr->HasThisControlEnumFlag(APCAndPagedNodeHelpers::ControlEnumOfAPCSegment::SPLIT_INFLIGHT)
+    //         )
+    //         {
+    //             return false;
+    //         }
+    //         if (!current_apc_ptr->IfAPCBranchValid())
+    //         {
+    //             break;
+    //         }
             
-            uint32_t next_apc_id = current_apc_ptr->ReadMetaCellFamily32(MetaIndexOfAPCNode::SHARED_NEXT_ID);
-            if (next_apc_id == UNSIGNED_ZERO || next_apc_id == BRANCH_SENTINAL)
-            {
-                break;
-            }
-            AdaptivePackedCellContainer* next_apc_ptr = APCManagerPtr_->GetAPCPtrFromBranchId(next_apc_id);
-            if (!next_apc_ptr || next_apc_ptr == current_apc_ptr)
-            {
-                break;
-            }
-            current_apc_ptr = next_apc_ptr;
-        }
-        return true;
-    }
+    //         uint32_t next_apc_id = current_apc_ptr->ReadMetaCellFamily32(MetaIndexOfAPCNode::SHARED_NEXT_ID);
+    //         if (next_apc_id == UNSIGNED_ZERO || next_apc_id == BRANCH_SENTINAL)
+    //         {
+    //             break;
+    //         }
+    //         AdaptivePackedCellContainer* next_apc_ptr = APCManagerPtr_->GetAPCPtrFromBranchId(next_apc_id);
+    //         if (!next_apc_ptr || next_apc_ptr == current_apc_ptr)
+    //         {
+    //             break;
+    //         }
+    //         current_apc_ptr = next_apc_ptr;
+    //     }
+    //     return true;
+    // }
 
     bool AdaptivePackedCellContainer::TryPublishRegionalSharedGrowthOnce(APCPagedNodeSegmentClasses region_kind, packed64_t packed_cell, std::atomic<uint64_t>* growth_counter) noexcept
     {

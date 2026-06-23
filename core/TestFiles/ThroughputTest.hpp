@@ -9,7 +9,7 @@
 #include <optional>
 
 #include "AdaptivePackedCellContainer/APCSegmentsCausalCordinator.hpp"
-#include "AdaptivePackedCellContainer/PackedCellContainerManager.hpp"
+// #include "AdaptivePackedCellContainer/PackedCellContainerManager.hpp"
 
 
 using namespace PredictedAdaptedEncoding;
@@ -102,7 +102,6 @@ namespace
         APCSegmentsCausalCordinator& apc,
         APCPagedNodeSegmentClasses region,
         packed64_t cell,
-        PackedCellContainerManager& manager,
         std::atomic<uint64_t>* grow_counter,
         GraphStats& stats,
         uint32_t budget = 4096
@@ -116,7 +115,6 @@ namespace
             }
 
             stats.Retry.fetch_add(1, std::memory_order_relaxed);
-            manager.GetCellsAdaptiveBackoffFromManager(cell);
         }
 
         stats.TerminalFail.fetch_add(1, std::memory_order_relaxed);
@@ -277,8 +275,6 @@ void ThroughputTest()
     std::cout.setf(std::ios::unitbuf);
     std::cerr.setf(std::ios::unitbuf);
 
-    auto& manager = PackedCellContainerManager::Instance();
-    manager.StartAPCManager();
 
     Timer48 timer;
     MasterClockConf clock(nullptr, timer);
@@ -299,11 +295,6 @@ void ThroughputTest()
     APCSegmentsCausalCordinator Integrator;
     APCSegmentsCausalCordinator Motor;
 
-    Sensor.SetManagerForGlobalAPC(&manager);
-    Predictor.SetManagerForGlobalAPC(&manager);
-    Comparator.SetManagerForGlobalAPC(&manager);
-    Integrator.SetManagerForGlobalAPC(&manager);
-    Motor.SetManagerForGlobalAPC(&manager);
 
     Sensor.InitAPCAsNode(
         cfg.BranchMinChildCapacity,
@@ -351,7 +342,6 @@ void ThroughputTest()
     {
         producers.emplace_back([&, p]()
         {
-            auto th = manager.RegisterAPCThread();
 
             for (uint32_t i = p + 1; i <= VALUE_COUNT; i += PRODUCER_COUNT)
             {
@@ -365,7 +355,6 @@ void ThroughputTest()
                         Sensor,
                         APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
                         ff,
-                        manager,
                         &stats.GrowFF,
                         stats))
                 {
@@ -377,7 +366,6 @@ void ThroughputTest()
                         Predictor,
                         APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
                         fb,
-                        manager,
                         &stats.GrowFB,
                         stats))
                 {
@@ -386,7 +374,6 @@ void ThroughputTest()
                 }
             }
 
-            manager.UnRegisterAPCThread(th);
         });
     }
 
@@ -394,7 +381,6 @@ void ThroughputTest()
     {
         workers.emplace_back([&, w]()
         {
-            auto th = manager.RegisterAPCThread();
             size_t cursor = Sensor.PayloadBegin();
 
             while (ff_consumed.load(std::memory_order_acquire) < VALUE_COUNT)
@@ -408,7 +394,6 @@ void ThroughputTest()
 
                 if (!maybe)
                 {
-                    manager.GetManagersAdaptiveBackoff().AutoBackoff();
                     continue;
                 }
 
@@ -434,7 +419,6 @@ void ThroughputTest()
                         Integrator,
                         APCPagedNodeSegmentClasses::STATE_SLOT,
                         state_cell,
-                        manager,
                         &stats.GrowSTATE,
                         stats))
                 {
@@ -443,7 +427,6 @@ void ThroughputTest()
                 }
             }
 
-            manager.UnRegisterAPCThread(th);
         });
     }
 
@@ -451,7 +434,6 @@ void ThroughputTest()
     {
         workers.emplace_back([&, w]()
         {
-            auto th = manager.RegisterAPCThread();
             size_t cursor = Predictor.PayloadBegin();
 
             while (fb_consumed.load(std::memory_order_acquire) < VALUE_COUNT)
@@ -465,7 +447,6 @@ void ThroughputTest()
 
                 if (!maybe)
                 {
-                    manager.GetManagersAdaptiveBackoff().AutoBackoff();
                     continue;
                 }
 
@@ -491,7 +472,6 @@ void ThroughputTest()
                         Comparator,
                         APCPagedNodeSegmentClasses::ERROR_SLOT,
                         error_cell,
-                        manager,
                         &stats.GrowERROR,
                         stats))
                 {
@@ -500,7 +480,6 @@ void ThroughputTest()
                 }
             }
 
-            manager.UnRegisterAPCThread(th);
         });
     }
 
@@ -508,7 +487,6 @@ void ThroughputTest()
     {
         workers.emplace_back([&, w]()
         {
-            auto th = manager.RegisterAPCThread();
 
             size_t state_cursor = Integrator.PayloadBegin();
             size_t error_cursor = Comparator.PayloadBegin();
@@ -524,7 +502,6 @@ void ThroughputTest()
 
                 if (!maybe_state)
                 {
-                    manager.GetManagersAdaptiveBackoff().AutoBackoff();
                     continue;
                 }
 
@@ -572,7 +549,6 @@ void ThroughputTest()
                         Motor,
                         APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
                         motor_cell,
-                        manager,
                         nullptr,
                         stats))
                 {
@@ -603,7 +579,6 @@ void ThroughputTest()
                 }
             }
 
-            manager.UnRegisterAPCThread(th);
         });
     }
 
@@ -666,5 +641,4 @@ void ThroughputTest()
     Predictor.FreeAll();
     Sensor.FreeAll();
 
-    manager.StopAPCManager();
 }
