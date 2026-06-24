@@ -57,8 +57,8 @@ namespace PredictedAdaptedEncoding
         uint64_t apc_description_index, 
         DescriptionOfAPC::SingleAPCDescriptionCellBuffer& return_buffer,
         bool claimed_is_invalid,
-        std::optional<OwnershipPolicy> validate_observer,
-        std::optional<DescriptionOfAPC::StateOfSingleAPCDescription> desired_state,
+        OwnershipPolicy validate_observer,
+        DescriptionOfAPC::StateOfSingleAPCDescription desired_state,
         std::optional<uint8_t> version_match
     ) noexcept
     {
@@ -87,6 +87,7 @@ namespace PredictedAdaptedEncoding
             claimed_is_invalid,
             validate_observer,
             desired_state,
+            apc_description_index,
             version_match
         );
     }

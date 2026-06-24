@@ -27,14 +27,6 @@ protected:
     static inline std::atomic<uint32_t> GlobalBranchIdAlloc_{1};
 ///
 
-    bool BindExternalRawFabricBacking_(
-        packed64_t* raw_cells_ptr,
-        size_t cell_count,
-        VagueTemoraryPremativeFabric* fabric_owner,
-        uint64_t fabric_slot_idx,
-        bool object_owned_by_fabric
-    ) noexcept;
-
     void ReleseFabricBindingOnly_() noexcept;
 
 public:
@@ -88,6 +80,14 @@ public:
     {
         return METACELL_COUNT;
     }
+
+    bool BindExternalRawFabricBacking_(
+        packed64_t* raw_cells_ptr,
+        size_t cell_count,
+        VagueTemoraryPremativeFabric* fabric_owner,
+        uint64_t fabric_slot_idx,
+        bool object_owned_by_fabric
+    ) noexcept;
 
 
 };

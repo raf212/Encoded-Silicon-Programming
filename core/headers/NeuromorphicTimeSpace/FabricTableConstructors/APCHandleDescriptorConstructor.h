@@ -28,8 +28,8 @@ namespace PredictedAdaptedEncoding
             uint64_t apc_description_index, 
             DescriptionOfAPC::SingleAPCDescriptionCellBuffer& return_buffer,
             bool claimed_is_invalid = true,
-            std::optional<OwnershipPolicy> validate_observer = std::nullopt,
-            std::optional<DescriptionOfAPC::StateOfSingleAPCDescription> desired_state = std::nullopt,
+            OwnershipPolicy validate_observer = OwnershipPolicy::UNASSIGNED_UNUSED_NANNULL,
+            DescriptionOfAPC::StateOfSingleAPCDescription desired_state = DescriptionOfAPC::StateOfSingleAPCDescription::UNASSIGNED_UNUSED_NANNULL,
             std::optional<uint8_t> version_match = std::nullopt
         ) noexcept;
 

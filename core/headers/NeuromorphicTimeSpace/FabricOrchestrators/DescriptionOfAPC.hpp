@@ -281,8 +281,8 @@ struct DescriptionOfAPC
     /// @param version_match IF: Set snd VERSION: Dosent match the current version -> Will RETURN: false
     static constexpr bool ValidateDescriptionBufferBySaftyFiles(
         SingleAPCDescriptionCellBuffer& single_apc_description,
-        std::optional<OwnershipPolicy> validate_observer = std::nullopt,
-        std::optional<StateOfSingleAPCDescription> desired_state = std::nullopt,
+        OwnershipPolicy validate_observer = OwnershipPolicy::UNASSIGNED_UNUSED_NANNULL,
+        StateOfSingleAPCDescription desired_state = StateOfSingleAPCDescription::UNASSIGNED_UNUSED_NANNULL,
         std::optional<uint8_t> version_match = std::nullopt
     ) noexcept
     {
@@ -317,12 +317,12 @@ struct DescriptionOfAPC
         const StateOfSingleAPCDescription state_of_description = static_cast<StateOfSingleAPCDescription>(Clock16Subdivision1x8Plus2x4InMode32CellModel::ExtractMid4Bit_(auth_view_of_state_version_ownership.InCellClock16));
         const OwnershipPolicy ownershipe_of_description = static_cast<OwnershipPolicy>(Clock16Subdivision1x8Plus2x4InMode32CellModel::ExtractHighiest4Bit_(auth_view_of_state_version_ownership.InCellClock16));
         
-        if (validate_observer.has_value() && *validate_observer != ownershipe_of_description)
+        if (validate_observer != OwnershipPolicy::UNASSIGNED_UNUSED_NANNULL && validate_observer != ownershipe_of_description)
         {
             return false;
         }
 
-        if (desired_state.has_value() && *desired_state != state_of_description)
+        if (desired_state != StateOfSingleAPCDescription::UNASSIGNED_UNUSED_NANNULL && desired_state != state_of_description)
         {
             return false;
         }
@@ -377,6 +377,17 @@ struct DescriptionOfAPC
         single_apc_description_buffer[static_cast<size_t>(APCDescriptorCellType::OCCUPANCY_CELL16x3)] = desired_occupancy_cell;
     }
 
+    static constexpr bool SetStateSaftyCellInBuffer(SingleAPCDescriptionCellBuffer& a_buffer_description, packed64_t packed_cell) noexcept
+    {
+        if (!PackedCell64_t::IsThisCellValid(packed_cell))
+        {
+            return false;
+        }
+
+        a_buffer_description[static_cast<size_t>(APCDescriptorCellType::STATE_OWNERSHIP_VESION_SAFTY)] = packed_cell;
+        return true;
+    }
+
 
     static constexpr std::optional<uint64_t> ReadADataValueFromADescriptionBuffer(
         SingleAPCDescriptionCellBuffer& a_description_buffer, 
@@ -415,8 +426,9 @@ struct DescriptionOfAPC
     static constexpr bool ValidateSingleAPCDescriptionBuffer(
         SingleAPCDescriptionCellBuffer& single_apc_description_buffer,
         bool check_consumeablity = true,
-        std::optional<OwnershipPolicy> validate_observer = std::nullopt,
-        std::optional<StateOfSingleAPCDescription> desired_state = std::nullopt,
+        OwnershipPolicy validate_observer = OwnershipPolicy::UNASSIGNED_UNUSED_NANNULL,
+        StateOfSingleAPCDescription desired_state = StateOfSingleAPCDescription::UNASSIGNED_UNUSED_NANNULL,
+        uint64_t match_apc_idx_itself = PackedCell64_t::PACKED_CELL_SENTINAL,
         std::optional<uint8_t> version_match = std::nullopt
     ) noexcept
     {
@@ -438,6 +450,16 @@ struct DescriptionOfAPC
         )
         {
             return false;
+        }
+        if (match_apc_idx_itself <= PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT)
+        {
+            const uint64_t saved_idx_in_buffer = PackedCell64_t::ExtractRaw48FamilyBits(
+                single_apc_description_buffer[static_cast<size_t>(APCDescriptorCellType::CURRENT_DESCRIPTOR_INDEX)]
+            );
+            if (match_apc_idx_itself != saved_idx_in_buffer)
+            {
+                return false;
+            }
         }
 
         single_apc_description_buffer[APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX] = VALID_BUFFER_MARK;
