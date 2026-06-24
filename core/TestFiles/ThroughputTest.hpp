@@ -8,7 +8,7 @@
 #include <array>
 #include <optional>
 
-#include "AdaptivePackedCellContainer/APCSegmentsCausalCordinator.hpp"
+#include "AdaptivePackedCellContainer/AdaptivePackedCellContainer.hpp"
 #include  "NeuromorphicTimeSpace/VagueTemoraryPremativeFabric.hpp"
 
 
@@ -116,7 +116,7 @@ namespace
     }
 
     static bool PublishBudgeted(
-        APCSegmentsCausalCordinator& apc,
+        AdaptivePackedCellContainer& apc,
         APCPagedNodeSegmentClasses region,
         packed64_t cell,
         std::atomic<uint64_t>* grow_counter,
@@ -126,7 +126,7 @@ namespace
     {
         for (uint32_t attempt = 0; attempt < budget; ++attempt)
         {
-            if (apc.PublishCausal(region, cell, grow_counter))
+            if (apc.PublishCausal(apc, region, cell, grow_counter))
             {
                 return true;
             }
@@ -138,7 +138,7 @@ namespace
         return false;
     }
 
-    static ExactLocalityCount CountExactLocality(APCSegmentsCausalCordinator& apc)
+    static ExactLocalityCount CountExactLocality(AdaptivePackedCellContainer& apc)
     {
         ExactLocalityCount out{};
 
@@ -183,12 +183,12 @@ namespace
         return out;
     }
 
-    static uint16_t HeaderUsedSum(APCSegmentsCausalCordinator& apc)
+    static uint16_t HeaderUsedSum(AdaptivePackedCellContainer& apc)
     {
         return apc.ReadTotalOccuPancyOfAnyPageClass();
     }
 
-    static uint32_t HeaderLocalitySum(APCSegmentsCausalCordinator& apc)
+    static uint32_t HeaderLocalitySum(AdaptivePackedCellContainer& apc)
     {
         return
             apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::IDLE) +
@@ -197,14 +197,14 @@ namespace
             apc.ReadCentralAPCOccupancyOfALocality(LocalityPolicy::FAULTY);
     }
     
-    static uint32_t RegionMeta(APCSegmentsCausalCordinator& apc, APCPagedNodeSegmentClasses region)
+    static uint32_t RegionMeta(AdaptivePackedCellContainer& apc, APCPagedNodeSegmentClasses region)
     {
         return apc.ReadPublishedOccupancyOfAPageClass(region);
     }
 
     static void PrintRegion(
         const char* label,
-        APCSegmentsCausalCordinator& apc,
+        AdaptivePackedCellContainer& apc,
         APCPagedNodeSegmentClasses region
     )
     {
@@ -225,7 +225,7 @@ namespace
 
     static void PrintNode(
         const char* name,
-        APCSegmentsCausalCordinator& apc
+        AdaptivePackedCellContainer& apc
     )
     {
         const ExactLocalityCount exact = CountExactLocality(apc);
@@ -305,35 +305,40 @@ void ThroughputTest()
     cfg.BranchMinChildCapacity = 256;
     cfg.NodeGroupSize = 1u;
 
-    APCSegmentsCausalCordinator Sensor;
-    APCSegmentsCausalCordinator Predictor;
-    APCSegmentsCausalCordinator Comparator;
-    APCSegmentsCausalCordinator Integrator;
-    APCSegmentsCausalCordinator Motor;
+
+    VagueTemoraryPremativeFabric silicon_local_fabric{};
+
+    silicon_local_fabric.InitializeFabric(1024, cfg.BranchMinChildCapacity);
 
 
-    Sensor.InitAPCAsNode(
-        cfg.BranchMinChildCapacity,
+    AdaptivePackedCellContainer Sensor;
+    AdaptivePackedCellContainer Predictor;
+    AdaptivePackedCellContainer Comparator;
+    AdaptivePackedCellContainer Integrator;
+    AdaptivePackedCellContainer Motor;
+
+    silicon_local_fabric.ConstructAnAPC_(
+        Sensor,
         cfg
     );
 
-    Predictor.InitAPCAsNode(
-        cfg.BranchMinChildCapacity,
+    silicon_local_fabric.ConstructAnAPC_(
+        Predictor,
         cfg
     );
 
-    Comparator.InitAPCAsNode(
-        cfg.BranchMinChildCapacity,
+    silicon_local_fabric.ConstructAnAPC_(
+        Comparator,
         cfg
     );
 
-    Integrator.InitAPCAsNode(
-        cfg.BranchMinChildCapacity,
+    silicon_local_fabric.ConstructAnAPC_(
+        Integrator,
         cfg
     );
 
-    Motor.InitAPCAsNode(
-        cfg.BranchMinChildCapacity,
+    silicon_local_fabric.ConstructAnAPC_(
+        Motor,
         cfg
     );
 
@@ -403,6 +408,7 @@ void ThroughputTest()
             {
                 auto maybe =
                     Sensor.ConsumeCausal(
+                        Sensor,
                         APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
                         cursor,
                         &stats.OlderFFObserved
@@ -455,6 +461,7 @@ void ThroughputTest()
             {
                 auto maybe =
                     Predictor.ConsumeCausal(
+                        Predictor,
                         APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE,
                         cursor,
                         &stats.OlderFBObserved
@@ -509,6 +516,7 @@ void ThroughputTest()
             {
                 auto maybe_state =
                     Integrator.ConsumeCausal(
+                        Integrator,
                         APCPagedNodeSegmentClasses::STATE_SLOT,
                         state_cursor,
                         nullptr
@@ -531,6 +539,7 @@ void ThroughputTest()
 
                 auto maybe_error =
                     Comparator.ConsumeCausal(
+                        Comparator,
                         APCPagedNodeSegmentClasses::ERROR_SLOT,
                         error_cursor,
                         nullptr
@@ -572,6 +581,7 @@ void ThroughputTest()
 
                 auto final_cell =
                     Motor.ConsumeCausal(
+                        Motor,
                         APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE,
                         motor_cursor,
                         nullptr

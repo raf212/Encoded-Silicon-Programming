@@ -66,14 +66,14 @@ private:
         return APCRuntimePtrTable_[apc_idx].load(MoLoad_);
     }
 
+public:
+
     std::optional<uint64_t> ConstructAnAPC_(   
         AdaptivePackedCellContainer& desired_apc,     
         const ContainerConf& container_conf,
         uint64_t shared_id = UNSIGNED_ZERO,
         uint64_t logical_id = UNSIGNED_ZERO
     ) noexcept;
-
-public:
 
     AdaptivePackedCellContainer* GetDeafultInitializedAPCFromFabric(
         const ContainerConf& container_conf,
