@@ -34,7 +34,7 @@ namespace PredictedAdaptedEncoding
         
     }
 
-    APCDescriptorRange APCHandleDescriptorConstructor::ReadARangeOfAPCDescriptorFromRecordBook_(uint64_t apc_slot_index) noexcept
+    APCDescriptorRange APCHandleDescriptorConstructor::ReadARangeOfAPCDescription_(uint64_t apc_slot_index) noexcept
     {
         APCDescriptorRange probable_full_range_of_apc_descriptor{};
         const bool ok = ReadAPCDescriptorTableBeginEndFromRecordBook(probable_full_range_of_apc_descriptor);
@@ -69,7 +69,7 @@ namespace PredictedAdaptedEncoding
 
         DescriptionOfAPC::BuildABlankAPCDescriptionBufferwith2CellIdentity(return_buffer);
 
-        const APCDescriptorRange this_apc_descriptor_range = ReadARangeOfAPCDescriptorFromRecordBook_(apc_description_index);
+        const APCDescriptorRange this_apc_descriptor_range = ReadARangeOfAPCDescription_(apc_description_index);
 
         if (!this_apc_descriptor_range.IsVAlid)
         {
@@ -99,7 +99,7 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-        const APCDescriptorRange this_apc_descriptor_range = ReadARangeOfAPCDescriptorFromRecordBook_(apc_description_idx);
+        const APCDescriptorRange this_apc_descriptor_range = ReadARangeOfAPCDescription_(apc_description_idx);
         if (!this_apc_descriptor_range.IsVAlid)
         {
             return false;
@@ -121,7 +121,7 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-        const APCDescriptorRange desired_descriptor_range = ReadARangeOfAPCDescriptorFromRecordBook_(current_descriptor_idx.value());
+        const APCDescriptorRange desired_descriptor_range = ReadARangeOfAPCDescription_(current_descriptor_idx.value());
         if (!desired_descriptor_range.IsVAlid)
         {
             return false;
@@ -145,6 +145,26 @@ namespace PredictedAdaptedEncoding
         }
     }
     
+    DescriptionOfAPC::DescriptorSaftyFiles APCHandleDescriptorConstructor::OneShotTryReadingDescriptionState_(uint64_t apc_description_index) noexcept
+    {
+        DescriptionOfAPC::DescriptorSaftyFiles return_files{};
+
+        if (!SlabBasePtr_ || apc_description_index >= CountOfAPC_)
+        {
+            return return_files;
+        }
+        
+        const APCDescriptorRange desired_description_range = ReadARangeOfAPCDescription_(apc_description_index);
+        if (!desired_description_range.IsVAlid)
+        {
+            return return_files;
+        }
+        const size_t state_cell_idx = desired_description_range.BeginIndex + static_cast<size_t>(APCDescriptorCellType::STATE_OWNERSHIP_VESION_SAFTY);
+        const packed64_t state_of_apc_cell = SlabBasePtr_[state_cell_idx];
+
+        return_files = DescriptionOfAPC::ReadFilesFromStateSaftyofADescriptor(state_of_apc_cell);
+        return return_files;
+    }
 
 
 }

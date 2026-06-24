@@ -9,7 +9,7 @@ namespace PredictedAdaptedEncoding
         /// @brief Read Description OF:: Single APC SLOT ||(WARNING: IT DOSENT READ THE MEMORY RANGE OF THE APC)
         /// @param apc_slot_index 
         /// @return 
-        APCDescriptorRange ReadARangeOfAPCDescriptorFromRecordBook_(uint64_t apc_slot_index) noexcept;
+        APCDescriptorRange ReadARangeOfAPCDescription_(uint64_t apc_slot_index) noexcept;
 
     public:
 
@@ -44,10 +44,10 @@ namespace PredictedAdaptedEncoding
             bool caller_holds_claim_guard = false
         ) noexcept;
 
-        // std::optional<DescriptionOfAPC::StateOfSingleAPCDescription> OneShotTryReadingDescriptionState(uint64_t apc_description_index) noexcept
-        // {
-            
-        // }
+        /// @brief Just Reads the APCDescriptorCellType::STATE_OWNERSHIP_VESION_SAFTY Cell  Without Validating with Other Descriptor Cells
+        /// @param apc_description_index 
+        /// @return 
+        DescriptionOfAPC::DescriptorSaftyFiles OneShotTryReadingDescriptionState_(uint64_t apc_description_index) noexcept;
         
     };
 

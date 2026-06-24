@@ -17,6 +17,7 @@ static_assert(alignof(APCDescriptorRange) == alignof(packed64_t));
 using APCSegmentPoolRange = APCDescriptorRange;
 
 
+
 struct DescriptionOfAPC
 {
 
@@ -63,10 +64,17 @@ struct DescriptionOfAPC
     static constexpr bool IsValidAPCDescriptionCell(
         packed64_t packed_cell, 
         std::optional<PackedMode> mode_check = std::nullopt,
-        bool check_consumeablity = true
+        bool check_consumeablity = true,
+        PackedCell64_t::AuthoritiveCellView* return_auth_view_ptr = nullptr
     ) noexcept
     {
-        const PackedCell64_t::AuthoritiveCellView desired_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
+        PackedCell64_t::AuthoritiveCellView desired_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
+
+        if (return_auth_view_ptr)
+        {
+            *return_auth_view_ptr = desired_auth_view;
+        }
+
         if (!CoreOfFabricCoordinator::CommonValidityCheckOfFabricCellsTableSegmentClasses(desired_auth_view) ||
             desired_auth_view.FabricTableSegmentClass != FabricTableSegmentClasses::APC_HANDLE_DESCRIPTOR
         )
@@ -189,8 +197,65 @@ struct DescriptionOfAPC
 
     }
 
+    struct DescriptorSaftyFiles
+    {
+        uint16_t WidthOfAPC = UNSIGNED_ZERO;
+        uint8_t Version = UNSIGNED_ZERO;
+        StateOfSingleAPCDescription StateOfTheAPC = StateOfSingleAPCDescription::UNASSIGNED_UNUSED_NANNULL;
+        OwnershipPolicy WhoHoldsTheAcess = OwnershipPolicy::UNASSIGNED_UNUSED_NANNULL;
+        LocalityPolicy LocalityOfTheDescription = LocalityPolicy::UNASSIGNED_UNUSED_NANNULL;
+        bool IsValid = false;
+    };
+    static_assert(sizeof(DescriptorSaftyFiles) <= sizeof(packed64_t));
 
-    static constexpr bool IsValidStateSaftyCell(
+    /// @brief Returns A Compleate View of the APCDescriptorCellType::STATE_OWNERSHIP_VESION_SAFTY
+    /// @param packed_cell 
+    /// @return 
+    static constexpr DescriptorSaftyFiles ReadFilesFromStateSaftyofADescriptor(packed64_t packed_cell) noexcept
+    {
+        DescriptorSaftyFiles return_descriptor_files{};
+
+        PackedCell64_t::AuthoritiveCellView desired_cell_view{};
+
+        if (!IsValidAPCDescriptionCell(packed_cell, PackedMode::MODEL32, false, &desired_cell_view))
+        {
+            return return_descriptor_files;
+        }
+
+        return_descriptor_files.WidthOfAPC = static_cast<uint16_t>(desired_cell_view.Raw32BitInCellData);
+
+        return_descriptor_files.Version = Clock16Subdivision1x8Plus2x4InMode32CellModel::ExtractLowest8Bit_(desired_cell_view.InCellClock16);
+
+        return_descriptor_files.StateOfTheAPC = static_cast<StateOfSingleAPCDescription>(
+            Clock16Subdivision1x8Plus2x4InMode32CellModel::ExtractMid4Bit_(desired_cell_view.InCellClock16)
+        );
+
+        return_descriptor_files.WhoHoldsTheAcess = static_cast<OwnershipPolicy>(
+            Clock16Subdivision1x8Plus2x4InMode32CellModel::ExtractHighiest4Bit_(desired_cell_view.InCellClock16)
+        );
+
+        return_descriptor_files.LocalityOfTheDescription = desired_cell_view.LocalityOfCell;
+
+        if (
+            return_descriptor_files.WidthOfAPC >= MINIMUM_BRANCH_CAPACITY  && 
+            return_descriptor_files.WidthOfAPC <= APCDataStructure::APC_MAX_LENGTH_OR_COUNTER &&
+            return_descriptor_files.StateOfTheAPC != StateOfSingleAPCDescription::UNASSIGNED_UNUSED_NANNULL &&
+            return_descriptor_files.WhoHoldsTheAcess != OwnershipPolicy::UNASSIGNED_UNUSED_NANNULL
+        )
+        {
+            return_descriptor_files.IsValid = true;
+            return return_descriptor_files;
+        }
+
+        return return_descriptor_files;
+    }
+
+    /// @brief Matches The SingleAPCDescriptionCellBuffer's -> RECORDED: Width vs STORED: Files IN: APCDescriptorCellType::STATE_OWNERSHIP_VESION_SAFTY
+    /// @param single_apc_description 
+    /// @param validate_observer Who Ownes the APC Currently & If set And validate_observer != Current Owner -> Will RETURN: false
+    /// @param desired_state Whats the CURRENT: StateOfSingleAPCDescription value & IF: Set desired_state != StateOfSingleAPCDescription -> Will RETURN: false
+    /// @param version_match IF: Set snd VERSION: Dosent match the current version -> Will RETURN: false
+    static constexpr bool ValidateDescriptionBufferBySaftyFiles(
         SingleAPCDescriptionCellBuffer& single_apc_description,
         std::optional<OwnershipPolicy> validate_observer = std::nullopt,
         std::optional<StateOfSingleAPCDescription> desired_state = std::nullopt,
@@ -345,7 +410,7 @@ struct DescriptionOfAPC
                 PackedMode::MODEL48, 
                 check_consumeablity
             ) ||
-            !IsValidStateSaftyCell(single_apc_description_buffer, validate_observer, desired_state, version_match) 
+            !ValidateDescriptionBufferBySaftyFiles(single_apc_description_buffer, validate_observer, desired_state, version_match) 
         )
         {
             return false;
