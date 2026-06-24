@@ -109,7 +109,7 @@ namespace PredictedAdaptedEncoding
         if ((low32_half_view.IsCellValid && high32_half_view.IsCellValid) || *maybe_desired_candidate_occupancy > IN_CELL_VALUE_MODE32_SENTINAL)
         {
             packed64_t expected_low = low32_half_view.RawCell;
-            const packed64_t desired_claimed_low = PackedCell64_t::SetLocalityInPacked(low32_and_probable_high32.first, LocalityPolicy::CLAIMED);
+            const packed64_t desired_claimed_low = PackedCell64_t::SetLocalityInPacked(low32_half_view.RawCell, LocalityPolicy::CLAIMED);
 
             auto RestoreLow = [&]()
             {

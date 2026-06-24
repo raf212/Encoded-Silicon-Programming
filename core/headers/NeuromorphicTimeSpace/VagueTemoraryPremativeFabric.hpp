@@ -81,6 +81,13 @@ public:
         uint64_t logical_id = UNSIGNED_ZERO
     ) noexcept;
 
+    bool InitializeFabricWithPtrTable(
+        uint16_t slot_count,
+        size_t slot_cell_count = MINIMUM_BRANCH_CAPACITY,
+        uint8_t slab_id = APCDataStructure::BRANCH_VERSION,
+        uint32_t fabric_thread_capacity = DEFAULT_THREAD_TABLE_CAPACITY
+    ) noexcept;
+
 };
 
 

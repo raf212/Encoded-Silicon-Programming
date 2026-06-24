@@ -184,28 +184,35 @@ namespace PredictedAdaptedEncoding
             return std::nullopt;
         }
 
-        const uint64_t bucket_count_dht = (desired_hash_table_bounds.BeginIndex - desired_hash_table_bounds.EndIndex) / HASH_BUCKED_WIDTH_OF_FABRIC;
-
-        if (bucket_count_dht == UNSIGNED_ZERO)
+        const uint64_t table_cell_count = desired_hash_table_bounds.EndIndex - desired_hash_table_bounds.BeginIndex;
+        if ((table_cell_count % HASH_BUCKED_WIDTH_OF_FABRIC) != UNSIGNED_ZERO)
         {
             return std::nullopt;
         }
+        
+        const uint64_t bucket_count_dht = table_cell_count / HASH_BUCKED_WIDTH_OF_FABRIC;
+
 
         uint64_t bucket = HashHelpers::HashUnsigned48_(key48) & (bucket_count_dht - 1u);
 
         for (uint64_t prob = 0; prob < bucket_count_dht; prob++)
         {
             const size_t base_idx_dht = static_cast<size_t>(desired_hash_table_bounds.BeginIndex + (bucket * HASH_BUCKED_WIDTH_OF_FABRIC));
-            const HashFilesCarrier exissting_hash = ReadHashFilesFromSlab(base_idx_dht, false);
+            const HashFilesCarrier existing_hash = ReadHashFilesFromSlab(base_idx_dht, false);
             
-            if (!exissting_hash.IsValid || exissting_hash.AttachedLocality == LocalityPolicy::IDLE)
+            if (!existing_hash.IsValid || existing_hash.AttachedLocality == LocalityPolicy::IDLE)
             {
                 return std::nullopt;
             }
 
-            if (exissting_hash.HashKey == key48)
+            if (existing_hash.HashKey == key48)
             {
-                return exissting_hash.HashValue;
+                return existing_hash.HashValue;
+            }
+
+            if (existing_hash.ProbDistance < prob)
+            {
+                return std::nullopt;
             }
             
             bucket = (bucket + 1u) & (bucket_count_dht - 1u);

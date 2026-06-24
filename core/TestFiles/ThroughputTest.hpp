@@ -308,7 +308,7 @@ void ThroughputTest()
 
     VagueTemoraryPremativeFabric silicon_local_fabric{};
 
-    if (!silicon_local_fabric.InitializeFabric(
+    if (!silicon_local_fabric.InitializeFabricWithPtrTable(
             1024,
             cfg.BranchMinChildCapacity,
             APCDataStructure::BRANCH_VERSION,
