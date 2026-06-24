@@ -2,7 +2,7 @@
 
 namespace PredictedAdaptedEncoding
 {
-    constexpr void FabricConstructor::MakeAndStoreFabricMetaValue48_(
+    void FabricConstructor::MakeAndStoreFabricMetaValue48_(
         FabricMetaIndicies fabric_meta_idx, 
         uint64_t value, 
         LocalityPolicy cell_locality,
@@ -31,7 +31,7 @@ namespace PredictedAdaptedEncoding
 
     //Integrate AtomicAdaptiveBackoff
     // add CAS_FAILURE_COUNT
-    constexpr bool FabricConstructor::UpdateValidPairedOccupancyApproxAtomically_(
+    bool FabricConstructor::UpdateValidPairedOccupancyApproxAtomically_(
         LocalityPolicy candidate_to_update, uint64_t desired_occupancy_value,
         bool force_update, clk16_t pair_version
     ) noexcept
@@ -152,7 +152,7 @@ namespace PredictedAdaptedEncoding
 
 
 
-    constexpr packed64_t FabricConstructor::ReadCompletePackedCellDirectly(size_t slab_index) noexcept
+    packed64_t FabricConstructor::ReadCompletePackedCellDirectly(size_t slab_index) noexcept
     {
         if (!SlabBasePtr_ || slab_index >= SlabCellCount_)
         {

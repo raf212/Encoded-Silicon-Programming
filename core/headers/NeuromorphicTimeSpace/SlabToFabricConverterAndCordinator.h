@@ -18,7 +18,7 @@ namespace PredictedAdaptedEncoding
         void InitializeHashTable_(FabricTableSegmentClasses table_class) noexcept;
 
         /// @brief CALLES: 4xUpdateValidPairedOccupancyApproxAtomically_ ON: Each LocalityPolicy
-        constexpr void Zero4LocalityBasedOccupancyOfFabric_() noexcept;
+        void Zero4LocalityBasedOccupancyOfFabric_() noexcept;
 
         /// @brief BUILD: & INITIALIZED: All The APC Handle Descriptor With Segment Pool <-  CONSISTING: Packed CEll -> PacvkedMode::VALUE32
         void InitializeAPCDescriptorTable_() noexcept;
@@ -26,7 +26,7 @@ namespace PredictedAdaptedEncoding
         /// @brief INITIALIZES: All FabricMetaIndicies
         /// @param table_directory_begin 
         /// @param table_directory_end 
-        constexpr void InitializeCompleateFabricMetaIndices_(size_t record_book_begin, size_t record_book_end) noexcept;
+        void InitializeCompleateFabricMetaIndices_(size_t record_book_begin, size_t record_book_end) noexcept;
 
     public:
         SlabToFabricConverterAndCordinator(/* args */) noexcept = default;

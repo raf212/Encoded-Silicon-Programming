@@ -54,7 +54,7 @@ namespace PredictedAdaptedEncoding
 
 
 
-    constexpr void SlabToFabricConverterAndCordinator::Zero4LocalityBasedOccupancyOfFabric_() noexcept
+    void SlabToFabricConverterAndCordinator::Zero4LocalityBasedOccupancyOfFabric_() noexcept
     {
         UpdateValidPairedOccupancyApproxAtomically_(LocalityPolicy::IDLE, UNSIGNED_ZERO, true, APCDataStructure::BRANCH_VERSION);
         UpdateValidPairedOccupancyApproxAtomically_(LocalityPolicy::PUBLISHED, UNSIGNED_ZERO, true, APCDataStructure::BRANCH_VERSION);
@@ -63,7 +63,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    constexpr void SlabToFabricConverterAndCordinator::InitializeCompleateFabricMetaIndices_(size_t record_book_begin, size_t record_book_end) noexcept
+    void SlabToFabricConverterAndCordinator::InitializeCompleateFabricMetaIndices_(size_t record_book_begin, size_t record_book_end) noexcept
     {
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::MAGIC, APCDataStructure::FABRIC_MAGIC);
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::VERSION, APCDataStructure::BRANCH_VERSION);

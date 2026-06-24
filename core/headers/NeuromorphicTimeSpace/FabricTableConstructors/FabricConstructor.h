@@ -38,7 +38,7 @@ namespace PredictedAdaptedEncoding
         }
 
         /// @brief ONLY: Use for Initialiazation ONLY
-        constexpr void MakeAndStoreFabricMetaValue48_(
+        void MakeAndStoreFabricMetaValue48_(
             FabricMetaIndicies fabric_meta_idx, uint64_t value, 
             LocalityPolicy cell_locality = LocalityPolicy::PUBLISHED,
             AccessContractOfValue access_contract = AccessContractOfValue::CAS_RMW,
@@ -145,7 +145,7 @@ namespace PredictedAdaptedEncoding
 
     public:
 
-        constexpr packed64_t ReadCompletePackedCellDirectly(size_t slab_index) noexcept;
+        packed64_t ReadCompletePackedCellDirectly(size_t slab_index) noexcept;
 
         constexpr packed64_t AtomicallyLoadReadCompletePackedCell(size_t slab_index) noexcept;
 
@@ -190,7 +190,7 @@ namespace PredictedAdaptedEncoding
         /// @param desired_occupancy_value IF: desired_occupancy_value <= UINT32_MAX ONLY -> USED: FabricMetaIndicies::FABRIC_OCCUPANCY_APPROXIMATION_LOCALITY_LOW32 || BOTH: LOW32 + HIGH32
         /// @param force_update DO NOT CHANGE TO: true untill Understand USE: IF: false -> CAS: Update || true -> ATOMIC STORE: 
         /// @return 
-        constexpr bool UpdateValidPairedOccupancyApproxAtomically_(
+        bool UpdateValidPairedOccupancyApproxAtomically_(
             LocalityPolicy candidate_to_update, uint64_t desired_occupancy_value,
             bool force_update = false,
             clk16_t pair_version = UNSIGNED_ZERO

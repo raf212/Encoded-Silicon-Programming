@@ -308,8 +308,15 @@ void ThroughputTest()
 
     VagueTemoraryPremativeFabric silicon_local_fabric{};
 
-    silicon_local_fabric.InitializeFabric(1024, cfg.BranchMinChildCapacity);
-
+    if (!silicon_local_fabric.InitializeFabric(
+            1024,
+            cfg.BranchMinChildCapacity,
+            APCDataStructure::BRANCH_VERSION,
+            DEFAULT_THREAD_TABLE_CAPACITY))
+    {
+        std::cerr << "Fabric initialization failed\n";
+        return;
+    }
 
     AdaptivePackedCellContainer Sensor;
     AdaptivePackedCellContainer Predictor;
@@ -317,30 +324,17 @@ void ThroughputTest()
     AdaptivePackedCellContainer Integrator;
     AdaptivePackedCellContainer Motor;
 
-    silicon_local_fabric.ConstructAnAPC_(
-        Sensor,
-        cfg
-    );
-
-    silicon_local_fabric.ConstructAnAPC_(
-        Predictor,
-        cfg
-    );
-
-    silicon_local_fabric.ConstructAnAPC_(
-        Comparator,
-        cfg
-    );
-
-    silicon_local_fabric.ConstructAnAPC_(
-        Integrator,
-        cfg
-    );
-
-    silicon_local_fabric.ConstructAnAPC_(
-        Motor,
-        cfg
-    );
+    const bool roots_ok =
+        silicon_local_fabric.ConstructAnAPC_(Sensor, cfg, 1u, 1u).has_value() &&
+        silicon_local_fabric.ConstructAnAPC_(Predictor, cfg, 2u, 2u).has_value() &&
+        silicon_local_fabric.ConstructAnAPC_(Comparator, cfg, 3u, 3u).has_value() &&
+        silicon_local_fabric.ConstructAnAPC_(Integrator, cfg, 4u, 4u).has_value() &&
+        silicon_local_fabric.ConstructAnAPC_(Motor, cfg, 5u, 5u).has_value();
+    if (!roots_ok)
+    {
+        return;
+    }
+    
 
     GraphStats stats;
 

@@ -68,7 +68,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    constexpr void RecordBookConstructor::WriteARecordBookOfTSCEntry_(
+    void RecordBookConstructor::WriteARecordBookOfTSCEntry_(
         OriginOfRecord table_class, 
         size_t begin, size_t end, 
         uint8_t slab_id

@@ -28,7 +28,7 @@ namespace PredictedAdaptedEncoding
         /// @param table_class Desired FabricTableSegmentClasses == OriginOfRecord
         /// @param begin Begin Index OF: FabricTableSegmentClasses -> Record
         /// @param end End Index OF: FabricTableSegmentClasses -> Record
-        constexpr void WriteARecordBookOfTSCEntry_(
+        void WriteARecordBookOfTSCEntry_(
             OriginOfRecord table_class, 
             size_t begin, size_t end, 
             uint8_t slab_id = UNSIGNED_ZERO
