@@ -1,5 +1,6 @@
 #pragma once 
 #include "SegmentIODefinition.hpp"
+#include "APCSegmentsCausalCordinator.hpp"
 
 namespace PredictedAdaptedEncoding
 {

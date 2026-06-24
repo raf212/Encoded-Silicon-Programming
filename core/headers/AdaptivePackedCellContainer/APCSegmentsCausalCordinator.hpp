@@ -1,11 +1,11 @@
 #pragma once
 #include <array>
 #include <utility>
-#include "AdaptivePackedCellContainer.hpp"
+#include "SegmentIODefinition.hpp"
 
 namespace PredictedAdaptedEncoding
 {
-class APCSegmentsCausalCordinator : public AdaptivePackedCellContainer
+class APCSegmentsCausalCordinator : public SegmentIODefinition
 {
 private:
 
@@ -74,51 +74,19 @@ public:
     }
 
     bool PublishCausal(
+        AdaptivePackedCellContainer& apc,
         APCPagedNodeSegmentClasses region,
         packed64_t cell,
         std::atomic<uint64_t>* growth_counter = nullptr
-    ) noexcept
-    {
-        cell = PackedCell64_t::SetPageClassInPacked(cell, region);
-
-        if (TryPublishRegionalSharedGrowthOnce(region, cell, growth_counter))
-        {
-            MarkEmittedCausalCell(region, cell);
-            return true;
-        }
-        return false;
-    }
+    ) noexcept;
 
     std::optional<packed64_t> ConsumeCausal(
+        AdaptivePackedCellContainer& apc,
         APCPagedNodeSegmentClasses region,
         size_t& scan_cursor,
         std::atomic<uint64_t>* older_counter = nullptr,
         bool drop_older = false
-    ) noexcept
-    {
-        const size_t max_drops = drop_older
-            ? (static_cast<size_t>(PayloadCapacityFromHeader()) * 2u + 16u)
-            : 1u;
-        size_t drops = 0;
-
-        while (drops < max_drops)
-        {
-            auto maybe = ConsumeCellByRegionMaskTraverseStartFromThisAPC(region, scan_cursor);
-            if (!maybe) return std::nullopt;
-
-            if (AcceptCausalCell(region, *maybe))
-                return maybe;
-
-            if (older_counter)
-                older_counter->fetch_add(1, std::memory_order_relaxed);
-
-            if (!drop_older)
-                return maybe;
-
-            ++drops;
-        }
-        return std::nullopt;  // drop budget exhausted — caller should back off
-    }
+    ) noexcept;
 
     uint32_t CountPublishedInRegion(APCPagedNodeSegmentClasses region) noexcept
     {
@@ -134,19 +102,6 @@ public:
         return count;
     }
 
-    bool HasAnyPublishedInChain(APCPagedNodeSegmentClasses region) noexcept
-    {
-        AdaptivePackedCellContainer* current = FindSharedRootOrThis();
-        while (current)
-        {
-            auto* node = static_cast<APCSegmentsCausalCordinator*>(current);
-            if (node->CountPublishedInRegion(region) > 0)
-            {
-                return true;
-            }
-            current = current->GetNextSharedSegment();
-        }
-        return false;
-    }
+    bool HasAnyPublishedInChain(APCPagedNodeSegmentClasses region, AdaptivePackedCellContainer& apc) noexcept;
 };
 }

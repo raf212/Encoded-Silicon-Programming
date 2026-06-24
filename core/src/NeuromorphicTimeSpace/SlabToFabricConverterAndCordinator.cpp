@@ -424,25 +424,29 @@ namespace PredictedAdaptedEncoding
     }
 
 
-
-    AdaptivePackedCellContainer* VagueTemoraryPremativeFabric::GetDeafultInitializedAPCFromFabric(
+    std::optional<uint64_t> VagueTemoraryPremativeFabric::ConstructAnAPC_(   
+        AdaptivePackedCellContainer& desired_apc,     
         const ContainerConf& container_conf,
         uint64_t shared_id,
         uint64_t logical_id
     ) noexcept
     {
+        if (!desired_apc.IfAPCBranchValid())
+        {
+            return std::nullopt;
+        }
+
         if (
             !SlabBasePtr_ || 
             PerAPCRuntimeCellCount_ < MINIMUM_BRANCH_CAPACITY ||
             CountOfAPC_ == UNSIGNED_ZERO
         )
         {
-            return nullptr;
+            return std::nullopt;
         }
 
         uint64_t desired_apc_slot = PackedCell64_t::PACKED_CELL_SENTINAL;
         bool claimed_desired = false;
-
 
         for (uint64_t description_idx = 0; description_idx < CountOfAPC_; description_idx++)
         {
@@ -466,7 +470,7 @@ namespace PredictedAdaptedEncoding
 
         if (!claimed_desired && desired_apc_slot >= PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT)
         {
-            return nullptr;
+            return std::nullopt;
         }
 
         DescriptionOfAPC::SingleAPCDescriptionCellBuffer  desired_apc_description_buffer{};
@@ -480,7 +484,7 @@ namespace PredictedAdaptedEncoding
         );
         if (!buffer_ok)
         {
-            return nullptr;
+            return std::nullopt;
         }
 
         const packed64_t updated_safty = DescriptionOfAPC::SwitchStateOrAPCOwnerOfSaftyCell(
@@ -492,27 +496,25 @@ namespace PredictedAdaptedEncoding
         const bool update_ok_safty = DescriptionOfAPC::SetStateSaftyCellInBuffer(desired_apc_description_buffer, updated_safty);
         if (!update_ok_safty)
         {
-            return nullptr;
+            return std::nullopt;
         }
 
 
         const bool claimed_descripor_for_caller = OneShotUpdateAPCDescriptor(desired_apc_description_buffer, true);
         if (!claimed_descripor_for_caller)
         {
-            return nullptr;
+            return std::nullopt;
         }
         
         APCSegmentPoolRange desired_apc_segment_pool_range = GetSegmentPoolBegainEndForSingleAPCDescription_(desired_apc_slot);
         if (!desired_apc_segment_pool_range.IsVAlid)
         {
-            return nullptr;
+            return std::nullopt;
         }
 
         packed64_t* raw_apc_segment_ptr = &SlabBasePtr_[desired_apc_segment_pool_range.BeginIndex];
 
-        AdaptivePackedCellContainer new_apc{};
-
-        if (!new_apc.BindExternalRawFabricBacking_(
+        if (!desired_apc.BindExternalRawFabricBacking_(
             raw_apc_segment_ptr,
             PerAPCRuntimeCellCount_,
             this,
@@ -520,16 +522,16 @@ namespace PredictedAdaptedEncoding
             true
         ))
         {
-            return nullptr;
+            return std::nullopt;
         }
 
-        if (!StoreAPCRuntimePtr(desired_apc_slot, &new_apc))
+        if (!StoreAPCRuntimePtr(desired_apc_slot, &desired_apc))
         {
-            return nullptr;
+            return std::nullopt;
         }
         
 
-        new_apc.InitRootOrChildBranch(
+        desired_apc.InitRootOrChildBranch(
             desired_apc_slot,
             logical_id,
             shared_id,
@@ -537,7 +539,26 @@ namespace PredictedAdaptedEncoding
             container_conf
         );
 
-        return GetAPCRuntimePtr(desired_apc_slot);
+        return desired_apc_slot;
+    }
+
+
+    AdaptivePackedCellContainer* VagueTemoraryPremativeFabric::GetDeafultInitializedAPCFromFabric(
+        const ContainerConf& container_conf,
+        uint64_t shared_id,
+        uint64_t logical_id
+    ) noexcept
+    {
+        AdaptivePackedCellContainer new_apc{};
+
+        std::optional<uint64_t> maybe_apc_slot_idx = ConstructAnAPC_(
+            new_apc,
+            container_conf,
+            shared_id,
+            logical_id
+        );
+
+        return maybe_apc_slot_idx.has_value() ? GetAPCRuntimePtr(*maybe_apc_slot_idx) : nullptr;
     
     }
 

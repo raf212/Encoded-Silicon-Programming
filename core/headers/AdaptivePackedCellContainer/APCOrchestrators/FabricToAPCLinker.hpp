@@ -6,6 +6,7 @@ namespace PredictedAdaptedEncoding
 {
     
 class VagueTemoraryPremativeFabric;
+class AdaptivePackedCellContainer;
 
 class FabricToAPCLinker : public APCDataStructure
 {
