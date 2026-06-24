@@ -82,6 +82,57 @@ public:
     //     {
     //         return nullptr;
     //     }
+
+    //     uint64_t desired_apc_slot = PackedCell64_t::PACKED_CELL_SENTINAL;
+    //     bool claimed_desired = false;
+
+
+    //     for (uint64_t description_idx = 0; description_idx < CountOfAPC_; description_idx++)
+    //     {
+    //         const DescriptionOfAPC::DescriptorSaftyFiles desired_files = OneShotTryReadingDescriptionState_(description_idx);
+    //         if (
+    //             desired_files.IsValid && 
+    //             desired_files.WidthOfAPC == PerAPCRuntimeCellCount_ &&
+    //             desired_files.LocalityOfTheDescription ==LocalityPolicy::PUBLISHED && 
+    //             desired_files.WhoHoldsTheAcess != OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER &&  
+    //             desired_files.StateOfTheAPC == DescriptionOfAPC::StateOfSingleAPCDescription::RECORD_WITH_SEGMENT_POOL
+    //         )
+    //         {
+    //             claimed_desired = ClaimACompleateAPCDescriptorCells(description_idx);
+    //             if (claimed_desired)
+    //             {
+    //                 desired_apc_slot = description_idx;
+    //                 break;
+    //             }
+    //         }
+    //     }
+
+    //     if (!claimed_desired && desired_apc_slot >= PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT)
+    //     {
+    //         return nullptr;
+    //     }
+
+    //     DescriptionOfAPC::SingleAPCDescriptionCellBuffer  desired_apc_description_buffer{};
+
+    //     const bool buffer_ok = ReadACompleateAPCDescriptorBuffer(
+    //         desired_apc_slot, 
+    //         desired_apc_description_buffer, 
+    //         false, 
+    //         OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC, 
+    //         DescriptionOfAPC::StateOfSingleAPCDescription::RECORD_WITH_SEGMENT_POOL
+    //     );
+
+    //     if (!buffer_ok)
+    //     {
+    //         return nullptr;
+    //     }
+
+
+        
+        
+
+
+        
         
     // }
 };

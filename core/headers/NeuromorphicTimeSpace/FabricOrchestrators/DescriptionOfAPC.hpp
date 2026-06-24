@@ -197,6 +197,30 @@ struct DescriptionOfAPC
 
     }
 
+    /// @brief Sets Desired State, Owner & Version inside Safty Cell -> ONY: Bare Matale Packed Cell Check
+    /// @return WARNING: This Function Dosent Validate ANYTHING & User Defined Value May Broke The Description If Not Validated OR: Carefull Use
+    static constexpr packed64_t SwitchStateOrAPCOwnerOfSaftyCell(
+        packed64_t packed_cell,
+        StateOfSingleAPCDescription desired_state = StateOfSingleAPCDescription::UNASSIGNED_UNUSED_NANNULL,
+        OwnershipPolicy desired_owner_of_apc = OwnershipPolicy::UNASSIGNED_UNUSED_NANNULL,
+        uint8_t desired_version = UNSIGNED_ZERO
+    ) noexcept
+    {
+        const DescriptorSaftyFiles current_safty_files = ReadFilesFromStateSaftyofADescriptor(packed_cell);
+
+        const StateOfSingleAPCDescription state_value = desired_state == StateOfSingleAPCDescription::UNASSIGNED_UNUSED_NANNULL ? current_safty_files.StateOfTheAPC : desired_state;
+        const OwnershipPolicy owner = desired_owner_of_apc == OwnershipPolicy::UNASSIGNED_UNUSED_NANNULL ? current_safty_files.WhoHoldsTheAcess : desired_owner_of_apc;
+        const uint8_t version = desired_version == UNSIGNED_ZERO ? current_safty_files.Version : desired_version;
+
+        const uint16_t state_version_ownership = Clock16Subdivision1x8Plus2x4InMode32CellModel::Pack1x8Plus2x4InUnsigned16_(
+            version, 
+            static_cast<uint8_t>(state_value), 
+            static_cast<uint8_t>(owner)
+        );
+
+        return PackedCell64_t::SetCLK16InPacked(packed_cell, state_version_ownership);
+    }
+
     struct DescriptorSaftyFiles
     {
         uint16_t WidthOfAPC = UNSIGNED_ZERO;
