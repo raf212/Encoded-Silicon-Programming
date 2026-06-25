@@ -190,7 +190,7 @@ struct DescriptionOfAPC
             static_cast<tag8_t>(Model32Subclass::UNCLOCKED_1x8_PLUS_2x4),
             FabricTableSegmentClasses::APC_HANDLE_DESCRIPTOR,
             locality, InternalDataTypePolicy::UnsignedPCellDataType,
-            AttributePolicy::INSTRUCTION_CELL,
+            AttributePolicy::DEPENDENT_OR_INSTRUCTION_CELL,
             apc_width,
             state_version_ownership
         );
@@ -218,7 +218,7 @@ struct DescriptionOfAPC
             static_cast<uint8_t>(owner)
         );
 
-        return PackedCell64_t::SetCLK16InPacked(packed_cell, state_version_ownership);
+        return PackedCell64_t::SetMETA16InPacked(packed_cell, state_version_ownership);
     }
 
     struct DescriptorSaftyFiles

@@ -148,7 +148,7 @@ namespace PredictedAdaptedEncoding
         packed64_t ReadCompletePackedCellDirectly(size_t slab_index) noexcept;
 
         constexpr packed64_t AtomicallyLoadReadCompletePackedCell(size_t slab_index) noexcept;
-
+        
         bool ReadFabricMetaCellViewAtomically(FabricMetaIndicies fabric_meta_idx, PackedCell64_t::AuthoritiveCellView& meta_cell_view_address) noexcept;
 
         constexpr void StorePackedCellUncheckedDirectly(size_t slab_index, packed64_t packed_cell) noexcept;

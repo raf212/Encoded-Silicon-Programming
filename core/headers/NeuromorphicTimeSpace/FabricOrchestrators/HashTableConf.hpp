@@ -142,7 +142,7 @@ struct HashTableConf : public HashHelpers
 
 
 
-    /// @brief Cell DEFAULTS: TypeFamily::VALUE48 + AccessContractOfValue::CLAIMED_GURDED + AttributePolicy::INSTRUCTION_CELL
+    /// @brief Cell DEFAULTS: TypeFamily::VALUE48 + AccessContractOfValue::CLAIMED_GURDED + AttributePolicy::DEPENDENT_OR_INSTRUCTION_CELL
     /// @return VALID -> Packed Cell -> OR: UINT64_MAX:: if FabricTableSegmentClasses dosent belong  BRANCH_HASH, SHARED_HASH, LOGICAL_HASH
     static constexpr packed64_t MakeHashKeyOrValueCell(
         uint64_t hash_key_or_value,
@@ -221,7 +221,7 @@ struct HashTableConf : public HashHelpers
             hash_table,
             locality,
             InternalDataTypePolicy::UnsignedPCellDataType,
-            AttributePolicy::INSTRUCTION_CELL,
+            AttributePolicy::DEPENDENT_OR_INSTRUCTION_CELL,
             desired_prob_distance_lock
         );
     }

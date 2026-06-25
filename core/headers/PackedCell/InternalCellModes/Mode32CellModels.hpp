@@ -96,8 +96,7 @@ namespace PredictedAdaptedEncoding
         static constexpr std::pair<packed64_t, packed64_t> GetPairOfLow32FAndHigh32SFromUnsigned64ForFabric(
             uint64_t value, clk16_t version,
             LocalityPolicy locality = LocalityPolicy::IDLE,
-            FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG,
-            AttributePolicy attribute_policy = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
+            FabricTableSegmentClasses fabric_segment_class = FabricTableSegmentClasses::GLOBAL_AND_CONFIG
         ) noexcept
         {
             const std::pair<packed64_t, packed64_t> lowf_highs = GetPairOfLow32FAndHigh32SFromUnsigned64_(
@@ -105,7 +104,7 @@ namespace PredictedAdaptedEncoding
                 locality, 
                 OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC, 
                 static_cast<tag8_t>(fabric_segment_class), 
-                attribute_policy
+                AttributePolicy::DEPENDENT_OR_INSTRUCTION_CELL
             );
 
             if (fabric_segment_class != FabricTableSegmentClasses::GLOBAL_AND_CONFIG && value <= IN_CELL_VALUE_MODE32_SENTINAL)

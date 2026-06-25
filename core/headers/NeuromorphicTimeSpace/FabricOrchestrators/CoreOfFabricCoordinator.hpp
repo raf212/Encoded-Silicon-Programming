@@ -111,7 +111,7 @@ namespace PredictedAdaptedEncoding
         TABLE_DIRECTORY_COUNT = 38,
         TABLE_DIRECTORY_VERSION = 39,
 
-        //I'm dilullllllllu
+        // It dosent have a use case 
         FABRIC_OCCUPANCY_APPROXIMATION_IDLE_LOW32 = 40,
         FABRIC_OCCUPANCY_APPROXIMATION_IDLE_HIGH32 = 41,
         FABRIC_OCCUPANCY_APPROXIMATION_PUBLISHED_LOW32 = 42,
@@ -256,7 +256,9 @@ namespace PredictedAdaptedEncoding
         {
             switch (meta_idx)
             {
-            //21 for now skeletorn
+            case FabricMetaIndicies::TOTAL_APC_IN_USE:
+            case FabricMetaIndicies::RETIRE_SLOT_HEAD:
+            case FabricMetaIndicies::RELATION_FREE_HEAD:
             case FabricMetaIndicies::GLOBAL_EPOCH48:
             case FabricMetaIndicies::MIN_SAFE_EPOCH48:
             case FabricMetaIndicies::NEXT_DEVICE_VIEW_ID:
@@ -273,10 +275,36 @@ namespace PredictedAdaptedEncoding
             case FabricMetaIndicies::LIVE_SLOT_COUNT:
             case FabricMetaIndicies::FABRIC_CLOCK16:
                 return true;
-            
             default:
                 return false;
             }
+        }
+
+        static constexpr packed64_t UpdateACountMetaCell(packed64_t packed_cell, FabricMetaIndicies user_validation, int delta) noexcept
+        {
+            const PackedCell64_t::AuthoritiveCellView auth_view_of_the_cell = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
+            if (
+                !CommonValidityCheckOfFabricCellsTableSegmentClasses(auth_view_of_the_cell) ||
+                auth_view_of_the_cell.CellMode != PackedMode::VALUE48 ||
+                auth_view_of_the_cell.Attribute != AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL ||
+                auth_view_of_the_cell.CellValueDataType != InternalDataTypePolicy::UnsignedPCellDataType ||
+                !IsThisFebricMetaIdxAValidIncrementalCountType(user_validation)
+            )
+            {
+                return PackedCell64_t::PACKED_CELL_SENTINAL;
+            }
+            
+            const int64_t updated_count = auth_view_of_the_cell.Raw48BitInCellData <= PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT ?
+                auth_view_of_the_cell.Raw48BitInCellData + delta : delta;
+            if (updated_count >= PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT || updated_count < UNSIGNED_ZERO)
+            {
+                return PackedCell64_t::PACKED_CELL_SENTINAL;
+            }
+
+            const uint64_t desired_count = static_cast<uint64_t>(updated_count) & MaskLowNBits(FAMILY_48_BIT_LEN);
+            
+            return PackedCell64_t::SetMETA16InPacked(desired_count, auth_view_of_the_cell.InCellMeta16);
+
         }
 
         using DefaultMemCopyBuffer = std::array<packed64_t, MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY>;
@@ -314,6 +342,16 @@ namespace PredictedAdaptedEncoding
                 return false;
             }
             
+        }
+
+        static constexpr uint64_t GetBranchIdFromAPCSlotIdx(uint64_t apc_slot_index) noexcept
+        {
+            return apc_slot_index + 1u;
+        }
+
+        static constexpr uint64_t GetSlotIdxFromBranchId(uint64_t branch_id) noexcept
+        {
+            return branch_id - 1;
         }
     
     };

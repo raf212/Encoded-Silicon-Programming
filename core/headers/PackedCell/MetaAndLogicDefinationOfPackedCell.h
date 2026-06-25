@@ -173,13 +173,13 @@ namespace PredictedAdaptedEncoding {
 
     /// @brief Describs Attribute OF: Packed Cell & Why it exist
     /// @param SELF_CONTAINED_DATA_OR_MODEL VALUE OR: MODEL -> Itself Carry The Whole Message
-    /// @param INSTRUCTION_CELL VALUE OR: MODEL -> Describs ANY: Kind OF: Instruction TO: Closeby PackedCell
+    /// @param DEPENDENT_OR_INSTRUCTION_CELL VALUE OR: MODEL -> Describs ANY: Kind OF: Instruction TO: Closeby PackedCell
     /// @param INSTRUCTION_RAW64_NEXT INSTRUCTIONS: If Cells Are Raw64 how TO: Read and Write Them & SEQUENTIAL: N * INSTRUCTION_RAW64_NEXT (N  AMOUNT: Can be used to describe the Meta)
     /// @param INSTRUCTION_RAW64_EOF INSTRUCTIONS: Defines Its the end Raw64 and LATER ON: Cells Are Packed Cell
     enum class AttributePolicy : tag8_t
     {
         SELF_CONTAINED_DATA_OR_MODEL = 0,
-        INSTRUCTION_CELL = 1,
+        DEPENDENT_OR_INSTRUCTION_CELL = 1,
         INSTRUCTION_RAW64_NEXT = 2,
         INSTRUCTION_RAW64_EOF = 3,
         UNASSIGNED_UNUSED_NANNULL = 4

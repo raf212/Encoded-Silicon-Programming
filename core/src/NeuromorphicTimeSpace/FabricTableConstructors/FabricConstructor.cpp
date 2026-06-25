@@ -49,8 +49,7 @@ namespace PredictedAdaptedEncoding
         const std::pair<packed64_t, packed64_t> low32_and_probable_high32 = PairedVersionedCellModelOfMode32::GetPairOfLow32FAndHigh32SFromUnsigned64ForFabric(
             desired_occupancy_value, pair_version,
             LocalityPolicy::PUBLISHED,
-            FabricTableSegmentClasses::GENERIC_CONTROL,
-            AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
+            FabricTableSegmentClasses::GENERIC_CONTROL
         );
 
         auto ForceUpdate = [&](){
@@ -422,6 +421,5 @@ namespace PredictedAdaptedEncoding
 
         return true;
     }
-
 
 }

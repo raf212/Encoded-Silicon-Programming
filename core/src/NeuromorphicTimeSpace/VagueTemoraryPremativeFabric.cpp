@@ -13,22 +13,23 @@ namespace PredictedAdaptedEncoding
         uint64_t logical_id
     ) noexcept
     {
-        if (!desired_apc.IfAPCBranchValid())
+        if (desired_apc.IfAPCBranchValid())
         {
             return std::nullopt;
         }
 
         if (
+            !FabricInitialized_.load(MoLoad_) ||
             !SlabBasePtr_ || 
             PerAPCRuntimeCellCount_ < MINIMUM_BRANCH_CAPACITY ||
-            CountOfAPC_ == UNSIGNED_ZERO
+            CountOfAPC_ == UNSIGNED_ZERO ||
+            CountOfAPC_ >= PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT
         )
         {
             return std::nullopt;
         }
 
         uint64_t desired_apc_slot = PackedCell64_t::PACKED_CELL_SENTINAL;
-        bool claimed_desired = false;
 
         for (uint64_t description_idx = 0; description_idx < CountOfAPC_; description_idx++)
         {
@@ -41,8 +42,7 @@ namespace PredictedAdaptedEncoding
                 desired_files.StateOfTheAPC == DescriptionOfAPC::StateOfSingleAPCDescription::RECORD_WITH_SEGMENT_POOL
             )
             {
-                claimed_desired = ClaimACompleateAPCDescriptorCells(description_idx);
-                if (claimed_desired)
+                if (ClaimACompleateAPCDescriptorCells(description_idx))
                 {
                     desired_apc_slot = description_idx;
                     break;
@@ -50,19 +50,20 @@ namespace PredictedAdaptedEncoding
             }
         }
 
-        if (!claimed_desired && desired_apc_slot >= PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT)
+        if (desired_apc_slot >= CountOfAPC_)
         {
             return std::nullopt;
         }
 
         DescriptionOfAPC::SingleAPCDescriptionCellBuffer  desired_apc_description_buffer{};
-
+        
         const bool buffer_ok = ReadACompleateAPCDescriptorBuffer(
             desired_apc_slot, 
             desired_apc_description_buffer, 
             false, 
             OwnershipPolicy::NEUROMORPHIC_SPACE_TIME_FABRIC, 
-            DescriptionOfAPC::StateOfSingleAPCDescription::RECORD_WITH_SEGMENT_POOL
+            DescriptionOfAPC::StateOfSingleAPCDescription::RECORD_WITH_SEGMENT_POOL,
+            std::nullopt
         );
         if (!buffer_ok)
         {
@@ -94,6 +95,13 @@ namespace PredictedAdaptedEncoding
             return std::nullopt;
         }
 
+        const size_t capacity = desired_apc_segment_pool_range.EndIndex - desired_apc_segment_pool_range.BeginIndex;
+        if (capacity != PerAPCRuntimeCellCount_)
+        {
+            return std::nullopt;
+        }
+        
+
         packed64_t* raw_apc_segment_ptr = &SlabBasePtr_[desired_apc_segment_pool_range.BeginIndex];
 
         if (!desired_apc.BindExternalRawFabricBacking_(
@@ -101,24 +109,67 @@ namespace PredictedAdaptedEncoding
             PerAPCRuntimeCellCount_,
             this,
             desired_apc_slot,
-            true
+            false
         ))
         {
             return std::nullopt;
         }
 
-        if (!StoreAPCRuntimePtr(desired_apc_slot, &desired_apc))
+        const uint64_t branch_id = CoreOfFabricCoordinator::GetBranchIdFromAPCSlotIdx(desired_apc_slot);
+        const uint64_t final_logical_id = (logical_id == UNSIGNED_ZERO || logical_id >= PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT) ? branch_id : logical_id;
+        const uint64_t final_shared_id = (shared_id == UNSIGNED_ZERO || shared_id >= PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT) ? branch_id : shared_id;
+
+        if (!desired_apc.InitOnFabricBackingAfterBind(
+            capacity,
+            container_conf, 
+            branch_id,
+            final_logical_id,
+            final_shared_id,
+            true
+        ))
         {
+            desired_apc.FreeAll();
             return std::nullopt;
         }
         
 
-        desired_apc.InitRootOrChildBranch(
-            desired_apc_slot,
-            logical_id,
-            shared_id,
-            PerAPCRuntimeCellCount_,
-            container_conf
+        if (!StoreAPCRuntimePtr(desired_apc_slot, &desired_apc))
+        {
+            desired_apc.FreeAll();
+            return std::nullopt;
+        }
+
+
+        const uint64_t description_begin_in_slab = GetDescriptorBeginIdxAsBranchIdHasValue(branch_id);
+        if (description_begin_in_slab == UNSIGNED_ZERO || description_begin_in_slab >= PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT)
+        {
+            desired_apc.FreeAll();
+            return std::nullopt;
+        }
+        
+        const bool branch_ok = InsertOrUpdateRobinHoodHash48_(FabricTableSegmentClasses::BRANCH_HASH, branch_id, description_begin_in_slab);
+        const bool logical_ok = InsertOrUpdateRobinHoodHash48_(FabricTableSegmentClasses::LOGICAL_HASH, logical_id, description_begin_in_slab);
+        const bool shared_ok = InsertOrUpdateRobinHoodHash48_(FabricTableSegmentClasses::SHARED_HASH, shared_id, description_begin_in_slab);
+
+        packed64_t current_apc_count_cell = AtomicallyLoadReadCompletePackedCell(static_cast<size_t>(FabricMetaIndicies::TOTAL_APC_IN_USE));
+
+        const packed64_t updated_apc_count_cell = CoreOfFabricCoordinator::UpdateACountMetaCell(
+            current_apc_count_cell,
+            FabricMetaIndicies::TOTAL_APC_IN_USE,
+            1u
+        );
+
+        if (!branch_ok || !logical_ok || !shared_ok || updated_apc_count_cell == PackedCell64_t::PACKED_CELL_SENTINAL)
+        {
+            StoreAPCRuntimePtr(desired_apc_slot, nullptr);
+            desired_apc.FreeAll();
+            return std::nullopt;
+        }
+        
+        CompareExchangeStrongFromFabric(
+            static_cast<size_t>(FabricMetaIndicies::TOTAL_APC_IN_USE),
+            current_apc_count_cell,
+            updated_apc_count_cell
         );
 
         return desired_apc_slot;
@@ -146,9 +197,9 @@ namespace PredictedAdaptedEncoding
 
     bool VagueTemoraryPremativeFabric::InitializeFabricWithPtrTable(
         uint16_t slot_count,
-        size_t slot_cell_count = MINIMUM_BRANCH_CAPACITY,
-        uint8_t slab_id = APCDataStructure::BRANCH_VERSION,
-        uint32_t fabric_thread_capacity = DEFAULT_THREAD_TABLE_CAPACITY
+        size_t slot_cell_count,
+        uint8_t slab_id,
+        uint32_t fabric_thread_capacity
     ) noexcept
     {
         APCRuntimePtrTable_.reset();
@@ -166,7 +217,7 @@ namespace PredictedAdaptedEncoding
 
         if (!BuildAPCRuntimePtrTable_())
         {
-            ShutDownFabric();
+            ShutDownFabricWithPtrTable();
             return false;
         }
         

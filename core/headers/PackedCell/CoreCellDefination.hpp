@@ -30,7 +30,7 @@ namespace PredictedAdaptedEncoding
 
             meta16_t  InCellMeta16{0};
 
-            AttributePolicy Priority{AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL};
+            AttributePolicy Attribute{AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL};
 
             OwnershipPolicy CellOwnership{OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER};
 
@@ -267,7 +267,7 @@ namespace PredictedAdaptedEncoding
                 return MakeFaultyCell();
             }
             packed64_t packed_cell = (packed64_t(in_cell_value) & MaskLowNBits(VALBITS));
-            packed_cell = SetCLK16InPacked(packed_cell, clock16);
+            packed_cell = SetMETA16InPacked(packed_cell, clock16);
             packed_cell = SetMETA16InPacked(packed_cell, meta16);
             return packed_cell;
         }
@@ -537,7 +537,7 @@ namespace PredictedAdaptedEncoding
             const meta16_t meta16 = ExtractMeta16fromPackedCell(packed_cell);
             out_packed_cell_view.RawCell = packed_cell;
             out_packed_cell_view.InCellMeta16 = meta16;
-            out_packed_cell_view.Priority = static_cast<AttributePolicy>(ExtractPriorityFromMETA16_U_(meta16));
+            out_packed_cell_view.Attribute = static_cast<AttributePolicy>(ExtractPriorityFromMETA16_U_(meta16));
             out_packed_cell_view.CellOwnership =  static_cast<OwnershipPolicy>(ExtractCellLocalNodeAuthotityFromMETA16_U_(meta16));
             out_packed_cell_view.LocalityOfCell = static_cast<LocalityPolicy>(ExtractLocalityFromMETA16_U_(meta16));
             out_packed_cell_view.CellMode = static_cast<PackedMode>(ExtractCellModeFromMETA16_U_(meta16));

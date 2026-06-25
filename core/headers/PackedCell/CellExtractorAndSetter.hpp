@@ -272,12 +272,12 @@ protected:
                 static_cast<tag8_t>(attribute)
             );
         }
-        
-        static constexpr  packed64_t SetCLK16InPacked(packed64_t packed_cell, clk16_t clk16)
+
+        static constexpr packed64_t SetMETA16InPacked(packed64_t packed_cell, meta16_t meta16) noexcept
         {
-            constexpr packed64_t clk16_mask = (MaskLowNBits(LOW16_BIT_LEN) << VALBITS);
-            packed_cell &= ~clk16_mask;
-            packed_cell |= (packed64_t(clk16 & MaskLowNBits(LOW16_BIT_LEN)) << VALBITS);
+            constexpr packed64_t top_48_bit_mask = MaskLowNBits(META16_B16) << TOTAL_LOW;
+            packed_cell &= ~top_48_bit_mask;
+            packed_cell |= (packed64_t(meta16) & MaskLowNBits(META16_B16)) << TOTAL_LOW;
             return packed_cell;
         }
 
@@ -331,14 +331,6 @@ protected:
         }
 
     protected:
-
-        static constexpr packed64_t SetMETA16InPacked(packed64_t packed_cell, meta16_t meta16) noexcept
-        {
-            constexpr packed64_t top_48_bit_mask = MaskLowNBits(META16_B16) << TOTAL_LOW;
-            packed_cell &= ~top_48_bit_mask;
-            packed_cell |= (packed64_t(meta16) & MaskLowNBits(META16_B16)) << TOTAL_LOW;
-            return packed_cell;
-        }
 
         static  constexpr meta16_t SetPriorityInMETA16(
             meta16_t meta16,
