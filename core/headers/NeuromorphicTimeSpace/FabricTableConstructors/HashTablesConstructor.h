@@ -11,16 +11,7 @@ namespace PredictedAdaptedEncoding
 
         std::optional<uint64_t> FindHashValue48_(FabricTableSegmentClasses hash_table, uint64_t key48) noexcept;
 
-        uint64_t GetDescriptorBeginIdxAsBranchIdHasValue(uint64_t branch_id) noexcept
-        {
-            const uint64_t apc_slot_idx = CoreOfFabricCoordinator::GetSlotIdxFromBranchId(branch_id);
-            const APCDescriptorRange range_of_desired_description = ReadARangeOfAPCDescription_(apc_slot_idx);
-            if (range_of_desired_description.IsVAlid)
-            {
-                return range_of_desired_description.BeginIndex;
-            }
-            return PackedCell64_t::PACKED_CELL_SENTINAL;
-        }
+        uint64_t GetDescriptorBeginIdxAsBranchIdHasValue(uint64_t branch_id) noexcept;
         
     public:
         /// @brief Takes Base Bucket Index -> GATHER: 3 Cells -> CALLS: HashTableConf::ReadKeyValueProbFromValidCells

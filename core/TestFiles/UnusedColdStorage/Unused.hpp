@@ -95,5 +95,24 @@ namespace PredictedAdaptedEncoding
     };
 
 
+    // AdaptivePackedCellContainer* VagueTemoraryPremativeFabric::GetDeafultInitializedAPCFromFabric(
+    //     const ContainerConf& container_conf,
+    //     uint64_t shared_id,
+    //     uint64_t logical_id
+    // ) noexcept
+    // {
+    //     AdaptivePackedCellContainer new_apc{};
+
+    //     std::optional<uint64_t> maybe_apc_slot_idx = ConstructAnAPC_(
+    //         new_apc,
+    //         container_conf,
+    //         shared_id,
+    //         logical_id
+    //     );
+
+    //     return maybe_apc_slot_idx.has_value() ? GetAPCRuntimePtr(*maybe_apc_slot_idx) : nullptr;
+    
+    // }
+
 
 }

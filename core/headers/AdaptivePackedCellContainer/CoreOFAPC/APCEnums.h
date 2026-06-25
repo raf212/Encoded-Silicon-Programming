@@ -112,6 +112,14 @@ namespace PredictedAdaptedEncoding
         EDGE_TABLE_COUNT = 76,
         WEIGHT_TABLE_COUNT = 77,
 
+        // FABRIC_INFO
+        RETIRED_ACCESS_KEY = 78,
+        SHARED_ID_ACCESS_KEY = 79,
+        LOGICAL_ID_ACCESS_KEY = 80,
+        SHARED_COUNT = 81,
+        LOGICAL_COUNT = 82,
+
+
         // amount / end marker
         EOF_APC_HEADER = 95
     };

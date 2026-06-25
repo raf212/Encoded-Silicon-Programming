@@ -76,12 +76,6 @@ public:
         uint64_t logical_id = UNSIGNED_ZERO
     ) noexcept;
 
-    AdaptivePackedCellContainer* GetDeafultInitializedAPCFromFabric(
-        const ContainerConf& container_conf,
-        uint64_t shared_id = UNSIGNED_ZERO,
-        uint64_t logical_id = UNSIGNED_ZERO
-    ) noexcept;
-
     bool InitializeFabricWithPtrTable(
         uint16_t slot_count,
         size_t slot_cell_count = MINIMUM_BRANCH_CAPACITY,
@@ -95,6 +89,16 @@ public:
         ClearAPCRuntimePtrTable_();
         APCRuntimePtrTable_.reset();
         ShutDownFabric();
+    }
+
+    AdaptivePackedCellContainer* GetAPCRuntimePtrByBranchId(uint64_t branch_id) noexcept
+    {
+        if (branch_id == UNSIGNED_ZERO || branch_id >= PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT)
+        {
+            return nullptr;
+        }
+        
+        return GetAPCRuntimePtr(CoreOfFabricCoordinator::GetSlotIdxFromBranchId(branch_id));
     }
 
 };

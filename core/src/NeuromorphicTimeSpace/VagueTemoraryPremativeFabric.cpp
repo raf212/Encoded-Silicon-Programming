@@ -148,8 +148,8 @@ namespace PredictedAdaptedEncoding
         }
         
         const bool branch_ok = InsertOrUpdateRobinHoodHash48_(FabricTableSegmentClasses::BRANCH_HASH, branch_id, description_begin_in_slab);
-        const bool logical_ok = InsertOrUpdateRobinHoodHash48_(FabricTableSegmentClasses::LOGICAL_HASH, logical_id, description_begin_in_slab);
-        const bool shared_ok = InsertOrUpdateRobinHoodHash48_(FabricTableSegmentClasses::SHARED_HASH, shared_id, description_begin_in_slab);
+        const bool logical_ok = InsertOrUpdateRobinHoodHash48_(FabricTableSegmentClasses::LOGICAL_HASH, final_logical_id, branch_id);
+        const bool shared_ok = InsertOrUpdateRobinHoodHash48_(FabricTableSegmentClasses::SHARED_HASH, final_shared_id, branch_id);
 
         packed64_t current_apc_count_cell = AtomicallyLoadReadCompletePackedCell(static_cast<size_t>(FabricMetaIndicies::TOTAL_APC_IN_USE));
 
@@ -173,26 +173,6 @@ namespace PredictedAdaptedEncoding
         );
 
         return desired_apc_slot;
-    }
-
-
-    AdaptivePackedCellContainer* VagueTemoraryPremativeFabric::GetDeafultInitializedAPCFromFabric(
-        const ContainerConf& container_conf,
-        uint64_t shared_id,
-        uint64_t logical_id
-    ) noexcept
-    {
-        AdaptivePackedCellContainer new_apc{};
-
-        std::optional<uint64_t> maybe_apc_slot_idx = ConstructAnAPC_(
-            new_apc,
-            container_conf,
-            shared_id,
-            logical_id
-        );
-
-        return maybe_apc_slot_idx.has_value() ? GetAPCRuntimePtr(*maybe_apc_slot_idx) : nullptr;
-    
     }
 
     bool VagueTemoraryPremativeFabric::InitializeFabricWithPtrTable(
