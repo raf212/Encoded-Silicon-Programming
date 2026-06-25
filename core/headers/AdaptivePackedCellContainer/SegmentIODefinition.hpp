@@ -282,7 +282,7 @@ public:
     )
     {
         const packed64_t central_occupancy_cell = ReadCentralAPCOccupancyCellForThisPagedNode();
-        const uint64_t raw48 = PackedCell64_t::ExtractRaw48FamilyBits(central_occupancy_cell);
+        const uint64_t raw48 = ContainerInvarients::AutoExtractDataOfAValidAPCCell(central_occupancy_cell);
         bool ok = Subdevision16x3InternalMode48CellModel::ExtractLowMidHighFromMode48_(raw48, published_occupancy, claimed_occupancy, faulty_occupancy);
         return ok;
     }

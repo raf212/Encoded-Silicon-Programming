@@ -20,12 +20,12 @@ namespace PredictedAdaptedEncoding
 
     val32_t SegmentIODefinition::ReadMetaCellFamily32(MetaIndexOfAPCNode idx) noexcept
     {
-        if (!ValidMetaIdx(idx) || idx == MetaIndexOfAPCNode::LOCAL_CLOCK48)
+        if (!ValidMetaIdx(idx))
         {
-            return UNSIGNED_ZERO;
+            return PackedCell64_t::PACKED_CELL_SENTINAL;
         }
         size_t index = static_cast<size_t>(idx);
-        return PackedCell64_t::ExtractRaw32FamilyBits(BackingPtr[index].load(MoLoad_));
+        return ContainerInvarients::AutoExtractDataOfAValidAPCCell(BackingPtr[index].load(MoLoad_));
     }
 
     void SegmentIODefinition::TouchLocalMetaClock48() noexcept
@@ -81,14 +81,11 @@ namespace PredictedAdaptedEncoding
         }
         const size_t index = static_cast<size_t>(idx);
         packed64_t expected_packed = BackingPtr[index].load(MoLoad_);
-        if (PackedCell64_t::ExtractRaw32FamilyBits(expected_packed) != expected_value)
+        if (ContainerInvarients::AutoExtractDataOfAValidAPCCell(expected_packed) != expected_value)
         {
             return false;
         }
-        if (PackedCell64_t::ExtractLocalityPolicy(expected_packed) == LocalityPolicy::CLAIMED)
-        {
-            return false;
-        }
+
         meta16_t current_strl = PackedCell64_t::ExtractMeta16fromPackedCell(expected_packed);
         clk16_t current_clock16 = PackedCell64_t::ExtractClk16(expected_packed);
         const packed64_t desired_packed = PackedCell64_t::Compose32BitFamilyPackedCell(desired_value, current_clock16, current_strl);
@@ -893,7 +890,7 @@ namespace PredictedAdaptedEncoding
             uint16_t faulty_count = UNSIGNED_ZERO;
             //
 
-            const uint64_t raw48 = PackedCell64_t::ExtractRaw48FamilyBits(observed_cell);
+            const uint64_t raw48 = ContainerInvarients::AutoExtractDataOfAValidAPCCell(observed_cell);
 
             if (!Subdevision16x3InternalMode48CellModel::ExtractLowMidHighFromMode48_(raw48, published_count, claimed_count, faulty_count))
             {

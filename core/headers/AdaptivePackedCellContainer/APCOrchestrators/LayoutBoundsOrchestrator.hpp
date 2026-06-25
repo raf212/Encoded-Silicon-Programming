@@ -182,7 +182,7 @@ struct LayoutBoundsOfSingleRelNodeClass
             return false;
         }
 
-        const uint64_t raw48 = PackedCell64_t::ExtractRaw48FamilyBits(packed_cell);
+        const uint64_t raw48 = ContainerInvarients::AutoExtractDataOfAValidAPCCell(packed_cell, true);
         
         return Subdevision16x3InternalMode48CellModel::ExtractLowMidHighFromMode48_(raw48, begin_index, end_index, version_count);
     }
