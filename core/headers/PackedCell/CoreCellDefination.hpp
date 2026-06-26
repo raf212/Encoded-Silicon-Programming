@@ -6,7 +6,7 @@ namespace PredictedAdaptedEncoding
 
     struct PackedCell64_t  : public PackedCellSetters
     {
-        static constexpr uint64_t MODE_48_MAX_UNSIGNED_LIMIT = 0xFFFFFFFFFFFF;
+        static constexpr uint64_t BIT_FAMILY_48_SENTINAL = 0xFFFFFFFFFFFF;
 
         static constexpr bool IsThisCellValid(packed64_t packed_cell) noexcept
         {
@@ -52,9 +52,9 @@ namespace PredictedAdaptedEncoding
 
             clk16_t InCellClock16{CLOCK_16_SENTINAL};
 
-            uint64_t Raw48BitInCellData{MODE_48_MAX_UNSIGNED_LIMIT};
+            uint64_t Raw48BitInCellData{BIT_FAMILY_48_SENTINAL};
 
-            val32_t Raw32BitInCellData{IN_CELL_VALUE_MODE32_SENTINAL};
+            val32_t Raw32BitInCellData{BIT_FAMILY_32_SENTINAL};
 
             bool IsCellValid{false};
             bool ValidatedView{false};
@@ -249,7 +249,7 @@ namespace PredictedAdaptedEncoding
         {
             return MakeAnUncheckedCell_(
                 PackedMode::MODEL32,
-                IN_CELL_VALUE_MODE32_SENTINAL,
+                BIT_FAMILY_32_SENTINAL,
                 UINT16_MAX,
                 AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
                 OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,

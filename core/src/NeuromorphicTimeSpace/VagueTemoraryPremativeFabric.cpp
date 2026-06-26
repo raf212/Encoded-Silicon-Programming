@@ -23,7 +23,7 @@ namespace PredictedAdaptedEncoding
             !SlabBasePtr_ || 
             PerAPCRuntimeCellCount_ < MINIMUM_BRANCH_CAPACITY ||
             CountOfAPC_ == UNSIGNED_ZERO ||
-            CountOfAPC_ >= PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT
+            CountOfAPC_ >= PackedCell64_t::BIT_FAMILY_48_SENTINAL
         )
         {
             return std::nullopt;
@@ -116,8 +116,8 @@ namespace PredictedAdaptedEncoding
         }
 
         const uint64_t branch_id = CoreOfFabricCoordinator::GetBranchIdFromAPCSlotIdx(desired_apc_slot);
-        const uint64_t final_logical_id = (logical_id == UNSIGNED_ZERO || logical_id >= PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT) ? branch_id : logical_id;
-        const uint64_t final_shared_id = (shared_id == UNSIGNED_ZERO || shared_id >= PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT) ? branch_id : shared_id;
+        const uint64_t final_logical_id = (logical_id == UNSIGNED_ZERO || logical_id >= PackedCell64_t::BIT_FAMILY_48_SENTINAL) ? branch_id : logical_id;
+        const uint64_t final_shared_id = (shared_id == UNSIGNED_ZERO || shared_id >= PackedCell64_t::BIT_FAMILY_48_SENTINAL) ? branch_id : shared_id;
 
         if (!desired_apc.InitOnFabricBackingAfterBind(
             capacity,
@@ -141,7 +141,7 @@ namespace PredictedAdaptedEncoding
 
 
         const uint64_t description_begin_in_slab = GetDescriptorBeginIdxAsBranchIdHasValue(branch_id);
-        if (description_begin_in_slab == UNSIGNED_ZERO || description_begin_in_slab >= PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT)
+        if (description_begin_in_slab == UNSIGNED_ZERO || description_begin_in_slab >= PackedCell64_t::BIT_FAMILY_48_SENTINAL)
         {
             desired_apc.FreeAll();
             return std::nullopt;

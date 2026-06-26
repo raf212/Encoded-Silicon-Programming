@@ -5,7 +5,7 @@ namespace PredictedAdaptedEncoding
 {
 
     class AdaptivePackedCellContainer;
-    static constexpr uint64_t APC_FABRIC_INDEX_SENTINAL = PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT;
+    static constexpr uint64_t APC_FABRIC_INDEX_SENTINAL = PackedCell64_t::BIT_FAMILY_48_SENTINAL;
 
 
     /// UNCHECKED
@@ -294,9 +294,9 @@ namespace PredictedAdaptedEncoding
                 return PackedCell64_t::PACKED_CELL_SENTINAL;
             }
             
-            const int64_t updated_count = auth_view_of_the_cell.Raw48BitInCellData <= PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT ?
+            const int64_t updated_count = auth_view_of_the_cell.Raw48BitInCellData <= PackedCell64_t::BIT_FAMILY_48_SENTINAL ?
                 auth_view_of_the_cell.Raw48BitInCellData + delta : delta;
-            if (updated_count >= PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT || updated_count < UNSIGNED_ZERO)
+            if (updated_count >= PackedCell64_t::BIT_FAMILY_48_SENTINAL || updated_count < UNSIGNED_ZERO)
             {
                 return PackedCell64_t::PACKED_CELL_SENTINAL;
             }

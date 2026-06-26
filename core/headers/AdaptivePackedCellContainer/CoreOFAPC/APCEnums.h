@@ -12,7 +12,7 @@ namespace PredictedAdaptedEncoding
     {
         // identity
         MAGIC_ID = 0,
-        MANAGER_CONTROL_FLAGS = 1,
+        FABRIC_FLAG = 1,
         SEGMENT_CONF_FLAGS = 2,
 
         // logical-node identity

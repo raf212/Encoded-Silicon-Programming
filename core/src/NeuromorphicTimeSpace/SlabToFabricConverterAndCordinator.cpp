@@ -77,7 +77,7 @@ namespace PredictedAdaptedEncoding
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::SEGMENT_POOL_BEGIN_IDX, static_cast<uint64_t>(SegmentPoolBegin_));
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::SEGMENT_POOL_END_IDX, static_cast<uint64_t>(SegmentPoolEnd_));
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::TOTAL_APC_IN_USE , UNSIGNED_ZERO);
-        MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::RETIRE_SLOT_HEAD, PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT);
+        MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::RETIRE_SLOT_HEAD, PackedCell64_t::BIT_FAMILY_48_SENTINAL);
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::RELATION_FREE_HEAD, UNSIGNED_ZERO);
         
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::GLOBAL_EPOCH48, 1u);
@@ -268,7 +268,7 @@ namespace PredictedAdaptedEncoding
 
         InitializationInProgress_.store(true, MoStoreSeq_);
 
-        if (slot_count == UNSIGNED_ZERO || slot_cell_count > APCDataStructure::APC_MAX_LENGTH_OR_COUNTER)
+        if (slot_count == UNSIGNED_ZERO || slot_cell_count > APCDataStructure::APC_ALL_INDEX_LIMIT)
         {
             return false;
         }

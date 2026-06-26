@@ -8,6 +8,7 @@ namespace PredictedAdaptedEncoding
 
     struct PackedCellExtractors
     {
+        
         static constexpr uint16_t CLOCK_16_SENTINAL = UINT16_MAX;
         static constexpr uint64_t PACKED_CELL_SENTINAL = UINT64_MAX;
 
@@ -38,7 +39,7 @@ namespace PredictedAdaptedEncoding
         {
             if (!IsPackedCellFrom32BitFamily(packed_cell))
             {
-                return IN_CELL_VALUE_MODE32_SENTINAL;
+                return BIT_FAMILY_32_SENTINAL;
             }
             
             return static_cast<val32_t>(packed_cell & MaskLowNBits(VALBITS));

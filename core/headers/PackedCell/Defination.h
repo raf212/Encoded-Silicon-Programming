@@ -40,7 +40,7 @@ namespace PredictedAdaptedEncoding
     static constexpr uint8_t CACHELINE_BOUNDRY = 16;
     static constexpr unsigned UNSIGNED_ZERO = 0u;
     static constexpr unsigned MINIMUM_BRANCH_CAPACITY = 256u;
-    static constexpr uint32_t IN_CELL_VALUE_MODE32_SENTINAL = UINT32_MAX;
+    static constexpr uint32_t BIT_FAMILY_32_SENTINAL = UINT32_MAX;
     static constexpr uint16_t META_16_SENTINAL = UINT16_MAX;
 
     static constexpr uint8_t SIZE_OF_MODE_48 = 6u;

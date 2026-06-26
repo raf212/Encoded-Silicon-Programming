@@ -491,7 +491,7 @@ namespace PredictedAdaptedEncoding
         budget = std::clamp<uint32_t>(
             budget,
             1u,
-            std::min<uint32_t>(span, APC_MAX_LENGTH_OR_COUNTER)
+            std::min<uint32_t>(span, APC_ALL_INDEX_LIMIT)
         );
 
         return static_cast<uint16_t>(budget);

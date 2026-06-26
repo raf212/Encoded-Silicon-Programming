@@ -89,7 +89,7 @@ struct OccupancyOrchestrator
 
         static constexpr bool IsCapacityOfAPCLegal(size_t total_capacity) noexcept
         {
-            return total_capacity > APCDataStructure::METACELL_COUNT && total_capacity <= APCDataStructure::APC_MAX_LENGTH_OR_COUNTER;
+            return total_capacity > APCDataStructure::METACELL_COUNT && total_capacity <= APCDataStructure::APC_ALL_INDEX_LIMIT;
         }
 
 protected:

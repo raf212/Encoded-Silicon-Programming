@@ -14,9 +14,10 @@ namespace PredictedAdaptedEncoding
         static constexpr uint32_t EOF_HEADER = 0x72616600;//big-endian
         static constexpr uint16_t BRANCH_VERSION = 1u;
         static constexpr packed64_t PACKED_CELL_SENTENAL = UINT64_MAX;
-        static constexpr uint32_t APC_MAX_LENGTH_OR_COUNTER = UINT16_MAX - 1;
+
+        static constexpr uint32_t APC_ALL_INDEX_LIMIT = UINT16_MAX - 1;
         static constexpr uint32_t APC_INDEX_SENTINAL = UINT16_MAX;
-        static constexpr uint32_t BRANCH_SENTINAL = IN_CELL_VALUE_MODE32_SENTINAL;
+        static constexpr uint32_t BRANCH_SENTINAL = BIT_FAMILY_32_SENTINAL;
         static constexpr size_t APC_CACHELINE_SIZE = 64u;
         static constexpr size_t APC_SIZE_SENTINAL = SIZE_MAX;
 

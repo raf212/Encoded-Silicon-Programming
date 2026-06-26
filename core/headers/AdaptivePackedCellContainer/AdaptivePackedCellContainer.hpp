@@ -25,7 +25,7 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
         PublishResult TryPublishToRegionLocal_(
             packed64_t packed_cell_for_publish, 
             APCPagedNodeSegmentClasses region_kind = APCPagedNodeSegmentClasses::FREE_SLOT,
-            uint16_t max_tries = APC_MAX_LENGTH_OR_COUNTER / (APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses)
+            uint16_t max_tries = APC_ALL_INDEX_LIMIT / (APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses)
         ) noexcept;
 
         static size_t FindGreatestCommonDivisor_(size_t a, size_t b) noexcept;
@@ -57,18 +57,7 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
         AdaptivePackedCellContainer(const AdaptivePackedCellContainer&) = delete;
         AdaptivePackedCellContainer& operator = (const AdaptivePackedCellContainer&) = delete;
 
-        void InitAPCOnSelfMemory(size_t cpacity, ContainerConf container_cfg = {});
-
-        void InitAPCAsNode(
-            size_t capacity,
-            const ContainerConf& container_configuration,
-            uint32_t aux_param_u32 = UNSIGNED_ZERO
-
-        );
-
-        void TryCreateBranchIfNeeded(APCPagedNodeSegmentClasses rel_mask_hint = APCPagedNodeSegmentClasses::FREE_SLOT) noexcept;
-
-        bool TryPublishRegionalSharedGrowthOnce(APCPagedNodeSegmentClasses region_kind, packed64_t packed_cell, std::atomic<uint64_t>* growth_counter = nullptr) noexcept;
+        bool TryPublishRegionalSharedGrowthOnce(APCPagedNodeSegmentClasses region_kind, packed64_t packed_cell) noexcept;
 
         PublishResult PublishCellByRegionMAskTraverseStartsFromThisAPC(
             APCPagedNodeSegmentClasses region_kind, 
@@ -76,7 +65,6 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
             std::optional<uint16_t> max_tries = std::nullopt
         ) noexcept;
 
-        AdaptivePackedCellContainer* GrowSharedNodeByRegionKind(APCPagedNodeSegmentClasses desired_region_kind, bool enable_branching = true) noexcept;
 
         std::optional<packed64_t> ConsumeCellByRegionMaskTraverseStartFromThisAPC(APCPagedNodeSegmentClasses region_kind, size_t& scan_cursor) noexcept;
 
@@ -206,8 +194,6 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
             InitZeroState_();
             return true;
         }
-
-
 
 };
 

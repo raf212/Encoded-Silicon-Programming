@@ -202,20 +202,6 @@ public:
         return UpdateAPCModeFlagsInHeader_(UNSIGNED_ZERO, static_cast<uint32_t>(desired_control_flag), MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
     }
 
-    bool TurnOnAManagerControlFlag(ManagerControlFlagBits desired_manager_control_flag) noexcept
-    {
-        return UpdateAPCModeFlagsInHeader_(static_cast<uint32_t>(desired_manager_control_flag), UNSIGNED_ZERO, MetaIndexOfAPCNode::MANAGER_CONTROL_FLAGS);
-    }
-
-    bool ClearOneManagerControlFlag(ManagerControlFlagBits desired_manager_control_flag) noexcept
-    {
-        return UpdateAPCModeFlagsInHeader_(UNSIGNED_ZERO, static_cast<uint32_t>(desired_manager_control_flag), MetaIndexOfAPCNode::MANAGER_CONTROL_FLAGS);
-    }
-
-    bool HasThisManageControlFlag(ManagerControlFlagBits desired_manager_contgrol_flag) noexcept
-    {
-        return (ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::MANAGER_CONTROL_FLAGS) & static_cast<uint32_t>(desired_manager_contgrol_flag)) != UNSIGNED_ZERO;
-    }
 
     bool IsLayoutMutationFlagActive() noexcept
     {

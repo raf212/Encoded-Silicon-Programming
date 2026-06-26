@@ -7,7 +7,7 @@ namespace PredictedAdaptedEncoding
     uint16_t SegmentIODefinition::ReadCentralAPCOccupancyOfALocality(LocalityPolicy locality_type) noexcept
     {
         const uint16_t total_capacity = static_cast<uint16_t>(
-            std::min<size_t>(GetTotalCapacityForThisAPC(), APC_MAX_LENGTH_OR_COUNTER)
+            std::min<size_t>(GetTotalCapacityForThisAPC(), APC_ALL_INDEX_LIMIT)
         );
 
         const std::optional<uint16_t> desired_occupancy = OccupancyOrchestrator::GetOccuupancyFromPackedCellMode48(
@@ -235,7 +235,7 @@ namespace PredictedAdaptedEncoding
         while (true)
         {
             uint32_t current_thread_count = static_cast<uint32_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::CURRENT_ACTIVE_THREADS));
-            if (current_thread_count == IN_CELL_VALUE_MODE32_SENTINAL)
+            if (current_thread_count == BIT_FAMILY_32_SENTINAL)
             {
                 return false;
             }
@@ -807,7 +807,7 @@ namespace PredictedAdaptedEncoding
         if (page_class == APCPagedNodeSegmentClasses::CONTROL_SLOT)
         {
             max_for_a_page = static_cast<uint16_t>(
-                std::min<size_t>(METACELL_COUNT, APC_MAX_LENGTH_OR_COUNTER)
+                std::min<size_t>(METACELL_COUNT, APC_ALL_INDEX_LIMIT)
             );
         }
         else
@@ -821,7 +821,7 @@ namespace PredictedAdaptedEncoding
                 static_cast<uint16_t>(
                     std::min<uint32_t>(
                         maybe_bounds_of_the_page_class->GetPayloadSpan(),
-                        APC_MAX_LENGTH_OR_COUNTER
+                        APC_ALL_INDEX_LIMIT
                     )
                 )
             );
@@ -938,21 +938,21 @@ namespace PredictedAdaptedEncoding
                 case LocalityPolicy::IDLE :
                     return true;
                 case LocalityPolicy::PUBLISHED :
-                    if (published_count < APC_MAX_LENGTH_OR_COUNTER)
+                    if (published_count < APC_ALL_INDEX_LIMIT)
                     {
                         published_count++;
                         return true;
                     }
                     return false;
                 case LocalityPolicy::CLAIMED :
-                    if (claimed_count < APC_MAX_LENGTH_OR_COUNTER)
+                    if (claimed_count < APC_ALL_INDEX_LIMIT)
                     {
                         claimed_count++;
                         return true;
                     }
                     return false;
                 case LocalityPolicy::FAULTY :
-                    if (faulty_count < APC_MAX_LENGTH_OR_COUNTER)
+                    if (faulty_count < APC_ALL_INDEX_LIMIT)
                     {
                         faulty_count++;
                         return true;

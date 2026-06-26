@@ -192,8 +192,8 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-        if (layout_bound.BeginIndex > APC_MAX_LENGTH_OR_COUNTER ||
-            layout_bound.EndIndex > APC_MAX_LENGTH_OR_COUNTER ||
+        if (layout_bound.BeginIndex > APC_ALL_INDEX_LIMIT ||
+            layout_bound.EndIndex > APC_ALL_INDEX_LIMIT ||
             layout_bound.EndIndex < layout_bound.BeginIndex)
         {
             return false;
@@ -244,7 +244,7 @@ namespace PredictedAdaptedEncoding
 
     bool SegmentIODefinition::UpdateAPCModeFlagsInHeader_(uint64_t flags_to_turn_on, uint64_t flags_to_turn_off, MetaIndexOfAPCNode desired_flag_idx) noexcept
     {
-        if (desired_flag_idx != MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS && desired_flag_idx != MetaIndexOfAPCNode::MANAGER_CONTROL_FLAGS)
+        if (desired_flag_idx != MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS && desired_flag_idx != MetaIndexOfAPCNode::FABRIC_FLAG)
         {
             return false;
         }
@@ -515,7 +515,7 @@ namespace PredictedAdaptedEncoding
         };
 
         const uint16_t meta_published = static_cast<uint16_t>(
-            std::min<size_t>(METACELL_COUNT, APC_MAX_LENGTH_OR_COUNTER)
+            std::min<size_t>(METACELL_COUNT, APC_ALL_INDEX_LIMIT)
         );
 
         StoreCount(
@@ -563,7 +563,7 @@ namespace PredictedAdaptedEncoding
     std::optional<uint16_t> SegmentIODefinition::ReadGlobalLayoutVersion_() noexcept
     {
         const uint16_t raw = static_cast<uint16_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION));
-        if (raw > APC_MAX_LENGTH_OR_COUNTER || raw == UNSIGNED_ZERO)
+        if (raw > APC_ALL_INDEX_LIMIT || raw == UNSIGNED_ZERO)
         {
             return std::nullopt;
         }

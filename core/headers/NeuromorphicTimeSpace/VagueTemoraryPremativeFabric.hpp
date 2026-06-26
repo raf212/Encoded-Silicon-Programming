@@ -93,7 +93,7 @@ public:
 
     AdaptivePackedCellContainer* GetAPCRuntimePtrByBranchId(uint64_t branch_id) noexcept
     {
-        if (branch_id == UNSIGNED_ZERO || branch_id >= PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT)
+        if (branch_id == UNSIGNED_ZERO || branch_id >= PackedCell64_t::BIT_FAMILY_48_SENTINAL)
         {
             return nullptr;
         }

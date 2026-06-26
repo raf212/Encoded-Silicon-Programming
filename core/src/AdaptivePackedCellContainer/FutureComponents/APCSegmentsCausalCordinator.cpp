@@ -10,9 +10,11 @@ namespace PredictedAdaptedEncoding
         std::atomic<uint64_t>* growth_counter
     ) noexcept
     {
+        (void) growth_counter;
+
         cell = PackedCell64_t::SetPageClassInPacked(cell, region);
 
-        if (apc.TryPublishRegionalSharedGrowthOnce(region, cell, growth_counter))
+        if (apc.TryPublishRegionalSharedGrowthOnce(region, cell))
         {
             MarkEmittedCausalCell(region, cell);
             return true;

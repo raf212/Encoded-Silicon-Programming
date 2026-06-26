@@ -23,7 +23,7 @@ struct HashHelpers
     static constexpr uint8_t HASH_SHIFT_3 = 31u;
     static constexpr uint64_t DEFAULT_HAS_CONST_1 = 0xbf58476d1ce4e5b9ull;
     static constexpr uint64_t DEFAULT_HAS_CONST_2 = 0x94d049bb133111ebull;
-    static constexpr uint64_t HASH_TOMBSTONE_KEY = PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT;
+    static constexpr uint64_t HASH_TOMBSTONE_KEY = PackedCell64_t::BIT_FAMILY_48_SENTINAL;
     static constexpr uint8_t MIN_LIMIT_POW_OF_2 = 16u;
     static constexpr uint8_t DEFAULT_TABLE_TAILROOM_MULT = 2u;
     static constexpr uint16_t PROB_DISTANCE_SENTINAL = UINT16_MAX;
@@ -120,7 +120,7 @@ struct HashTableConf : public HashHelpers
 
         if (
             !CoreOfFabricCoordinator::IsValidHashTable(a_cell_view.FabricTableSegmentClass) ||
-            a_cell_view.Raw48BitInCellData == PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT
+            a_cell_view.Raw48BitInCellData == PackedCell64_t::BIT_FAMILY_48_SENTINAL
         )
         {
             return false;

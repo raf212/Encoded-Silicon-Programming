@@ -25,7 +25,6 @@ protected:
     Timer48 LocalTimer48_;
     std::function<void(const char*, const char*)> APCLogger_;
     std::vector<std::vector<uint64_t>> SOABitmapForAPC_;
-    static inline std::atomic<uint32_t> GlobalBranchIdAlloc_{1};
 ///
 
     void ReleseFabricBindingOnly_() noexcept;

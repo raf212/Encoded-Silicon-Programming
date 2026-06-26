@@ -86,7 +86,7 @@ namespace PredictedAdaptedEncoding
                 attribute_policy
             );
 
-            if (page_class == APCPagedNodeSegmentClasses::CONTROL_SLOT && value <= IN_CELL_VALUE_MODE32_SENTINAL)
+            if (page_class == APCPagedNodeSegmentClasses::CONTROL_SLOT && value <= BIT_FAMILY_32_SENTINAL)
             {
                 return std::pair<packed64_t, packed64_t>(lowf_highs.first, PackedCell64_t::PACKED_CELL_SENTINAL);
             }
@@ -107,7 +107,7 @@ namespace PredictedAdaptedEncoding
                 AttributePolicy::DEPENDENT_OR_INSTRUCTION_CELL
             );
 
-            if (fabric_segment_class != FabricTableSegmentClasses::GLOBAL_AND_CONFIG && value <= IN_CELL_VALUE_MODE32_SENTINAL)
+            if (fabric_segment_class != FabricTableSegmentClasses::GLOBAL_AND_CONFIG && value <= BIT_FAMILY_32_SENTINAL)
             {
                 return std::pair<packed64_t, packed64_t>(lowf_highs.first, PackedCell64_t::PACKED_CELL_SENTINAL);
             }

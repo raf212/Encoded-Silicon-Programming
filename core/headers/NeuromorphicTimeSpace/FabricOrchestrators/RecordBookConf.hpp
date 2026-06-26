@@ -47,11 +47,11 @@ struct RecordBookConf
         {
         case PackedMode::VALUE48:
             return a_cell_view.ContractOfValue != AccessContractOfValue::UNASSIGNED_UNUSED_NANNULL &&
-                a_cell_view.Raw48BitInCellData < PackedCell64_t::MODE_48_MAX_UNSIGNED_LIMIT;
+                a_cell_view.Raw48BitInCellData < PackedCell64_t::BIT_FAMILY_48_SENTINAL;
         case PackedMode::MODEL32:
 
             return a_cell_view.SubClassOfModel32 == Model32Subclass::UNCLOCKED_1x8_PLUS_2x4 &&
-                a_cell_view.Raw32BitInCellData < IN_CELL_VALUE_MODE32_SENTINAL;
+                a_cell_view.Raw32BitInCellData < BIT_FAMILY_32_SENTINAL;
 
         default:
             return false;
