@@ -53,6 +53,35 @@ struct ContainerInvarients
         }
         
     }
+
+
+    static constexpr packed64_t ReplaceValueInAPCTypeFamilyCell(packed64_t packed_cell, uint64_t desired_value, bool is_claimed_cell_valid = false) noexcept
+    {
+        const PackedCell64_t::AuthoritiveCellView desired_cell_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
+        if (!desired_cell_auth_view.IsCellValid)
+        {
+            return PackedCell64_t::PACKED_CELL_SENTINAL;
+        }
+
+        if (!is_claimed_cell_valid && desired_cell_auth_view.LocalityOfCell == LocalityPolicy::CLAIMED)
+        {
+            return false;
+        }
+
+        switch (desired_cell_auth_view.CellMode)
+        {
+        case PackedMode::VALUE32:
+            return PackedCell64_t::Compose32BitFamilyPackedCell(static_cast<uint32_t>(desired_value) & MaskLowNBits(VALBITS), desired_cell_auth_view.InCellClock16, desired_cell_auth_view.InCellMeta16);
+
+        case PackedMode::VALUE48:
+            return PackedCell64_t::Compose48BitFamilyPackedCell(desired_cell_auth_view.Raw48BitInCellData, desired_cell_auth_view.InCellMeta16);
+        default:
+            return PackedCell64_t::PACKED_CELL_SENTINAL;
+        }
+
+    }
+
+
 };
 
 }

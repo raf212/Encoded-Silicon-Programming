@@ -41,7 +41,7 @@ private:
 
         while (true)
         {
-            const uint32_t current32 = ReadMetaCellFamily32(idx);
+            const uint64_t current32 = ReadValuFromAPCMetaIndecies(idx);
             const clk16_t current = static_cast<clk16_t>(current32);
 
             if (current32 != UNSIGNED_ZERO &&
@@ -50,7 +50,7 @@ private:
                 return false;
             }
 
-            if (JustUpdateValueOfMeta32(idx, current32, static_cast<uint32_t>(candidate), false))
+            if (ReplaceOnlyMetaCellValue(idx, current32, static_cast<uint32_t>(candidate), false))
             {
                 return true;
             }

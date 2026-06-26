@@ -4,11 +4,10 @@
 namespace PredictedAdaptedEncoding
 {
 
-    void SegmentIODefinition::WriteTypedValue32MetaCellAPC_(
+    void SegmentIODefinition::InsertTypedValue48MetaCellOfAPC_(
         MetaIndexOfAPCNode idx,
         uint64_t value48,
-        AttributePolicy attribute,
-        APCPagedNodeSegmentClasses page_class
+        LocalityPolicy locality
     ) noexcept
     {
         size_t index = static_cast<size_t>(idx);
@@ -18,16 +17,15 @@ namespace PredictedAdaptedEncoding
         }
 
         const packed64_t packed_cell = PackedCell64_t::MakeTypedAPCValidPackedCell(
-            TypeFamily::VALUE32,
+            TypeFamily::VALUE48,
             AccessContractOfValue::CAS_RMW,
-            page_class,
-            LocalityPolicy::PUBLISHED,
+            APCPagedNodeSegmentClasses::CONTROL_SLOT,
+            locality,
             InternalDataTypePolicy::UnsignedPCellDataType,
-            attribute,
+            AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
             value48,
             UNSIGNED_ZERO
         );
-
 
         BackingPtr[index].store(packed_cell, MoStoreSeq_);
         BackingPtr[index].notify_all();
@@ -79,9 +77,9 @@ namespace PredictedAdaptedEncoding
                 return;
         }
 
-        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::REGION_DIR_COUNT, static_cast<val32_t>(APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses));
-        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::EDGE_TABLE_COUNT, UNSIGNED_ZERO);
-        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::WEIGHT_TABLE_COUNT, UNSIGNED_ZERO);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::REGION_DIR_COUNT, static_cast<val32_t>(APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses));
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::EDGE_TABLE_COUNT, UNSIGNED_ZERO);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::WEIGHT_TABLE_COUNT, UNSIGNED_ZERO);
         #ifndef NDEBUG
             auto layout = ReadAndGetFullRegionLayout_(false);
             if (!layout)
@@ -244,7 +242,7 @@ namespace PredictedAdaptedEncoding
 
 
 
-    bool SegmentIODefinition::UpdateAPCModeFlagsInHeader_(uint32_t flags_to_turn_on, uint32_t flags_to_turn_off, MetaIndexOfAPCNode desired_flag_idx) noexcept
+    bool SegmentIODefinition::UpdateAPCModeFlagsInHeader_(uint64_t flags_to_turn_on, uint64_t flags_to_turn_off, MetaIndexOfAPCNode desired_flag_idx) noexcept
     {
         if (desired_flag_idx != MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS && desired_flag_idx != MetaIndexOfAPCNode::MANAGER_CONTROL_FLAGS)
         {
@@ -253,20 +251,20 @@ namespace PredictedAdaptedEncoding
         
         while (true)
         {
-            const uint32_t current_flags = ReadMetaCellFamily32(desired_flag_idx);
+            const uint64_t current_flags = ReadValuFromAPCMetaIndecies(desired_flag_idx);
             if (current_flags == BRANCH_SENTINAL)
             {
                 return false;
             }
             
-            uint32_t next_flags = current_flags;
+            uint64_t next_flags = current_flags;
             next_flags |= flags_to_turn_on;
             next_flags &= ~flags_to_turn_off;
             if (next_flags == current_flags)
             {
                 return true;
             }
-            if (JustUpdateValueOfMeta32(desired_flag_idx, current_flags, next_flags))
+            if (ReplaceOnlyMetaCellValue(desired_flag_idx, current_flags, next_flags))
             {
                 return true;
             }
@@ -448,13 +446,13 @@ namespace PredictedAdaptedEncoding
         }
         while (true)
         {
-            const uint32_t compleate_current_paged_node_ready_bit = ReadMetaCellFamily32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
+            const uint32_t compleate_current_paged_node_ready_bit = static_cast<uint32_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT));
             const uint32_t updated_current_ready_bit = compleate_current_paged_node_ready_bit | anew_readybit;
             if (updated_current_ready_bit == compleate_current_paged_node_ready_bit)
             {
                 return true;
             }
-            if (JustUpdateValueOfMeta32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT, compleate_current_paged_node_ready_bit, updated_current_ready_bit))
+            if (ReplaceOnlyMetaCellValue(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT, compleate_current_paged_node_ready_bit, updated_current_ready_bit))
             {
                 return true;
             }
@@ -471,13 +469,13 @@ namespace PredictedAdaptedEncoding
         }
         while (true)
         {
-            const uint32_t compleate_current_paged_node_ready_bit = ReadMetaCellFamily32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
+            const uint32_t compleate_current_paged_node_ready_bit = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
             const uint32_t updated_current_ready_bit = compleate_current_paged_node_ready_bit & ~anew_readybit;
             if (updated_current_ready_bit == compleate_current_paged_node_ready_bit)
             {
                 return true;
             }
-            if (JustUpdateValueOfMeta32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT, compleate_current_paged_node_ready_bit, updated_current_ready_bit))
+            if (ReplaceOnlyMetaCellValue(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT, compleate_current_paged_node_ready_bit, updated_current_ready_bit))
             {
                 return true;
             }
@@ -564,7 +562,7 @@ namespace PredictedAdaptedEncoding
 
     std::optional<uint16_t> SegmentIODefinition::ReadGlobalLayoutVersion_() noexcept
     {
-        const uint32_t raw = ReadMetaCellFamily32(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
+        const uint32_t raw = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
         if (raw == BRANCH_SENTINAL || raw == UNSIGNED_ZERO)
         {
             return std::nullopt;
@@ -581,12 +579,12 @@ namespace PredictedAdaptedEncoding
 
         while (true)
         {
-            const uint32_t current_version = ReadMetaCellFamily32(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
+            const uint32_t current_version = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
             if ((current_version) == layout_version)
             {
                 return true;
             }
-            if (JustUpdateValueOfMeta32(
+            if (ReplaceOnlyMetaCellValue(
                 MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION,
                 current_version,
                 static_cast<uint32_t>(layout_version)

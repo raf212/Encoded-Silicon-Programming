@@ -17,7 +17,7 @@ protected:
         return UpdateAPCModeFlagsInHeader_(use_or_between_flags, UNSIGNED_ZERO, MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
     }
 
-    bool UpdateAPCModeFlagsInHeader_(uint32_t flags_to_turn_on = UNSIGNED_ZERO, uint32_t flags_to_turn_off = UNSIGNED_ZERO, MetaIndexOfAPCNode desired_flag_idx = MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS) noexcept;
+    bool UpdateAPCModeFlagsInHeader_(uint64_t flags_to_turn_on = UNSIGNED_ZERO, uint64_t flags_to_turn_off = UNSIGNED_ZERO, MetaIndexOfAPCNode desired_flag_idx = MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS) noexcept;
 
     bool WriteBoundsPairToHeader_(
         const LayoutBoundsOfSingleRelNodeClass layout_bound,
@@ -62,11 +62,10 @@ protected:
     ) noexcept;
 
     /// @brief APC META USES TypeFamily::VALUE32 path WITH::AccessContractOfValue -> SYSTEM BROKES if anythhing else then32Bit family
-    void WriteTypedValue32MetaCellAPC_(
+    void InsertTypedValue48MetaCellOfAPC_(
         MetaIndexOfAPCNode idx,
         uint64_t value48,
-        AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
-        APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::CONTROL_SLOT
+        LocalityPolicy locality = LocalityPolicy::PUBLISHED
     ) noexcept;
 
     void WrireAPCMetaModel_48t(
@@ -99,10 +98,10 @@ public:
 
     void WriteOrUpdateMetaClock48(AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL, std::optional<uint64_t>meta_clock_48 = std::nullopt) noexcept;
 
-    bool JustUpdateValueOfMeta32(
+    bool ReplaceOnlyMetaCellValue(
         MetaIndexOfAPCNode idx,
-        uint32_t expected_value,
-        uint32_t desired_value,
+        uint64_t expected_value,
+        uint64_t desired_value,
         bool refresh_clock16 = true
     ) noexcept;
 
@@ -127,11 +126,10 @@ public:
         bool is_root_shared = true,
         uint64_t aux_param_uint48 = UNSIGNED_ZERO,
         uint64_t branch_depth = UNSIGNED_ZERO,
-        uint64_t branch_priority = UNSIGNED_ZERO,
-        AttributePolicy write_cell_priority = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL
+        uint64_t branch_priority = UNSIGNED_ZERO
     ) noexcept;
 
-    val32_t ReadMetaCellFamily32(MetaIndexOfAPCNode idx) noexcept;
+    uint64_t ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode idx) noexcept;
 
     void TouchLocalMetaClock48() noexcept;
 
@@ -196,7 +194,7 @@ public:
 
     bool HasThisControlEnumFlag(ControlEnumOfAPCSegment flag) noexcept
     {
-        return (ReadMetaCellFamily32(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS) & static_cast<uint32_t>(flag)) != 0u;
+        return (ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS) & static_cast<uint32_t>(flag)) != 0u;
     }
 
     bool ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment desired_control_flag) noexcept
@@ -216,7 +214,7 @@ public:
 
     bool HasThisManageControlFlag(ManagerControlFlagBits desired_manager_contgrol_flag) noexcept
     {
-        return (ReadMetaCellFamily32(MetaIndexOfAPCNode::MANAGER_CONTROL_FLAGS) & static_cast<uint32_t>(desired_manager_contgrol_flag)) != UNSIGNED_ZERO;
+        return (ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::MANAGER_CONTROL_FLAGS) & static_cast<uint32_t>(desired_manager_contgrol_flag)) != UNSIGNED_ZERO;
     }
 
     bool IsLayoutMutationFlagActive() noexcept
@@ -231,34 +229,34 @@ public:
 
     uint32_t GetTotalCapacityForThisAPC() noexcept
     {
-        return ReadMetaCellFamily32(MetaIndexOfAPCNode::TOTAL_CAPACITY_OF_THIS_SEGEMENT);
+        return static_cast<uint32_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::TOTAL_CAPACITY_OF_THIS_SEGEMENT));
     }
 
     uint32_t MaxDepthRead() noexcept
     {
-        return ReadMetaCellFamily32(MetaIndexOfAPCNode::MAX_DEPTH);
+        return static_cast<uint32_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::MAX_DEPTH));
     }
 
     uint32_t CurrentBranchDepthRead() noexcept
     {
-        return ReadMetaCellFamily32(MetaIndexOfAPCNode::BRANCH_DEPTH);
+        return static_cast<uint32_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::BRANCH_DEPTH));
     }
 
     void MakeAPCBranchOwned() noexcept
     {
-        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::CURRENTLY_OWNED, 1u);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::CURRENTLY_OWNED, 1u);
     }
 
 
-    void ResetTotalCASFailureForThisBranch(AttributePolicy attribute = AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL) noexcept
+    void ResetTotalCASFailureForThisBranch() noexcept
     {
-        WriteTypedValue32MetaCellAPC_(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH, UNSIGNED_ZERO, attribute);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH, UNSIGNED_ZERO);
     }
 
     bool SetSegmentRegionKind(APCPagedNodeSegmentClasses region_kind) noexcept
     {
-        const uint32_t current_segment_kind = ReadMetaCellFamily32(MetaIndexOfAPCNode::SEGMENT_KIND);
-        return JustUpdateValueOfMeta32(MetaIndexOfAPCNode::SEGMENT_KIND, current_segment_kind, static_cast<uint32_t>(region_kind));
+        const uint64_t current_segment_kind = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SEGMENT_KIND);
+        return ReplaceOnlyMetaCellValue(MetaIndexOfAPCNode::SEGMENT_KIND, current_segment_kind, static_cast<uint32_t>(region_kind));
     }
 
     packed64_t ReadCentralAPCOccupancyCellForThisPagedNode() noexcept

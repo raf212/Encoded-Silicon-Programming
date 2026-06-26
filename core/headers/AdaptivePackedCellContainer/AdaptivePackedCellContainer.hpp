@@ -16,8 +16,6 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
 
         void InitZeroState_() noexcept;
 
-        void RefreshAPCMeta_() noexcept;
-
         size_t SuggestedChildCapacity_() noexcept;
 
         std::optional<packed64_t> TryConsumeAndIdleFromRegionLocal_(
@@ -31,9 +29,6 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
             OwnershipPolicy node_authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
             uint16_t max_tries = APC_MAX_LENGTH_OR_COUNTER / (APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses)
         ) noexcept;
-
-        //not used
-        void UpdateRegionRelMaskForIdx_(APCPagedNodeSegmentClasses rel_mask) noexcept;
 
         static size_t FindGreatestCommonDivisor_(size_t a, size_t b) noexcept;
 
@@ -104,11 +99,11 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
             return false;
         }
 
-        uint32_t GetSlabSlotID() noexcept;
+        uint64_t GetSlabSlotID() noexcept;
 
-        uint32_t GetLogicalId() noexcept;
+        uint64_t GetLogicalId() noexcept;
 
-        uint32_t GetSharedId() noexcept;
+        uint64_t GetSharedId() noexcept;
 
         size_t ReserveProducerSlots(size_t number_of_slots) noexcept;
 
@@ -131,7 +126,7 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
 
         uint32_t GetProducerCursorPlacement() noexcept
         {
-            return ReadMetaCellFamily32(MetaIndexOfAPCNode::PRODUCER_CURSOR_PLACEMENT);
+            return static_cast<uint32_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::PRODUCER_CURSOR_PLACEMENT));
         }
 
         bool UpdateProducerCursorPlacement(uint32_t new_cursor_placement_idx) noexcept
@@ -150,7 +145,7 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
 
         uint32_t GetConsumerCursorPlacement() noexcept
         {
-            return ReadMetaCellFamily32(MetaIndexOfAPCNode::CONSUMER_CURSORE_PLACEMENT);
+            return static_cast<uint32_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::CONSUMER_CURSORE_PLACEMENT));
         }
 
         bool UpdateConsumerCursorPlacement(uint32_t new_cursor_value) noexcept
@@ -184,8 +179,7 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
             uint64_t shared_id,
             bool is_shared_root,
             uint64_t aux_param48 = UNSIGNED_ZERO,
-            uint64_t branch_depth = UNSIGNED_ZERO,
-            uint8_t branch_priority = UNSIGNED_ZERO
+            uint64_t branch_depth = UNSIGNED_ZERO
         ) noexcept
         {
             if (
@@ -213,8 +207,7 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
                 container_cfg,
                 is_shared_root,
                 aux_param48,
-                branch_depth,
-                branch_priority
+                branch_depth
             );
 
             container_cfg.NodeGroupSize = 1u;
@@ -223,7 +216,6 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
             {
                 InitRegionIdx(container_cfg.RegionSize);
             }
-            RefreshAPCMeta_();
             return true;
         }
 

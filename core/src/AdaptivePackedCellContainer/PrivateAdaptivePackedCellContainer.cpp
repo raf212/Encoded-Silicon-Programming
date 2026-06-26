@@ -25,34 +25,6 @@ namespace PredictedAdaptedEncoding
         UpdateConsumerCursorPlacement(static_cast<uint32_t>(PayloadBegin()));
     }
 
-    void AdaptivePackedCellContainer::RefreshAPCMeta_() noexcept
-    {
-        if (!IfAPCBranchValid())
-        {
-            return;
-        }
-        if (ShouldSplitNow())
-        {
-            TurnOnASegmentFlag(ControlEnumOfAPCSegment::SATURATED);
-        }
-        else
-        {
-            ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::SATURATED);
-        }
-        TouchLocalMetaClock48();
-
-        uint32_t current_group_size = ReadMetaCellFamily32(MetaIndexOfAPCNode::NODE_GROUP_SIZE);
-        if (current_group_size == UNSIGNED_ZERO)
-        {
-            JustUpdateValueOfMeta32(
-                MetaIndexOfAPCNode::NODE_GROUP_SIZE,
-                current_group_size,
-                1u
-            );
-        }
-        
-    }
-
     size_t AdaptivePackedCellContainer::SuggestedChildCapacity_() noexcept
     {
         const size_t payload_capacity = PayloadCapacityFromHeader();
@@ -75,7 +47,7 @@ namespace PredictedAdaptedEncoding
         
         while (true)
         {
-            const uint32_t current_cursor_placement = ReadMetaCellFamily32(cursors_meta_idx);
+            const uint32_t current_cursor_placement = static_cast<uint32_t>(ReadValuFromAPCMetaIndecies(cursors_meta_idx));
             uint32_t desired_cursor_place = current_cursor_placement;
             if (cursor_placement.has_value())
             {
@@ -146,7 +118,7 @@ namespace PredictedAdaptedEncoding
                 }
                 return current_cursor_placement;
             }
-            if (JustUpdateValueOfMeta32(cursors_meta_idx, current_cursor_placement, desired_cursor_place))
+            if (ReplaceOnlyMetaCellValue(cursors_meta_idx, current_cursor_placement, desired_cursor_place))
             {
                 if (did_changed_easy_return)
                 {
@@ -225,7 +197,6 @@ namespace PredictedAdaptedEncoding
             ApplyCentralAndRegionOccupancyTransitionCell(current_cell, idle_cell, cell_class);
             BackingPtr[idx].notify_all();
             TouchLocalMetaClock48();
-            RefreshAPCMeta_();
             scan_cursor = idx + 1;
             if (scan_cursor >= current_region_bounds.EndIndex)
             {
@@ -235,32 +206,6 @@ namespace PredictedAdaptedEncoding
             return current_cell;
         }
         return std::nullopt;
-    }
-
-    void AdaptivePackedCellContainer::UpdateRegionRelMaskForIdx_(APCPagedNodeSegmentClasses rel_mask) noexcept
-    {
-        if (!IfAPCBranchValid())
-        {
-            return;
-        }
-        const uint32_t ready_bit = APCAndPagedNodeHelpers::MakeOneAPCNodeClassReadyBit(rel_mask);
-        if (ready_bit == 0)
-        {
-            return;
-        }
-        while (true)
-        {
-            const val32_t current_branch_rel_mask = ReadMetaCellFamily32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
-            const uint32_t next_mask = current_branch_rel_mask | ready_bit;
-            if (next_mask == current_branch_rel_mask)
-            {
-                return;
-            }
-            if (JustUpdateValueOfMeta32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT, current_branch_rel_mask, next_mask))
-            {
-                return;
-            }
-        }
     }
 
 
@@ -352,8 +297,6 @@ namespace PredictedAdaptedEncoding
             BackingPtr[current_index].notify_all();
             ApplyCentralAndRegionOccupancyTransitionCell(claimd_local_inplace_cell, packed_cell_for_publish, cell_class);
             TouchLocalMetaClock48();
-            RefreshAPCMeta_();
-
             return {PublishStatus::OK, current_index};
         }
 
@@ -427,7 +370,7 @@ namespace PredictedAdaptedEncoding
         {
             return false;
         }
-        const size_t region_size = static_cast<size_t>(ReadMetaCellFamily32(MetaIndexOfAPCNode::REGION_SIZE));
+        const size_t region_size = static_cast<size_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::REGION_SIZE));
         if (region_size == 0)
         {
             SOABitmapForAPC_.clear();
@@ -472,9 +415,9 @@ namespace PredictedAdaptedEncoding
                 }
             }
         }
-        const uint32_t expected_mask = ReadMetaCellFamily32(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
+        const uint32_t expected_mask = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
 
-        JustUpdateValueOfMeta32(
+        ReplaceOnlyMetaCellValue(
             MetaIndexOfAPCNode::PAGED_NODE_READY_BIT,
             expected_mask,
             global_ready_mask
@@ -515,7 +458,7 @@ namespace PredictedAdaptedEncoding
                 : 100u;
 
         uint32_t split_threshold =
-            ReadMetaCellFamily32(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE);
+            ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE);
 
         if (split_threshold == 0u ||
             split_threshold == BRANCH_SENTINAL ||
@@ -525,7 +468,7 @@ namespace PredictedAdaptedEncoding
         }
 
         const uint32_t cas_failure =
-            ReadMetaCellFamily32(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH);
+            ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH);
 
         const bool high_contention =
             cas_failure != BRANCH_SENTINAL &&
