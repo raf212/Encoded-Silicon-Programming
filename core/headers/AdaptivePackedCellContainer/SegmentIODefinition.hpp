@@ -139,9 +139,9 @@ public:
 
     bool ShouldSplitNow() noexcept;
 
-    bool TryBindPortTarget(MetaIndexOfAPCNode port_meta_idx, uint32_t target_branch_id) noexcept;
+    bool TryBindPortTarget(MetaIndexOfAPCNode port_meta_idx, uint64_t target_branch_id) noexcept;
 
-    uint32_t TotalCASFailForThisBranchIncreaseAndGet(uint32_t increment) noexcept;
+    uint64_t TotalCASFailForThisBranchIncreaseAndGet(uint32_t increment) noexcept;
 
     bool SetLayOutBounds(
         APCPagedNodeSegmentClasses page_class, 
@@ -173,16 +173,16 @@ public:
 
     uint16_t ReadTotalOccuPancyOfAnyPageClass(APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::NULLNAN) noexcept;
     
-    bool WriteExactMetaCellJustNewValue(MetaIndexOfAPCNode idx, uint32_t value) noexcept;
+    bool WriteExactMetaCellJustNewValue(MetaIndexOfAPCNode idx, uint64_t value) noexcept;
 
     bool ValidateAPCOccupancyInvarient() noexcept;
 
-    bool  TryBindShareNext(uint32_t shared_next_id) noexcept
+    bool  TryBindShareNext(uint64_t shared_next_id) noexcept
     {
         return TryBindPortTarget(MetaIndexOfAPCNode::SHARED_NEXT_ID, shared_next_id);
     }
 
-    bool TryBindSharedPrevious(uint32_t shared_previous_id) noexcept
+    bool TryBindSharedPrevious(uint64_t shared_previous_id) noexcept
     {
         return TryBindPortTarget(MetaIndexOfAPCNode::SHARED_PREVIOUS_ID, shared_previous_id);
     }

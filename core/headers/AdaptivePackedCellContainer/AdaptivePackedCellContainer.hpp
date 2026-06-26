@@ -68,8 +68,6 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
 
         );
 
-        void InitRegionIdx(size_t region_size) noexcept;
-
         void TryCreateBranchIfNeeded(APCPagedNodeSegmentClasses rel_mask_hint = APCPagedNodeSegmentClasses::FREE_SLOT) noexcept;
 
         bool TryPublishRegionalSharedGrowthOnce(APCPagedNodeSegmentClasses region_kind, packed64_t packed_cell, std::atomic<uint64_t>* growth_counter = nullptr) noexcept;
@@ -106,8 +104,6 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
         uint64_t GetSharedId() noexcept;
 
         size_t ReserveProducerSlots(size_t number_of_slots) noexcept;
-
-        size_t NextProducerSequence() noexcept;
 
         uint32_t CountExactLocalRegionalOccupancy(APCPagedNodeSegmentClasses desired_region_class) noexcept;
 
@@ -212,10 +208,6 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
 
             container_cfg.NodeGroupSize = 1u;
             InitZeroState_();
-            if (container_cfg.RegionSize > UNSIGNED_ZERO)
-            {
-                InitRegionIdx(container_cfg.RegionSize);
-            }
             return true;
         }
 

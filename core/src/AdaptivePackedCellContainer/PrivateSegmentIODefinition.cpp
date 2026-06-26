@@ -469,7 +469,7 @@ namespace PredictedAdaptedEncoding
         }
         while (true)
         {
-            const uint32_t compleate_current_paged_node_ready_bit = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
+            const uint32_t compleate_current_paged_node_ready_bit = static_cast<uint32_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT));
             const uint32_t updated_current_ready_bit = compleate_current_paged_node_ready_bit & ~anew_readybit;
             if (updated_current_ready_bit == compleate_current_paged_node_ready_bit)
             {
@@ -562,12 +562,12 @@ namespace PredictedAdaptedEncoding
 
     std::optional<uint16_t> SegmentIODefinition::ReadGlobalLayoutVersion_() noexcept
     {
-        const uint32_t raw = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
-        if (raw == BRANCH_SENTINAL || raw == UNSIGNED_ZERO)
+        const uint16_t raw = static_cast<uint16_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION));
+        if (raw > APC_MAX_LENGTH_OR_COUNTER || raw == UNSIGNED_ZERO)
         {
             return std::nullopt;
         }
-        return static_cast<uint16_t>(raw);
+        return raw;
     }
 
     bool SegmentIODefinition::WriteGlobalLayoutVersion_(uint16_t layout_version) noexcept
@@ -579,7 +579,7 @@ namespace PredictedAdaptedEncoding
 
         while (true)
         {
-            const uint32_t current_version = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
+            const uint64_t current_version = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
             if ((current_version) == layout_version)
             {
                 return true;

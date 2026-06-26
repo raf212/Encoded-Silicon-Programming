@@ -131,10 +131,6 @@ namespace PredictedAdaptedEncoding
             UNSIGNED_ZERO
         );
         InitZeroState_();
-        if (container_cfg.RegionSize > 0)
-        {
-            InitRegionIdx(container_cfg.RegionSize);
-        }
     }
 
     void AdaptivePackedCellContainer::InitAPCAsNode(
@@ -148,90 +144,6 @@ namespace PredictedAdaptedEncoding
         SetGraphNodeFlag();
     }
 
-
-    void AdaptivePackedCellContainer::InitRegionIdx(size_t region_size) noexcept
-    {
-        if (!IfAPCBranchValid() || region_size == 0)
-        {
-            return;
-        }
-        const uint32_t current_region_size = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::REGION_SIZE);
-        if (!ReplaceOnlyMetaCellValue(
-            MetaIndexOfAPCNode::REGION_SIZE,
-            current_region_size,
-            static_cast<uint32_t>(region_size)
-        ))
-        {
-            return;
-        }
-        const uint32_t region_count = static_cast<uint32_t>((PayloadCapacityFromHeader() + region_size - 1u) / region_size);
-        const uint32_t current_region_count = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::REGION_COUNT);
-        if (!ReplaceOnlyMetaCellValue(
-            MetaIndexOfAPCNode::REGION_COUNT,
-            current_region_count,
-            region_count
-        ))
-        {
-            return;
-        }
-        RebuildRegionIndexFromPayload_();
-        TurnOnASegmentFlag(ControlEnumOfAPCSegment::HAS_REGION_INDEX);
-    }
-
-    size_t AdaptivePackedCellContainer::NextProducerSequence() noexcept
-    {
-        if (!IfAPCBranchValid())
-        {
-            return APCDataStructure::APC_SIZE_SENTINAL;
-        }
-
-        struct ProducerBlockCacheTLS
-        {
-            const AdaptivePackedCellContainer* OwnerOfNode = nullptr;
-            uint32_t OwnerBranchId = 0;
-            size_t BlockBase = 0;
-            size_t BlockLeft = 0;
-        };
-
-        thread_local ProducerBlockCacheTLS cache{};
-        const uint32_t branch_id = GetSlabSlotID();
-
-        if (cache.OwnerOfNode != this || cache.OwnerBranchId != branch_id)
-        {
-            cache.OwnerOfNode = this;
-            cache.OwnerBranchId = branch_id;
-            cache.BlockBase = 0;
-            cache.BlockLeft = 0;
-        }
-
-        const size_t payload_capacity = PayloadCapacityFromHeader();
-        if (payload_capacity == UNSIGNED_ZERO)
-        {
-            return APCDataStructure::APC_SIZE_SENTINAL;
-        }
-        
-
-        const size_t current_block_size = static_cast<size_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::PRODUCER_BLOCK_SIZE));
-        const size_t safe_block = payload_capacity > 1 ? std::min<size_t>(
-            std::max<size_t>(current_block_size, 1u),
-            payload_capacity - 1u
-        ) : 1u;
-
-        if (cache.BlockLeft == 0)
-        {
-            const size_t base = ReserveProducerSlots(safe_block);
-            if (base == APCDataStructure::APC_SIZE_SENTINAL)
-            {
-                return APCDataStructure::APC_SIZE_SENTINAL;
-            }
-            cache.BlockBase = base;
-            cache.BlockLeft = safe_block;
-        }
-        const size_t sequence = cache.BlockBase;
-        ++cache.BlockBase;
-        --cache.BlockLeft;
-        return sequence;
-    }
 
 
 
@@ -408,7 +320,7 @@ namespace PredictedAdaptedEncoding
         }
         AdaptivePackedCellContainer* current_apc_ptr = root_apc_ptr;
         bool first = true;
-        const uint32_t group_size = std::max<uint32_t>(1u, ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::NODE_GROUP_SIZE));
+        const uint32_t group_size = std::max<uint32_t>(1u, static_cast<uint32_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::NODE_GROUP_SIZE)));
         uint32_t chain_guard = 0;
         const uint32_t max_chain_steps = group_size + 2u;
 
@@ -455,7 +367,7 @@ namespace PredictedAdaptedEncoding
         }
 
         AdaptivePackedCellContainer* curren_or_next_container_ptr = GetNextSharedSegment();
-        const uint32_t group_size = std::max<uint32_t>(1u, ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::NODE_GROUP_SIZE));
+        const uint32_t group_size = std::max<uint32_t>(1u, static_cast<uint32_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::NODE_GROUP_SIZE)));
         uint32_t chain_guard = 0;
         const uint32_t max_chain_steps = group_size + 2u;
 
@@ -515,9 +427,9 @@ namespace PredictedAdaptedEncoding
             ClearSplitFlag();
             return nullptr;
         }
-        const uint32_t root_branch_id = root_apc_ptr->GetSlabSlotID();
-        const uint32_t root_logical_id = root_apc_ptr->GetLogicalId();
-        const uint32_t shared_group_id = (root_apc_ptr->GetSharedId() == UNSIGNED_ZERO || root_apc_ptr->GetSharedId() == BRANCH_SENTINAL) ?
+        const uint64_t root_branch_id = root_apc_ptr->GetSlabSlotID();
+        const uint64_t root_logical_id = root_apc_ptr->GetLogicalId();
+        const uint64_t shared_group_id = (root_apc_ptr->GetSharedId() == UNSIGNED_ZERO || root_apc_ptr->GetSharedId() == BRANCH_SENTINAL) ?
                                             root_branch_id : root_apc_ptr->GetSharedId();
         const uint32_t parents_depth = CurrentBranchDepthRead();
         const uint32_t child_depth = parents_depth + 1u;
@@ -535,8 +447,8 @@ namespace PredictedAdaptedEncoding
         child_configuration.RetireBatchThreshold = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::RETIRE_BRANCH_THRASHOLD);
         child_configuration.BackgroundEpochAdvanceMS = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::BACKGROUND_EPOCH_ADVANCE_MS);
         child_configuration.EnableBranching = enable_recursive_branching;
-        child_configuration.BranchSplitThresholdPercentage = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE);
-        child_configuration.BranchMaxDepth = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::MAX_DEPTH);
+        child_configuration.BranchSplitThresholdPercentage = static_cast<uint32_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE));
+        child_configuration.BranchMaxDepth = static_cast<uint32_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::MAX_DEPTH));
         child_configuration.BranchMinChildCapacity = SuggestedChildCapacity_();
 
         AdaptivePackedCellContainer* new_child_segment_ptr = nullptr;
@@ -558,7 +470,7 @@ namespace PredictedAdaptedEncoding
 
 
         
-        const uint32_t new_child_branch_id = new_child_segment_ptr->GetSlabSlotID();
+        const uint64_t new_child_branch_id = new_child_segment_ptr->GetSlabSlotID();
         if (new_child_branch_id == UNSIGNED_ZERO || new_child_branch_id == BRANCH_SENTINAL || new_child_branch_id == root_branch_id)
         {
             new_child_segment_ptr->FreeAll();
@@ -581,8 +493,8 @@ namespace PredictedAdaptedEncoding
         new_child_segment_ptr->SetSegmentRegionKind(desired_region_kind);
         auto CopyBranchSagmentMeta = [&](MetaIndexOfAPCNode idx) noexcept
         {
-            const uint32_t root_src = root_apc_ptr->ReadValuFromAPCMetaIndecies(idx);
-            const uint32_t child_dest = new_child_segment_ptr->ReadValuFromAPCMetaIndecies(idx);
+            const uint64_t root_src = root_apc_ptr->ReadValuFromAPCMetaIndecies(idx);
+            const uint64_t child_dest = new_child_segment_ptr->ReadValuFromAPCMetaIndecies(idx);
             new_child_segment_ptr->ReplaceOnlyMetaCellValue(idx, child_dest, root_src);
         };
 
@@ -599,7 +511,7 @@ namespace PredictedAdaptedEncoding
         const uint32_t max_chain_steps =
             std::max<uint32_t>(
                 1u,
-                root_apc_ptr->ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::NODE_GROUP_SIZE)
+                static_cast<uint32_t>(root_apc_ptr->ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::NODE_GROUP_SIZE))
             ) + 2u;
 
         while (tail_apc_ptr && guard++ < max_chain_steps)
@@ -650,7 +562,7 @@ namespace PredictedAdaptedEncoding
     {
         AdaptivePackedCellContainer* root_apc_ptr = FindSharedRootOrThis();
         
-        const uint32_t shared_group_id = (
+        const uint64_t shared_group_id = (
             root_apc_ptr->GetSharedId() == UNSIGNED_ZERO || root_apc_ptr->GetSharedId() == BRANCH_SENTINAL
         ) ? root_apc_ptr->GetSlabSlotID() : root_apc_ptr->GetSharedId();
         std::vector<AdaptivePackedCellContainer*> apc_chain;
@@ -673,14 +585,14 @@ namespace PredictedAdaptedEncoding
         for (size_t i = 0; i < apc_chain.size(); i++)
         {
             AdaptivePackedCellContainer* current_chain_index_apc = apc_chain[i];
-            const uint32_t expected_group_size = current_chain_index_apc->ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::NODE_GROUP_SIZE);
+            const uint32_t expected_group_size = static_cast<uint32_t>(current_chain_index_apc->ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::NODE_GROUP_SIZE));
             current_chain_index_apc->ReplaceOnlyMetaCellValue(MetaIndexOfAPCNode::NODE_GROUP_SIZE, expected_group_size, group_size);
 
-            const uint32_t expected_shared_id = current_chain_index_apc->ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SHARED_ID);
+            const uint64_t expected_shared_id = current_chain_index_apc->ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SHARED_ID);
             current_chain_index_apc->ReplaceOnlyMetaCellValue(MetaIndexOfAPCNode::SHARED_ID, expected_shared_id, shared_group_id);
 
-            const uint32_t previous_id = (i == 0) ? BRANCH_SENTINAL : apc_chain[i - 1]->GetSlabSlotID();
-            const uint32_t next_id = (i + 1 < apc_chain.size()) ? apc_chain[i + 1]->GetSlabSlotID() : BRANCH_SENTINAL;
+            const uint64_t previous_id = (i == 0) ? BRANCH_SENTINAL : apc_chain[i - 1]->GetSlabSlotID();
+            const uint64_t next_id = (i + 1 < apc_chain.size()) ? apc_chain[i + 1]->GetSlabSlotID() : BRANCH_SENTINAL;
             current_chain_index_apc->WriteExactMetaCellJustNewValue(
                 MetaIndexOfAPCNode::SHARED_PREVIOUS_ID,
                 previous_id
@@ -807,7 +719,7 @@ namespace PredictedAdaptedEncoding
                 mask |= APCAndPagedNodeHelpers::MakeOneAPCNodeClassReadyBit(current_region);
             }
         }
-        const uint32_t old_ready_mask = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
+        const uint64_t old_ready_mask = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
         return ReplaceOnlyMetaCellValue(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT, old_ready_mask, mask);
     }
 

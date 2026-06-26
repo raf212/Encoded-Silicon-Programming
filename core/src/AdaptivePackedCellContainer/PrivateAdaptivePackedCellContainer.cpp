@@ -251,16 +251,7 @@ namespace PredictedAdaptedEncoding
         {
             return {PublishStatus::FULL, APCDataStructure::APC_SIZE_SENTINAL};
         }
-        
-        const size_t next_producer_sequense = NextProducerSequence();
-        if (next_producer_sequense == APCDataStructure::APC_SIZE_SENTINAL)
-        {
-            return {PublishStatus::FULL, APCDataStructure::APC_SIZE_SENTINAL};
-        }
 
-        const size_t seed_idx = (next_producer_sequense >= PayloadBegin()) ? (next_producer_sequense - PayloadBegin()) : 0;
-        const size_t base = begin_idx + (seed_idx % span);
-        const size_t step = MakeProbeStepCoPrime_(seed_idx + 1u, span);
         const size_t bounded_tries =
             std::min<size_t>(
                 span,
@@ -269,7 +260,7 @@ namespace PredictedAdaptedEncoding
 
         for (size_t tries = 0; tries < bounded_tries; tries++)        
         {
-            const size_t current_index = begin_idx + ((base - begin_idx + tries * step) % span);
+            const size_t current_index = begin_idx + ((begin_idx + tries) % span);
             packed64_t observed_cell = BackingPtr[current_index].load(MoLoad_);
             const PackedCell64_t::AuthoritiveCellView observed_cell_view = PackedCell64_t::GetAuthoritiveViewsForACell(observed_cell);
 
@@ -415,7 +406,7 @@ namespace PredictedAdaptedEncoding
                 }
             }
         }
-        const uint32_t expected_mask = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT);
+        const uint32_t expected_mask = static_cast<uint32_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT));
 
         ReplaceOnlyMetaCellValue(
             MetaIndexOfAPCNode::PAGED_NODE_READY_BIT,
@@ -457,7 +448,7 @@ namespace PredictedAdaptedEncoding
                 ? static_cast<uint32_t>((uint64_t{used_occupancy} * 100u) / span)
                 : 100u;
 
-        uint32_t split_threshold =
+        uint64_t split_threshold =
             ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE);
 
         if (split_threshold == 0u ||
@@ -467,8 +458,7 @@ namespace PredictedAdaptedEncoding
             split_threshold = INITIAL_BRANCH_SPLIT_THRESHOLD_PERCENTAGE;
         }
 
-        const uint32_t cas_failure =
-            ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH);
+        const uint64_t cas_failure = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH);
 
         const bool high_contention =
             cas_failure != BRANCH_SENTINAL &&

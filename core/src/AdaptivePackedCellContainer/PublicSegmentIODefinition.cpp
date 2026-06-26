@@ -234,7 +234,7 @@ namespace PredictedAdaptedEncoding
         
         while (true)
         {
-            uint32_t current_thread_count = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::CURRENT_ACTIVE_THREADS);
+            uint32_t current_thread_count = static_cast<uint32_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::CURRENT_ACTIVE_THREADS));
             if (current_thread_count == IN_CELL_VALUE_MODE32_SENTINAL)
             {
                 return false;
@@ -254,7 +254,7 @@ namespace PredictedAdaptedEncoding
         }
     }
 
-    bool SegmentIODefinition::TryBindPortTarget(MetaIndexOfAPCNode port_meta_idx, uint32_t target_branch_id) noexcept
+    bool SegmentIODefinition::TryBindPortTarget(MetaIndexOfAPCNode port_meta_idx, uint64_t target_branch_id) noexcept
     {
         if (target_branch_id == BRANCH_SENTINAL)
         {
@@ -262,7 +262,7 @@ namespace PredictedAdaptedEncoding
         }
         while (true)
         {
-            const uint32_t current_meta_value = ReadValuFromAPCMetaIndecies(port_meta_idx);
+            const uint32_t current_meta_value = static_cast<uint32_t>(ReadValuFromAPCMetaIndecies(port_meta_idx));
             if (current_meta_value == target_branch_id)
             {
                 return true;
@@ -280,9 +280,9 @@ namespace PredictedAdaptedEncoding
 
     bool SegmentIODefinition::ShouldSplitNow() noexcept
     {
-        const val32_t split_threshold = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE);
-        const val32_t max_depth = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::MAX_DEPTH);
-        const val32_t depth_of_current_branch = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::BRANCH_DEPTH);
+        const uint64_t split_threshold = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE);
+        const uint64_t max_depth = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::MAX_DEPTH);
+        const uint64_t depth_of_current_branch = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::BRANCH_DEPTH);
         if (depth_of_current_branch >= max_depth)
         {
             return false;
@@ -327,7 +327,7 @@ namespace PredictedAdaptedEncoding
         const uint32_t bit = static_cast<uint32_t>(ControlEnumOfAPCSegment::SPLIT_INFLIGHT);
         while (true)
         {
-            const uint32_t current_flags = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
+            const uint32_t current_flags = static_cast<uint32_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS));
             if ((current_flags & bit) != UNSIGNED_ZERO)
             {
                 return false;
@@ -346,11 +346,11 @@ namespace PredictedAdaptedEncoding
         
     }
 
-    uint32_t SegmentIODefinition::TotalCASFailForThisBranchIncreaseAndGet(uint32_t increment) noexcept
+    uint64_t SegmentIODefinition::TotalCASFailForThisBranchIncreaseAndGet(uint32_t increment) noexcept
     {
         while (true)
         {
-            val32_t current_total_cas_failure = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH);
+            uint64_t current_total_cas_failure = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH);
             if (current_total_cas_failure == BRANCH_SENTINAL)
             {
                 return BRANCH_SENTINAL;
@@ -550,7 +550,7 @@ namespace PredictedAdaptedEncoding
 
         while (true)
         {
-            const uint32_t current_flags = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
+            const uint32_t current_flags = static_cast<uint32_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS));
             if (current_flags == BRANCH_SENTINAL)
             {
                 return false;
@@ -778,11 +778,11 @@ namespace PredictedAdaptedEncoding
         }
     }
 
-    bool SegmentIODefinition::WriteExactMetaCellJustNewValue(MetaIndexOfAPCNode idx, uint32_t value) noexcept
+    bool SegmentIODefinition::WriteExactMetaCellJustNewValue(MetaIndexOfAPCNode idx, uint64_t value) noexcept
     {
         while (true)
         {
-            const uint32_t current_value = ReadValuFromAPCMetaIndecies(idx);
+            const uint64_t current_value = ReadValuFromAPCMetaIndecies(idx);
             if (current_value == value)
             {
                 return true;
