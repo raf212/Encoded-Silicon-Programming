@@ -16,7 +16,6 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
 
         void InitZeroState_() noexcept;
 
-        size_t SuggestedChildCapacity_() noexcept;
 
         std::optional<packed64_t> TryConsumeAndIdleFromRegionLocal_(
             APCPagedNodeSegmentClasses region_kind, size_t& scan_cursor,
@@ -26,7 +25,6 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
         PublishResult TryPublishToRegionLocal_(
             packed64_t packed_cell_for_publish, 
             APCPagedNodeSegmentClasses region_kind = APCPagedNodeSegmentClasses::FREE_SLOT,
-            OwnershipPolicy node_authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
             uint16_t max_tries = APC_MAX_LENGTH_OR_COUNTER / (APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses)
         ) noexcept;
 
@@ -59,7 +57,7 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
         AdaptivePackedCellContainer(const AdaptivePackedCellContainer&) = delete;
         AdaptivePackedCellContainer& operator = (const AdaptivePackedCellContainer&) = delete;
 
-        void InitOwned(size_t cpacity, ContainerConf container_cfg = {});
+        void InitAPCOnSelfMemory(size_t cpacity, ContainerConf container_cfg = {});
 
         void InitAPCAsNode(
             size_t capacity,
@@ -73,8 +71,8 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
         bool TryPublishRegionalSharedGrowthOnce(APCPagedNodeSegmentClasses region_kind, packed64_t packed_cell, std::atomic<uint64_t>* growth_counter = nullptr) noexcept;
 
         PublishResult PublishCellByRegionMAskTraverseStartsFromThisAPC(
-            APCPagedNodeSegmentClasses region_kind, packed64_t cell_to_publish, 
-            OwnershipPolicy authority = OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER,
+            APCPagedNodeSegmentClasses region_kind, 
+            packed64_t cell_to_publish, 
             std::optional<uint16_t> max_tries = std::nullopt
         ) noexcept;
 
@@ -109,9 +107,7 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
 
         uint32_t CountExactTotalChainOccupancy(APCPagedNodeSegmentClasses desired_region_class) noexcept;
         
-        bool RebuildExectReadyMask() noexcept;
-        
-         bool IfAPCBranchValid() noexcept
+        bool IfAPCBranchValid() noexcept
         {
             return (BackingPtr && PayloadCapacityFromHeader() >= MINIMUM_BRANCH_CAPACITY - PayloadBegin());
         }

@@ -24,10 +24,6 @@ namespace PredictedAdaptedEncoding
         static constexpr uint32_t FABRIC_META_EOF = 0x41474946u;
 
 protected:
-        static constexpr bool DoseU32FitsInU16_(uint32_t value) noexcept
-        {
-            return value <= APC_MAX_LENGTH_OR_COUNTER;
-        }
 
         static constexpr packed64_t* AllocateAlignedRawPackedCells_(size_t count)
         {
@@ -98,11 +94,6 @@ protected:
             return static_cast<uint16_t>(candidate - baseline) < HALF16Bit_THRESHOLD_WRAP;
             
         }
-        static constexpr APCPagedNodeSegmentClasses ExtractPagedRelMaskFromPacked (packed64_t packed_cell) noexcept
-        {
-            return static_cast<APCPagedNodeSegmentClasses>(PackedCell64_t::ExtractAPCPagedNodeSegmentClasse(packed_cell));
-        }
-
 
         static constexpr uint32_t MakeOneAPCNodeClassReadyBit(APCPagedNodeSegmentClasses desired_rel_class) noexcept
         {
@@ -118,8 +109,8 @@ protected:
         static constexpr bool CanCellBeConsumedForThisRegion(packed64_t packed_cell, APCPagedNodeSegmentClasses region_kind) noexcept
         {
             return PackedCell64_t::ExtractLocalityPolicy(packed_cell) == LocalityPolicy::PUBLISHED &&
-                ExtractPagedRelMaskFromPacked(packed_cell) == region_kind;        
-            }
+                PackedCell64_t::ExtractAPCPagedNodeSegmentClasse(packed_cell) == region_kind;        
+        }
 
         static constexpr MetaIndexOfAPCNode GetOccupancyMetIndexByRegionClass(
             APCPagedNodeSegmentClasses desired_region_class
@@ -150,31 +141,16 @@ protected:
         static constexpr bool IsThisCellAppropriateAndGenericToConsume(const PackedCell64_t::AuthoritiveCellView& a_cell_view, APCPagedNodeSegmentClasses page_class) noexcept
         {
 
-            if (!a_cell_view.IsCellValid)
+            if (
+                !a_cell_view.IsCellValid ||
+                a_cell_view.LocalityOfCell != LocalityPolicy::PUBLISHED ||
+                page_class != a_cell_view.PageClass ||
+                !IsDataConsumablePageClass(a_cell_view.PageClass)
+            )
             {
                 return false;
             }
             
-            if (a_cell_view.LocalityOfCell != LocalityPolicy::PUBLISHED)
-            {
-                return false;
-            }
-
-            if (page_class != a_cell_view.PageClass)
-            {
-                return false;
-            }
-            
-            if (!IsDataConsumablePageClass(a_cell_view.PageClass))
-            {
-                return false;
-            }
-
-            if (IsEmbededControlCell(a_cell_view) || IsEmbededTimerCell(a_cell_view))
-            {
-                return false;
-            }
-
             return true;
         }
 
@@ -225,54 +201,6 @@ protected:
             }
             return true;
         }
-
-    static constexpr packed64_t TryToSwitchPageClassRuntime(
-        packed64_t packed_cell,
-        APCPagedNodeSegmentClasses page_class
-    ) noexcept
-    {
-        const PackedCell64_t::AuthoritiveCellView desired_cell_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
-        if (!desired_cell_view.IsCellValid)
-        {
-            return PackedCell64_t::MakeFaultyCell();
-        }
-
-        if (desired_cell_view.CellOwnership != OwnershipPolicy::ADAPTIVE_PACKED_CELL_CONTAINER)
-        {
-            return packed_cell;
-        }
-
-        if (desired_cell_view.ContractOfValue == AccessContractOfValue::CAS_RMW)
-        {
-            return packed_cell;
-        }
-
-        if (desired_cell_view.LocalityOfCell == LocalityPolicy::CLAIMED)
-        {
-            switch (desired_cell_view.ContractOfValue)
-            {
-
-            case AccessContractOfValue::ATOMIC_SLNAPSHOT:
-                return packed_cell;
-
-            case AccessContractOfValue::CLAIMED_GURDED:
-                return packed_cell;
-            
-            default:
-                break;
-            }
-        }
-        
-        if (desired_cell_view.PageClass == APCPagedNodeSegmentClasses::CONTROL_SLOT)
-        {
-            return packed_cell;
-        }
-
-        packed_cell = PackedCell64_t::SetPageClassInPacked(packed_cell, page_class);
-        
-        return packed_cell;
-        
-    }
 
 };
 

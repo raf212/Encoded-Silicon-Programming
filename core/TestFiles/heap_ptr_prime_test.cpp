@@ -238,7 +238,7 @@ int main()
     task_cfg.ProducerBlockSize = 64;
     task_cfg.InitialMode = PackedMode::MODEL32;
 
-    TASK_APC.InitOwned(apc_capacity, task_cfg);
+    TASK_APC.InitAPCOnSelfMemory(apc_capacity, task_cfg);
     TASK_APC.SetManagerForGlobalAPC(&apc_manager);
     apc_manager.ReclaimationRequestOfAPCSegmentFromManager_(&TASK_APC);
 

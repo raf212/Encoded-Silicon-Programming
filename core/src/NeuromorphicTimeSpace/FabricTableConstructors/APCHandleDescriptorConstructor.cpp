@@ -77,8 +77,8 @@ namespace PredictedAdaptedEncoding
         }
 
         std::memcpy(
+            return_buffer.data(),
             &SlabBasePtr_[this_apc_descriptor_range.BeginIndex],
-            &return_buffer,
             APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX * sizeof(packed64_t)
         );
 

@@ -276,12 +276,6 @@ protected:
             return SetMETA16InPacked(packed_cell, new_desired_meta);
         }
 
-        static constexpr packed64_t SetSegmentLayoutInPacked(packed64_t packed_cell, OwnershipPolicy segment_layout) noexcept
-        {
-            const meta16_t new_desired_meta = SetNodeAuthorityInMETA16(ExtractMeta16fromPackedCell(packed_cell), segment_layout);
-            return SetMETA16InPacked(packed_cell, new_desired_meta);
-        }
-
         static constexpr packed64_t SetLocalityInPacked(packed64_t packed_cell, LocalityPolicy local_state) noexcept
         {
             const meta16_t new_desired_meta = SetLocalityInMETA16(ExtractMeta16fromPackedCell(packed_cell), local_state);
