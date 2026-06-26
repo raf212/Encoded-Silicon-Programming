@@ -572,7 +572,7 @@ namespace PredictedAdaptedEncoding
         }
     }
 
-    bool SegmentIODefinition::TryExtendASegmentInOwnAPC(APCPagedNodeSegmentClasses desired_rel_mask, uint32_t wanted_amount, ContainerConf::APCSegmentExtendOrder desired_apc_order) noexcept
+    bool SegmentIODefinition::TryExtendInternalPagedNode(APCPagedNodeSegmentClasses desired_rel_mask, uint32_t wanted_amount, ContainerConf::APCSegmentExtendOrder desired_apc_order) noexcept
     {
         if (wanted_amount == 0)
         {
@@ -778,7 +778,7 @@ namespace PredictedAdaptedEncoding
         }
     }
 
-    bool SegmentIODefinition::WriteExactMetaCellJustNewValue(MetaIndexOfAPCNode idx, uint64_t value) noexcept
+    bool SegmentIODefinition::ForceAutoReplaceAPCMetaCellValue(MetaIndexOfAPCNode idx, uint64_t value) noexcept
     {
         while (true)
         {

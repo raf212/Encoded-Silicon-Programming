@@ -157,7 +157,7 @@ public:
 
     bool TrySetLayoutMutationInFlight() noexcept;
 
-    bool TryExtendASegmentInOwnAPC(APCPagedNodeSegmentClasses desired_rel_mask, uint32_t wanted_amount, ContainerConf::APCSegmentExtendOrder desired_apc_order) noexcept;
+    bool TryExtendInternalPagedNode(APCPagedNodeSegmentClasses desired_rel_mask, uint32_t wanted_amount, ContainerConf::APCSegmentExtendOrder desired_apc_order) noexcept;
 
     clk16_t ReadLastAcceptedClok16ForThisSegment(APCPagedNodeSegmentClasses region_kind) noexcept;
     clk16_t ReadLastEmittedClok16ForThisSegment(APCPagedNodeSegmentClasses region_kind) noexcept;
@@ -173,7 +173,7 @@ public:
 
     uint16_t ReadTotalOccuPancyOfAnyPageClass(APCPagedNodeSegmentClasses page_class = APCPagedNodeSegmentClasses::NULLNAN) noexcept;
     
-    bool WriteExactMetaCellJustNewValue(MetaIndexOfAPCNode idx, uint64_t value) noexcept;
+    bool ForceAutoReplaceAPCMetaCellValue(MetaIndexOfAPCNode idx, uint64_t value) noexcept;
 
     bool ValidateAPCOccupancyInvarient() noexcept;
 

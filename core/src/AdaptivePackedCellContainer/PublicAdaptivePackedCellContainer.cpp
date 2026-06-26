@@ -178,7 +178,7 @@ namespace PredictedAdaptedEncoding
 
         auto full_layout = ReadAndGetFullRegionLayout_();
         const uint32_t grow_amount = SuggestedInternalAPCExpension_(full_layout ? &(*full_layout) : nullptr, 50);
-        if (grow_amount > 0 && TryExtendASegmentInOwnAPC(
+        if (grow_amount > 0 && TryExtendInternalPagedNode(
             region_kind,
             grow_amount,
             ContainerConf::APCSegmentExtendOrder::PRIORITY
@@ -494,11 +494,11 @@ namespace PredictedAdaptedEncoding
 
             const uint64_t previous_id = (i == 0) ? BRANCH_SENTINAL : apc_chain[i - 1]->GetSlabSlotID();
             const uint64_t next_id = (i + 1 < apc_chain.size()) ? apc_chain[i + 1]->GetSlabSlotID() : BRANCH_SENTINAL;
-            current_chain_index_apc->WriteExactMetaCellJustNewValue(
+            current_chain_index_apc->ForceAutoReplaceAPCMetaCellValue(
                 MetaIndexOfAPCNode::SHARED_PREVIOUS_ID,
                 previous_id
             );
-            current_chain_index_apc->WriteExactMetaCellJustNewValue(
+            current_chain_index_apc->ForceAutoReplaceAPCMetaCellValue(
                 MetaIndexOfAPCNode::SHARED_NEXT_ID,
                 next_id
             );

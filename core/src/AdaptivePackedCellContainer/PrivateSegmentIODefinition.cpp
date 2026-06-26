@@ -552,7 +552,7 @@ namespace PredictedAdaptedEncoding
             UNSIGNED_ZERO
         );
 
-        WriteExactMetaCellJustNewValue(
+        ForceAutoReplaceAPCMetaCellValue(
             MetaIndexOfAPCNode::PAGED_NODE_READY_BIT,
             UNSIGNED_ZERO
         );
