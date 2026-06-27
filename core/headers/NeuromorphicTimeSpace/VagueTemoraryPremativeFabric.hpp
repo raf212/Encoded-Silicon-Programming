@@ -71,9 +71,7 @@ public:
 
     std::optional<uint64_t> ConstructAnAPC_(   
         AdaptivePackedCellContainer& desired_apc,     
-        const ContainerConf& container_conf,
-        uint64_t shared_id = UNSIGNED_ZERO,
-        uint64_t logical_id = UNSIGNED_ZERO
+        APCGroupReserver::APCInitialIdentityStruct& container_conf
     ) noexcept;
 
     bool InitializeFabricWithPtrTable(

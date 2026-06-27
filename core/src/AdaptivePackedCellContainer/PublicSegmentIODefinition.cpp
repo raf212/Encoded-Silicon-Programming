@@ -96,17 +96,25 @@ namespace PredictedAdaptedEncoding
         
     }
 
-    void SegmentIODefinition::InitLogicalNodeIdentity(
-        uint64_t logical_node_id,
-        uint64_t shared_id,
-        bool is_root_shared
+    void SegmentIODefinition::ConfigureThisAPCIdentity(
+        const APCGroupReserver::APCInitialIdentityStruct& container_configuration
     ) noexcept
     {
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LOGICAL_GROUP_ID, logical_node_id);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_GROUP_ID, shared_id);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::APC_SLOT_IDX,UNSIGNED_ZERO);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::BRANCH_ID, UNSIGNED_ZERO);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LOGICAL_GROUP_ID, container_configuration.LogicalId);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_GROUP_ID, container_configuration.SharedID);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_ID_ACCESS_KEY, container_configuration.SharedAcessKey);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LOGICAL_ID_ACCESS_KEY, container_configuration.LogicalAcessKey);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_SEQUENTIAL_IDX_COUNT, UNSIGNED_ZERO);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LOGICAL_SEQUENTIAL_IDX_COUNT, UNSIGNED_ZERO);
+
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_GROUP_SEQUENTIAL_PREVIOUS_IDX, APC_META_CELL_SENTINAL);
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_GROUP_SEQUENTIAL_NEXT_IDX, APC_META_CELL_SENTINAL);
-        if (is_root_shared)
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LOGICAL_GROUP_SEQUENTIAL_NEXT_IDX, APC_META_CELL_SENTINAL);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LOGICAL_GROUP_SEQUENTIAL_PREVIOUS_IDX, APC_META_CELL_SENTINAL);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::RETIRED_ACCESS_LOCK, APC_META_CELL_SENTINAL);        
+        if (container_configuration.SharedSequentialCount > UNSIGNED_ZERO || container_configuration.SharedSequentialCount > UNSIGNED_ZERO)
         {
             TurnOnMultipleSegmentFlagsAtOnce_(static_cast<uint32_t>(ControlEnumOfAPCSegment::IS_GRAPH_NODE) | static_cast<uint32_t>(ControlEnumOfAPCSegment::IS_SHARED_ROOT));
             ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::IS_SHARED_MAMBER);
@@ -141,15 +149,8 @@ namespace PredictedAdaptedEncoding
 
 
     void SegmentIODefinition::InitRootOrChildBranch(
-        uint64_t branch_id,
-        uint64_t logical_node_id,
-        uint64_t shared_id,
         size_t total_capacity,
-        const ContainerConf& container_configuration,
-        bool is_root_shared,
-        uint64_t aux_param_uint48,
-        uint64_t branch_depth,
-        uint64_t branch_priority
+        const APCGroupReserver::APCInitialIdentityStruct& container_configuration
     ) noexcept
     {
         if (!IsBound())
@@ -158,38 +159,23 @@ namespace PredictedAdaptedEncoding
         }
 
         const uint64_t safe_capacity = static_cast<uint16_t>(std::min<size_t>(total_capacity, APC_ALL_INDEX_LIMIT));
-
-        const uint32_t region_count = container_configuration.RegionSize == 0 ? 0 : static_cast<uint32_t>((std::max<size_t>(total_capacity, METACELL_COUNT) - METACELL_COUNT + container_configuration.RegionSize - 1) / container_configuration.RegionSize);
-        const uint64_t resolve_shared_id = (shared_id == UNSIGNED_ZERO || shared_id == APC_META_CELL_SENTINAL) ? branch_id : shared_id;
         
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::MAGIC_ID, BRANCH_MAGIC);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::BRANCH_ID, static_cast<uint64_t>(std::min<uint64_t>(branch_id, APC_META_CELL_SENTINAL)));
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION, BRANCH_VERSION);
 
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::BRANCH_DEPTH, branch_depth);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::BRANCH_PRIORITY, branch_priority);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS, container_configuration.EnableBranching ? static_cast<uint32_t>(ControlEnumOfAPCSegment::ENABLE_BRANCHING) : static_cast<uint32_t>(ControlEnumOfAPCSegment::NONE));
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::BRANCH_PRIORITY, UNSIGNED_ZERO);
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::CURRENT_ACTIVE_THREADS, UNSIGNED_ZERO);
         WrireAPCMetaModel_48t(MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48, UNSIGNED_ZERO);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE, container_configuration.BranchSplitThresholdPercentage);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SEGMENT_KIND, static_cast<uint32_t>(APCPagedNodeSegmentClasses::FREE_SLOT));
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::MAX_DEPTH, container_configuration.BranchMaxDepth);
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::TOTAL_CAPACITY_OF_THIS_SEGEMENT, safe_capacity);                                                                                        
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LAST_SPLIT_EPOCH, UNSIGNED_ZERO);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::REGION_SIZE, static_cast<uint32_t>(container_configuration.RegionSize));
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::REGION_COUNT, region_count);
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::PAGED_NODE_READY_BIT, UNSIGNED_ZERO);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::PRODUCER_BLOCK_SIZE, static_cast<uint32_t>(container_configuration.ProducerBlockSize));
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::BACKGROUND_EPOCH_ADVANCE_MS, static_cast<uint32_t>(container_configuration.BackgroundEpochAdvanceMS));
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::DEFINED_MODE_OF_CURRENT_APC, static_cast<uint32_t>(container_configuration.InitialMode));
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::RETIRE_BRANCH_THRASHOLD, container_configuration.RetireBatchThreshold);
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::PRODUCER_CURSOR_PLACEMENT, static_cast<uint32_t>(METACELL_COUNT));
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::CONSUMER_CURSORE_PLACEMENT, static_cast<uint32_t>(METACELL_COUNT));
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::CURRENTLY_OWNED, UNSIGNED_ZERO);
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH, UNSIGNED_ZERO);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::NODE_GROUP_SIZE, container_configuration.NodeGroupSize);
-        InitLogicalNodeIdentity(logical_node_id, resolve_shared_id, is_root_shared);
-        InitNodeSemantics(aux_param_uint48);
+
+        ConfigureThisAPCIdentity(container_configuration);
         InitDefaultAPCSegmentedNodeLayout_();
         for (uint8_t i = 0; i < APCAndPagedNodeHelpers::SIZE_OF_APCPagedNodeRelMaskClasses; i++)
         {
@@ -281,8 +267,8 @@ namespace PredictedAdaptedEncoding
     bool SegmentIODefinition::ShouldSplitNow() noexcept
     {
         const uint64_t split_threshold = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE);
-        const uint64_t max_depth = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::MAX_DEPTH);
-        const uint64_t depth_of_current_branch = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::BRANCH_DEPTH);
+        const uint64_t max_depth = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::LOGICAL_SEQUENTIAL_IDX_COUNT);
+        const uint64_t depth_of_current_branch = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SHARED_SEQUENTIAL_IDX_COUNT);
         if (depth_of_current_branch >= max_depth)
         {
             return false;
@@ -572,7 +558,7 @@ namespace PredictedAdaptedEncoding
         }
     }
 
-    bool SegmentIODefinition::TryExtendInternalPagedNode(APCPagedNodeSegmentClasses desired_rel_mask, uint32_t wanted_amount, ContainerConf::APCSegmentExtendOrder desired_apc_order) noexcept
+    bool SegmentIODefinition::TryExtendInternalPagedNode(APCPagedNodeSegmentClasses desired_rel_mask, uint32_t wanted_amount, APCGroupReserver::APCInitialIdentityStruct::APCSegmentExtendOrder desired_apc_order) noexcept
     {
         if (wanted_amount == 0)
         {
@@ -723,7 +709,7 @@ namespace PredictedAdaptedEncoding
         }
 
 
-        if (desired_apc_order == ContainerConf::APCSegmentExtendOrder::PRIORITY)
+        if (desired_apc_order == APCGroupReserver::APCInitialIdentityStruct::APCSegmentExtendOrder::PRIORITY)
         {
             std::sort(candidates.begin(), candidates.begin() + count, 
                 [&](const auto* priority_layout_1, const auto* priority_layout_2) noexcept

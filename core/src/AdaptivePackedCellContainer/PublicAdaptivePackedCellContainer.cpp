@@ -95,7 +95,7 @@ namespace PredictedAdaptedEncoding
         if (grow_amount > 0 && TryExtendInternalPagedNode(
             region_kind,
             grow_amount,
-            ContainerConf::APCSegmentExtendOrder::PRIORITY
+            APCGroupReserver::APCInitialIdentityStruct::APCSegmentExtendOrder::PRIORITY
         ))
         {
             local_result = PublishCellByRegionMAskTraverseStartsFromThisAPC(region_kind, packed_cell);

@@ -234,7 +234,7 @@ int main()
         std::max<size_t>(MIN_APC_CAPACITY, num_of_tasks * 4 + 64);
 
     AdaptivePackedCellContainer TASK_APC;
-    ContainerConf task_cfg;
+    APCGroupReserver::APCInitialIdentityStruct task_cfg;
     task_cfg.ProducerBlockSize = 64;
     task_cfg.InitialMode = PackedMode::MODEL32;
 

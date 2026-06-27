@@ -106,27 +106,17 @@ public:
     ) noexcept;
 
 
-    void InitLogicalNodeIdentity(
-        uint64_t logical_node_id,
-        uint64_t shared_id,
-        bool is_root_shared
+    void ConfigureThisAPCIdentity(
+        const APCGroupReserver::APCInitialIdentityStruct& container_configuration
+    ) noexcept;
+
+    void InitRootOrChildBranch(
+        size_t total_capacity,
+        const APCGroupReserver::APCInitialIdentityStruct& container_configuration
     ) noexcept;
 
     void InitNodeSemantics(
         uint64_t aux_param_uint48 = UNSIGNED_ZERO
-    ) noexcept;
-
-
-    void InitRootOrChildBranch(
-        uint64_t branch_id,
-        uint64_t logical_node_id,
-        uint64_t shared_id,
-        size_t total_capacity,
-        const ContainerConf& container_configuration,
-        bool is_root_shared = true,
-        uint64_t aux_param_uint48 = UNSIGNED_ZERO,
-        uint64_t branch_depth = UNSIGNED_ZERO,
-        uint64_t branch_priority = UNSIGNED_ZERO
     ) noexcept;
 
     uint64_t ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode idx) noexcept;
@@ -157,7 +147,7 @@ public:
 
     bool TrySetLayoutMutationInFlight() noexcept;
 
-    bool TryExtendInternalPagedNode(APCPagedNodeSegmentClasses desired_rel_mask, uint32_t wanted_amount, ContainerConf::APCSegmentExtendOrder desired_apc_order) noexcept;
+    bool TryExtendInternalPagedNode(APCPagedNodeSegmentClasses desired_rel_mask, uint32_t wanted_amount, APCGroupReserver::APCInitialIdentityStruct::APCSegmentExtendOrder desired_apc_order) noexcept;
 
     clk16_t ReadLastAcceptedClok16ForThisSegment(APCPagedNodeSegmentClasses region_kind) noexcept;
     clk16_t ReadLastEmittedClok16ForThisSegment(APCPagedNodeSegmentClasses region_kind) noexcept;
@@ -218,16 +208,6 @@ public:
         return static_cast<uint32_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::TOTAL_CAPACITY_OF_THIS_SEGEMENT));
     }
 
-    uint32_t MaxDepthRead() noexcept
-    {
-        return static_cast<uint32_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::MAX_DEPTH));
-    }
-
-    uint32_t CurrentBranchDepthRead() noexcept
-    {
-        return static_cast<uint32_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::BRANCH_DEPTH));
-    }
-
     void MakeAPCBranchOwned() noexcept
     {
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::CURRENTLY_OWNED, 1u);
@@ -237,12 +217,6 @@ public:
     void ResetTotalCASFailureForThisBranch() noexcept
     {
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH, UNSIGNED_ZERO);
-    }
-
-    bool SetSegmentRegionKind(APCPagedNodeSegmentClasses region_kind) noexcept
-    {
-        const uint64_t current_segment_kind = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SEGMENT_KIND);
-        return ReplaceOnlyMetaCellValue(MetaIndexOfAPCNode::SEGMENT_KIND, current_segment_kind, static_cast<uint32_t>(region_kind));
     }
 
     packed64_t ReadCentralAPCOccupancyCellForThisPagedNode() noexcept

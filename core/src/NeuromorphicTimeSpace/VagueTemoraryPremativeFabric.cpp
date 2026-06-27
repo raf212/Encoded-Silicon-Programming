@@ -8,9 +8,7 @@ namespace PredictedAdaptedEncoding
 
     std::optional<uint64_t> VagueTemoraryPremativeFabric::ConstructAnAPC_(   
         AdaptivePackedCellContainer& desired_apc,     
-        const ContainerConf& container_conf,
-        uint64_t shared_id,
-        uint64_t logical_id
+        APCGroupReserver::APCInitialIdentityStruct& container_conf
     ) noexcept
     {
         if (desired_apc.IfAPCBranchValid())
@@ -116,16 +114,12 @@ namespace PredictedAdaptedEncoding
         }
 
         const uint64_t branch_id = HashIdConstructror::MakeARandom48bitValue();
-        const uint64_t final_logical_id = (logical_id == UNSIGNED_ZERO || logical_id >= PackedCell64_t::BIT_FAMILY_48_SENTINAL) ? branch_id : logical_id;
-        const uint64_t final_shared_id = (shared_id == UNSIGNED_ZERO || shared_id >= PackedCell64_t::BIT_FAMILY_48_SENTINAL) ? branch_id : shared_id;
+        const uint64_t final_logical_id = 000000;
+        const uint64_t final_shared_id = 0000000;
 
         if (!desired_apc.InitOnFabricBackingAfterBind(
             capacity,
-            container_conf, 
-            branch_id,
-            final_logical_id,
-            final_shared_id,
-            true
+            container_conf
         ))
         {
             desired_apc.FreeAll();

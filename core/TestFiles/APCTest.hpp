@@ -623,7 +623,7 @@
 //     void InitNode(
 //         APCSegmentsCausalCordinator& node,
 //         PackedCellContainerManager& manager,
-//         const ContainerConf& cfg,
+//         const APCGroupReserver::APCInitialIdentityStruct& cfg,
 //         uint32_t aux = 0
 //     )
 //     {
@@ -718,7 +718,7 @@
 //     Timer48 timer;
 //     MasterClockConf clock(nullptr, timer);
 
-//     ContainerConf cfg;
+//     APCGroupReserver::APCInitialIdentityStruct cfg;
 //     cfg.InitialMode = PackedMode::MODEL32;
 //     cfg.ProducerBlockSize = 4;
 //     cfg.RegionSize = 8;

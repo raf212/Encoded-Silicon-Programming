@@ -295,22 +295,15 @@ void ThroughputTest()
 
     // Timer48 timer;
 
-    ContainerConf cfg;
+    APCGroupReserver::APCInitialIdentityStruct cfg;
     cfg.InitialMode = PackedMode::VALUE32;
-    cfg.ProducerBlockSize = 8;
-    cfg.RegionSize = 16;
-    cfg.EnableBranching = true;
-    cfg.BranchSplitThresholdPercentage = 40;
-    cfg.BranchMaxDepth = 6;
-    cfg.BranchMinChildCapacity = 256;
-    cfg.NodeGroupSize = 1u;
 
 
     VagueTemoraryPremativeFabric silicon_local_fabric{};
 
     if (!silicon_local_fabric.InitializeFabricWithPtrTable(
             1024,
-            cfg.BranchMinChildCapacity,
+            MINIMUM_BRANCH_CAPACITY,
             APCDataStructure::BRANCH_VERSION,
             DEFAULT_THREAD_TABLE_CAPACITY))
     {
@@ -325,11 +318,11 @@ void ThroughputTest()
     AdaptivePackedCellContainer Motor;
 
     const bool roots_ok =
-        silicon_local_fabric.ConstructAnAPC_(Sensor, cfg, 1u, 1u).has_value() &&
-        silicon_local_fabric.ConstructAnAPC_(Predictor, cfg, 2u, 2u).has_value() &&
-        silicon_local_fabric.ConstructAnAPC_(Comparator, cfg, 3u, 3u).has_value() &&
-        silicon_local_fabric.ConstructAnAPC_(Integrator, cfg, 4u, 4u).has_value() &&
-        silicon_local_fabric.ConstructAnAPC_(Motor, cfg, 5u, 5u).has_value();
+        silicon_local_fabric.ConstructAnAPC_(Sensor, cfg).has_value() &&
+        silicon_local_fabric.ConstructAnAPC_(Predictor, cfg).has_value() &&
+        silicon_local_fabric.ConstructAnAPC_(Comparator, cfg).has_value() &&
+        silicon_local_fabric.ConstructAnAPC_(Integrator, cfg).has_value() &&
+        silicon_local_fabric.ConstructAnAPC_(Motor, cfg).has_value();
     if (!roots_ok)
     {
         return;

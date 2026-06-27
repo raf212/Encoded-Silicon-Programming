@@ -25,20 +25,20 @@ namespace PredictedAdaptedEncoding
             SHARED_ID_ACCESS_KEY = 79,
             LOGICAL_ID_ACCESS_KEY = 80,
             //LINKED SEQUENTIAL CHAIN
-            SHARED_SEQUENTIAL_IDX_COUNT = 81,
-            LOGICAL_SEQUENTIAL_IDX_COUNT = 82,
+            SHARED_SEQUENTIAL_IDX_COUNT = 8,
+            LOGICAL_SEQUENTIAL_IDX_COUNT = 9,
             SHARED_GROUP_SEQUENTIAL_PREVIOUS_IDX = 6,
             SHARED_GROUP_SEQUENTIAL_NEXT_IDX = 7,
+            LOGICAL_GROUP_SEQUENTIAL_NEXT_IDX = 17,
+            LOGICAL_GROUP_SEQUENTIAL_PREVIOUS_IDX = 19,
         RETIRED_ACCESS_LOCK = 78,
         ///
 
         // runtime-control
-        BRANCH_DEPTH = 8,
-        MAX_DEPTH = 9,
         BRANCH_PRIORITY = 10,
         CURRENT_ACTIVE_THREADS = 11,
         SPLIT_THRESHOLD_PERCENTAGE = 12,
-        SEGMENT_KIND = 13,
+        // RESERVED = 13,
 
         // payload / capacity
         TOTAL_CAPACITY_OF_THIS_SEGEMENT = 14,
@@ -48,9 +48,6 @@ namespace PredictedAdaptedEncoding
         LAST_SPLIT_EPOCH = 16,
 
         // region summary
-        REGION_DIR_COUNT = 17,
-        REGION_SIZE = 18,
-        REGION_COUNT = 19,
         PAGED_NODE_READY_BIT = 20,
         PRODUCER_BLOCK_SIZE = 21,
         BACKGROUND_EPOCH_ADVANCE_MS = 22,
@@ -122,7 +119,10 @@ namespace PredictedAdaptedEncoding
         EDGE_TABLE_COUNT = 76,
         WEIGHT_TABLE_COUNT = 77,
 
-        RESERVED = 85,
+        // RESERVED = 18,
+        // RESERVED = 82,
+        // RESERVED = 81,
+        // RESERVED = 85,
         // amount / end marker
         EOF_APC_HEADER = 95
     };

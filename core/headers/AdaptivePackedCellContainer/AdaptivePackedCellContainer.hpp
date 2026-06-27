@@ -32,9 +32,6 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
 
         size_t MakeProbeStepCoPrime_(size_t seed, size_t region_capacity) const noexcept;
 
-
-        bool RebuildRegionIndexFromPayload_() noexcept;
-
         uint32_t SuggestedInternalAPCExpension_(CompleteAPCNodeRegionsLayout* complete_layout, uint8_t prefared_percentage_of_free = 50) noexcept;
 
         uint16_t ComputeAdaptivemaxTreies_(packed64_t packed_cell) noexcept;
@@ -152,13 +149,7 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
 
         bool InitOnFabricBackingAfterBind(
             size_t capacity,
-            ContainerConf container_cfg,
-            uint64_t branch_id,
-            uint64_t logical_id,
-            uint64_t shared_id,
-            bool is_shared_root,
-            uint64_t aux_param48 = UNSIGNED_ZERO,
-            uint64_t branch_depth = UNSIGNED_ZERO
+            APCGroupReserver::APCInitialIdentityStruct container_cfg
         ) noexcept
         {
             if (
@@ -179,17 +170,10 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
             }
 
             InitRootOrChildBranch(
-                branch_id,
-                logical_id,
-                shared_id,
                 capacity,
-                container_cfg,
-                is_shared_root,
-                aux_param48,
-                branch_depth
+                container_cfg
             );
 
-            container_cfg.NodeGroupSize = 1u;
             InitZeroState_();
             return true;
         }

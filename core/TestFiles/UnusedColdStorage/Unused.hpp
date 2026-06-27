@@ -96,7 +96,7 @@ namespace PredictedAdaptedEncoding
 
 
     // AdaptivePackedCellContainer* VagueTemoraryPremativeFabric::GetDeafultInitializedAPCFromFabric(
-    //     const ContainerConf& container_conf,
+    //     const APCGroupReserver::APCInitialIdentityStruct& container_conf,
     //     uint64_t shared_id,
     //     uint64_t logical_id
     // ) noexcept
