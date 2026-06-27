@@ -14,12 +14,12 @@ namespace PredictedAdaptedEncoding
 
     uint64_t AdaptivePackedCellContainer::GetLogicalId() noexcept
     {
-        return ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::LOGICAL_NODE_ID);
+        return ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::LOGICAL_GROUP_ID);
     }
 
     uint64_t AdaptivePackedCellContainer::GetSharedId() noexcept
     {
-            return ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SHARED_ID);
+            return ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SHARED_GROUP_ID);
     }
 
     size_t AdaptivePackedCellContainer::ReserveProducerSlots(size_t number_of_slots) noexcept

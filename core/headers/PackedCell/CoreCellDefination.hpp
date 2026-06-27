@@ -7,6 +7,8 @@ namespace PredictedAdaptedEncoding
     struct PackedCell64_t  : public PackedCellSetters
     {
         static constexpr uint64_t BIT_FAMILY_48_SENTINAL = 0xFFFFFFFFFFFF;
+        static constexpr uint64_t APC_FABRIC_SLOT_LIMIT = BIT_FAMILY_48_SENTINAL - 1;
+
 
         static constexpr bool IsThisCellValid(packed64_t packed_cell) noexcept
         {

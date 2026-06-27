@@ -102,10 +102,10 @@ namespace PredictedAdaptedEncoding
         bool is_root_shared
     ) noexcept
     {
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LOGICAL_NODE_ID, logical_node_id);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_ID, shared_id);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_PREVIOUS_ID, APC_META_CELL_SENTINAL);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_NEXT_ID, APC_META_CELL_SENTINAL);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LOGICAL_GROUP_ID, logical_node_id);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_GROUP_ID, shared_id);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_GROUP_SEQUENTIAL_PREVIOUS_IDX, APC_META_CELL_SENTINAL);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_GROUP_SEQUENTIAL_NEXT_IDX, APC_META_CELL_SENTINAL);
         if (is_root_shared)
         {
             TurnOnMultipleSegmentFlagsAtOnce_(static_cast<uint32_t>(ControlEnumOfAPCSegment::IS_GRAPH_NODE) | static_cast<uint32_t>(ControlEnumOfAPCSegment::IS_SHARED_ROOT));

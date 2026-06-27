@@ -49,7 +49,7 @@ namespace PredictedAdaptedEncoding
         APC_SEGMENTPOOL_END_SLAB = 3,
         NEXT_APC_SAGMANTPOOL_BEGAIN = 4,
         LOGICAL_ID = 5,
-        SHARED_ID = 6,
+        SHARED_GROUP_ID = 6,
         RELATION_HEADS = 7,
         RETIRE_EPOCH48 = 8,
         APC_FLAGS_FOR_THIS = 9,

@@ -26,15 +26,8 @@ namespace PredictedAdaptedEncoding
     #define MAX_TIMER_DOWNSHIFT 14
     #define A_BILLION 1000000000ull
     #define THRESHHOLD_64BIT 1e-12
-    //AtomicAdaptiveBackoff
-    #define BURNCYCLE_THRESHOLD 4
-    #define PAUSE_THRESHOLD 16
-    #define YIELD_THRESHOLD 48
-    #define MINIMUM_SLEEP_THRASHOLD_US 8
-    //manager
-    #define BIT_PATTERN_THREAD_TOKEN_GENERATOR 0xA5A5A5A5u
+    ////
 
-    static constexpr size_t SIZE_OF_A_PAIR =( 2 * sizeof(uint64_t));
     static constexpr size_t BIT_LENGTH_OF_A_PACKED_CELL = 64;
     static constexpr uint8_t SIZE_OF_CACHELINE = 64;
     static constexpr uint8_t CACHELINE_BOUNDRY = 16;

@@ -113,20 +113,59 @@ protected:
 
 struct HashIdConstructror
 {
+    static constexpr uint64_t GROUP_IDX_BIT_BOUNDRY = 16u;
+    static constexpr uint64_t GROUP_SEQUENTIAL_INDEX_MASK = UINT16_MAX;
+    static constexpr uint64_t GROUP_PREFIX_MASK = UINT32_MAX;
+
     /// @brief VALIDATES THE RAW ID 
     static constexpr bool IsValidAPCId48(uint64_t value) noexcept
     {
         return value != UNSIGNED_ZERO && value < APCDataStructure::APC_META_CELL_SENTINAL;
     }
 
+    /// @brief Branch ID = FABRIC::APC SLOT IDX + 1
+    /// @param apc_slot_index APC SLO IDX < UINT48_MAX - 1
+    /// @return IF IDX VALID -> BRANCH ID  / INVALID: -> UINT64_MAX
     static constexpr uint64_t GetBranchIdFromAPCSlotIdx(uint64_t apc_slot_index) noexcept
     {
+        if (apc_slot_index >= PackedCell64_t::APC_FABRIC_SLOT_LIMIT)
+        {
+            return PackedCell64_t::PACKED_CELL_SENTINAL;
+        }
+        
         return apc_slot_index + 1u;
     }
 
+    /// @brief APC SLOT IDX = FABRIC::BRANCH ID - 1
+    /// @param branch_id BRANCH ID < UINT48_MAX - 1
+    /// @return IF ID VALID -> SLOT IDX / INVALID: -> UINT64_MAX
     static constexpr uint64_t GetSlotIdxFromBranchId(uint64_t branch_id) noexcept
     {
+        if (!IsValidAPCId48(branch_id))
+        {
+            return PackedCell64_t::PACKED_CELL_SENTINAL;
+        }
+        
         return branch_id - 1;
+    }
+
+    /// @brief CREATS: HASH KEY: Based On a Desired SHARED / LOGICAL Group ID
+    /// @param sequential_idx_of_desired_id SEQUENTIAL IDX < UINT16_MAX - 1
+    /// @return IF INVALID: UINT64_MAX
+    static constexpr uint64_t MakeGroupAccessKey48(uint64_t group_id, uint64_t sequential_idx_of_desired_id) noexcept
+    {
+        if (
+            group_id == UNSIGNED_ZERO ||
+            group_id > GROUP_SEQUENTIAL_INDEX_MASK ||
+            sequential_idx_of_desired_id > APCDataStructure::APC_ALL_INDEX_LIMIT
+        )
+        {
+            return PackedCell64_t::PACKED_CELL_SENTINAL;
+        }
+
+        const uint64_t key = ((group_id & GROUP_PREFIX_MASK) << GROUP_IDX_BIT_BOUNDRY) | (sequential_idx_of_desired_id & GROUP_SEQUENTIAL_INDEX_MASK);
+
+        return IsValidAPCId48(key) ? key : PackedCell64_t::PACKED_CELL_SENTINAL;
     }
 };
 

@@ -487,7 +487,7 @@ struct DescriptionOfAPC
         SetADescriptionInCellBuffer(apc_description_buffer, APCDescriptorCellType::APC_SEGMENTPOOL_END_SLAB, segment_pool_end, cell_locality);
         SetADescriptionInCellBuffer(apc_description_buffer, APCDescriptorCellType::NEXT_APC_SAGMANTPOOL_BEGAIN, segment_pool_begin_for_next_apc, cell_locality);
         SetADescriptionInCellBuffer(apc_description_buffer, APCDescriptorCellType::LOGICAL_ID, UNSIGNED_ZERO, cell_locality);
-        SetADescriptionInCellBuffer(apc_description_buffer, APCDescriptorCellType::SHARED_ID, UNSIGNED_ZERO, cell_locality);
+        SetADescriptionInCellBuffer(apc_description_buffer, APCDescriptorCellType::SHARED_GROUP_ID, UNSIGNED_ZERO, cell_locality);
         SetADescriptionInCellBuffer(apc_description_buffer, APCDescriptorCellType::RELATION_HEADS, UNSIGNED_ZERO, cell_locality);
         SetADescriptionInCellBuffer(apc_description_buffer, APCDescriptorCellType::RETIRE_EPOCH48, UNSIGNED_ZERO, cell_locality);
         SetADescriptionInCellBuffer(apc_description_buffer, APCDescriptorCellType::APC_FLAGS_FOR_THIS, UNSIGNED_ZERO, cell_locality);

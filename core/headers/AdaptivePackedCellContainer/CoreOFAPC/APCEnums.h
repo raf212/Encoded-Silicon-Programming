@@ -17,10 +17,10 @@ namespace PredictedAdaptedEncoding
 
         // logical-node identity
         BRANCH_ID = 3,
-        LOGICAL_NODE_ID = 4,
-        SHARED_ID = 5,
-        SHARED_PREVIOUS_ID = 6,
-        SHARED_NEXT_ID = 7,
+        LOGICAL_GROUP_ID = 4,
+        SHARED_GROUP_ID = 5,
+        SHARED_GROUP_SEQUENTIAL_PREVIOUS_IDX = 6,
+        SHARED_GROUP_SEQUENTIAL_NEXT_IDX = 7,
 
         // runtime-control
         BRANCH_DEPTH = 8,
