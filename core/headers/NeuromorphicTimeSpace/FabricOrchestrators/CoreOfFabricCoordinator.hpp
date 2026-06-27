@@ -157,7 +157,8 @@ namespace PredictedAdaptedEncoding
 
     struct CoreOfFabricCoordinator
     {
-
+        static constexpr uint32_t FABRIC_MAGIC = 0x41504643u;
+        static constexpr uint32_t FABRIC_META_EOF = 0x41474946u;
         static constexpr uint8_t EACH_TABLE_RECORD_SENTINAL = UINT8_MAX;
 
         static constexpr bool IsValidHashTable(FabricTableSegmentClasses table_class) noexcept
@@ -344,15 +345,7 @@ namespace PredictedAdaptedEncoding
             
         }
 
-        static constexpr uint64_t GetBranchIdFromAPCSlotIdx(uint64_t apc_slot_index) noexcept
-        {
-            return apc_slot_index + 1u;
-        }
 
-        static constexpr uint64_t GetSlotIdxFromBranchId(uint64_t branch_id) noexcept
-        {
-            return branch_id - 1;
-        }
     
     };
 

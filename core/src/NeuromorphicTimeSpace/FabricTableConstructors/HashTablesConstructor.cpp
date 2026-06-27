@@ -224,7 +224,7 @@ namespace PredictedAdaptedEncoding
 
     uint64_t HashTablesConstructor::GetDescriptorBeginIdxAsBranchIdHasValue(uint64_t branch_id) noexcept
     {
-        const uint64_t apc_slot_idx = CoreOfFabricCoordinator::GetSlotIdxFromBranchId(branch_id);
+        const uint64_t apc_slot_idx = APCDataStructure::GetSlotIdxFromBranchId(branch_id);
         const APCDescriptorRange range_of_desired_description = ReadARangeOfAPCDescription_(apc_slot_idx);
         if (range_of_desired_description.IsVAlid)
         {

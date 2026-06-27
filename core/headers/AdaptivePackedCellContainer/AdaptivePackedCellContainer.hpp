@@ -32,7 +32,6 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
 
         size_t MakeProbeStepCoPrime_(size_t seed, size_t region_capacity) const noexcept;
 
-        bool RebuildSharedChainSegmentMetatdataFromRoot_() noexcept;
 
         bool RebuildRegionIndexFromPayload_() noexcept;
 

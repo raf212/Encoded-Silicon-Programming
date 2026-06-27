@@ -8,8 +8,8 @@ namespace PredictedAdaptedEncoding
 
 struct LayoutBoundsOfSingleRelNodeClass
 {
-    uint32_t BeginIndex = APCDataStructure::BRANCH_SENTINAL;
-    uint32_t EndIndex = APCDataStructure::BRANCH_SENTINAL;
+    uint32_t BeginIndex = BIT_FAMILY_32_SENTINAL;
+    uint32_t EndIndex = BIT_FAMILY_32_SENTINAL;
     APCPagedNodeSegmentClasses PAGE_LAYOUT_CLASS = APCPagedNodeSegmentClasses::NULLNAN;
     float InitialOrCurrentPercentage = 0u;
     uint16_t VersionNumber = 0u;
@@ -182,7 +182,7 @@ struct LayoutBoundsOfSingleRelNodeClass
             return false;
         }
 
-        const uint64_t raw48 = ContainerInvarients::AutoExtractDataOfAValidAPCCell(packed_cell, true);
+        const uint64_t raw48 = APCDataStructure::AutoExtractDataOfAValidAPCCell(packed_cell, true);
         
         return Subdevision16x3InternalMode48CellModel::ExtractLowMidHighFromMode48_(raw48, begin_index, end_index, version_count);
     }
@@ -198,8 +198,8 @@ struct CompleteAPCNodeRegionsLayout
     ) noexcept
     {
         return LayoutBoundsOfSingleRelNodeClass{
-            APCDataStructure::BRANCH_SENTINAL,
-            APCDataStructure::BRANCH_SENTINAL,
+            BIT_FAMILY_32_SENTINAL,
+            BIT_FAMILY_32_SENTINAL,
             desired_layout_class,
             static_cast<float>(initial_percentage)
         };

@@ -47,7 +47,7 @@ namespace PredictedAdaptedEncoding
         for (uint32_t attempt = 0; attempt < HARD_RESERVE_GUARD; ++attempt)
         {
             uint32_t current_producer_cursor = GetProducerCursorPlacement();
-            if (current_producer_cursor == BRANCH_SENTINAL || current_producer_cursor < PayloadBegin() || current_producer_cursor >= GetTotalCapacityForThisAPC())
+            if (current_producer_cursor == APC_META_CELL_SENTINAL || current_producer_cursor < PayloadBegin() || current_producer_cursor >= GetTotalCapacityForThisAPC())
             {
                 current_producer_cursor = PayloadBegin();
             }
@@ -80,6 +80,7 @@ namespace PredictedAdaptedEncoding
         TotalCASFailForThisBranchIncreaseAndGet(1);
         return APCDataStructure::APC_SIZE_SENTINAL;
     }
+
     
     bool AdaptivePackedCellContainer::TryPublishRegionalSharedGrowthOnce(APCPagedNodeSegmentClasses region_kind, packed64_t packed_cell) noexcept
     {
@@ -190,86 +191,6 @@ namespace PredictedAdaptedEncoding
 
         return local_result;
     }
-
-
-    bool AdaptivePackedCellContainer::RebuildSharedChainSegmentMetatdataFromRoot_() noexcept
-    {
-        AdaptivePackedCellContainer* root_apc_ptr = FindSharedRootOrThis();
-        
-        const uint64_t shared_group_id = (
-            root_apc_ptr->GetSharedId() == UNSIGNED_ZERO || root_apc_ptr->GetSharedId() == BRANCH_SENTINAL
-        ) ? root_apc_ptr->GetSlabSlotID() : root_apc_ptr->GetSharedId();
-        std::vector<AdaptivePackedCellContainer*> apc_chain;
-        AdaptivePackedCellContainer* current_apc = root_apc_ptr;
-
-        uint32_t guard = 0;
-        constexpr uint32_t HEARD_CHAIN_GUARD = 4096;
-
-        while (current_apc && guard++ < HEARD_CHAIN_GUARD)
-        {
-            apc_chain.push_back(current_apc);
-            AdaptivePackedCellContainer* next = current_apc->GetNextSharedSegment();
-            if (!next || next == current_apc)
-            {
-                break;
-            }
-            current_apc = next;
-        }
-        const uint32_t group_size = static_cast<uint32_t>(apc_chain.size());
-        for (size_t i = 0; i < apc_chain.size(); i++)
-        {
-            AdaptivePackedCellContainer* current_chain_index_apc = apc_chain[i];
-            const uint32_t expected_group_size = static_cast<uint32_t>(current_chain_index_apc->ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::NODE_GROUP_SIZE));
-            current_chain_index_apc->ReplaceOnlyMetaCellValue(MetaIndexOfAPCNode::NODE_GROUP_SIZE, expected_group_size, group_size);
-
-            const uint64_t expected_shared_id = current_chain_index_apc->ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SHARED_ID);
-            current_chain_index_apc->ReplaceOnlyMetaCellValue(MetaIndexOfAPCNode::SHARED_ID, expected_shared_id, shared_group_id);
-
-            const uint64_t previous_id = (i == 0) ? BRANCH_SENTINAL : apc_chain[i - 1]->GetSlabSlotID();
-            const uint64_t next_id = (i + 1 < apc_chain.size()) ? apc_chain[i + 1]->GetSlabSlotID() : BRANCH_SENTINAL;
-            current_chain_index_apc->ForceAutoReplaceAPCMetaCellValue(
-                MetaIndexOfAPCNode::SHARED_PREVIOUS_ID,
-                previous_id
-            );
-            current_chain_index_apc->ForceAutoReplaceAPCMetaCellValue(
-                MetaIndexOfAPCNode::SHARED_NEXT_ID,
-                next_id
-            );
-
-            if (i == 0)
-            {
-                current_chain_index_apc->TurnOnASegmentFlag(ControlEnumOfAPCSegment::IS_SHARED_ROOT);
-                current_chain_index_apc->ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::IS_SHARED_MAMBER);
-            }
-            else
-            {
-                current_chain_index_apc->TurnOnASegmentFlag(ControlEnumOfAPCSegment::IS_SHARED_MAMBER);
-                current_chain_index_apc->ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::IS_SHARED_ROOT);
-                
-            }
-            
-            if (previous_id == BRANCH_SENTINAL)
-            {
-                current_chain_index_apc->ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::HAS_SHARED_PREVIOUS);
-            }
-            else
-            {
-                current_chain_index_apc->TurnOnASegmentFlag(ControlEnumOfAPCSegment::HAS_SHARED_PREVIOUS);
-            }
-
-            if (next_id == BRANCH_SENTINAL)
-            {
-                current_chain_index_apc->ClearOneControlEnumFlagOfAPC(ControlEnumOfAPCSegment::HAS_SHARED_NEXT);
-            }
-            else
-            {
-                current_chain_index_apc->TurnOnASegmentFlag(ControlEnumOfAPCSegment::HAS_SHARED_NEXT);
-            }
-        }
-        return true;
-    }
-
-
 
     void FabricToAPCLinker::FreeAll() noexcept
     {

@@ -7,60 +7,7 @@
 namespace PredictedAdaptedEncoding
 {
 
-    struct APCDataStructure 
-    {
-        static constexpr size_t METACELL_COUNT = 96;
-        static constexpr uint32_t BRANCH_MAGIC = 0x41504342u;//big-endian
-        static constexpr uint32_t EOF_HEADER = 0x72616600;//big-endian
-        static constexpr uint16_t BRANCH_VERSION = 1u;
-        static constexpr packed64_t PACKED_CELL_SENTENAL = UINT64_MAX;
 
-        static constexpr uint32_t APC_ALL_INDEX_LIMIT = UINT16_MAX - 1;
-        static constexpr uint32_t APC_INDEX_SENTINAL = UINT16_MAX;
-        static constexpr uint32_t BRANCH_SENTINAL = BIT_FAMILY_32_SENTINAL;
-        static constexpr size_t APC_CACHELINE_SIZE = 64u;
-        static constexpr size_t APC_SIZE_SENTINAL = SIZE_MAX;
-
-        static constexpr uint32_t FABRIC_MAGIC = 0x41504643u;
-        static constexpr uint32_t FABRIC_META_EOF = 0x41474946u;
-
-protected:
-
-        static constexpr packed64_t* AllocateAlignedRawPackedCells_(size_t count)
-        {
-            if (count == UNSIGNED_ZERO)
-            {
-                return nullptr;
-            }
-
-            void* raw_ptr = nullptr;
-
-            try
-            {
-                raw_ptr = ::operator new[](sizeof(packed64_t) * count, std::align_val_t{APC_CACHELINE_SIZE});
-            }
-            catch(...)
-            {
-                return nullptr;
-            }
-            
-            auto* packed_cells = static_cast<packed64_t*>(raw_ptr);
-            for (size_t i = 0; i < count; i++)
-            {
-                packed_cells[i] = PackedCell64_t::PACKED_CELL_SENTINAL;
-            }
-            return packed_cells;
-        }
-
-        static constexpr void FreeAlignedRawPackedCells_(packed64_t* backing_ptr) noexcept
-        {
-            if (!backing_ptr)
-            {
-                return;
-            }
-            ::operator delete[](static_cast<void*>(backing_ptr), std::align_val_t{APC_CACHELINE_SIZE});
-        }
-    };
 
     struct Timer48
     {
@@ -205,10 +152,5 @@ protected:
 
 };
 
-struct PublishResult
-{
-    PublishStatus ResultStatus{PublishStatus::INVALID};
-    size_t Index{APCDataStructure::APC_SIZE_SENTINAL};
-};
 
 }

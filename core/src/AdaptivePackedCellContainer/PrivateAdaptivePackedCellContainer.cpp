@@ -35,7 +35,7 @@ namespace PredictedAdaptedEncoding
             {
                 *did_changed_easy_return = false;
             }
-            return SegmentIODefinition::BRANCH_SENTINAL;
+            return BIT_FAMILY_32_SENTINAL;
         }
         
         while (true)
@@ -49,7 +49,7 @@ namespace PredictedAdaptedEncoding
 
             else if (increment_or_decrement_of_cursor != 0)
             {
-                if (current_cursor_placement == SegmentIODefinition::BRANCH_SENTINAL)
+                if (current_cursor_placement == APC_META_CELL_SENTINAL)
                 {
                     if (did_changed_easy_return)
                     {
@@ -65,7 +65,7 @@ namespace PredictedAdaptedEncoding
                     {
                         *did_changed_easy_return = false;
                     }
-                    return SegmentIODefinition::BRANCH_SENTINAL;
+                    return BIT_FAMILY_32_SENTINAL;
                 }
                 
                 size_t current_placement = static_cast<size_t>(PayloadBegin());
@@ -434,7 +434,7 @@ namespace PredictedAdaptedEncoding
             ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE);
 
         if (split_threshold == 0u ||
-            split_threshold == BRANCH_SENTINAL ||
+            split_threshold == APC_META_CELL_SENTINAL ||
             split_threshold > 100u)
         {
             split_threshold = INITIAL_BRANCH_SPLIT_THRESHOLD_PERCENTAGE;
@@ -443,8 +443,8 @@ namespace PredictedAdaptedEncoding
         const uint64_t cas_failure = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH);
 
         const bool high_contention =
-            cas_failure != BRANCH_SENTINAL &&
-            cas_failure > static_cast<uint32_t>(used_occupancy + 4u);
+            cas_failure != APC_META_CELL_SENTINAL &&
+            cas_failure > (used_occupancy + 4u);
 
         const bool near_full =
             pressure_percentage + 10u >= split_threshold;

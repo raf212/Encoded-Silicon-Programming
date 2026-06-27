@@ -65,7 +65,7 @@ namespace PredictedAdaptedEncoding
 
     void SlabToFabricConverterAndCordinator::InitializeCompleateFabricMetaIndices_(size_t record_book_begin, size_t record_book_end) noexcept
     {
-        MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::MAGIC, APCDataStructure::FABRIC_MAGIC);
+        MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::MAGIC, CoreOfFabricCoordinator::FABRIC_MAGIC);
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::VERSION, APCDataStructure::BRANCH_VERSION);
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::FLAGS, UNSIGNED_ZERO);
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::SLAB_ID, static_cast<uint64_t>(SlabId_));
@@ -120,7 +120,7 @@ namespace PredictedAdaptedEncoding
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::RELATION_TOMBSTONE_COUNT, UNSIGNED_ZERO);
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::RELATION_UNLINK_FAILURES, UNSIGNED_ZERO);
         MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::WORK_QUEUE_CLAIM_FAILURES, UNSIGNED_ZERO);
-        MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::EOF_FABRIC_HEADER, APCDataStructure::FABRIC_META_EOF);
+        MakeAndStoreFabricMetaValue48_(FabricMetaIndicies::EOF_FABRIC_HEADER, CoreOfFabricCoordinator::FABRIC_META_EOF);
     }
 
 

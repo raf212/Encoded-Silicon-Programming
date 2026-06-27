@@ -25,7 +25,7 @@ namespace PredictedAdaptedEncoding
             return PackedCell64_t::PACKED_CELL_SENTINAL;
         }
         size_t index = static_cast<size_t>(idx);
-        return ContainerInvarients::AutoExtractDataOfAValidAPCCell(BackingPtr[index].load(MoLoad_));
+        return APCDataStructure::AutoExtractDataOfAValidAPCCell(BackingPtr[index].load(MoLoad_));
     }
 
     void SegmentIODefinition::TouchLocalMetaClock48() noexcept
@@ -81,12 +81,12 @@ namespace PredictedAdaptedEncoding
         }
         const size_t index = static_cast<size_t>(idx);
         packed64_t expected_packed = BackingPtr[index].load(MoLoad_);
-        if (ContainerInvarients::AutoExtractDataOfAValidAPCCell(expected_packed) != expected_value)
+        if (APCDataStructure::AutoExtractDataOfAValidAPCCell(expected_packed) != expected_value)
         {
             return false;
         }
 
-        const packed64_t desired_packed = ContainerInvarients::ReplaceValueInAPCTypeFamilyCell(expected_packed, desired_value, false);
+        const packed64_t desired_packed = APCDataStructure::ReplaceValueInAPCTypeFamilyCell(expected_packed, desired_value, false);
         return BackingPtr[index].compare_exchange_strong(
             expected_packed,
             desired_packed,
@@ -104,8 +104,8 @@ namespace PredictedAdaptedEncoding
     {
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LOGICAL_NODE_ID, logical_node_id);
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_ID, shared_id);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_PREVIOUS_ID, BRANCH_SENTINAL);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_NEXT_ID, BRANCH_SENTINAL);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_PREVIOUS_ID, APC_META_CELL_SENTINAL);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_NEXT_ID, APC_META_CELL_SENTINAL);
         if (is_root_shared)
         {
             TurnOnMultipleSegmentFlagsAtOnce_(static_cast<uint32_t>(ControlEnumOfAPCSegment::IS_GRAPH_NODE) | static_cast<uint32_t>(ControlEnumOfAPCSegment::IS_SHARED_ROOT));
@@ -130,12 +130,12 @@ namespace PredictedAdaptedEncoding
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LAST_EMITTED_FEED_FORWARD_CLOCK16, UNSIGNED_ZERO);
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LAST_EMITTED_FEED_BACKWARD_CLOCK16, UNSIGNED_ZERO);
 
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::FEEDFORWARD_IN_TARGET_ID, BRANCH_SENTINAL);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::FEEDFORWARD_OUT_TARGET_ID, BRANCH_SENTINAL);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::FEEDBACKWARD_IN_TARGET_ID, BRANCH_SENTINAL);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::FEEDBACKWARD_OUT_TARGET_ID, BRANCH_SENTINAL);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LATERAL_0_TARGET_ID, BRANCH_SENTINAL);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LATERAL_1_TARGET_ID, BRANCH_SENTINAL);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::FEEDFORWARD_IN_TARGET_ID, APC_META_CELL_SENTINAL);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::FEEDFORWARD_OUT_TARGET_ID, APC_META_CELL_SENTINAL);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::FEEDBACKWARD_IN_TARGET_ID, APC_META_CELL_SENTINAL);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::FEEDBACKWARD_OUT_TARGET_ID, APC_META_CELL_SENTINAL);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LATERAL_0_TARGET_ID, APC_META_CELL_SENTINAL);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LATERAL_1_TARGET_ID, APC_META_CELL_SENTINAL);
     }
 
 
@@ -157,13 +157,13 @@ namespace PredictedAdaptedEncoding
             return;
         }
 
-        const uint32_t safe_capacity = static_cast<uint32_t>(std::min<size_t>(total_capacity, BRANCH_SENTINAL));
+        const uint64_t safe_capacity = static_cast<uint16_t>(std::min<size_t>(total_capacity, APC_ALL_INDEX_LIMIT));
 
         const uint32_t region_count = container_configuration.RegionSize == 0 ? 0 : static_cast<uint32_t>((std::max<size_t>(total_capacity, METACELL_COUNT) - METACELL_COUNT + container_configuration.RegionSize - 1) / container_configuration.RegionSize);
-        const uint64_t resolve_shared_id = (shared_id == UNSIGNED_ZERO || shared_id == BRANCH_SENTINAL) ? branch_id : shared_id;
+        const uint64_t resolve_shared_id = (shared_id == UNSIGNED_ZERO || shared_id == APC_META_CELL_SENTINAL) ? branch_id : shared_id;
         
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::MAGIC_ID, BRANCH_MAGIC);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::BRANCH_ID, static_cast<uint64_t>(std::min<uint64_t>(branch_id, BRANCH_SENTINAL)));
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::BRANCH_ID, static_cast<uint64_t>(std::min<uint64_t>(branch_id, APC_META_CELL_SENTINAL)));
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION, BRANCH_VERSION);
 
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::BRANCH_DEPTH, branch_depth);
@@ -256,18 +256,18 @@ namespace PredictedAdaptedEncoding
 
     bool SegmentIODefinition::TryBindPortTarget(MetaIndexOfAPCNode port_meta_idx, uint64_t target_branch_id) noexcept
     {
-        if (target_branch_id == BRANCH_SENTINAL)
+        if (target_branch_id == APC_META_CELL_SENTINAL)
         {
             return false;
         }
         while (true)
         {
-            const uint32_t current_meta_value = static_cast<uint32_t>(ReadValuFromAPCMetaIndecies(port_meta_idx));
+            const uint64_t current_meta_value = ReadValuFromAPCMetaIndecies(port_meta_idx);
             if (current_meta_value == target_branch_id)
             {
                 return true;
             }
-            if (current_meta_value != BRANCH_SENTINAL)
+            if (current_meta_value != APC_META_CELL_SENTINAL)
             {
                 return false;
             }
@@ -351,9 +351,9 @@ namespace PredictedAdaptedEncoding
         while (true)
         {
             uint64_t current_total_cas_failure = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH);
-            if (current_total_cas_failure == BRANCH_SENTINAL)
+            if (current_total_cas_failure == APC_META_CELL_SENTINAL)
             {
-                return BRANCH_SENTINAL;
+                return APC_META_CELL_SENTINAL;
             }
             
             if (ReplaceOnlyMetaCellValue(MetaIndexOfAPCNode::TOTAL_CAS_FAILURE_FOR_THIS_APC_BRANCH, current_total_cas_failure, current_total_cas_failure + increment))
@@ -546,12 +546,12 @@ namespace PredictedAdaptedEncoding
 
     bool SegmentIODefinition::TrySetLayoutMutationInFlight() noexcept
     {
-        const uint32_t bit = static_cast<uint32_t>(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
+        const uint64_t bit = static_cast<uint64_t>(ControlEnumOfAPCSegment::LAYOUT_MUTATION_INFLIGHT);
 
         while (true)
         {
-            const uint32_t current_flags = static_cast<uint32_t>(ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS));
-            if (current_flags == BRANCH_SENTINAL)
+            const uint64_t current_flags = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS);
+            if (current_flags == APC_META_CELL_SENTINAL)
             {
                 return false;
             }
@@ -559,7 +559,7 @@ namespace PredictedAdaptedEncoding
             {
                 return false;
             }
-            const uint32_t desired_flags = current_flags | bit;
+            const uint64_t desired_flags = current_flags | bit;
             if (ReplaceOnlyMetaCellValue(
                 MetaIndexOfAPCNode::SEGMENT_CONF_FLAGS,
                 current_flags,
@@ -888,7 +888,7 @@ namespace PredictedAdaptedEncoding
             uint16_t faulty_count = UNSIGNED_ZERO;
             //
 
-            const uint64_t raw48 = ContainerInvarients::AutoExtractDataOfAValidAPCCell(observed_cell);
+            const uint64_t raw48 = APCDataStructure::AutoExtractDataOfAValidAPCCell(observed_cell);
 
             if (!Subdevision16x3InternalMode48CellModel::ExtractLowMidHighFromMode48_(raw48, published_count, claimed_count, faulty_count))
             {

@@ -252,7 +252,7 @@ namespace PredictedAdaptedEncoding
         while (true)
         {
             const uint64_t current_flags = ReadValuFromAPCMetaIndecies(desired_flag_idx);
-            if (current_flags == BRANCH_SENTINAL)
+            if (current_flags == APC_META_CELL_SENTINAL)
             {
                 return false;
             }
