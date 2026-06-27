@@ -2,7 +2,7 @@
 #pragma once 
 #include <array>
 #include <utility>
-#include "CoreOfAPC.hpp"
+#include "ConstructorsAndCarriersOfAPC.hpp"
 
 namespace PredictedAdaptedEncoding
 {
@@ -20,22 +20,6 @@ struct APCDataStructure
     static constexpr uint32_t APC_INDEX_SENTINAL = UINT16_MAX;
     static constexpr size_t APC_CACHELINE_SIZE = 64u;
     static constexpr size_t APC_SIZE_SENTINAL = SIZE_MAX;
-
-    /// @brief VALIDATES THE RAW ID 
-    static constexpr bool IsValidAPCId48(uint64_t value) noexcept
-    {
-        return value != UNSIGNED_ZERO && value < APC_META_CELL_SENTINAL;
-    }
-
-    static constexpr uint64_t GetBranchIdFromAPCSlotIdx(uint64_t apc_slot_index) noexcept
-    {
-        return apc_slot_index + 1u;
-    }
-
-    static constexpr uint64_t GetSlotIdxFromBranchId(uint64_t branch_id) noexcept
-    {
-        return branch_id - 1;
-    }
 
 
     static constexpr uint64_t AutoExtractDataOfAValidAPCCell(
@@ -127,10 +111,50 @@ protected:
 };
 
 
+struct HashIdConstructror
+{
+    /// @brief VALIDATES THE RAW ID 
+    static constexpr bool IsValidAPCId48(uint64_t value) noexcept
+    {
+        return value != UNSIGNED_ZERO && value < APCDataStructure::APC_META_CELL_SENTINAL;
+    }
+
+    static constexpr uint64_t GetBranchIdFromAPCSlotIdx(uint64_t apc_slot_index) noexcept
+    {
+        return apc_slot_index + 1u;
+    }
+
+    static constexpr uint64_t GetSlotIdxFromBranchId(uint64_t branch_id) noexcept
+    {
+        return branch_id - 1;
+    }
+};
+
+
+
 struct PublishResult
 {
     PublishStatus ResultStatus{PublishStatus::INVALID};
     size_t Index{APCDataStructure::APC_SIZE_SENTINAL};
+};
+
+
+struct Timer48
+{
+    static constexpr uint64_t TicksPerSec_ = A_BILLION;
+
+    static constexpr uint64_t NowTicks() noexcept
+    {
+        using  cns = std::chrono::nanoseconds;
+        auto d = std::chrono::steady_clock::now().time_since_epoch();
+        uint64_t ns_count = static_cast<uint64_t>(std::chrono::duration_cast<cns>(d).count());
+        return ns_count & MaskLowNBits(FAMILY_48_BIT_LEN);
+    }
+
+    static constexpr uint16_t NowClock16() noexcept
+    {
+        return static_cast<uint16_t>(NowTicks() & MaskLowNBits(LOW16_BIT_LEN));
+    }
 };
 
 }

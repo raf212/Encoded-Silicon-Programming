@@ -98,7 +98,7 @@ public:
             return nullptr;
         }
         
-        return GetAPCRuntimePtr(APCDataStructure::GetSlotIdxFromBranchId(branch_id));
+        return GetAPCRuntimePtr(HashIdConstructror::GetSlotIdxFromBranchId(branch_id));
     }
 
 };

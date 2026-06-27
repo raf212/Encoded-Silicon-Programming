@@ -115,7 +115,7 @@ namespace PredictedAdaptedEncoding
             return std::nullopt;
         }
 
-        const uint64_t branch_id = APCDataStructure::GetBranchIdFromAPCSlotIdx(desired_apc_slot);
+        const uint64_t branch_id = HashIdConstructror::GetBranchIdFromAPCSlotIdx(desired_apc_slot);
         const uint64_t final_logical_id = (logical_id == UNSIGNED_ZERO || logical_id >= PackedCell64_t::BIT_FAMILY_48_SENTINAL) ? branch_id : logical_id;
         const uint64_t final_shared_id = (shared_id == UNSIGNED_ZERO || shared_id >= PackedCell64_t::BIT_FAMILY_48_SENTINAL) ? branch_id : shared_id;
 
