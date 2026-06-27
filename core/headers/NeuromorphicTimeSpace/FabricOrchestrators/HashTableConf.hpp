@@ -144,7 +144,7 @@ struct HashTableConf : public HashHelpers
 
     /// @brief Cell DEFAULTS: TypeFamily::VALUE48 + AccessContractOfValue::CLAIMED_GURDED + AttributePolicy::DEPENDENT_OR_INSTRUCTION_CELL
     /// @return VALID -> Packed Cell -> OR: UINT64_MAX:: if FabricTableSegmentClasses dosent belong  BRANCH_HASH, SHARED_HASH, LOGICAL_HASH
-    static constexpr packed64_t MakeHashKeyOrValueCell(
+    static constexpr packed64_t MakeAHashValueCell(
         uint64_t hash_key_or_value,
         FabricTableSegmentClasses hash_table_class, 
         LocalityPolicy locality = LocalityPolicy::IDLE
@@ -155,9 +155,7 @@ struct HashTableConf : public HashHelpers
             return PackedCell64_t::PACKED_CELL_SENTINAL;
         }
 
-        if (locality == LocalityPolicy::PUBLISHED && 
-            (hash_key_or_value == UNSIGNED_ZERO || hash_key_or_value >= HASH_TOMBSTONE_KEY)
-        )
+        if (locality == LocalityPolicy::PUBLISHED && HashIdConstructror::IsValidAPCId48(hash_key_or_value))
         {
             return PackedCell64_t::PACKED_CELL_SENTINAL;
         }
@@ -171,6 +169,57 @@ struct HashTableConf : public HashHelpers
             AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
             hash_key_or_value
         );
+    }
+
+    static constexpr packed64_t MakeHashIdKeyCell(
+        uint64_t  key48,
+        FabricTableSegmentClasses hash_table,
+        LocalityPolicy locality = LocalityPolicy::IDLE
+    ) noexcept
+    {
+        
+        if (locality == LocalityPolicy::PUBLISHED && !HashIdConstructror::IsValidAPCId48(key48))
+        {
+            return PackedCell64_t::PACKED_CELL_SENTINAL;
+        }
+
+        if (IsGroupableHashTable(hash_table))
+        {
+            const std::optional<uint32_t> prefix_32 = HashIdConstructror::GroupPreFix32FromKey48(key48);
+            const std::optional<uint16_t> sequential_index = HashIdConstructror::GetSeqIndexOfAHashKey(key48);
+
+            if (!prefix_32.has_value() || !sequential_index.has_value())
+            {
+                return PackedCell64_t::PACKED_CELL_SENTINAL;
+            }
+            
+            if (locality == LocalityPolicy::PUBLISHED && prefix_32.value() == UNSIGNED_ZERO)
+            {
+                return PackedCell64_t::PACKED_CELL_SENTINAL;
+            }
+            
+            return PackedCell64_t::MakeModeledFabricValidPackedCell(
+                ModelFamily::MODEL32,
+                static_cast<tag8_t>(Model32Subclass::SELF_CLASS),
+                hash_table,
+                locality,
+                InternalDataTypePolicy ::UnsignedPCellDataType,
+                AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
+                prefix_32.value(),
+                sequential_index.value()
+            );
+        }
+        
+        return PackedCell64_t::MakeTypedFabricValidPackedCell(
+            TypeFamily::VALUE48, 
+            AccessContractOfValue::CLAIMED_GURDED, 
+            hash_table, 
+            locality,
+            InternalDataTypePolicy::UnsignedPCellDataType, 
+            AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
+            key48
+        );
+
     }
 
 
@@ -340,13 +389,13 @@ struct HashTableConf : public HashHelpers
 
         BuildEmptyHashBuffer(desired_buffer);
 
-        desired_buffer[key_idx] = MakeHashKeyOrValueCell(
+        desired_buffer[key_idx] = MakeHashIdKeyCell(
             provided_hash_files.HashKey,
             provided_hash_files.HashTable,
             provided_hash_files.AttachedLocality
         );
 
-        desired_buffer[value_idx] = MakeHashKeyOrValueCell(
+        desired_buffer[value_idx] = MakeAHashValueCell(
             provided_hash_files.HashValue,
             provided_hash_files.HashTable,
             provided_hash_files.AttachedLocality
@@ -387,8 +436,6 @@ struct HashTableConf : public HashHelpers
         return a_hash_buffer[VALIDATION_INDEX_HASH_BUFFER] == VALIDATION_MARK_OF_HASH_TABLE_BUFFER;  
     }
 
-
-
     static constexpr void RestHashFilesCarrier(HashFilesCarrier& a_file_carrier) noexcept
     {
         a_file_carrier.HashValue = UNSIGNED_ZERO;
@@ -399,6 +446,10 @@ struct HashTableConf : public HashHelpers
         a_file_carrier.IsValid = false;
     }
 
+    static constexpr bool IsGroupableHashTable(FabricTableSegmentClasses hash_table) noexcept
+    {
+        return hash_table == FabricTableSegmentClasses::LOGICAL_HASH || hash_table == FabricTableSegmentClasses::SHARED_HASH;
+    }
 
 };
 

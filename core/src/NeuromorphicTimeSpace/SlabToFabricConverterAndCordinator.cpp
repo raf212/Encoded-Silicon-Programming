@@ -142,7 +142,8 @@ namespace PredictedAdaptedEncoding
         }
 
         
-        const packed64_t idle_key_value = HashTableConf::MakeHashKeyOrValueCell(UNSIGNED_ZERO, hash_table, LocalityPolicy::IDLE);
+        const packed64_t idle_key = HashTableConf::MakeHashIdKeyCell(UNSIGNED_ZERO, hash_table, LocalityPolicy::IDLE);
+        const packed64_t idle_value = HashTableConf::MakeAHashValueCell(UNSIGNED_ZERO, hash_table, LocalityPolicy::IDLE);
         const packed64_t prob_distance_lock_cell_idle = HashTableConf::MakeHashProbDistanceCellWithSaftyLock(
             UNSIGNED_ZERO, UNSIGNED_ZERO, UNSIGNED_ZERO,
             hash_table, 
@@ -150,7 +151,8 @@ namespace PredictedAdaptedEncoding
         );
 
         if (
-            idle_key_value == PackedCell64_t::PACKED_CELL_SENTINAL ||
+            idle_key == PackedCell64_t::PACKED_CELL_SENTINAL ||
+            idle_value == PackedCell64_t::PACKED_CELL_SENTINAL ||
             prob_distance_lock_cell_idle == PackedCell64_t::PACKED_CELL_SENTINAL 
         )
         {
@@ -163,8 +165,8 @@ namespace PredictedAdaptedEncoding
             idx += HASH_BUCKED_WIDTH_OF_FABRIC
         )
         {
-            StorePackedCellUncheckedDirectly(idx + static_cast<size_t>(HashTableInternalIndexing::KEY_INDEX), idle_key_value);
-            StorePackedCellUncheckedDirectly(idx + static_cast<size_t>(HashTableInternalIndexing::VALUE_INDEX), idle_key_value);
+            StorePackedCellUncheckedDirectly(idx + static_cast<size_t>(HashTableInternalIndexing::KEY_INDEX), idle_key);
+            StorePackedCellUncheckedDirectly(idx + static_cast<size_t>(HashTableInternalIndexing::VALUE_INDEX), idle_value);
             StorePackedCellUncheckedDirectly(idx + static_cast<size_t>(HashTableInternalIndexing::PROB_DISTANCE_LOCK), prob_distance_lock_cell_idle);
         }
     }

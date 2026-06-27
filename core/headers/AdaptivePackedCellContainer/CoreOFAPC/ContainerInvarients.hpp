@@ -155,7 +155,7 @@ struct HashIdConstructror
     /// @brief Get 16 Bit Sequential Linked Idx From Key
     /// @param group_key48 Raw Key
     /// @return if Key VALID: -> 16 BIT SEQUENTIAL IDX / std::nullopt
-    static constexpr std::optional<uint16_t> GroupSequentialLinkedIdxFromKey48(uint64_t group_key48) noexcept
+    static constexpr std::optional<uint16_t> GetSeqIndexOfAHashKey(uint64_t group_key48) noexcept
     {
         if (!IsValidAPCId48(group_key48))
         {
