@@ -129,10 +129,17 @@ struct HashTableConf : public HashHelpers
         switch (a_cell_view.CellMode)
         {
         case PackedMode::VALUE48:
-            return a_cell_view.ContractOfValue == AccessContractOfValue::CLAIMED_GURDED;
+            return true;
 
         case PackedMode::MODEL48:
             return a_cell_view.SubClassOfModel48 == Model48Subclass::SUBDIVISION16x3_INTERNAL_CELL_MODEL;
+        
+        case PackedMode::MODEL32:
+            if (IsGroupableHashTable(a_cell_view.FabricTableSegmentClass))
+            {
+                return a_cell_view.SubClassOfModel32 == Model32Subclass::SELF_CLASS;
+            }
+            return false;
             
         default:
             return false;
@@ -275,6 +282,25 @@ struct HashTableConf : public HashHelpers
         );
     }
 
+private:
+    static constexpr uint64_t ExtractHashKey48FromValidViewUnchecked_(
+        const PackedCell64_t::AuthoritiveCellView a_key_cell_view
+    )
+    {
+        if (a_key_cell_view.CellMode == PackedMode::VALUE48)
+        {
+            return a_key_cell_view.Raw48BitInCellData;
+        }
+
+        if (a_key_cell_view.CellMode == PackedMode::MODEL32)
+        {
+            const uint64_t rebuild_group_key = HashIdConstructror::RebuildOriginalKey(a_key_cell_view.Raw32BitInCellData, a_key_cell_view.InCellClock16);
+            return HashIdConstructror::IsValidAPCId48(rebuild_group_key) ? rebuild_group_key : PackedCell64_t::PACKED_CELL_SENTINAL;
+        }
+
+        return PackedCell64_t::PACKED_CELL_SENTINAL;
+    }
+public:
 
 
     /// @brief Takes HASH: KEY + VALUE + LOCK :: TRIPLET -> VALIDSTS 
@@ -333,6 +359,13 @@ struct HashTableConf : public HashHelpers
             return invalid_value;
         }
 
+        const uint64_t maybe_rebuilded_key48 = ExtractHashKey48FromValidViewUnchecked_(key_cell_auth_view);
+        if (!HashIdConstructror::IsValidAPCId48(maybe_rebuilded_key48))
+        {
+            return invalid_value;
+        }
+        
+
         const uint16_t key_low16 = static_cast<uint16_t>(key_cell_auth_view.Raw48BitInCellData & MaskLowNBits(LOW16_BIT_LEN));
         const uint16_t value_low16 = static_cast<uint16_t>(value_cell_auth_view.Raw48BitInCellData & MaskLowNBits(LOW16_BIT_LEN));
 
@@ -343,7 +376,7 @@ struct HashTableConf : public HashHelpers
         {
             return HashFilesCarrier{
                 value_cell_auth_view.Raw48BitInCellData,
-                key_cell_auth_view.Raw48BitInCellData,
+                maybe_rebuilded_key48,
                 lowest_prob_distance,
                 value_cell_auth_view.FabricTableSegmentClass,
                 value_cell_auth_view.LocalityOfCell,
@@ -353,7 +386,7 @@ struct HashTableConf : public HashHelpers
 
         return HashFilesCarrier{
             value_cell_auth_view.Raw48BitInCellData,
-            key_cell_auth_view.Raw48BitInCellData,
+            maybe_rebuilded_key48,
             lowest_prob_distance,
             value_cell_auth_view.FabricTableSegmentClass,
             value_cell_auth_view.LocalityOfCell,

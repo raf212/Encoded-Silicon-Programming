@@ -165,6 +165,11 @@ struct HashIdConstructror
         return static_cast<uint16_t>(group_key48 & GROUP_SEQUENTIAL_INDEX_MASK);
     }
 
+    static constexpr uint64_t RebuildOriginalKey(uint32_t prefix32, uint16_t index16) noexcept
+    {
+        return (static_cast<uint64_t>(prefix32) << GROUP_IDX_BIT_BOUNDRY | static_cast<uint64_t>(index16));
+    }
+
     static uint64_t MakeARandom48bitValue() noexcept
     {
         static std::atomic<uint64_t> global_counter{1u};
