@@ -11,8 +11,6 @@ namespace PredictedAdaptedEncoding
 
         std::optional<uint64_t> FindHashValue48_(FabricTableSegmentClasses hash_table, uint64_t key48) noexcept;
 
-        uint64_t GetDescriptorBeginIdxAsBranchIdHasValue(uint64_t branch_id) noexcept;
-        
     public:
         /// @brief Takes Base Bucket Index -> GATHER: 3 Cells -> CALLS: HashTableConf::ReadKeyValueProbFromValidCells
         /// @param bucked_base_index First Index In Slab For That Hash SIMPLY: HashTableInternalIndexing::KEY_INDEX OF: ANY: Hash Table

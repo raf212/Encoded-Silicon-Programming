@@ -115,7 +115,7 @@ namespace PredictedAdaptedEncoding
             return std::nullopt;
         }
 
-        const uint64_t branch_id = HashIdConstructror::GetBranchIdFromAPCSlotIdx(desired_apc_slot);
+        const uint64_t branch_id = HashIdConstructror::MakeARandom48bitValue();
         const uint64_t final_logical_id = (logical_id == UNSIGNED_ZERO || logical_id >= PackedCell64_t::BIT_FAMILY_48_SENTINAL) ? branch_id : logical_id;
         const uint64_t final_shared_id = (shared_id == UNSIGNED_ZERO || shared_id >= PackedCell64_t::BIT_FAMILY_48_SENTINAL) ? branch_id : shared_id;
 
@@ -140,14 +140,14 @@ namespace PredictedAdaptedEncoding
         }
 
 
-        const uint64_t description_begin_in_slab = GetDescriptorBeginIdxAsBranchIdHasValue(branch_id);
-        if (description_begin_in_slab == UNSIGNED_ZERO || description_begin_in_slab >= PackedCell64_t::BIT_FAMILY_48_SENTINAL)
+        const uint64_t branch_retire_lock = 00000000000000;
+        if (branch_retire_lock == UNSIGNED_ZERO || branch_retire_lock >= PackedCell64_t::BIT_FAMILY_48_SENTINAL)
         {
             desired_apc.FreeAll();
             return std::nullopt;
         }
         
-        const bool branch_ok = InsertOrUpdateRobinHoodHash48_(FabricTableSegmentClasses::BRANCH_HASH, branch_id, description_begin_in_slab);
+        const bool branch_ok = InsertOrUpdateRobinHoodHash48_(FabricTableSegmentClasses::BRANCH_HASH, branch_id, branch_retire_lock);
         const bool logical_ok = InsertOrUpdateRobinHoodHash48_(FabricTableSegmentClasses::LOGICAL_HASH, final_logical_id, branch_id);
         const bool shared_ok = InsertOrUpdateRobinHoodHash48_(FabricTableSegmentClasses::SHARED_HASH, final_shared_id, branch_id);
 

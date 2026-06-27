@@ -15,12 +15,22 @@ namespace PredictedAdaptedEncoding
         FABRIC_FLAG = 1,
         SEGMENT_CONF_FLAGS = 2,
 
-        // logical-node identity
-        BRANCH_ID = 3,
-        LOGICAL_GROUP_ID = 4,
-        SHARED_GROUP_ID = 5,
-        SHARED_GROUP_SEQUENTIAL_PREVIOUS_IDX = 6,
-        SHARED_GROUP_SEQUENTIAL_NEXT_IDX = 7,
+        // FABRIC_INFO
+        APC_SLOT_IDX = 84,
+            //ID
+            BRANCH_ID = 3,
+            LOGICAL_GROUP_ID = 4,
+            SHARED_GROUP_ID = 5,
+            //KEY
+            SHARED_ID_ACCESS_KEY = 79,
+            LOGICAL_ID_ACCESS_KEY = 80,
+            //LINKED SEQUENTIAL CHAIN
+            SHARED_SEQUENTIAL_IDX_COUNT = 81,
+            LOGICAL_SEQUENTIAL_IDX_COUNT = 82,
+            SHARED_GROUP_SEQUENTIAL_PREVIOUS_IDX = 6,
+            SHARED_GROUP_SEQUENTIAL_NEXT_IDX = 7,
+        RETIRED_ACCESS_LOCK = 78,
+        ///
 
         // runtime-control
         BRANCH_DEPTH = 8,
@@ -112,14 +122,7 @@ namespace PredictedAdaptedEncoding
         EDGE_TABLE_COUNT = 76,
         WEIGHT_TABLE_COUNT = 77,
 
-        // FABRIC_INFO
-        RETIRED_ACCESS_KEY = 78,
-        SHARED_ID_ACCESS_KEY = 79,
-        LOGICAL_ID_ACCESS_KEY = 80,
-        SHARED_COUNT = 81,
-        LOGICAL_COUNT = 82,
-
-
+        RESERVED = 85,
         // amount / end marker
         EOF_APC_HEADER = 95
     };

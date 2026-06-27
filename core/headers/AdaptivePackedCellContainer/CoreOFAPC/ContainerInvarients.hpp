@@ -95,9 +95,6 @@ struct APCDataStructure
     }
 
 protected:
-
-
-
         static constexpr void FreeAlignedRawPackedCells_(packed64_t* backing_ptr) noexcept
         {
             if (!backing_ptr)
@@ -123,32 +120,6 @@ struct HashIdConstructror
         return value != UNSIGNED_ZERO && value < APCDataStructure::APC_META_CELL_SENTINAL;
     }
 
-    /// @brief Branch ID = FABRIC::APC SLOT IDX + 1
-    /// @param apc_slot_index APC SLO IDX < UINT48_MAX - 1
-    /// @return IF IDX VALID -> BRANCH ID  / INVALID: -> UINT64_MAX
-    static constexpr uint64_t GetBranchIdFromAPCSlotIdx(uint64_t apc_slot_index) noexcept
-    {
-        if (apc_slot_index >= PackedCell64_t::APC_FABRIC_SLOT_LIMIT)
-        {
-            return PackedCell64_t::PACKED_CELL_SENTINAL;
-        }
-        
-        return apc_slot_index + 1u;
-    }
-
-    /// @brief APC SLOT IDX = FABRIC::BRANCH ID - 1
-    /// @param branch_id BRANCH ID < UINT48_MAX - 1
-    /// @return IF ID VALID -> SLOT IDX / INVALID: -> UINT64_MAX
-    static constexpr uint64_t GetSlotIdxFromBranchId(uint64_t branch_id) noexcept
-    {
-        if (!IsValidAPCId48(branch_id))
-        {
-            return PackedCell64_t::PACKED_CELL_SENTINAL;
-        }
-        
-        return branch_id - 1;
-    }
-
     /// @brief CREATS: HASH KEY: Based On a Desired SHARED / LOGICAL Group ID
     /// @param sequential_idx_of_desired_id SEQUENTIAL IDX < UINT16_MAX - 1
     /// @return IF INVALID: UINT64_MAX
@@ -167,6 +138,82 @@ struct HashIdConstructror
 
         return IsValidAPCId48(key) ? key : PackedCell64_t::PACKED_CELL_SENTINAL;
     }
+
+    /// @brief Get 32 Bit Prefix of A Group Key Can be used to set a Different sequential idx to find linked APC's
+    /// @param group_key48 Raw key
+    /// @return If Key VALID: -> 32 BIT PREFIX / std::nullopt
+    static constexpr std::optional<uint32_t> GroupPreFix32FromKey48(uint64_t group_key48) noexcept
+    {
+        if (!IsValidAPCId48(group_key48))
+        {
+            return std::nullopt;
+        }
+        
+        return static_cast<uint32_t>((group_key48 >> GROUP_IDX_BIT_BOUNDRY) & GROUP_PREFIX_MASK);
+    }
+
+    /// @brief Get 16 Bit Sequential Linked Idx From Key
+    /// @param group_key48 Raw Key
+    /// @return if Key VALID: -> 16 BIT SEQUENTIAL IDX / std::nullopt
+    static constexpr std::optional<uint16_t> GroupSequentialLinkedIdxFromKey48(uint64_t group_key48) noexcept
+    {
+        if (!IsValidAPCId48(group_key48))
+        {
+            return std::nullopt;
+        }
+
+        return static_cast<uint16_t>(group_key48 & GROUP_SEQUENTIAL_INDEX_MASK);
+    }
+
+    static uint64_t MakeARandom48bitValue() noexcept
+    {
+        static std::atomic<uint64_t> global_counter{1u};
+
+        auto SplitMix64 = [](uint64_t x) noexcept -> uint64_t
+        {
+            x += 0x9E3779B97F4A7C15ull;
+            x = (x ^ (x >> 30u)) * 0xBF58476D1CE4E5B9ull;
+            x = (x ^ (x >> 27u)) * 0x94D049BB133111EBull;
+            x = x ^ (x >> 31u);
+            return x;
+        };
+
+        uint64_t random_seed = global_counter.fetch_add(1, std::memory_order_acq_rel);
+
+        random_seed ^= static_cast<uint64_t>(
+            std::chrono::high_resolution_clock::now().time_since_epoch().count()
+        );
+
+        random_seed ^= reinterpret_cast<uint64_t>(&random_seed);
+
+        try
+        {
+            std::random_device random_device;
+            random_seed ^= (static_cast<uint64_t>(random_device()) << VALBITS);
+            random_seed ^= static_cast<uint64_t>(random_device());
+        }
+        catch(...)
+        {
+            random_seed ^= 0xD6E8FEB86659FD93ull;
+        }
+
+        for (uint32_t attempt = 0; attempt < 8u; attempt++)
+        {
+            random_seed = SplitMix64(random_seed);
+            const uint64_t seed48 = random_seed & MaskLowNBits(TOTAL_LOW);
+
+            if (seed48 != UNSIGNED_ZERO && seed48 < PackedCell64_t::BIT_FAMILY_48_SENTINAL)
+            {
+                return seed48;
+            }
+        }
+        
+        const uint64_t fallback = SplitMix64(global_counter.fetch_add(1u, std::memory_order_acq_rel)) & MaskLowNBits(TOTAL_LOW);
+
+        return fallback!= UNSIGNED_ZERO && fallback < PackedCell64_t::BIT_FAMILY_48_SENTINAL ? fallback : PackedCell64_t::PACKED_CELL_SENTINAL;
+
+    }
+
 };
 
 

@@ -91,14 +91,14 @@ public:
         ShutDownFabric();
     }
 
-    AdaptivePackedCellContainer* GetAPCRuntimePtrByBranchId(uint64_t branch_id) noexcept
+    AdaptivePackedCellContainer* GetAPCRuntimePtrByBranchId(uint64_t apc_slot_idx) noexcept
     {
-        if (branch_id == UNSIGNED_ZERO || branch_id >= PackedCell64_t::BIT_FAMILY_48_SENTINAL)
+        if (apc_slot_idx == UNSIGNED_ZERO || apc_slot_idx >= PackedCell64_t::BIT_FAMILY_48_SENTINAL)
         {
             return nullptr;
         }
         
-        return GetAPCRuntimePtr(HashIdConstructror::GetSlotIdxFromBranchId(branch_id));
+        return GetAPCRuntimePtr(apc_slot_idx);
     }
 
 };
