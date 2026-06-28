@@ -16,7 +16,7 @@ protected:
     packed64_t* OwnedRawBackingCells_{nullptr};
     APCBackingCellAtomicRefViewTemp* OwnedBackingView_{nullptr};
     VagueTemoraryPremativeFabric* FabricOwnerPtr_{nullptr};
-    uint64_t FabricSlotIndex_{APCDataStructure::APC_SIZE_SENTINAL};
+    uint64_t IdxOfThisAPCInFabric_{APCDataStructure::APC_SIZE_SENTINAL};
     bool FabricBackend_{false};
     bool FabricObjectOwnedByFabric_{false};
 
@@ -29,13 +29,6 @@ protected:
 
     void ReleseFabricBindingOnly_() noexcept;
 
-    template<size_t NUMBER_OF_CELLS>
-    bool ClaimAndCopyToAPCFromArray(
-        size_t slab_starting_idx,
-        size_t sequential_number_of_cells,
-        const std::array<packed64_t, NUMBER_OF_CELLS>& source_cells
-    ) noexcept;
-
 public:
     APCBackingCellAtomicRefViewTemp* BackingPtr{nullptr};
 
@@ -43,7 +36,27 @@ public:
 
     void SetFabricOwnerForGlobalAPC(VagueTemoraryPremativeFabric* fabric_owner) noexcept;
 
+    template<size_t NUMBER_OF_CELLS>
+    bool ClaimAndCopyToAPCFromArray(
+        size_t starting_idx_in_apc,
+        size_t sequential_number_of_cells,
+        const std::array<packed64_t, NUMBER_OF_CELLS>& source_cells
+    ) noexcept;
 
+    template<size_t NUMBER_OF_CELLS>
+    bool ForceCopyToAPCFromArray(
+        size_t starting_idx_in_apc,
+        size_t sequential_number_of_cells,
+        const std::array<packed64_t, NUMBER_OF_CELLS>& source_cells
+    ) noexcept;
+
+
+    template<size_t NUMBER_OF_CELLS>
+    bool CopyFromAPCToANArrayBuffer(
+        size_t starting_idx_in_apc,
+        size_t sequential_number_of_cells,
+        const std::array<packed64_t, NUMBER_OF_CELLS>& source_cells
+    ) noexcept;
 
 
     bool IsFabricBackend() const noexcept
@@ -53,7 +66,7 @@ public:
 
     uint64_t GetFabricSlotIndex() const noexcept
     {
-        return FabricSlotIndex_;
+        return IdxOfThisAPCInFabric_;
     }
 
     VagueTemoraryPremativeFabric* GetFabricOwner() noexcept

@@ -51,7 +51,6 @@ namespace PredictedAdaptedEncoding
         /// @param number_of_cells Number Of CElls Wants Claimed
         bool ClaimNxSequentialPackedCellStrong_(size_t slab_idx, size_t number_of_cells) noexcept;
 
-
         /// @brief Copys From the Pointing Memory -> SlabBasePtr_ :: desired Number Of Cells 
         /// @param slab_starting_idx The Starting Index of SlabBasePtr_ From Where Copy Starts
         /// @param sequential_number_of_cells Number Of Packed Cells to be Copied
@@ -71,7 +70,6 @@ namespace PredictedAdaptedEncoding
                 false
             );
         }
-
 
         /// @brief Copys From the Pointing Memory -> SlabBasePtr_ :: desired Number Of Cells 
         /// @param slab_starting_idx The Starting Index of SlabBasePtr_ From Where Copy Starts
@@ -93,6 +91,12 @@ namespace PredictedAdaptedEncoding
             );
         }
 
+        template<size_t NUMBER_OF_CELLS>
+        bool ReadASnapShotFromSlab(
+            size_t slab_starting_idx,
+            size_t sequential_count,
+            const std::array<packed64_t, NUMBER_OF_CELLS>& return_buffer
+        ) noexcept;
 
     private:
 

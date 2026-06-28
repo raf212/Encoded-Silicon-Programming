@@ -422,4 +422,32 @@ namespace PredictedAdaptedEncoding
         return true;
     }
 
+    template<size_t NUMBER_OF_CELLS>
+    bool FabricConstructor::ReadASnapShotFromSlab(
+        size_t slab_starting_idx,
+        size_t sequential_count,
+        const std::array<packed64_t, NUMBER_OF_CELLS>& return_buffer
+    ) noexcept
+    {
+        if (
+            !SlabBasePtr_ ||
+            !return_buffer ||
+            slab_starting_idx >= SlabCellCount_ ||
+            sequential_count == UNSIGNED_ZERO ||
+            sequential_count > SlabCellCount_ - slab_starting_idx
+        )
+        {
+            return false;
+        }
+
+        std::memcpy(
+            return_buffer,
+            &SlabBasePtr_[slab_starting_idx],
+            sequential_count * sizeof(packed64_t)
+        );
+
+        return true;
+    }
+
+
 }
