@@ -104,8 +104,8 @@ namespace PredictedAdaptedEncoding
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::BRANCH_ID, UNSIGNED_ZERO);
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LOGICAL_GROUP_ID, container_configuration.LogicalId);
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_GROUP_ID, container_configuration.SharedID);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_ID_ACCESS_KEY, container_configuration.SharedAcessKey);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LOGICAL_ID_ACCESS_KEY, container_configuration.LogicalAcessKey);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_ID_ACCESS_KEY, container_configuration.SharedHashKey);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LOGICAL_ID_ACCESS_KEY, container_configuration.LogicalHashKey);
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_SEQUENTIAL_IDX_COUNT, UNSIGNED_ZERO);
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LOGICAL_SEQUENTIAL_IDX_COUNT, UNSIGNED_ZERO);
 

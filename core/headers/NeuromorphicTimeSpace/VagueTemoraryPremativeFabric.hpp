@@ -69,6 +69,10 @@ private:
 
 public:
 
+    bool ResolveIDConfOfAPC(
+        APCGroupReserver::APCInitialIdentityStruct& a_initial_acp_conf
+    ) noexcept;
+
     std::optional<uint64_t> ConstructAnAPC_(   
         AdaptivePackedCellContainer& desired_apc,     
         APCGroupReserver::APCInitialIdentityStruct& container_conf

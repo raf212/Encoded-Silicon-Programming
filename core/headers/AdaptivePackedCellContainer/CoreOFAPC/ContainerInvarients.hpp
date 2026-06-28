@@ -122,6 +122,15 @@ struct HashIdConstructror
 
 struct APCGroupReserver
 {
+    enum class APCIdentityDef : uint8_t
+    {
+        INVALID = 0,
+        ROOT = 1,
+        CHILD = 2,
+        DEFAULT_ASSIGNMENT = 3,
+        NULL_USER_INSTRUCTION = 4
+    };
+
     struct APCInitialIdentityStruct
     {
         PackedMode InitialMode = PackedMode::UNASSIGNED_UNUSED_NANNULL;
@@ -129,8 +138,8 @@ struct APCGroupReserver
         uint64_t BranchID = PackedCell64_t::PACKED_CELL_SENTINAL;
         uint64_t SharedID = PackedCell64_t::PACKED_CELL_SENTINAL;
         uint64_t LogicalId = PackedCell64_t::PACKED_CELL_SENTINAL;
-        uint64_t SharedAcessKey = PackedCell64_t::PACKED_CELL_SENTINAL;
-        uint64_t LogicalAcessKey = PackedCell64_t::PACKED_CELL_SENTINAL;
+        uint64_t SharedHashKey = PackedCell64_t::PACKED_CELL_SENTINAL;
+        uint64_t LogicalHashKey = PackedCell64_t::PACKED_CELL_SENTINAL;
         uint64_t SharedPreviousId = PackedCell64_t::PACKED_CELL_SENTINAL;
         uint64_t SharedNextId = PackedCell64_t::PACKED_CELL_SENTINAL;
         uint64_t LogicalPreviousId = PackedCell64_t::PACKED_CELL_SENTINAL;
@@ -139,8 +148,10 @@ struct APCGroupReserver
         uint16_t LogicalSequentalCount = APCDataStructure::APC_INDEX_SENTINAL;
 
         bool MinimalValid = false;
-        bool IsVarticalChild = false;
-        bool IsHorizontalChild = false;
+        APCIdentityDef HorizontalSharedState = APCIdentityDef::INVALID;
+        APCIdentityDef VarticalLogicState  = APCIdentityDef::INVALID;
+        bool IsAPCRootOfThisLocic = false;
+
 
         enum class APCSegmentExtendOrder : uint8_t
         {
@@ -153,13 +164,69 @@ struct APCGroupReserver
 
     static constexpr bool IsMinimalValidIdentity(APCInitialIdentityStruct& a_initial_apc_conf) noexcept
     {
-        if (a_initial_apc_conf.InitialMode != PackedMode::UNASSIGNED_UNUSED_NANNULL && a_initial_apc_conf.APCSlotIndex < PackedCell64_t::APC_FABRIC_SLOT_LIMIT)
+        if (
+            a_initial_apc_conf.InitialMode != PackedMode::UNASSIGNED_UNUSED_NANNULL && 
+            APCDataStructure::IsSlotIdxInBound(a_initial_apc_conf.APCSlotIndex)
+        )
         {
             a_initial_apc_conf.MinimalValid = true;
             return true;
         }
         return false;
     }
+
+    static constexpr void CheckAndEnableDynamicChild(APCInitialIdentityStruct& a_initial_acp_conf) noexcept
+    {
+        if (IsMinimalValidIdentity(a_initial_acp_conf))
+        {
+            if (HashIdConstructror::IsValidAPCId48(a_initial_acp_conf.SharedID))
+            {
+                a_initial_acp_conf.HorizontalSharedState = APCIdentityDef::DEFAULT_ASSIGNMENT;
+            }
+            if (HashIdConstructror::IsValidAPCId48(a_initial_acp_conf.LogicalId))
+            {
+                a_initial_acp_conf.VarticalLogicState = APCIdentityDef::DEFAULT_ASSIGNMENT;
+            }
+        }
+    }
+
+    static constexpr uint64_t APCSlotIdxToHashTableHandler(uint64_t apc_slot_idx) noexcept
+    {
+        if (APCDataStructure::IsSlotIdxInBound(apc_slot_idx + 1))
+        {
+            return apc_slot_idx + 1;
+        }
+        return PackedCell64_t::PACKED_CELL_SENTINAL;
+    }
+
+    static constexpr uint64_t HashTableHandlerToAPCSlotIdx(uint64_t handler) noexcept
+    {
+        if (handler > UNSIGNED_ZERO && APCDataStructure::IsSlotIdxInBound(handler))
+        {
+            return handler - 1;
+        }
+        return PackedCell64_t::PACKED_CELL_SENTINAL;
+    }
+
+    // static constexpr bool ValidateKeyIdPairs(APCInitialIdentityStruct& identinty_struct) noexcept
+    // {
+    //     auto shared_prefix = HashIdConstructror::GroupPreFix32FromKey48(identinty_struct.SharedHashKey);
+    //     auto shared_horizontal_idx = HashIdConstructror::GetSeqIndexOfAHashKey(identinty_struct.SharedHashKey);
+
+    // }
+
+    // static constexpr bool IsIdentityRoot(APCInitialIdentityStruct& idintity_struct, FabricTableSegmentClasses hash_table)
+    // {
+    //     switch (hash_table)
+    //     {
+    //     case FabricTableSegmentClasses::SHARED_HASH:
+            
+    //         break;
+        
+    //     default:
+    //         break;
+    //     }
+    // }
 
 
     

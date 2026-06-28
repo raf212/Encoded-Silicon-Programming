@@ -199,4 +199,58 @@ namespace PredictedAdaptedEncoding
     }
 
 
+    bool VagueTemoraryPremativeFabric::ResolveIDConfOfAPC(
+        APCGroupReserver::APCInitialIdentityStruct& a_initial_acp_conf
+    ) noexcept
+    {
+        if (!APCGroupReserver::IsMinimalValidIdentity(a_initial_acp_conf) || a_initial_acp_conf.APCSlotIndex >= CountOfAPC_)
+        {
+            a_initial_acp_conf.MinimalValid = false;
+            return false;
+        }
+
+        APCGroupReserver::CheckAndEnableDynamicChild(a_initial_acp_conf);
+
+        a_initial_acp_conf.BranchID = HashIdConstructror::MakeARandom48bitValue();
+
+
+        if (a_initial_acp_conf.HorizontalSharedState != APCGroupReserver::APCIdentityDef::INVALID)
+        {
+            a_initial_acp_conf.SharedHashKey = HashIdConstructror::MakeGroupAccessKey48(a_initial_acp_conf.SharedID, UNSIGNED_ZERO);
+
+            const std::optional<uint64_t> maybe_root_branch_handle = FindHashValue48_(FabricTableSegmentClasses::SHARED_HASH, a_initial_acp_conf.SharedHashKey);
+            if (!maybe_root_branch_handle.has_value())
+            {
+                if (!InsertOrUpdateRobinHoodHash48_(
+                    FabricTableSegmentClasses::SHARED_HASH,
+                    a_initial_acp_conf.SharedHashKey, 
+                    APCGroupReserver::APCSlotIdxToHashTableHandler(a_initial_acp_conf.APCSlotIndex)
+                ))
+                {
+                    return false;
+                }
+
+                a_initial_acp_conf.SharedPreviousId = UNSIGNED_ZERO;
+                a_initial_acp_conf.SharedNextId = UNSIGNED_ZERO;
+                a_initial_acp_conf.HorizontalSharedState = APCGroupReserver::APCIdentityDef::ROOT;
+            }
+
+            const uint64_t root_apc_slot_idx = APCGroupReserver::HashTableHandlerToAPCSlotIdx(*maybe_root_branch_handle);
+            AdaptivePackedCellContainer* root_apc = GetAPCRuntimePtr(root_apc_slot_idx);
+            if (!root_apc || !root_apc->IfAPCBranchValid())
+            {
+                return false;  ///////????
+            }
+            
+            
+
+        }
+
+
+
+        
+        return true;
+    }
+
+
 }

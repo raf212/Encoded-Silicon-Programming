@@ -94,6 +94,13 @@ struct APCDataStructure
 
     }
 
+
+    static constexpr bool IsSlotIdxInBound(uint64_t apc_slot_idx) noexcept
+    {
+        return apc_slot_idx < PackedCell64_t::APC_FABRIC_SLOT_LIMIT;
+    }
+
+
 protected:
         static constexpr void FreeAlignedRawPackedCells_(packed64_t* backing_ptr) noexcept
         {

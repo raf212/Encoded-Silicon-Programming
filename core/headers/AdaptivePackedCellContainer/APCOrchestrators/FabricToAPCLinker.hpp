@@ -29,12 +29,21 @@ protected:
 
     void ReleseFabricBindingOnly_() noexcept;
 
+    template<size_t NUMBER_OF_CELLS>
+    bool ClaimAndCopyToAPCFromArray(
+        size_t slab_starting_idx,
+        size_t sequential_number_of_cells,
+        const std::array<packed64_t, NUMBER_OF_CELLS>& source_cells
+    ) noexcept;
+
 public:
     APCBackingCellAtomicRefViewTemp* BackingPtr{nullptr};
 
     void FreeAll() noexcept;
 
     void SetFabricOwnerForGlobalAPC(VagueTemoraryPremativeFabric* fabric_owner) noexcept;
+
+
 
 
     bool IsFabricBackend() const noexcept
