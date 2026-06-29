@@ -152,7 +152,7 @@ struct HashTableConf : public HashHelpers
     /// @brief Cell DEFAULTS: TypeFamily::VALUE48 + AccessContractOfValue::CLAIMED_GURDED + AttributePolicy::DEPENDENT_OR_INSTRUCTION_CELL
     /// @return VALID -> Packed Cell -> OR: UINT64_MAX:: if FabricTableSegmentClasses dosent belong  BRANCH_HASH, SHARED_HASH, LOGICAL_HASH
     static constexpr packed64_t MakeAHashValueCell(
-        uint64_t hash_key_or_value,
+        uint64_t hash_handle,
         FabricTableSegmentClasses hash_table_class, 
         LocalityPolicy locality = LocalityPolicy::IDLE
     ) noexcept
@@ -162,7 +162,7 @@ struct HashTableConf : public HashHelpers
             return PackedCell64_t::PACKED_CELL_SENTINAL;
         }
 
-        if (locality == LocalityPolicy::PUBLISHED && HashIdConstructror::IsValidAPCId48(hash_key_or_value))
+        if (locality == LocalityPolicy::PUBLISHED && HashIdConstructror::IsValidHashHandle(hash_handle))
         {
             return PackedCell64_t::PACKED_CELL_SENTINAL;
         }
@@ -174,7 +174,7 @@ struct HashTableConf : public HashHelpers
             locality,
             InternalDataTypePolicy::UnsignedPCellDataType, 
             AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
-            hash_key_or_value
+            hash_handle
         );
     }
 
@@ -184,6 +184,10 @@ struct HashTableConf : public HashHelpers
         LocalityPolicy locality = LocalityPolicy::IDLE
     ) noexcept
     {
+        if (!CoreOfFabricCoordinator::IsValidHashTable(hash_table))
+        {
+            return PackedCell64_t::PACKED_CELL_SENTINAL;
+        }
         
         if (locality == LocalityPolicy::PUBLISHED && !HashIdConstructror::IsValidAPCId48(key48))
         {
@@ -364,10 +368,16 @@ public:
         {
             return invalid_value;
         }
-        
 
-        const uint16_t key_low16 = static_cast<uint16_t>(key_cell_auth_view.Raw48BitInCellData & MaskLowNBits(LOW16_BIT_LEN));
-        const uint16_t value_low16 = static_cast<uint16_t>(value_cell_auth_view.Raw48BitInCellData & MaskLowNBits(LOW16_BIT_LEN));
+        const uint64_t value_handle_48 =  value_cell_auth_view.Raw48BitInCellData;
+        if (!HashIdConstructror::IsValidHashHandle(value_handle_48))
+        {
+            return invalid_value;
+        }
+        
+        const uint16_t key_low16 = static_cast<uint16_t>(maybe_rebuilded_key48 & MaskLowNBits(LOW16_BIT_LEN));
+        const uint16_t value_low16 = static_cast<uint16_t>(value_handle_48 & MaskLowNBits(LOW16_BIT_LEN));
+
 
         if (
             lock_mid16_key == key_low16 &&
