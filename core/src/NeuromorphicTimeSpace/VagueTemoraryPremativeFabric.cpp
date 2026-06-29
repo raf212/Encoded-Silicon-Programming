@@ -205,11 +205,11 @@ namespace PredictedAdaptedEncoding
     {
         if (!APCGroupReserver::IsMinimalValidIdentity(a_initial_acp_conf) || a_initial_acp_conf.APCSlotIndex >= CountOfAPC_)
         {
-            a_initial_acp_conf.MinimalValid = false;
+            a_initial_acp_conf.IsAssignable = false;
             return false;
         }
 
-        APCGroupReserver::CheckAndEnableDynamicChild(a_initial_acp_conf);
+        APCGroupReserver::IsMinimalValidIdentity(a_initial_acp_conf);
 
         a_initial_acp_conf.BranchID = HashIdConstructror::MakeARandom48bitValue();
 

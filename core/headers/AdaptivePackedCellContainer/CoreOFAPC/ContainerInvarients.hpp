@@ -165,20 +165,25 @@ struct APCGroupReserver
     struct APCInitialIdentityStruct
     {
         PackedMode InitialMode = PackedMode::UNASSIGNED_UNUSED_NANNULL;
+
         uint64_t APCSlotIndex = PackedCell64_t::PACKED_CELL_SENTINAL;
         uint64_t BranchID = PackedCell64_t::PACKED_CELL_SENTINAL;
         uint64_t SharedID = PackedCell64_t::PACKED_CELL_SENTINAL;
         uint64_t LogicalId = PackedCell64_t::PACKED_CELL_SENTINAL;
+
+        uint64_t AcessPassCodeOfAPC = PackedCell64_t::PACKED_CELL_SENTINAL;
         uint64_t SharedHashKey = PackedCell64_t::PACKED_CELL_SENTINAL;
         uint64_t LogicalHashKey = PackedCell64_t::PACKED_CELL_SENTINAL;
+
         uint64_t SharedPreviousId = PackedCell64_t::PACKED_CELL_SENTINAL;
         uint64_t SharedNextId = PackedCell64_t::PACKED_CELL_SENTINAL;
         uint64_t LogicalPreviousId = PackedCell64_t::PACKED_CELL_SENTINAL;
         uint64_t LogicalNextId = PackedCell64_t::PACKED_CELL_SENTINAL;
+
         uint16_t SharedSequentialCount = APCDataStructure::APC_INDEX_SENTINAL;
         uint16_t LogicalSequentalCount = APCDataStructure::APC_INDEX_SENTINAL;
 
-        bool MinimalValid = false;
+        bool IsAssignable = false;
         APCIdentityDef HorizontalSharedState = APCIdentityDef::INVALID;
         APCIdentityDef VarticalLogicState  = APCIdentityDef::INVALID;
         bool IsAPCRootOfThisLocic = false;
@@ -192,56 +197,68 @@ struct APCGroupReserver
         };
     };
 
+    static constexpr bool IsMinimalValidAxis(const APCInitialIdentityStruct& a_initial_apc_conf) noexcept
+    {
+        return a_initial_apc_conf.HorizontalSharedState != APCIdentityDef::INVALID &&
+            a_initial_apc_conf.VarticalLogicState != APCIdentityDef::INVALID;
+    }
 
     static constexpr bool IsMinimalValidIdentity(APCInitialIdentityStruct& a_initial_apc_conf) noexcept
     {
-        if (
-            a_initial_apc_conf.InitialMode != PackedMode::UNASSIGNED_UNUSED_NANNULL && 
-            HashIdConstructror::IsValidAPCSlotIdx(a_initial_apc_conf.APCSlotIndex)
-        )
-        {
-            a_initial_apc_conf.MinimalValid = true;
-            return true;
-        }
-        return false;
-    }
-
-    static constexpr void CheckAndEnableDynamicChild(APCInitialIdentityStruct& a_initial_acp_conf) noexcept
-    {
-        if (IsMinimalValidIdentity(a_initial_acp_conf))
-        {
-            if (HashIdConstructror::IsValidAPCId48(a_initial_acp_conf.SharedID))
-            {
-                a_initial_acp_conf.HorizontalSharedState = APCIdentityDef::DEFAULT_ASSIGNMENT;
-            }
-            if (HashIdConstructror::IsValidAPCId48(a_initial_acp_conf.LogicalId))
-            {
-                a_initial_acp_conf.VarticalLogicState = APCIdentityDef::DEFAULT_ASSIGNMENT;
-            }
-        }
-    }
-
-    // static constexpr bool ValidateKeyIdPairs(APCInitialIdentityStruct& identinty_struct) noexcept
-    // {
-    //     auto shared_prefix = HashIdConstructror::GroupPreFix32FromKey48(identinty_struct.SharedHashKey);
-    //     auto shared_horizontal_idx = HashIdConstructror::GetSeqIndexOfAHashKey(identinty_struct.SharedHashKey);
-
-    // }
-
-    // static constexpr bool IsIdentityRoot(APCInitialIdentityStruct& idintity_struct, FabricTableSegmentClasses hash_table)
-    // {
-    //     switch (hash_table)
-    //     {
-    //     case FabricTableSegmentClasses::SHARED_HASH:
-            
-    //         break;
+        a_initial_apc_conf.IsAssignable = a_initial_apc_conf.InitialMode != PackedMode::UNASSIGNED_UNUSED_NANNULL &&
+            HashIdConstructror::IsValidAPCSlotIdx(a_initial_apc_conf.APCSlotIndex) &&
+            HashIdConstructror::IsValidAPCId48(a_initial_apc_conf.BranchID) &&
+            HashIdConstructror::IsValidAPCId48(a_initial_apc_conf.AcessPassCodeOfAPC) &&
+            IsMinimalValidAxis(a_initial_apc_conf);
         
-    //     default:
-    //         break;
-    //     }
-    // }
+        return a_initial_apc_conf.IsAssignable;
+    }
 
+    static constexpr APCInitialIdentityStruct MakeDefaultIdentityForAPC(PackedMode initial_mode) noexcept
+    {
+        APCInitialIdentityStruct requested_identity{};
+        requested_identity.InitialMode = initial_mode;
+        requested_identity.HorizontalSharedState = APCIdentityDef::NULL_USER_INSTRUCTION;
+        requested_identity.VarticalLogicState = APCIdentityDef::NULL_USER_INSTRUCTION;
+        return requested_identity;
+    }
 
+    static constexpr APCInitialIdentityStruct MakeAGroupedIdentityForAPC(
+        PackedMode initial_mode,
+        uint64_t shared_id,
+        uint64_t logical_id
+    ) noexcept
+    {
+        APCInitialIdentityStruct requested_identgity{};
+
+        requested_identgity.InitialMode = initial_mode;
+
+        if (HashIdConstructror::IsValidAPCId48(shared_id))
+        {
+            requested_identgity.SharedID = shared_id;
+            requested_identgity.HorizontalSharedState = APCIdentityDef::DEFAULT_ASSIGNMENT;
+        }
+        else
+        {
+            requested_identgity.HorizontalSharedState = APCIdentityDef::NULL_USER_INSTRUCTION;
+        }
+
+        if (HashIdConstructror::IsValidAPCId48(logical_id))
+        {
+            requested_identgity.LogicalId = logical_id;
+            requested_identgity.VarticalLogicState = APCIdentityDef::DEFAULT_ASSIGNMENT;
+        }
+        else
+        {
+            requested_identgity.VarticalLogicState = APCIdentityDef::NULL_USER_INSTRUCTION;
+        }
+        
+        return requested_identgity;
+        
+    }
+
+    // static constexpr bool ValidateKeyIdPairs(APCInitialIdentityStruct& identinty_struct) noexcept;
+    // static constexpr bool IsIdentityRoot(APCInitialIdentityStruct& idintity_struct, FabricTableSegmentClasses hash_table) noexcept;
     
 };
 
