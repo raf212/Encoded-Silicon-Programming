@@ -1,11 +1,11 @@
 #pragma once
-#include "APCOrchestrators/FabricToAPCLinker.hpp"
+#include "ConstructorsOfAPC/ReadAndWriteOfAPC.h"
 
 namespace PredictedAdaptedEncoding
 {
 
 
-class SegmentIODefinition : public FabricToAPCLinker
+class SegmentIODefinition : public ReadAndWriteOfAPC
 {
 public:
     SegmentIODefinition() noexcept = default;

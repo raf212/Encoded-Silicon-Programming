@@ -1,6 +1,6 @@
 #pragma once
 #include <functional>
-#include "LayoutBoundsOrchestrator.hpp"
+#include "../APCOrchestrators/LayoutBoundsOrchestrator.hpp"
 
 namespace PredictedAdaptedEncoding
 {
@@ -55,9 +55,8 @@ public:
     bool CopyFromAPCToANArrayBuffer(
         size_t starting_idx_in_apc,
         size_t sequential_number_of_cells,
-        const std::array<packed64_t, NUMBER_OF_CELLS>& source_cells
+        const std::array<packed64_t, NUMBER_OF_CELLS>& return_buffer
     ) noexcept;
-
 
     bool BindExternalRawFabricBacking_(
         packed64_t* raw_cells_ptr,
@@ -66,7 +65,6 @@ public:
         uint64_t fabric_slot_idx,
         bool object_owned_by_fabric
     ) noexcept;
-
 
     bool IsFabricBackend() const noexcept
     {
@@ -96,15 +94,6 @@ public:
     bool ValidMetaIdx(MetaIndexOfAPCNode idx) noexcept
     {
         return BackingPtr && static_cast<size_t>(idx) < CapacityOfThisAPC_ && static_cast<size_t>(idx) < METACELL_COUNT;
-    }
-
-    packed64_t ReadFullMetaCell(MetaIndexOfAPCNode idx) noexcept
-    {
-        if (ValidMetaIdx(idx))
-        {
-            return BackingPtr[static_cast<size_t>(idx)].load(MoLoad_);
-        }
-        return PACKED_CELL_SENTENAL;
     }
 
     static constexpr uint32_t PayloadBegin() noexcept

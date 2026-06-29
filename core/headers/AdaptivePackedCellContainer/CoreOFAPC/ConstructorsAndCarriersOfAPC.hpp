@@ -22,6 +22,8 @@ struct APCDataStructure
     static constexpr size_t APC_SIZE_SENTINAL = SIZE_MAX;
 
 
+    using APCMetaBuffer = std::array<packed64_t, METACELL_COUNT>;
+
     static constexpr uint64_t AutoExtractDataOfAValidAPCCell(
         packed64_t packed_cell, 
         bool is_claimed_cell_valid = false,
