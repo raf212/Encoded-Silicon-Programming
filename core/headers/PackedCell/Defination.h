@@ -27,6 +27,8 @@ namespace PredictedAdaptedEncoding
     #define A_BILLION 1000000000ull
     #define THRESHHOLD_64BIT 1e-12
     ////
+    #define DEFAULT_MAX_TRIES 128
+
 
     static constexpr size_t BIT_LENGTH_OF_A_PACKED_CELL = 64;
     static constexpr uint8_t SIZE_OF_CACHELINE = 64;

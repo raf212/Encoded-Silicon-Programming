@@ -224,7 +224,7 @@ namespace PredictedAdaptedEncoding
                 if (!InsertOrUpdateRobinHoodHash48_(
                     FabricTableSegmentClasses::SHARED_HASH,
                     a_initial_acp_conf.SharedHashKey, 
-                    APCGroupReserver::APCSlotIdxToHashTableHandler(a_initial_acp_conf.APCSlotIndex)
+                    HashIdConstructror::APCSlotIdxToHashTableHandler(a_initial_acp_conf.APCSlotIndex)
                 ))
                 {
                     return false;
@@ -235,7 +235,7 @@ namespace PredictedAdaptedEncoding
                 a_initial_acp_conf.HorizontalSharedState = APCGroupReserver::APCIdentityDef::ROOT;
             }
 
-            const uint64_t root_apc_slot_idx = APCGroupReserver::HashTableHandlerToAPCSlotIdx(*maybe_root_branch_handle);
+            const uint64_t root_apc_slot_idx = HashIdConstructror::HashTableHandlerToAPCSlotIdx(*maybe_root_branch_handle);
             AdaptivePackedCellContainer* root_apc = GetAPCRuntimePtr(root_apc_slot_idx);
             if (!root_apc || !root_apc->IfAPCBranchValid())
             {

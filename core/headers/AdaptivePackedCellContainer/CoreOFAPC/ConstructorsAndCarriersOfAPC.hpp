@@ -95,13 +95,6 @@ struct APCDataStructure
 
     }
 
-
-    static constexpr bool IsSlotIdxInBound(uint64_t apc_slot_idx) noexcept
-    {
-        return apc_slot_idx < PackedCell64_t::APC_FABRIC_SLOT_LIMIT;
-    }
-
-
 protected:
         static constexpr void FreeAlignedRawPackedCells_(packed64_t* backing_ptr) noexcept
         {
@@ -256,7 +249,7 @@ struct Timer48
 {
     static constexpr uint64_t TicksPerSec_ = A_BILLION;
 
-    static constexpr uint64_t NowTicks() noexcept
+    static uint64_t NowTicks() noexcept
     {
         using  cns = std::chrono::nanoseconds;
         auto d = std::chrono::steady_clock::now().time_since_epoch();
@@ -264,7 +257,7 @@ struct Timer48
         return ns_count & MaskLowNBits(FAMILY_48_BIT_LEN);
     }
 
-    static constexpr uint16_t NowClock16() noexcept
+    static uint16_t NowClock16() noexcept
     {
         return static_cast<uint16_t>(NowTicks() & MaskLowNBits(LOW16_BIT_LEN));
     }

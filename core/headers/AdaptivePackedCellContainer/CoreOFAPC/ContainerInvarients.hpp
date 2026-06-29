@@ -7,6 +7,7 @@
 namespace PredictedAdaptedEncoding
 {
 
+
 struct HashIdConstructror
 {
     static constexpr uint64_t GROUP_IDX_BIT_BOUNDRY = 16u;
@@ -16,7 +17,35 @@ struct HashIdConstructror
     /// @brief VALIDATES THE RAW ID 
     static constexpr bool IsValidAPCId48(uint64_t value) noexcept
     {
-        return value != UNSIGNED_ZERO && value < APCDataStructure::APC_META_CELL_SENTINAL;
+        return value != UNSIGNED_ZERO && value < PackedCell64_t::BIT_FAMILY_48_SENTINAL;
+    }
+
+    static constexpr bool IsValidAPCSlotIdx(uint64_t slot_idx) noexcept
+    {
+        return slot_idx < PackedCell64_t::APC_FABRIC_SLOT_LIMIT;
+    }
+
+    static constexpr bool IsValidHashHandle(uint64_t handle) noexcept
+    {
+        return handle > UNSIGNED_ZERO && handle < PackedCell64_t::BIT_FAMILY_48_SENTINAL;
+    }
+
+    static constexpr uint64_t APCSlotIdxToHashTableHandler(uint64_t apc_slot_idx) noexcept
+    {
+        if (IsValidAPCSlotIdx(apc_slot_idx))
+        {
+            return apc_slot_idx + 1;
+        }
+        return PackedCell64_t::PACKED_CELL_SENTINAL;
+    }
+
+    static constexpr uint64_t HashTableHandlerToAPCSlotIdx(uint64_t handler) noexcept
+    {
+        if (IsValidHashHandle(handler))
+        {
+            return handler - 1;
+        }
+        return PackedCell64_t::PACKED_CELL_SENTINAL;
     }
 
     /// @brief CREATS: HASH KEY: Based On a Desired SHARED / LOGICAL Group ID
@@ -66,7 +95,9 @@ struct HashIdConstructror
 
     static constexpr uint64_t RebuildOriginalKey(uint32_t prefix32, uint16_t index16) noexcept
     {
-        return (static_cast<uint64_t>(prefix32) << GROUP_IDX_BIT_BOUNDRY | static_cast<uint64_t>(index16));
+        const uint64_t original_key = (static_cast<uint64_t>(prefix32) << GROUP_IDX_BIT_BOUNDRY | static_cast<uint64_t>(index16));
+
+        return IsValidAPCId48(original_key) ? original_key : PackedCell64_t::PACKED_CELL_SENTINAL;
     }
 
     static uint64_t MakeARandom48bitValue() noexcept
@@ -166,7 +197,7 @@ struct APCGroupReserver
     {
         if (
             a_initial_apc_conf.InitialMode != PackedMode::UNASSIGNED_UNUSED_NANNULL && 
-            APCDataStructure::IsSlotIdxInBound(a_initial_apc_conf.APCSlotIndex)
+            HashIdConstructror::IsValidAPCSlotIdx(a_initial_apc_conf.APCSlotIndex)
         )
         {
             a_initial_apc_conf.MinimalValid = true;
@@ -188,24 +219,6 @@ struct APCGroupReserver
                 a_initial_acp_conf.VarticalLogicState = APCIdentityDef::DEFAULT_ASSIGNMENT;
             }
         }
-    }
-
-    static constexpr uint64_t APCSlotIdxToHashTableHandler(uint64_t apc_slot_idx) noexcept
-    {
-        if (APCDataStructure::IsSlotIdxInBound(apc_slot_idx + 1))
-        {
-            return apc_slot_idx + 1;
-        }
-        return PackedCell64_t::PACKED_CELL_SENTINAL;
-    }
-
-    static constexpr uint64_t HashTableHandlerToAPCSlotIdx(uint64_t handler) noexcept
-    {
-        if (handler > UNSIGNED_ZERO && APCDataStructure::IsSlotIdxInBound(handler))
-        {
-            return handler - 1;
-        }
-        return PackedCell64_t::PACKED_CELL_SENTINAL;
     }
 
     // static constexpr bool ValidateKeyIdPairs(APCInitialIdentityStruct& identinty_struct) noexcept

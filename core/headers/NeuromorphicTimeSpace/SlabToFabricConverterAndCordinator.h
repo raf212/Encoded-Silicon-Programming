@@ -47,6 +47,22 @@ namespace PredictedAdaptedEncoding
             uint8_t slab_id = APCDataStructure::BRANCH_VERSION,
             uint32_t fabric_thread_capacity = DEFAULT_THREAD_TABLE_CAPACITY
         ) noexcept;
+
+        uint64_t MakeUniqueBranchIdForHashAndAPC() noexcept
+        {
+            for (size_t i = 0; i < DEFAULT_MAX_TRIES; i++)
+            {
+                const uint64_t random_bid = HashIdConstructror::MakeARandom48bitValue();
+                if (
+                    HashIdConstructror::IsValidAPCId48(random_bid) && 
+                    !FindHashValue48_(FabricTableSegmentClasses::BRANCH_HASH, random_bid).has_value()
+                )
+                {
+                    return random_bid;
+                }
+                return PackedCell64_t::PACKED_CELL_SENTINAL;
+            }
+        }
         
     };
 
