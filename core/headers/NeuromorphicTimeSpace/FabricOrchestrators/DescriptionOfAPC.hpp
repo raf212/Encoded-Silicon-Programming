@@ -13,10 +13,6 @@ struct APCDescriptorRange
 static_assert(sizeof(APCDescriptorRange) == RECORD_BOOK_WIDTH * sizeof(packed64_t));
 static_assert(alignof(APCDescriptorRange) == alignof(packed64_t));
 
-/// @brief Use THis To make the code more Readable
-using APCSegmentPoolRange = APCDescriptorRange;
-
-
 
 struct DescriptionOfAPC
 {

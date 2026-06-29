@@ -123,6 +123,13 @@ namespace PredictedAdaptedEncoding
         EOF_APC_HEADER = 95
     };
 
+    struct APCSegmentPoolRange
+    {
+        size_t BeginIndex = UNSIGNED_ZERO;
+        size_t EndIndex = UNSIGNED_ZERO;
+        bool IsVAlid = false;
+    };
+
     enum class ControlEnumOfAPCSegment : uint32_t
     {
         NONE = 0u,

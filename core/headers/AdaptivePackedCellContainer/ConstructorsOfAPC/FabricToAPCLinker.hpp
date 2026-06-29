@@ -1,6 +1,6 @@
 #pragma once
 #include <functional>
-#include "../APCOrchestrators/LayoutBoundsOrchestrator.hpp"
+#include "../APCOrchestrators/HeaderOrchestrator.hpp"
 
 namespace PredictedAdaptedEncoding
 {
@@ -28,6 +28,11 @@ protected:
 ///
 
     void ReleseFabricBindingOnly_() noexcept;
+
+    bool IsThisAPCValidRange_(
+        size_t width = UNSIGNED_ZERO,
+        APCSegmentPoolRange* return_range = nullptr
+    ) noexcept;
 
 public:
     APCBackingCellAtomicRefViewTemp* BackingPtr{nullptr};

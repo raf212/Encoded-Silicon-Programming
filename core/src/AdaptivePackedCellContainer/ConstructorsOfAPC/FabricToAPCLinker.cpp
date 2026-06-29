@@ -58,6 +58,34 @@ namespace PredictedAdaptedEncoding
         FabricOwnerPtr_ = fabric_owner;
     }
 
+    bool FabricToAPCLinker::IsThisAPCValidRange_(size_t width,  APCSegmentPoolRange* return_range) noexcept
+    {
+        if (!FabricOwnerPtr_)
+        {
+            return false;
+        }
+        
+        const APCSegmentPoolRange range_of_this_apc = FabricOwnerPtr_->GetSegmentPoolBegainEndForSingleAPCDescription_(IdxOfThisAPCInFabric_);
+        if (!range_of_this_apc.IsVAlid)
+        {
+            return false;
+        }
+
+        if (return_range)
+        {
+            *return_range = range_of_this_apc;
+        }
+        
+        const size_t start_idx_of_memcopy_in_slab = range_of_this_apc.BeginIndex + width;
+
+        if (start_idx_of_memcopy_in_slab + width > range_of_this_apc.EndIndex)
+        {
+            return false;
+        }
+        return true;
+    }
+
+
     template<size_t NUMBER_OF_CELLS>
     bool FabricToAPCLinker::ClaimAndCopyToAPCFromArray(
         size_t starting_idx_in_apc,
@@ -65,25 +93,17 @@ namespace PredictedAdaptedEncoding
         const std::array<packed64_t, NUMBER_OF_CELLS>& source_cells
     ) noexcept
     {
-        if (!FabricOwnerPtr_)
-        {
-            return false;
-        }
-        
-        APCSegmentPoolRange range_of_this_apc = FabricOwnerPtr_->GetSegmentPoolBegainEndForSingleAPCDescription_(IdxOfThisAPCInFabric_);
-        if (!range_of_this_apc.IsVAlid)
+        APCSegmentPoolRange range_of_this_apc{};
+        if (!IsThisAPCValidRange_(sequential_number_of_cells, &range_of_this_apc))
         {
             return false;
         }
 
-        const size_t start_idx_of_memcopy_in_slab = range_of_this_apc.BeginIndex + starting_idx_in_apc;
-
-        if (start_idx_of_memcopy_in_slab + sequential_number_of_cells > range_of_this_apc.EndIndex)
-        {
-            return false;
-        }
-        
-        return FabricOwnerPtr_->ClaimThenMemCopyFromArray_(start_idx_of_memcopy_in_slab, sequential_number_of_cells, source_cells);
+        return FabricOwnerPtr_->ClaimThenMemCopyFromArray_(
+            (range_of_this_apc.BeginIndex + starting_idx_in_apc), 
+            sequential_number_of_cells, 
+            source_cells
+        );
     }
 
     template<size_t NUMBER_OF_CELLS>
@@ -93,26 +113,17 @@ namespace PredictedAdaptedEncoding
         const std::array<packed64_t, NUMBER_OF_CELLS>& source_cells
     ) noexcept
     {
-        if (!FabricOwnerPtr_)
+        APCSegmentPoolRange range_of_this_apc{};
+        if (!IsThisAPCValidRange_(sequential_number_of_cells, &range_of_this_apc))
         {
             return false;
         }
         
-        APCSegmentPoolRange range_of_this_apc = FabricOwnerPtr_->GetSegmentPoolBegainEndForSingleAPCDescription_(IdxOfThisAPCInFabric_);
-        if (!range_of_this_apc.IsVAlid)
-        {
-            return false;
-        }
-
-        const size_t start_idx_of_memcopy_in_slab = range_of_this_apc.BeginIndex + starting_idx_in_apc;
-
-        if (start_idx_of_memcopy_in_slab + sequential_number_of_cells > range_of_this_apc.EndIndex)
-        {
-            return false;
-        }
-        
-        return FabricOwnerPtr_->ForceMemCopyFromArray_(start_idx_of_memcopy_in_slab, sequential_number_of_cells, source_cells);
-
+        return FabricOwnerPtr_->ForceMemCopyFromArray_(
+            (range_of_this_apc.BeginIndex + starting_idx_in_apc), 
+            sequential_number_of_cells, 
+            source_cells
+        );
     }
 
     template<size_t NUMBER_OF_CELLS>
@@ -122,25 +133,16 @@ namespace PredictedAdaptedEncoding
         const std::array<packed64_t, NUMBER_OF_CELLS>& return_buffer
     ) noexcept
     {
-        if (!FabricOwnerPtr_)
+        APCSegmentPoolRange range_of_this_apc{};
+        if (!IsThisAPCValidRange_(sequential_number_of_cells, &range_of_this_apc))
         {
             return false;
         }
         
-        APCSegmentPoolRange range_of_this_apc = FabricOwnerPtr_->GetSegmentPoolBegainEndForSingleAPCDescription_(IdxOfThisAPCInFabric_);
-        if (!range_of_this_apc.IsVAlid)
-        {
-            return false;
-        }
-
-        const size_t start_idx_of_memcopy_in_slab = range_of_this_apc.BeginIndex + starting_idx_in_apc;
-
-        if (start_idx_of_memcopy_in_slab + sequential_number_of_cells > range_of_this_apc.EndIndex)
-        {
-            return false;
-        }
-        
-        return FabricOwnerPtr_->ReadASnapShotFromSlab(start_idx_of_memcopy_in_slab, sequential_number_of_cells, return_buffer);
-
+        return FabricOwnerPtr_->ReadASnapShotFromSlab(
+            (range_of_this_apc.BeginIndex + starting_idx_in_apc), 
+            sequential_number_of_cells, 
+            return_buffer
+        );
     }
 }

@@ -11,7 +11,7 @@ namespace PredictedAdaptedEncoding
         /* data */
     public:
 
-        bool ReadCompleateMetaHeaderDirectlyNonAtomic_(APCDataStructure::APCMetaBuffer& a_default_buffer) noexcept;
+        bool ReadCompleateMetaHeaderDirectlyNonAtomic_(HeaderOrchestrator::APCMetaBuffer& a_default_buffer) noexcept;
 
         packed64_t ReadFullMetaCell(MetaIndexOfAPCNode idx) noexcept
         {

@@ -3,7 +3,6 @@
 
 namespace PredictedAdaptedEncoding
 {
-    #define MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY 128
 
     class AdaptivePackedCellContainer;
     static constexpr uint64_t APC_FABRIC_INDEX_SENTINAL = PackedCell64_t::BIT_FAMILY_48_SENTINAL;
@@ -315,15 +314,15 @@ namespace PredictedAdaptedEncoding
 
         }
 
-        using DefaultMemCopyBuffer = std::array<packed64_t, MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY>;
+        // using DefaultMemCopyBuffer = std::array<packed64_t, MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY>;
 
-        static constexpr void BuildDefaultMemCopyBuffer(DefaultMemCopyBuffer& a_default_buffer) noexcept
-        {
-            for (size_t i = 0; i < MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY; i++)
-            {
-                a_default_buffer[i] = PackedCell64_t::PACKED_CELL_SENTINAL;
-            }
-        }
+        // static constexpr void BuildNullMemCopyBuffer(DefaultMemCopyBuffer& a_default_buffer) noexcept
+        // {
+        //     for (size_t i = 0; i < MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY; i++)
+        //     {
+        //         a_default_buffer[i] = PackedCell64_t::PACKED_CELL_SENTINAL;
+        //     }
+        // }
 
 
         static constexpr bool IsCellValidFabricMetaIndecies(const PackedCell64_t::AuthoritiveCellView& a_cell_view) noexcept

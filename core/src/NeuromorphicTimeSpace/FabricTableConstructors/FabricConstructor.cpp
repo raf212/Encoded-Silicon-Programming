@@ -342,8 +342,8 @@ namespace PredictedAdaptedEncoding
         }
         
         uint8_t changed_amount = UNSIGNED_ZERO;
-        CoreOfFabricCoordinator::DefaultMemCopyBuffer packed_cell_buffer{};
-        CoreOfFabricCoordinator::BuildDefaultMemCopyBuffer(packed_cell_buffer);
+        HeaderOrchestrator::DefaultMemCopyBuffer packed_cell_buffer{};
+        HeaderOrchestrator::BuildNullMemCopyBuffer(packed_cell_buffer);
 
         for (uint8_t idx_inc = 0; idx_inc < claim_order_cell_count; idx_inc++)
         {
