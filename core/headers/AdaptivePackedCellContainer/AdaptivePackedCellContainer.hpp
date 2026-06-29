@@ -53,6 +53,8 @@ class AdaptivePackedCellContainer : public APCSegmentsCausalCordinator
         AdaptivePackedCellContainer(const AdaptivePackedCellContainer&) = delete;
         AdaptivePackedCellContainer& operator = (const AdaptivePackedCellContainer&) = delete;
 
+        bool DirectReadCompleatAPCHeader() noexcept;
+
         bool TryPublishRegionalSharedGrowthOnce(APCPagedNodeSegmentClasses region_kind, packed64_t packed_cell) noexcept;
 
         PublishResult PublishCellByRegionMAskTraverseStartsFromThisAPC(

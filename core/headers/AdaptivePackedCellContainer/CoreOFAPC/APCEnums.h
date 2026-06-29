@@ -119,11 +119,7 @@ namespace PredictedAdaptedEncoding
         EDGE_TABLE_COUNT = 76,
         WEIGHT_TABLE_COUNT = 77,
 
-        // RESERVED = 18,
-        // RESERVED = 82,
-        // RESERVED = 81,
-        // RESERVED = 85,
-        // amount / end marker
+
         EOF_APC_HEADER = 95
     };
 

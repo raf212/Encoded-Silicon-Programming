@@ -3,6 +3,7 @@
 
 namespace PredictedAdaptedEncoding
 {
+    #define MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY 128
 
     class AdaptivePackedCellContainer;
     static constexpr uint64_t APC_FABRIC_INDEX_SENTINAL = PackedCell64_t::BIT_FAMILY_48_SENTINAL;
@@ -19,8 +20,6 @@ namespace PredictedAdaptedEncoding
     static constexpr size_t DEFAULT_FABRIC_CONTROLIO_LENGTH = 1024u;
     ///--------------------------
 
-    static constexpr uint8_t MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY = 32u;
-    static_assert(MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY <= UINT8_MAX);
 
     enum class RecordBookInternalIndexing : tag8_t
     {
@@ -153,6 +152,14 @@ namespace PredictedAdaptedEncoding
         UNDEFINED_CAS_FAILURE = 6,
         INVALID_USE_OF_METHOD = 7
 
+    };
+
+    /// @brief To Choose a Buffer to use 
+    enum class SizeOfABuffer : uint8_t
+    {
+        SMALL = 0,
+        MIDIUM = 1,
+        LARGE = 3
     };
 
     struct CoreOfFabricCoordinator

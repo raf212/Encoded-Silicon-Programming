@@ -325,7 +325,10 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    bool FabricConstructor::ClaimNxSequentialPackedCellStrong_(size_t claim_starting_idx_in_slab, size_t claim_order_cell_count) noexcept
+    bool FabricConstructor::ClaimNxSequentialPackedCellStrong_(
+        size_t claim_starting_idx_in_slab, 
+        size_t claim_order_cell_count
+    ) noexcept
     {
         if (
             !SlabBasePtr_ ||

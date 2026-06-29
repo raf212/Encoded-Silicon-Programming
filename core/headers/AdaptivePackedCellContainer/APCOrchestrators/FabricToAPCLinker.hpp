@@ -59,6 +59,15 @@ public:
     ) noexcept;
 
 
+    bool BindExternalRawFabricBacking_(
+        packed64_t* raw_cells_ptr,
+        size_t cell_count,
+        VagueTemoraryPremativeFabric* fabric_owner,
+        uint64_t fabric_slot_idx,
+        bool object_owned_by_fabric
+    ) noexcept;
+
+
     bool IsFabricBackend() const noexcept
     {
         return FabricBackend_;
@@ -102,14 +111,6 @@ public:
     {
         return METACELL_COUNT;
     }
-
-    bool BindExternalRawFabricBacking_(
-        packed64_t* raw_cells_ptr,
-        size_t cell_count,
-        VagueTemoraryPremativeFabric* fabric_owner,
-        uint64_t fabric_slot_idx,
-        bool object_owned_by_fabric
-    ) noexcept;
 
 
 };

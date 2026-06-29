@@ -49,7 +49,10 @@ namespace PredictedAdaptedEncoding
         /// @brief Try to claim N <= MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY Packed Cells 
         /// @param slab_idx STARTING: Index -> From Where Claiming Starts
         /// @param number_of_cells Number Of CElls Wants Claimed
-        bool ClaimNxSequentialPackedCellStrong_(size_t slab_idx, size_t number_of_cells) noexcept;
+        bool ClaimNxSequentialPackedCellStrong_(
+            size_t slab_idx, 
+            size_t number_of_cells
+        ) noexcept;
 
         /// @brief Copys From the Pointing Memory -> SlabBasePtr_ :: desired Number Of Cells 
         /// @param slab_starting_idx The Starting Index of SlabBasePtr_ From Where Copy Starts
