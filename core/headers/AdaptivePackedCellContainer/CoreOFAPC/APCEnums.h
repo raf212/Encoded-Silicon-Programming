@@ -22,16 +22,16 @@ namespace PredictedAdaptedEncoding
             LOGICAL_GROUP_ID = 4,
             SHARED_GROUP_ID = 5,
             //KEY
-            SHARED_ID_ACCESS_KEY = 79,
-            LOGICAL_ID_ACCESS_KEY = 80,
+            SHARED_ID_HASH_KEY = 79,
+            LOGICAL_ID_HASH_KEY = 80,
             //LINKED SEQUENTIAL CHAIN
-            SHARED_SEQUENTIAL_IDX_COUNT = 8,
-            LOGICAL_SEQUENTIAL_IDX_COUNT = 9,
-            SHARED_GROUP_SEQUENTIAL_PREVIOUS_IDX = 6,
-            SHARED_GROUP_SEQUENTIAL_NEXT_IDX = 7,
-            LOGICAL_GROUP_SEQUENTIAL_NEXT_IDX = 17,
-            LOGICAL_GROUP_SEQUENTIAL_PREVIOUS_IDX = 19,
-        RETIRED_ACCESS_LOCK = 78,
+            TOTAL_HORIZONTAL_COUNT_S = 8,
+            TOTAL_VERTICAL_COUNT_L = 9,
+            PREVIOUS_HORIZONTAL_S = 6,
+            NEXT_HORIZONTAL_S = 7,
+            NEXT_VERTICAL_L = 17,
+            PREVIOUS_VERTICAL_L = 19,
+        ACCESS_PASSWORD = 78,
         ///
 
         // runtime-control
@@ -146,18 +146,6 @@ namespace PredictedAdaptedEncoding
         HAS_EDGE_TABLE = 1u << 10,
         HAS_WEIGHT_TABLE = 1u << 11,
         LAYOUT_MUTATION_INFLIGHT = 1u << 12
-    };
-
-    enum class ManagerControlFlagBits : uint32_t
-    {
-        NONE = 0u,
-        REGISTERED_APC = 1U << 0,
-        DEAD_APC = 1U << 1,
-        RECLAIMATION_REQUST_FOR_JUST_THIS_APC = 1u << 2,
-        RECLAIMATION_REQUEST_FOR_WHOLE_CHAIN = 1u << 3,
-        REQUEST_NEW_SEGMENTATION = 1u << 4,
-        IN_WORK_STACK = 1u << 5,
-        IN_CLEANUP_STACK = 1u << 6
     };
 
     enum class PublishStatus : uint8_t

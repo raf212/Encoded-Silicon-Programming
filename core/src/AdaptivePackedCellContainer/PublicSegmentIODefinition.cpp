@@ -104,16 +104,16 @@ namespace PredictedAdaptedEncoding
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::BRANCH_ID, UNSIGNED_ZERO);
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LOGICAL_GROUP_ID, container_configuration.LogicalId);
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_GROUP_ID, container_configuration.SharedID);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_ID_ACCESS_KEY, container_configuration.SharedHashKey);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LOGICAL_ID_ACCESS_KEY, container_configuration.LogicalHashKey);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_SEQUENTIAL_IDX_COUNT, UNSIGNED_ZERO);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LOGICAL_SEQUENTIAL_IDX_COUNT, UNSIGNED_ZERO);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_ID_HASH_KEY, container_configuration.SharedHashKey);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LOGICAL_ID_HASH_KEY, container_configuration.LogicalHashKey);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::TOTAL_HORIZONTAL_COUNT_S, UNSIGNED_ZERO);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::TOTAL_VERTICAL_COUNT_L, UNSIGNED_ZERO);
 
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_GROUP_SEQUENTIAL_PREVIOUS_IDX, APC_META_CELL_SENTINAL);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::SHARED_GROUP_SEQUENTIAL_NEXT_IDX, APC_META_CELL_SENTINAL);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LOGICAL_GROUP_SEQUENTIAL_NEXT_IDX, APC_META_CELL_SENTINAL);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::LOGICAL_GROUP_SEQUENTIAL_PREVIOUS_IDX, APC_META_CELL_SENTINAL);
-        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::RETIRED_ACCESS_LOCK, APC_META_CELL_SENTINAL);        
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::PREVIOUS_HORIZONTAL_S, APC_META_CELL_SENTINAL);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::NEXT_HORIZONTAL_S, APC_META_CELL_SENTINAL);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::NEXT_VERTICAL_L, APC_META_CELL_SENTINAL);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::PREVIOUS_VERTICAL_L, APC_META_CELL_SENTINAL);
+        InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::ACCESS_PASSWORD, APC_META_CELL_SENTINAL);        
         if (container_configuration.SharedSequentialCount > UNSIGNED_ZERO || container_configuration.SharedSequentialCount > UNSIGNED_ZERO)
         {
             TurnOnMultipleSegmentFlagsAtOnce_(static_cast<uint32_t>(ControlEnumOfAPCSegment::IS_GRAPH_NODE) | static_cast<uint32_t>(ControlEnumOfAPCSegment::IS_SHARED_ROOT));
@@ -164,6 +164,7 @@ namespace PredictedAdaptedEncoding
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION, BRANCH_VERSION);
 
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::BRANCH_PRIORITY, UNSIGNED_ZERO);
+        
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::CURRENT_ACTIVE_THREADS, UNSIGNED_ZERO);
         WrireAPCMetaModel_48t(MetaIndexOfAPCNode::COMBINED_OCCUPANCY_PUBLISHED_CLAIMED_FAULTY_3x16_48, UNSIGNED_ZERO);
         InsertTypedValue48MetaCellOfAPC_(MetaIndexOfAPCNode::TOTAL_CAPACITY_OF_THIS_SEGEMENT, safe_capacity);                                                                                        
@@ -267,8 +268,8 @@ namespace PredictedAdaptedEncoding
     bool SegmentIODefinition::ShouldSplitNow() noexcept
     {
         const uint64_t split_threshold = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SPLIT_THRESHOLD_PERCENTAGE);
-        const uint64_t max_depth = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::LOGICAL_SEQUENTIAL_IDX_COUNT);
-        const uint64_t depth_of_current_branch = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::SHARED_SEQUENTIAL_IDX_COUNT);
+        const uint64_t max_depth = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::TOTAL_VERTICAL_COUNT_L);
+        const uint64_t depth_of_current_branch = ReadValuFromAPCMetaIndecies(MetaIndexOfAPCNode::TOTAL_HORIZONTAL_COUNT_S);
         if (depth_of_current_branch >= max_depth)
         {
             return false;

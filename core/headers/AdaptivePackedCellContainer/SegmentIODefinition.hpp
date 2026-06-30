@@ -169,12 +169,12 @@ public:
 
     bool  TryBindShareNext(uint64_t shared_next_id) noexcept
     {
-        return TryBindPortTarget(MetaIndexOfAPCNode::SHARED_GROUP_SEQUENTIAL_NEXT_IDX, shared_next_id);
+        return TryBindPortTarget(MetaIndexOfAPCNode::NEXT_HORIZONTAL_S, shared_next_id);
     }
 
     bool TryBindSharedPrevious(uint64_t shared_previous_id) noexcept
     {
-        return TryBindPortTarget(MetaIndexOfAPCNode::SHARED_GROUP_SEQUENTIAL_PREVIOUS_IDX, shared_previous_id);
+        return TryBindPortTarget(MetaIndexOfAPCNode::PREVIOUS_HORIZONTAL_S, shared_previous_id);
     }
 
     bool TurnOnASegmentFlag(ControlEnumOfAPCSegment desired_segment_flag) noexcept

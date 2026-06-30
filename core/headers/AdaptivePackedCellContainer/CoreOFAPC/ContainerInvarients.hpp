@@ -171,7 +171,7 @@ struct APCGroupReserver
         uint64_t SharedID = PackedCell64_t::PACKED_CELL_SENTINAL;
         uint64_t LogicalId = PackedCell64_t::PACKED_CELL_SENTINAL;
 
-        uint64_t AcessPassCodeOfAPC = PackedCell64_t::PACKED_CELL_SENTINAL;
+        uint64_t AccessPassword = PackedCell64_t::PACKED_CELL_SENTINAL;
         uint64_t SharedHashKey = PackedCell64_t::PACKED_CELL_SENTINAL;
         uint64_t LogicalHashKey = PackedCell64_t::PACKED_CELL_SENTINAL;
 
@@ -208,7 +208,7 @@ struct APCGroupReserver
         a_initial_apc_conf.IsAssignable = a_initial_apc_conf.InitialMode != PackedMode::UNASSIGNED_UNUSED_NANNULL &&
             HashIdConstructror::IsValidAPCSlotIdx(a_initial_apc_conf.APCSlotIndex) &&
             HashIdConstructror::IsValidAPCId48(a_initial_apc_conf.BranchID) &&
-            HashIdConstructror::IsValidAPCId48(a_initial_apc_conf.AcessPassCodeOfAPC) &&
+            HashIdConstructror::IsValidAPCId48(a_initial_apc_conf.AccessPassword) &&
             IsMinimalValidAxis(a_initial_apc_conf);
         
         return a_initial_apc_conf.IsAssignable;
