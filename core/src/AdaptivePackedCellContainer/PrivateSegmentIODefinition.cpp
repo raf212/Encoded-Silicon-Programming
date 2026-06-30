@@ -57,16 +57,11 @@ namespace PredictedAdaptedEncoding
 
     void SegmentIODefinition::InitDefaultAPCSegmentedNodeLayout_() noexcept
     {
-        const uint32_t payload_begain = METACELL_COUNT;
-        const uint32_t payload_end = GetTotalCapacityForThisAPC();
-        if (payload_end <= payload_begain)
-        {
-            return;
-        }
+        const uint32_t total_capacity = GetTotalCapacityForThisAPC();
+
         CompleteAPCNodeRegionsLayout full_paged_node_layout{};        
         
-
-        BuidDefaultLayoutPlan_(full_paged_node_layout);
+        CompleteAPCNodeRegionsLayout::BuildInitialLayoutPlan(full_paged_node_layout, total_capacity, APCDataStructure::BRANCH_VERSION);
 
         if (!WriteAllRegionsLayoutToHeader_(full_paged_node_layout, static_cast<uint16_t>(BRANCH_VERSION), false))
         {
@@ -89,77 +84,6 @@ namespace PredictedAdaptedEncoding
         #endif        
     }
 
-    void SegmentIODefinition::BuidDefaultLayoutPlan_(CompleteAPCNodeRegionsLayout& full_layout) noexcept
-    {
-        const uint32_t payload_begain = METACELL_COUNT;
-        const uint32_t payload_end = GetTotalCapacityForThisAPC();
-        if (payload_end <= payload_begain)
-        {
-            return;
-        }
-        full_layout.NormalizePercentagesIfNeeded();
-
-        const uint32_t total_span = payload_end - payload_begain;
-        uint32_t initial_cursor = payload_begain;
-
-        const std::optional<uint16_t> maybe_current_global_version = ReadGlobalLayoutVersion_();
-        const uint16_t current_or_start_version = maybe_current_global_version.has_value() ? *maybe_current_global_version : 1u;
-
-        if (!WriteGlobalLayoutVersion_(current_or_start_version))
-        {
-            return;
-        }
-        
-        auto AssignOne = [&](LayoutBoundsOfSingleRelNodeClass& one) noexcept
-        {
-            if (!APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(one.PAGE_LAYOUT_CLASS))
-            {
-                one.BeginIndex = initial_cursor;
-                one.EndIndex = initial_cursor;
-                one.VersionNumber = current_or_start_version;
-                return;
-            }
-
-            if (one.PAGE_LAYOUT_CLASS == APCPagedNodeSegmentClasses::FREE_SLOT)
-            {
-                return;
-            }
-            
-            one.BeginIndex = initial_cursor;
-            one.VersionNumber = current_or_start_version;
-            uint32_t wanted_span = one.ComputeWantedSpanFromTotal(total_span);
-            if (wanted_span == UNSIGNED_ZERO)
-            {
-                one.EndIndex = initial_cursor;
-                return;
-            }
-            
-            wanted_span = std::max<uint32_t>(wanted_span, MIN_REGION_SIZE);
-            const uint32_t remaining = payload_end > initial_cursor ? (payload_end - initial_cursor) : UNSIGNED_ZERO;
-            wanted_span = std::min<uint32_t>(wanted_span, remaining);
-            one.EndIndex = initial_cursor + wanted_span;
-            initial_cursor = one.EndIndex;
-        };
-
-        auto ordered = full_layout.OrderedViewsFIFO();
-        for (auto* one : ordered)
-        {
-            if (!one)
-            {
-                return;
-            }
-            if (one->PAGE_LAYOUT_CLASS == APCPagedNodeSegmentClasses::FREE_SLOT)
-            {
-                continue;
-            }
-            AssignOne(*one);
-        }
-        
-        full_layout.FreeLayout.BeginIndex = initial_cursor;
-        full_layout.FreeLayout.EndIndex = payload_end;
-        full_layout.FreeLayout.PAGE_LAYOUT_CLASS = APCPagedNodeSegmentClasses::FREE_SLOT;
-        full_layout.FreeLayout.VersionNumber = current_or_start_version;
-    }
 
     bool SegmentIODefinition::WriteBoundsPairToHeader_(
         const LayoutBoundsOfSingleRelNodeClass layout_bound,

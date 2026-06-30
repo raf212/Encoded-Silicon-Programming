@@ -89,6 +89,8 @@ namespace PredictedAdaptedEncoding
         static constexpr void InitializeDefaultHeaderBuffer(APCGroupReserver::APCIdentityDef& required_identity);
 
         static constexpr bool ValidateAHeaderBuffer(APCMetaBuffer& a_header_buffer) noexcept;
+
+
     };
     
 

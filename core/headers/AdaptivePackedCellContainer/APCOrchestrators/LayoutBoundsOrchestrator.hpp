@@ -65,7 +65,7 @@ struct LayoutBoundsOfSingleRelNodeClass
     }
 
 
-    void SetOrResetPercentage(uint32_t total_capacity_of_apc) noexcept
+    constexpr void SetOrResetPercentage(uint32_t total_capacity_of_apc) noexcept
     {
         InitialOrCurrentPercentage = static_cast<float>((static_cast<float>(GetPayloadSpan()) / static_cast<float>(total_capacity_of_apc)) * 100.00);
     }
@@ -135,12 +135,12 @@ struct LayoutBoundsOfSingleRelNodeClass
         return (static_cast<uint32_t>(InitialOrCurrentPercentage) * total_payload_span) / 100u;
     }
 
-        bool DoseThisIndexPhysicallyExistInThisRegion(size_t index) const noexcept
+    constexpr bool DoseThisIndexPhysicallyExistInThisRegion(size_t index) const noexcept
     {
         return index >= BeginIndex && index < EndIndex;
     }
     
-        bool CanCellBEConsumedForThisPhysicalRegion(
+    constexpr bool CanCellBEConsumedForThisPhysicalRegion(
         packed64_t packed_cell,
         size_t idx
     ) noexcept
@@ -320,29 +320,6 @@ struct CompleteAPCNodeRegionsLayout
             default:                                               return nullptr;
         }
     }
-    const LayoutBoundsOfSingleRelNodeClass* GetALayoutByRelMask(APCPagedNodeSegmentClasses desired_rel_mask) const noexcept
-    {
-        switch (desired_rel_mask)
-        {
-            case APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE:  return &FeedForwardLayout;
-            case APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE: return &FeedBackwardLayout;
-            case APCPagedNodeSegmentClasses::LATERAL_MESAGE     :  return &LateralLayout;
-            case APCPagedNodeSegmentClasses::STATE_SLOT:           return &StateLayout;
-            case APCPagedNodeSegmentClasses::ERROR_SLOT:           return &ErrorLayout;
-            case APCPagedNodeSegmentClasses::EDGE_DESCRIPTOR:      return &EdgeDescriptorLayout;
-            case APCPagedNodeSegmentClasses::WEIGHT_SLOT:          return &WeightLayout;
-            case APCPagedNodeSegmentClasses::AUX_SLOT:             return &AUXLayout;
-            case APCPagedNodeSegmentClasses::HETEROGENOUS_RAW_MEMORY:
-                return &HeterogenousMemoryLayout;
-            case APCPagedNodeSegmentClasses::SLOT_TABLE_DESCRIPTOR: 
-                return &LocalPairedPointerLayout;
-            case APCPagedNodeSegmentClasses::PAIRED_POINTER_IN_MEMORY:
-                return &DistancePairedLayout;
-            case APCPagedNodeSegmentClasses::UNDEFINED:            return &UndefinedLayout;
-            case APCPagedNodeSegmentClasses::FREE_SLOT:            return &FreeLayout;
-            default:                                               return nullptr;
-        }
-    }
 
     std::array<LayoutBoundsOfSingleRelNodeClass*, CURRENT_TOTAL_APC_REL_NODE_CLASSES> OrderedViewsFIFO() noexcept
     {
@@ -355,6 +332,79 @@ struct CompleteAPCNodeRegionsLayout
             &DistancePairedLayout, &UndefinedLayout,
             &FreeLayout
         };
+    }
+
+    static constexpr void BuildInitialLayoutPlan(
+        CompleteAPCNodeRegionsLayout& full_layout,
+        uint32_t capacity_of_the_apc,
+        uint16_t desired_version = APCDataStructure::BRANCH_VERSION
+    ) noexcept
+    {
+        const uint32_t payload_begain = APCDataStructure::METACELL_COUNT;
+        const uint32_t payload_end = capacity_of_the_apc;
+        const uint32_t total_span = payload_end - payload_begain;
+
+        if (
+            payload_end <= payload_begain || 
+            total_span > APCDataStructure::APC_ALL_INDEX_LIMIT || 
+            total_span < MINIMUM_BRANCH_CAPACITY
+        )
+        {
+            return;
+        }
+        full_layout.NormalizePercentagesIfNeeded();
+
+        uint32_t initial_cursor = payload_begain;
+        
+        auto AssignOne = [&](LayoutBoundsOfSingleRelNodeClass& one) noexcept
+        {
+            if (!APCAndPagedNodeHelpers::IsTrackedOccupancyPageClass(one.PAGE_LAYOUT_CLASS))
+            {
+                one.BeginIndex = initial_cursor;
+                one.EndIndex = initial_cursor;
+                one.VersionNumber = desired_version;
+                return;
+            }
+
+            if (one.PAGE_LAYOUT_CLASS == APCPagedNodeSegmentClasses::FREE_SLOT)
+            {
+                return;
+            }
+            
+            one.BeginIndex = initial_cursor;
+            one.VersionNumber = desired_version;
+            uint32_t wanted_span = one.ComputeWantedSpanFromTotal(total_span);
+            if (wanted_span == UNSIGNED_ZERO)
+            {
+                one.EndIndex = initial_cursor;
+                return;
+            }
+            
+            wanted_span = std::max<uint32_t>(wanted_span, MIN_REGION_SIZE);
+            const uint32_t remaining = payload_end > initial_cursor ? (payload_end - initial_cursor) : UNSIGNED_ZERO;
+            wanted_span = std::min<uint32_t>(wanted_span, remaining);
+            one.EndIndex = initial_cursor + wanted_span;
+            initial_cursor = one.EndIndex;
+        };
+
+        auto ordered = full_layout.OrderedViewsFIFO();
+        for (auto* one : ordered)
+        {
+            if (!one)
+            {
+                return;
+            }
+            if (one->PAGE_LAYOUT_CLASS == APCPagedNodeSegmentClasses::FREE_SLOT)
+            {
+                continue;
+            }
+            AssignOne(*one);
+        }
+        
+        full_layout.FreeLayout.BeginIndex = initial_cursor;
+        full_layout.FreeLayout.EndIndex = payload_end;
+        full_layout.FreeLayout.PAGE_LAYOUT_CLASS = APCPagedNodeSegmentClasses::FREE_SLOT;
+        full_layout.FreeLayout.VersionNumber = desired_version;
     }
 };
 }

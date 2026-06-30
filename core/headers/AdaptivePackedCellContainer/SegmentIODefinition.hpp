@@ -25,8 +25,6 @@ protected:
         bool caller_holds_the_flag = false
     ) noexcept;
 
-    void BuidDefaultLayoutPlan_(CompleteAPCNodeRegionsLayout& full_layout) noexcept;
-
     void InitDefaultAPCSegmentedNodeLayout_() noexcept;
 
     std::optional<uint16_t> ReadGlobalLayoutVersion_() noexcept;
