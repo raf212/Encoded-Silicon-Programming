@@ -86,63 +86,63 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    template<size_t NUMBER_OF_CELLS>
     bool FabricToAPCLinker::ClaimAndCopyToAPCFromArray(
         size_t starting_idx_in_apc,
         size_t sequential_number_of_cells,
-        const std::array<packed64_t, NUMBER_OF_CELLS>& source_cells
+        const packed64_t* source_cells
     ) noexcept
     {
         APCSegmentPoolRange range_of_this_apc{};
-        if (!IsThisAPCValidRange_(sequential_number_of_cells, &range_of_this_apc))
+        if (!IsThisAPCValidRange_(sequential_number_of_cells, &range_of_this_apc) || source_cells == nullptr)
         {
             return false;
         }
 
-        return FabricOwnerPtr_->ClaimThenMemCopyFromArray_(
+        return FabricOwnerPtr_->ForceNxMemCopy_(
             (range_of_this_apc.BeginIndex + starting_idx_in_apc), 
             sequential_number_of_cells, 
-            source_cells
+            source_cells,
+            false
         );
     }
 
-    template<size_t NUMBER_OF_CELLS>
     bool FabricToAPCLinker::ForceCopyToAPCFromArray(
         size_t starting_idx_in_apc,
         size_t sequential_number_of_cells,
-        const std::array<packed64_t, NUMBER_OF_CELLS>& source_cells
+        const packed64_t* source_cells
     ) noexcept
     {
         APCSegmentPoolRange range_of_this_apc{};
-        if (!IsThisAPCValidRange_(sequential_number_of_cells, &range_of_this_apc))
+        if (!IsThisAPCValidRange_(sequential_number_of_cells, &range_of_this_apc) || source_cells == nullptr)
         {
             return false;
         }
         
-        return FabricOwnerPtr_->ForceMemCopyFromArray_(
+        return FabricOwnerPtr_->ForceNxMemCopy_(
             (range_of_this_apc.BeginIndex + starting_idx_in_apc), 
             sequential_number_of_cells, 
-            source_cells
+            source_cells,
+            true
         );
     }
 
-    template<size_t NUMBER_OF_CELLS>
     bool FabricToAPCLinker::CopyFromAPCToANArrayBuffer(
         size_t starting_idx_in_apc,
         size_t sequential_number_of_cells,
-        std::array<packed64_t, NUMBER_OF_CELLS>& return_buffer
+        packed64_t* return_buffer
     ) noexcept
     {
         APCSegmentPoolRange range_of_this_apc{};
-        if (!IsThisAPCValidRange_(sequential_number_of_cells, &range_of_this_apc))
+        if (!IsThisAPCValidRange_(sequential_number_of_cells, &range_of_this_apc) || return_buffer == nullptr)
         {
             return false;
         }
         
-        return FabricOwnerPtr_->ReadASnapShotFromSlab(
+        return FabricOwnerPtr_->ForceNxMemCopy_(
             (range_of_this_apc.BeginIndex + starting_idx_in_apc), 
             sequential_number_of_cells, 
-            return_buffer
+            return_buffer,
+            true
         );
     }
 }

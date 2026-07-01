@@ -77,21 +77,54 @@ namespace PredictedAdaptedEncoding
                 force_update
             );
         }
+protected:
 
         /// @brief Copys From the Pointing Memory -> SlabBasePtr_ :: desired Number Of Cells 
         /// @param slab_starting_idx The Starting Index of SlabBasePtr_ From Where Copy Starts
-        /// @param number_of_cells Number Of Packed Cells to be Copied
-        /// @param desired_cells MEMORY Of Desired Packed Cells
-        /// @param force_update TRUE: Dosent Claim to LocalityPolicy::CLAIMED(Very Unsafe) FALSE: Claims To LocalityPolicy::CLAIMED 
+        /// @param sequential_number_of_cells Number Of Packed Cells to be Copied
+        /// @param source_cells ARRAY Of Desired Packed Cells
         /// @return true / false
-        bool ForceNxMemCopy_(
-            size_t slab_starting_idx, 
-            size_t number_of_cells, 
-            const packed64_t* desired_cells,
-            bool force_update = false
+        template <size_t NUMBER_OF_CELLS>
+        bool ClaimThenMemCopyFromArray_(
+            size_t slab_starting_idx,
+            size_t sequential_number_of_cells,
+            const std::array<packed64_t, NUMBER_OF_CELLS>& source_cells
+        ) noexcept
+        {
+            return ForceNxMemCopy_(
+                slab_starting_idx,
+                sequential_number_of_cells,
+                std::span<const packed64_t, NUMBER_OF_CELLS>(source_cells),
+                false
+            );
+        }
+
+        /// @brief Copys From the Pointing Memory -> SlabBasePtr_ :: desired Number Of Cells 
+        /// @param slab_starting_idx The Starting Index of SlabBasePtr_ From Where Copy Starts
+        /// @param sequential_number_of_cells Number Of Packed Cells to be Copied
+        /// @param source_cells ARRAY Of Desired Packed Cells
+        /// @return true / false
+        template <size_t NUMBER_OF_CELLS>
+        bool ForceMemCopyFromArray_(
+            size_t slab_starting_idx,
+            size_t sequential_number_of_cells,
+            const std::array<packed64_t, NUMBER_OF_CELLS>& source_cells
+        ) noexcept
+        {
+            return ForceNxMemCopy_(
+                slab_starting_idx,
+                sequential_number_of_cells,
+                std::span<const packed64_t, NUMBER_OF_CELLS>(source_cells),
+                true
+            );
+        }
+
+        template<size_t NUMBER_OF_CELLS>
+        bool ReadASnapShotFromSlab(
+            size_t slab_starting_idx,
+            size_t sequential_count,
+            std::array<packed64_t, NUMBER_OF_CELLS>& return_buffer
         ) noexcept;
-
-
 
     public:
 
@@ -157,49 +190,15 @@ namespace PredictedAdaptedEncoding
 
         /// @brief Copys From the Pointing Memory -> SlabBasePtr_ :: desired Number Of Cells 
         /// @param slab_starting_idx The Starting Index of SlabBasePtr_ From Where Copy Starts
-        /// @param sequential_number_of_cells Number Of Packed Cells to be Copied
-        /// @param source_cells ARRAY Of Desired Packed Cells
+        /// @param number_of_cells Number Of Packed Cells to be Copied
+        /// @param desired_cells MEMORY Of Desired Packed Cells
+        /// @param force_update TRUE: Dosent Claim to LocalityPolicy::CLAIMED(Very Unsafe) FALSE: Claims To LocalityPolicy::CLAIMED 
         /// @return true / false
-        template <size_t NUMBER_OF_CELLS>
-        bool ClaimThenMemCopyFromArray_(
-            size_t slab_starting_idx,
-            size_t sequential_number_of_cells,
-            const std::array<packed64_t, NUMBER_OF_CELLS>& source_cells
-        ) noexcept
-        {
-            return ForceNxMemCopy_(
-                slab_starting_idx,
-                sequential_number_of_cells,
-                std::span<const packed64_t, NUMBER_OF_CELLS>(source_cells),
-                false
-            );
-        }
-
-        /// @brief Copys From the Pointing Memory -> SlabBasePtr_ :: desired Number Of Cells 
-        /// @param slab_starting_idx The Starting Index of SlabBasePtr_ From Where Copy Starts
-        /// @param sequential_number_of_cells Number Of Packed Cells to be Copied
-        /// @param source_cells ARRAY Of Desired Packed Cells
-        /// @return true / false
-        template <size_t NUMBER_OF_CELLS>
-        bool ForceMemCopyFromArray_(
-            size_t slab_starting_idx,
-            size_t sequential_number_of_cells,
-            const std::array<packed64_t, NUMBER_OF_CELLS>& source_cells
-        ) noexcept
-        {
-            return ForceNxMemCopy_(
-                slab_starting_idx,
-                sequential_number_of_cells,
-                std::span<const packed64_t, NUMBER_OF_CELLS>(source_cells),
-                true
-            );
-        }
-
-        template<size_t NUMBER_OF_CELLS>
-        bool ReadASnapShotFromSlab(
-            size_t slab_starting_idx,
-            size_t sequential_count,
-            std::array<packed64_t, NUMBER_OF_CELLS>& return_buffer
+        bool ForceNxMemCopy_(
+            size_t slab_starting_idx, 
+            size_t number_of_cells, 
+            const packed64_t* desired_cells,
+            bool force_update = false
         ) noexcept;
 
     };
