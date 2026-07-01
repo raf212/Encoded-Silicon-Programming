@@ -76,7 +76,7 @@ namespace PredictedAdaptedEncoding
 
         // payload bounds versions
         MESSAGE_FEEDFORWARD_BOUNDS_VERSION = 43,
-        MESSAGE_FEEDBACKWARD_BOUNDS_VERSION = 44,
+        FEEDFORWARD_BOUNDS = 44,
         LATERAL_BOUNDS_VERSION = 45,
         STATE_BOUNDS_VERSION = 46,
         ERROR_BOUNDS_VERSION = 47,
@@ -86,8 +86,8 @@ namespace PredictedAdaptedEncoding
         HETEROGENOUS_RAW_MEMORY_BOUNDS_VERSION = 51,
         SLOT_TABLE_DESCRIPTOR_BOUNDS_VERSION = 52,
         PAIRED_POINTER_IN_MEMORY_BOUNDS_VERSION = 53,
-        UNDEFINED_BOUNDS_VERSION = 54,
-        FREE_BOUNDS_VERSION = 55,
+        FREE_BOUNDS_VERSION = 54,
+        UNDEFINED_BOUNDS_VERSION = 55,
         GLOBAL_CURRENT_VERSION = 56,
 
         // region occupancy

@@ -429,12 +429,12 @@ namespace PredictedAdaptedEncoding
     bool FabricConstructor::ReadASnapShotFromSlab(
         size_t slab_starting_idx,
         size_t sequential_count,
-        const std::array<packed64_t, NUMBER_OF_CELLS>& return_buffer
+        std::array<packed64_t, NUMBER_OF_CELLS>& return_buffer
     ) noexcept
     {
         if (
             !SlabBasePtr_ ||
-            !return_buffer ||
+            return_buffer.size() < sequential_count ||
             slab_starting_idx >= SlabCellCount_ ||
             sequential_count == UNSIGNED_ZERO ||
             sequential_count > SlabCellCount_ - slab_starting_idx

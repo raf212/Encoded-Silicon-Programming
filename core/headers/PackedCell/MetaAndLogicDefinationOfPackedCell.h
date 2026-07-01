@@ -198,13 +198,13 @@ namespace PredictedAdaptedEncoding {
         ERROR_SLOT = 0x5,
         EDGE_DESCRIPTOR = 0x6,
         WEIGHT_SLOT = 0x7,
-        CONTROL_SLOT = 0x8,
-        AUX_SLOT = 0x9,
-        HETEROGENOUS_RAW_MEMORY = 0xA,
-        SLOT_TABLE_DESCRIPTOR = 0xB,
-        PAIRED_POINTER_IN_MEMORY = 0xC,
-        FREE_SLOT     = 0xD,
-        UNDEFINED = 0xE,
+        AUX_SLOT = 0x8,
+        HETEROGENOUS_RAW_MEMORY = 0x9,
+        SLOT_TABLE_DESCRIPTOR = 0xA,
+        PAIRED_POINTER_IN_MEMORY = 0xB,
+        FREE_SLOT     = 0xC,
+        UNDEFINED = 0xD,
+        CONTROL_SLOT = 0xE,
         NULLNAN     = 0xF
     };
 

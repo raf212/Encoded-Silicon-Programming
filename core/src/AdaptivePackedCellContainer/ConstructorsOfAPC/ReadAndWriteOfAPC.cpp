@@ -20,5 +20,33 @@ namespace PredictedAdaptedEncoding
         return true;
     }
 
+    bool ReadAndWriteOfAPC::ReadCompleatLayoutBuffer_(
+        HeaderOrchestrator::LayoutBufferOfAPC& a_layout_buffer,
+        bool is_claimed_required
+    ) noexcept
+    {
+        if (is_claimed_required)
+        {
+            return ClaimAndCopyToAPCFromArray(
+                LayoutBoundsOrchestrator::GetBeginIndexOfLayoutBufferOfAPC(),
+                LayoutBoundsOrchestrator::GetLenOfLayoutConstructorInAPCHeader(),
+                a_layout_buffer
+            );
+        }
+        
+        return ForceCopyToAPCFromArray(
+            LayoutBoundsOrchestrator::GetBeginIndexOfLayoutBufferOfAPC(),
+            LayoutBoundsOrchestrator::GetLenOfLayoutConstructorInAPCHeader(),
+            a_layout_buffer
+        );
+    }
 
+    packed64_t ReadAndWriteOfAPC::ReadFullMetaCell(MetaIndexOfAPCNode idx) noexcept
+    {
+        if (ValidMetaIdx(idx))
+        {
+            return BackingPtr[static_cast<size_t>(idx)].load(MoLoad_);
+        }
+        return PACKED_CELL_SENTENAL;
+    }
 }

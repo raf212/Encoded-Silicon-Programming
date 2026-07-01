@@ -130,7 +130,7 @@ namespace PredictedAdaptedEncoding
     bool FabricToAPCLinker::CopyFromAPCToANArrayBuffer(
         size_t starting_idx_in_apc,
         size_t sequential_number_of_cells,
-        const std::array<packed64_t, NUMBER_OF_CELLS>& return_buffer
+        std::array<packed64_t, NUMBER_OF_CELLS>& return_buffer
     ) noexcept
     {
         APCSegmentPoolRange range_of_this_apc{};

@@ -13,15 +13,12 @@ namespace PredictedAdaptedEncoding
 
         bool ReadCompleateMetaHeaderDirectlyNonAtomic_(HeaderOrchestrator::APCMetaBuffer& a_default_buffer) noexcept;
 
-        packed64_t ReadFullMetaCell(MetaIndexOfAPCNode idx) noexcept
-        {
-            if (ValidMetaIdx(idx))
-            {
-                return BackingPtr[static_cast<size_t>(idx)].load(MoLoad_);
-            }
-            return PACKED_CELL_SENTENAL;
-        }
+        bool ReadCompleatLayoutBuffer_(
+            HeaderOrchestrator::LayoutBufferOfAPC& a_layout_buffer,
+            bool is_claimed_required = false
+        ) noexcept;
 
+        packed64_t ReadFullMetaCell(MetaIndexOfAPCNode idx) noexcept;
     };
     
     

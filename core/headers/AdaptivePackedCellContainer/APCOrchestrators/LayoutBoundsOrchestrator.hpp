@@ -6,6 +6,30 @@
 namespace PredictedAdaptedEncoding
 {
 
+
+struct LayoutBoundsOrchestrator
+{
+
+    static constexpr uint8_t LEN_OF_LAYOUT_DATA = static_cast<uint8_t>(APCPagedNodeSegmentClasses::CONTROL_SLOT) - static_cast<uint8_t>(APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE);
+
+    static constexpr uint8_t GetBeginIndexOfLayoutBufferOfAPC() noexcept
+    {
+        return static_cast<uint8_t>(MetaIndexOfAPCNode::FEEDFORWARD_BOUNDS);
+    }
+
+    static constexpr uint8_t GetEndIndexOfLayouyBufferOfAPC() noexcept
+    {
+        return static_cast<uint8_t>(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
+    }
+
+    static constexpr uint8_t GetLenOfLayoutConstructorInAPCHeader() noexcept
+    {
+        return GetEndIndexOfLayouyBufferOfAPC() - GetBeginIndexOfLayoutBufferOfAPC() + 1;
+    }
+
+};
+
+
 struct LayoutBoundsOfSingleRelNodeClass
 {
     uint32_t BeginIndex = BIT_FAMILY_32_SENTINAL;
@@ -24,7 +48,7 @@ struct LayoutBoundsOfSingleRelNodeClass
                 return MetaIndexOfAPCNode::MESSAGE_FEEDFORWARD_BOUNDS_VERSION;
 
             case APCPagedNodeSegmentClasses::FEEDBACKWARD_MESSAGE:
-                return MetaIndexOfAPCNode::MESSAGE_FEEDBACKWARD_BOUNDS_VERSION;
+                return MetaIndexOfAPCNode::FEEDFORWARD_BOUNDS;
 
             case APCPagedNodeSegmentClasses::LATERAL_MESAGE:
                 return MetaIndexOfAPCNode::LATERAL_BOUNDS_VERSION;

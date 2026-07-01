@@ -4,17 +4,20 @@
 
 namespace PredictedAdaptedEncoding
 {
-    #define MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY 32
 
 
     struct HeaderOrchestrator
     {
+        #define MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY 32
+        static constexpr uint8_t LEN_OF_APC_META_BUFFER_OR_COUNT = APCDataStructure::METACELL_COUNT + 1;
+
+        static constexpr uint8_t LEN_OF_LAYOUT_BUFFER = LayoutBoundsOrchestrator::GetLenOfLayoutConstructorInAPCHeader() + 1;
 
         using DefaultMemCopyBuffer = std::array<packed64_t, MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY>;
 
-        static constexpr uint8_t LEN_OF_APC_META_BUFFER = APCDataStructure::METACELL_COUNT + 1;
+        using APCMetaBuffer = std::array<packed64_t, LEN_OF_APC_META_BUFFER_OR_COUNT>;
 
-        using APCMetaBuffer = std::array<packed64_t, LEN_OF_APC_META_BUFFER>;
+        using LayoutBufferOfAPC = std::array<packed64_t, LEN_OF_LAYOUT_BUFFER>;
 
         static constexpr void BuildNullMemCopyBuffer(DefaultMemCopyBuffer& a_default_buffer) noexcept
         {
@@ -26,7 +29,7 @@ namespace PredictedAdaptedEncoding
 
         static constexpr void ConstructNullHeaderBuffer(APCMetaBuffer& a_meta_buffer) noexcept
         {
-            for (size_t i = 0; i < LEN_OF_APC_META_BUFFER; i++)
+            for (size_t i = 0; i < LEN_OF_APC_META_BUFFER_OR_COUNT; i++)
             {
                 a_meta_buffer[i] = PackedCell64_t::PACKED_CELL_SENTINAL;
             }
@@ -89,6 +92,8 @@ namespace PredictedAdaptedEncoding
         static constexpr void InitializeDefaultHeaderBuffer(APCGroupReserver::APCIdentityDef& required_identity);
 
         static constexpr bool ValidateAHeaderBuffer(APCMetaBuffer& a_header_buffer) noexcept;
+
+
 
 
     };
