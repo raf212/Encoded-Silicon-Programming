@@ -9,9 +9,6 @@ namespace PredictedAdaptedEncoding
 
 struct LayoutBoundsOrchestrator
 {
-
-    static constexpr uint8_t LEN_OF_LAYOUT_DATA = static_cast<uint8_t>(APCPagedNodeSegmentClasses::CONTROL_SLOT) - static_cast<uint8_t>(APCPagedNodeSegmentClasses::FEEDFORWARD_MESSAGE);
-
     static constexpr uint8_t GetBeginIndexOfLayoutBufferOfAPC() noexcept
     {
         return static_cast<uint8_t>(MetaIndexOfAPCNode::FEEDFORWARD_BOUNDS);
@@ -26,6 +23,8 @@ struct LayoutBoundsOrchestrator
     {
         return GetEndIndexOfLayouyBufferOfAPC() - GetBeginIndexOfLayoutBufferOfAPC() + 1;
     }
+
+
 
 };
 

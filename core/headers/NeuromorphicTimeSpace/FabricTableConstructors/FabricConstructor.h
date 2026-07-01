@@ -47,14 +47,14 @@ namespace PredictedAdaptedEncoding
     private:
 
         template <size_t EXTENT>
-        bool ForceNxMemCopy_(
+        bool ForceNxLenMemCopy(
             size_t slab_starting_idx,
             size_t sequential_number_of_cells,
             std::span<const packed64_t, EXTENT> desired_cells,
             bool force_update = false
         ) noexcept
         {
-            return ForceNxMemCopy_(
+            return ForceNxLenMemCopy(
                 slab_starting_idx,
                 sequential_number_of_cells,
                 desired_cells.data(),
@@ -70,7 +70,7 @@ namespace PredictedAdaptedEncoding
             bool force_update = false
         ) noexcept
         {
-            return ForceNxMemCopy_(
+            return ForceNxLenMemCopy(
                 slab_starting_idx,
                 sequential_number_of_cells,
                 std::span<const packed64_t, NUMBER_OF_CELLS>(source_cells),
@@ -91,7 +91,7 @@ protected:
             const std::array<packed64_t, NUMBER_OF_CELLS>& source_cells
         ) noexcept
         {
-            return ForceNxMemCopy_(
+            return ForceNxLenMemCopy(
                 slab_starting_idx,
                 sequential_number_of_cells,
                 std::span<const packed64_t, NUMBER_OF_CELLS>(source_cells),
@@ -111,7 +111,7 @@ protected:
             const std::array<packed64_t, NUMBER_OF_CELLS>& source_cells
         ) noexcept
         {
-            return ForceNxMemCopy_(
+            return ForceNxLenMemCopy(
                 slab_starting_idx,
                 sequential_number_of_cells,
                 std::span<const packed64_t, NUMBER_OF_CELLS>(source_cells),
@@ -120,7 +120,7 @@ protected:
         }
 
         template<size_t NUMBER_OF_CELLS>
-        bool ReadASnapShotFromSlab(
+        bool ReadASnapShotFromSlab_(
             size_t slab_starting_idx,
             size_t sequential_count,
             std::array<packed64_t, NUMBER_OF_CELLS>& return_buffer
@@ -173,7 +173,7 @@ protected:
         /// @param desired_occupancy_value IF: desired_occupancy_value <= UINT32_MAX ONLY -> USED: FabricMetaIndicies::FABRIC_OCCUPANCY_APPROXIMATION_LOCALITY_LOW32 || BOTH: LOW32 + HIGH32
         /// @param force_update DO NOT CHANGE TO: true untill Understand USE: IF: false -> CAS: Update || true -> ATOMIC STORE: 
         /// @return 
-        bool UpdateValidPairedOccupancyApproxAtomically_(
+        bool UpdateValidPairedOccupancyApproxAtomically(
             LocalityPolicy candidate_to_update, uint64_t desired_occupancy_value,
             bool force_update = false,
             clk16_t pair_version = UNSIGNED_ZERO
@@ -183,7 +183,7 @@ protected:
         /// @brief Try to claim N <= MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY Packed Cells 
         /// @param slab_idx STARTING: Index -> From Where Claiming Starts
         /// @param number_of_cells Number Of CElls Wants Claimed
-        bool ClaimNxSequentialPackedCellStrong_(
+        bool ClaimNxSequentialPackedCellStrong(
             size_t slab_idx, 
             size_t number_of_cells
         ) noexcept;
@@ -194,7 +194,7 @@ protected:
         /// @param desired_cells MEMORY Of Desired Packed Cells
         /// @param force_update TRUE: Dosent Claim to LocalityPolicy::CLAIMED(Very Unsafe) FALSE: Claims To LocalityPolicy::CLAIMED 
         /// @return true / false
-        bool ForceNxMemCopy_(
+        bool ForceNxLenMemCopy(
             size_t slab_starting_idx, 
             size_t number_of_cells, 
             const packed64_t* desired_cells,

@@ -31,7 +31,7 @@ namespace PredictedAdaptedEncoding
 
     //Integrate AtomicAdaptiveBackoff
     // add CAS_FAILURE_COUNT
-    bool FabricConstructor::UpdateValidPairedOccupancyApproxAtomically_(
+    bool FabricConstructor::UpdateValidPairedOccupancyApproxAtomically(
         LocalityPolicy candidate_to_update, uint64_t desired_occupancy_value,
         bool force_update, clk16_t pair_version
     ) noexcept
@@ -325,7 +325,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    bool FabricConstructor::ClaimNxSequentialPackedCellStrong_(
+    bool FabricConstructor::ClaimNxSequentialPackedCellStrong(
         size_t claim_starting_idx_in_slab, 
         size_t claim_order_cell_count
     ) noexcept
@@ -389,7 +389,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    bool FabricConstructor::ForceNxMemCopy_(
+    bool FabricConstructor::ForceNxLenMemCopy(
         size_t slab_starting_idx, 
         size_t number_of_cells, 
         const packed64_t* desired_cells,
@@ -409,7 +409,7 @@ namespace PredictedAdaptedEncoding
 
         if (!force_update)
         {
-            const bool claim_ok = ClaimNxSequentialPackedCellStrong_(slab_starting_idx, number_of_cells);
+            const bool claim_ok = ClaimNxSequentialPackedCellStrong(slab_starting_idx, number_of_cells);
             if (!claim_ok)
             {
                 return false;
@@ -426,7 +426,7 @@ namespace PredictedAdaptedEncoding
     }
 
     template<size_t NUMBER_OF_CELLS>
-    bool FabricConstructor::ReadASnapShotFromSlab(
+    bool FabricConstructor::ReadASnapShotFromSlab_(
         size_t slab_starting_idx,
         size_t sequential_count,
         std::array<packed64_t, NUMBER_OF_CELLS>& return_buffer

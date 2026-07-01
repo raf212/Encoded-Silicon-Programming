@@ -3,7 +3,7 @@
 namespace PredictedAdaptedEncoding
 {
 
-    APCSegmentPoolRange APCHandleDescriptorConstructor::GetSegmentPoolBegainEndForSingleAPCDescription_(uint64_t single_description_index) noexcept
+    APCSegmentPoolRange APCHandleDescriptorConstructor::GetSegmentPoolBegainEndForSingleAPCDescription(uint64_t single_description_index) noexcept
     {
         
         APCSegmentPoolRange desired_segment_pool_range{};
@@ -106,7 +106,7 @@ namespace PredictedAdaptedEncoding
             return false;
         }
         
-        return ClaimNxSequentialPackedCellStrong_(this_apc_descriptor_range.BeginIndex, APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX);
+        return ClaimNxSequentialPackedCellStrong(this_apc_descriptor_range.BeginIndex, APC_DESCRIPTOR_WIDTH_OR_VALIDATION_INDEX);
     }
 
 

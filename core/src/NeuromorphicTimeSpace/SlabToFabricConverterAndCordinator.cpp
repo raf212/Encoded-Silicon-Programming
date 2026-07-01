@@ -56,10 +56,10 @@ namespace PredictedAdaptedEncoding
 
     void SlabToFabricConverterAndCordinator::Zero4LocalityBasedOccupancyOfFabric_() noexcept
     {
-        UpdateValidPairedOccupancyApproxAtomically_(LocalityPolicy::IDLE, UNSIGNED_ZERO, true, APCDataStructure::BRANCH_VERSION);
-        UpdateValidPairedOccupancyApproxAtomically_(LocalityPolicy::PUBLISHED, UNSIGNED_ZERO, true, APCDataStructure::BRANCH_VERSION);
-        UpdateValidPairedOccupancyApproxAtomically_(LocalityPolicy::CLAIMED, UNSIGNED_ZERO, true, APCDataStructure::BRANCH_VERSION);
-        UpdateValidPairedOccupancyApproxAtomically_(LocalityPolicy::FAULTY, UNSIGNED_ZERO, true, APCDataStructure::BRANCH_VERSION);
+        UpdateValidPairedOccupancyApproxAtomically(LocalityPolicy::IDLE, UNSIGNED_ZERO, true, APCDataStructure::BRANCH_VERSION);
+        UpdateValidPairedOccupancyApproxAtomically(LocalityPolicy::PUBLISHED, UNSIGNED_ZERO, true, APCDataStructure::BRANCH_VERSION);
+        UpdateValidPairedOccupancyApproxAtomically(LocalityPolicy::CLAIMED, UNSIGNED_ZERO, true, APCDataStructure::BRANCH_VERSION);
+        UpdateValidPairedOccupancyApproxAtomically(LocalityPolicy::FAULTY, UNSIGNED_ZERO, true, APCDataStructure::BRANCH_VERSION);
     }
 
 
@@ -190,12 +190,12 @@ namespace PredictedAdaptedEncoding
         for (uint64_t desc_idx = 0; desc_idx < CountOfAPC_; desc_idx++)
         {
             const APCDescriptorRange self_range = ReadARangeOfAPCDescription_(desc_idx);
-            const APCSegmentPoolRange segment_pool_range = GetSegmentPoolBegainEndForSingleAPCDescription_(desc_idx);
+            const APCSegmentPoolRange segment_pool_range = GetSegmentPoolBegainEndForSingleAPCDescription(desc_idx);
             if (!self_range.IsVAlid || !segment_pool_range.IsVAlid)
             {
                 continue;
             }
-            const APCSegmentPoolRange next_segment_pool_range = GetSegmentPoolBegainEndForSingleAPCDescription_(desc_idx + 1);
+            const APCSegmentPoolRange next_segment_pool_range = GetSegmentPoolBegainEndForSingleAPCDescription(desc_idx + 1);
 
             DescriptionOfAPC::SingleAPCDescriptionCellBuffer desired_buffer = DescriptionOfAPC::MakeADefaultAPCDescription(
                 desc_idx,

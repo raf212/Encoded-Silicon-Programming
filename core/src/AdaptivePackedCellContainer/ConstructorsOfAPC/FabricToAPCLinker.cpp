@@ -65,7 +65,7 @@ namespace PredictedAdaptedEncoding
             return false;
         }
         
-        const APCSegmentPoolRange range_of_this_apc = FabricOwnerPtr_->GetSegmentPoolBegainEndForSingleAPCDescription_(IdxOfThisAPCInFabric_);
+        const APCSegmentPoolRange range_of_this_apc = FabricOwnerPtr_->GetSegmentPoolBegainEndForSingleAPCDescription(IdxOfThisAPCInFabric_);
         if (!range_of_this_apc.IsVAlid)
         {
             return false;
@@ -98,7 +98,7 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-        return FabricOwnerPtr_->ForceNxMemCopy_(
+        return FabricOwnerPtr_->ForceNxLenMemCopy(
             (range_of_this_apc.BeginIndex + starting_idx_in_apc), 
             sequential_number_of_cells, 
             source_cells,
@@ -118,7 +118,7 @@ namespace PredictedAdaptedEncoding
             return false;
         }
         
-        return FabricOwnerPtr_->ForceNxMemCopy_(
+        return FabricOwnerPtr_->ForceNxLenMemCopy(
             (range_of_this_apc.BeginIndex + starting_idx_in_apc), 
             sequential_number_of_cells, 
             source_cells,
@@ -138,7 +138,7 @@ namespace PredictedAdaptedEncoding
             return false;
         }
         
-        return FabricOwnerPtr_->ForceNxMemCopy_(
+        return FabricOwnerPtr_->ForceNxLenMemCopy(
             (range_of_this_apc.BeginIndex + starting_idx_in_apc), 
             sequential_number_of_cells, 
             return_buffer,

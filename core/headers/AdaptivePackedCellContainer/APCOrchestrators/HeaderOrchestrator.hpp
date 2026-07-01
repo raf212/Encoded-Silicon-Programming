@@ -21,7 +21,7 @@ namespace PredictedAdaptedEncoding
 
         static constexpr void BuildNullMemCopyBuffer(DefaultMemCopyBuffer& a_default_buffer) noexcept
         {
-            for (size_t i = 0; i < MAXIMUM_CLAIMABLE_COUNT_SEQUENTIALLY; i++)
+            for (size_t i = 0; i < a_default_buffer.size(); i++)
             {
                 a_default_buffer[i] = PackedCell64_t::PACKED_CELL_SENTINAL;
             }
@@ -29,10 +29,19 @@ namespace PredictedAdaptedEncoding
 
         static constexpr void ConstructNullHeaderBuffer(APCMetaBuffer& a_meta_buffer) noexcept
         {
-            for (size_t i = 0; i < LEN_OF_APC_META_BUFFER_OR_COUNT; i++)
+            for (size_t i = 0; i < a_meta_buffer.size(); i++)
             {
                 a_meta_buffer[i] = PackedCell64_t::PACKED_CELL_SENTINAL;
             }
+        }
+
+        static constexpr void BuildNullLayoutBuffer(LayoutBufferOfAPC& a_layout_buffer) noexcept
+        {
+            for (size_t i = 0; i < a_layout_buffer.size(); i++)
+            {
+                a_layout_buffer[i] = PackedCell64_t::PACKED_CELL_SENTINAL;
+            }
+
         }
 
         static constexpr void InsertTypedValue48MetaInBuffer(

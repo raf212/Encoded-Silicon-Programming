@@ -87,7 +87,7 @@ namespace PredictedAdaptedEncoding
             return std::nullopt;
         }
         
-        APCSegmentPoolRange desired_apc_segment_pool_range = GetSegmentPoolBegainEndForSingleAPCDescription_(desired_apc_slot);
+        APCSegmentPoolRange desired_apc_segment_pool_range = GetSegmentPoolBegainEndForSingleAPCDescription(desired_apc_slot);
         if (!desired_apc_segment_pool_range.IsVAlid)
         {
             return std::nullopt;

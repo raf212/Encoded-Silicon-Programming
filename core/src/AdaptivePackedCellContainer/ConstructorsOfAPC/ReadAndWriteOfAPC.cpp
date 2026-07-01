@@ -4,7 +4,7 @@
 namespace PredictedAdaptedEncoding
 {
 
-    bool ReadAndWriteOfAPC::ReadCompleateMetaHeaderDirectlyNonAtomic_(HeaderOrchestrator::APCMetaBuffer& a_default_buffer) noexcept
+    bool ReadAndWriteOfAPC::ReadCompleateMetaHeaderDirectlyNonAtomic(HeaderOrchestrator::APCMetaBuffer& a_default_buffer) noexcept
     {
         APCSegmentPoolRange range_of_this_apc{};
         if (!IsThisAPCValidRange_(APCDataStructure::METACELL_COUNT, &range_of_this_apc))
@@ -20,7 +20,7 @@ namespace PredictedAdaptedEncoding
         return true;
     }
 
-    bool ReadAndWriteOfAPC::ReadCompleatLayoutBuffer_(
+    bool ReadAndWriteOfAPC::ReadCompleatLayoutBuffer(
         HeaderOrchestrator::LayoutBufferOfAPC& a_layout_buffer,
         bool is_claimed_required
     ) noexcept

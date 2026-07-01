@@ -16,7 +16,7 @@ namespace PredictedAdaptedEncoding
         /// @brief Directly Gets Segment Pool Range For An APC by using INDEX: Of FabricTableSegmentClasses::APC_HANDLE_DESCRIPTOR | Dosent validate handle OR: Initialization 
         /// @param single_description_index Sequential index of desired APC FabricTableSegmentClasses::APC_HANDLE_DESCRIPTOR
         /// @return VALID: APCDescriptorRange::IsValid -> true || INVALID: APCDescriptorRange::IsValid -> true-> false
-        APCSegmentPoolRange GetSegmentPoolBegainEndForSingleAPCDescription_(uint64_t single_description_index) noexcept;
+        APCSegmentPoolRange GetSegmentPoolBegainEndForSingleAPCDescription(uint64_t single_description_index) noexcept;
 
         /// @brief Returns A return_buffer bbased obn set rules
         /// @param claimed_is_invalid MEANS: IF true -> LocalityPolicy::CLAIMED ->INVALID
