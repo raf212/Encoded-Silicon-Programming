@@ -12,7 +12,7 @@ namespace PredictedAdaptedEncoding
             return false;
         }
 
-        if (!CopyFromAPCToANArrayBuffer(UNSIGNED_ZERO, APCDataStructure::METACELL_COUNT, a_default_buffer.data()))
+        if (!CopyFromAPCToBuffer(UNSIGNED_ZERO, APCDataStructure::METACELL_COUNT, a_default_buffer.data()))
         {
             return false;
         }
@@ -27,14 +27,14 @@ namespace PredictedAdaptedEncoding
     {
         if (is_claimed_required)
         {
-            return ClaimAndCopyToAPCFromArray(
+            return ClaimAndCopyToAPCFromBuffer(
                 LayoutBoundsOrchestrator::GetBeginIndexOfLayoutBufferOfAPC(),
                 LayoutBoundsOrchestrator::GetLenOfLayoutConstructorInAPCHeader(),
                 a_layout_buffer.data()
             );
         }
         
-        return ForceCopyToAPCFromArray(
+        return ForceCopyToAPCFromBuffer(
             LayoutBoundsOrchestrator::GetBeginIndexOfLayoutBufferOfAPC(),
             LayoutBoundsOrchestrator::GetLenOfLayoutConstructorInAPCHeader(),
             a_layout_buffer.data()

@@ -41,19 +41,19 @@ public:
 
     void SetFabricOwnerForGlobalAPC(VagueTemoraryPremativeFabric* fabric_owner) noexcept;
 
-    bool ClaimAndCopyToAPCFromArray(
+    bool ClaimAndCopyToAPCFromBuffer(
         size_t starting_idx_in_apc,
         size_t sequential_number_of_cells,
         const packed64_t* source_cells
     ) noexcept;
 
-    bool ForceCopyToAPCFromArray(
+    bool ForceCopyToAPCFromBuffer(
         size_t starting_idx_in_apc,
         size_t sequential_number_of_cells,
         const packed64_t* source_cells
     ) noexcept;
 
-    bool CopyFromAPCToANArrayBuffer(
+    bool CopyFromAPCToBuffer(
         size_t starting_idx_in_apc,
         size_t sequential_number_of_cells,
         packed64_t* return_buffer

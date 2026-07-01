@@ -86,7 +86,7 @@ namespace PredictedAdaptedEncoding
     }
 
 
-    bool FabricToAPCLinker::ClaimAndCopyToAPCFromArray(
+    bool FabricToAPCLinker::ClaimAndCopyToAPCFromBuffer(
         size_t starting_idx_in_apc,
         size_t sequential_number_of_cells,
         const packed64_t* source_cells
@@ -106,7 +106,7 @@ namespace PredictedAdaptedEncoding
         );
     }
 
-    bool FabricToAPCLinker::ForceCopyToAPCFromArray(
+    bool FabricToAPCLinker::ForceCopyToAPCFromBuffer(
         size_t starting_idx_in_apc,
         size_t sequential_number_of_cells,
         const packed64_t* source_cells
@@ -126,7 +126,7 @@ namespace PredictedAdaptedEncoding
         );
     }
 
-    bool FabricToAPCLinker::CopyFromAPCToANArrayBuffer(
+    bool FabricToAPCLinker::CopyFromAPCToBuffer(
         size_t starting_idx_in_apc,
         size_t sequential_number_of_cells,
         packed64_t* return_buffer
