@@ -7,27 +7,6 @@ namespace PredictedAdaptedEncoding
 {
 
 
-struct LayoutBoundsOrchestrator
-{
-    static constexpr uint8_t GetBeginIndexOfLayoutBufferOfAPC() noexcept
-    {
-        return static_cast<uint8_t>(MetaIndexOfAPCNode::FEEDFORWARD_BOUNDS);
-    }
-
-    static constexpr uint8_t GetEndIndexOfLayouyBufferOfAPC() noexcept
-    {
-        return static_cast<uint8_t>(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
-    }
-
-    static constexpr uint8_t GetLenOfLayoutConstructorInAPCHeader() noexcept
-    {
-        return GetEndIndexOfLayouyBufferOfAPC() - GetBeginIndexOfLayoutBufferOfAPC() + 1;
-    }
-
-
-
-};
-
 
 struct LayoutBoundsOfSingleRelNodeClass
 {
@@ -369,7 +348,7 @@ struct CompleteAPCNodeRegionsLayout
 
         if (
             payload_end <= payload_begain || 
-            total_span > APCDataStructure::APC_ALL_INDEX_LIMIT || 
+            !APCDataStructure::IsThisIndexValidForAPC(capacity_of_the_apc) || 
             total_span < MINIMUM_BRANCH_CAPACITY
         )
         {
@@ -429,5 +408,119 @@ struct CompleteAPCNodeRegionsLayout
         full_layout.FreeLayout.PAGE_LAYOUT_CLASS = APCPagedNodeSegmentClasses::FREE_SLOT;
         full_layout.FreeLayout.VersionNumber = desired_version;
     }
+};
+
+
+struct LayoutBoundsOrchestrator
+{
+    struct LayoutCarrier
+    {
+        uint16_t BeginIndex = APCDataStructure::APC_INDEX_SENTINAL;
+        uint16_t EndIndex = APCDataStructure::APC_INDEX_SENTINAL;
+        uint8_t Version = UINT8_MAX;
+        APCPagedNodeSegmentClasses LayoutIdentity = APCPagedNodeSegmentClasses::NULLNAN;
+        bool IsValid = false;
+    };
+    static_assert(sizeof(LayoutCarrier) <= sizeof(packed64_t));
+
+    static constexpr bool ValidateALayoutCarrier(LayoutCarrier& a_layout) noexcept
+    {
+        if (
+            APCDataStructure::IsThisIndexValidForAPC(a_layout.BeginIndex) &&
+            APCDataStructure::IsThisIndexValidForAPC(a_layout.EndIndex) &&
+            a_layout.BeginIndex <= a_layout.EndIndex &&
+            PageNodeOrchestrator::IsValidLayoutNode(a_layout.LayoutIdentity) &&
+            a_layout.Version < UINT8_MAX 
+        )
+        {
+            return true;
+        }
+        a_layout.IsValid = false;
+        return false;
+    }
+
+    static constexpr packed64_t CreateALayoutBoundsCell(
+        LayoutCarrier& a_layout,
+        LocalityPolicy locality = LocalityPolicy::IDLE
+    ) noexcept
+    {
+        if (!ValidateALayoutCarrier(a_layout))
+        {
+            return PackedCell64_t::PACKED_CELL_SENTINAL;
+        }
+
+        const uint64_t raw48_layout = Subdivision2x16Plus2x8InternalMode48CellModel::Pack2x16Plus2x8UnsignedSubdivision_(
+            a_layout.BeginIndex,
+            a_layout.EndIndex,
+            a_layout.Version,
+            static_cast<uint8_t>(a_layout.LayoutIdentity)
+        );
+
+        return PackedCell64_t::MakeModeledAPCValidPackedCell(
+            ModelFamily::MODEL48,
+            static_cast<tag8_t>(Model48Subclass::FOUR_SUBDIVISION_2x16_AND_2x8),
+            APCPagedNodeSegmentClasses::CONTROL_SLOT,
+            locality,
+            InternalDataTypePolicy ::UnsignedPCellDataType,
+            AttributePolicy::SELF_CONTAINED_DATA_OR_MODEL,
+            raw48_layout
+        );
+
+    }
+
+    static constexpr LayoutCarrier GetLayoutCarrierFromValidLayoutCell(packed64_t packed_cell) noexcept
+    {
+        LayoutCarrier return_carrier{};
+        const PackedCell64_t::AuthoritiveCellView desired_auth_view = PackedCell64_t::GetAuthoritiveViewsForACell(packed_cell);
+        
+        if (
+            !PageNodeOrchestrator::IsValidAPCHeaderCell(desired_auth_view) ||
+            desired_auth_view.SubClassOfModel48 != Model48Subclass::FOUR_SUBDIVISION_2x16_AND_2x8
+        )
+        {
+            return return_carrier;
+        }
+        
+        return_carrier.BeginIndex = Subdivision2x16Plus2x8InternalMode48CellModel::ExtractLowestFirstLow16Bit0_(desired_auth_view.Raw48BitInCellData);
+        return_carrier.EndIndex = Subdivision2x16Plus2x8InternalMode48CellModel::ExtractSecondLow16Bit1_(desired_auth_view.Raw48BitInCellData);
+        return_carrier.Version = Subdivision2x16Plus2x8InternalMode48CellModel::ExtractHigh8Bit2_(desired_auth_view.Raw48BitInCellData);
+        return_carrier.LayoutIdentity = static_cast<APCPagedNodeSegmentClasses>(Subdivision2x16Plus2x8InternalMode48CellModel::ExtractHighestHigh8Bit3_(desired_auth_view.Raw48BitInCellData));
+
+        ValidateALayoutCarrier(return_carrier);
+        return return_carrier;
+    }
+
+    
+    static constexpr uint8_t LEN_OF_LAYOUT_BUFFER = PageNodeOrchestrator::GetLenOfLayoutConstructorInAPCHeader() + 1;
+    using LayoutBufferOfAPC = std::array<packed64_t, LEN_OF_LAYOUT_BUFFER>;
+
+
+    static constexpr void BuildNullLayoutBuffer(LayoutBufferOfAPC& a_layout_buffer) noexcept
+    {
+        for (size_t i = 0; i < a_layout_buffer.size(); i++)
+        {
+            a_layout_buffer[i] = PackedCell64_t::PACKED_CELL_SENTINAL;
+        }
+    }
+
+
+
+
+
+    // static constexpr bool BuildInitialLayoutBuffer(
+    //     LayoutBufferOfAPC& return_buffer,
+    //     uint32_t capacity_of_the_apc,
+    //     uint16_t desired_version = APCDataStructure::BRANCH_VERSION
+    // ) noexcept
+    // {
+
+    // }
+
+
+
+
+
+    static constexpr bool MutateAPCLayout() noexcept;
+
 };
 }

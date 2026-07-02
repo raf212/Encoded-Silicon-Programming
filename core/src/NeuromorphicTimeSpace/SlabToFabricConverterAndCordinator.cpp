@@ -270,7 +270,7 @@ namespace PredictedAdaptedEncoding
 
         InitializationInProgress_.store(true, MoStoreSeq_);
 
-        if (slot_count == UNSIGNED_ZERO || slot_cell_count > APCDataStructure::APC_ALL_INDEX_LIMIT)
+        if (slot_count == UNSIGNED_ZERO || !APCDataStructure::IsThisIndexValidForAPC(slot_count))
         {
             return false;
         }

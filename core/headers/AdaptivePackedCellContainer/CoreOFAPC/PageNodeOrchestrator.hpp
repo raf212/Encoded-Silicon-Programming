@@ -128,4 +128,53 @@ namespace PredictedAdaptedEncoding
 
 };
 
+
+struct PageNodeOrchestrator
+{
+    static constexpr uint8_t GetBeginIndexOfLayoutBufferOfAPC() noexcept
+    {
+        return static_cast<uint8_t>(MetaIndexOfAPCNode::FEEDFORWARD_BOUNDS);
+    }
+
+    static constexpr uint8_t GetEndIndexOfLayouyBufferOfAPC() noexcept
+    {
+        return static_cast<uint8_t>(MetaIndexOfAPCNode::GLOBAL_CURRENT_VERSION);
+    }
+
+    static constexpr uint8_t GetLenOfLayoutConstructorInAPCHeader() noexcept
+    {
+        return GetEndIndexOfLayouyBufferOfAPC() - GetBeginIndexOfLayoutBufferOfAPC() + 1;
+    }
+
+    static constexpr bool IsValidLayoutNode(APCPagedNodeSegmentClasses layout_node) noexcept
+    {
+        if (
+            layout_node > APCPagedNodeSegmentClasses::NONE &&
+            layout_node < APCPagedNodeSegmentClasses::CONTROL_SLOT
+        )
+        {
+            return true;
+        }
+        return false;
+    }
+
+    static constexpr bool IsValidAPCHeaderCell(const PackedCell64_t::AuthoritiveCellView a_auth_view) noexcept
+    {
+        if (!a_auth_view.IsCellValid && a_auth_view.PageClass != APCPagedNodeSegmentClasses::CONTROL_SLOT)
+        {
+            return false;
+        }
+
+        if (a_auth_view.CellMode != PackedMode::VALUE48 || a_auth_view.CellMode != PackedMode::MODEL48)
+        {
+            return false;
+        }
+        
+        return true;
+        
+    }
+
+};
+
+
 }

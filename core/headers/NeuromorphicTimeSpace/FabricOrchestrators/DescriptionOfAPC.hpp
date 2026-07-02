@@ -174,7 +174,7 @@ struct DescriptionOfAPC
         const uint32_t apc_width = static_cast<uint32_t>(segment_pool_end - segment_pool_begin);
 
         uint16_t state_version_ownership = UNSIGNED_ZERO;
-        if (apc_width == UNSIGNED_ZERO || apc_width > APCDataStructure::APC_ALL_INDEX_LIMIT)
+        if (apc_width == UNSIGNED_ZERO || !APCDataStructure::IsThisIndexValidForAPC(apc_width))
         {
             return PackedCell64_t::PACKED_CELL_SENTINAL;
         }
@@ -258,7 +258,7 @@ struct DescriptionOfAPC
 
         if (
             return_descriptor_files.WidthOfAPC >= MINIMUM_BRANCH_CAPACITY  && 
-            return_descriptor_files.WidthOfAPC <= APCDataStructure::APC_ALL_INDEX_LIMIT &&
+            APCDataStructure::IsThisIndexValidForAPC(return_descriptor_files.WidthOfAPC) &&
             return_descriptor_files.StateOfTheAPC != StateOfSingleAPCDescription::UNASSIGNED_UNUSED_NANNULL &&
             return_descriptor_files.WhoHoldsTheAcess != OwnershipPolicy::UNASSIGNED_UNUSED_NANNULL
         )

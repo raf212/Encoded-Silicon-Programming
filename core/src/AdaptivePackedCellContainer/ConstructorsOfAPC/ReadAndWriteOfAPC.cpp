@@ -21,22 +21,22 @@ namespace PredictedAdaptedEncoding
     }
 
     bool ReadAndWriteOfAPC::ReadCompleatLayoutBuffer(
-        HeaderOrchestrator::LayoutBufferOfAPC& a_layout_buffer,
+        LayoutBoundsOrchestrator::LayoutBufferOfAPC& a_layout_buffer,
         bool is_claimed_required
     ) noexcept
     {
         if (is_claimed_required)
         {
             return ClaimAndCopyToAPCFromBuffer(
-                LayoutBoundsOrchestrator::GetBeginIndexOfLayoutBufferOfAPC(),
-                LayoutBoundsOrchestrator::GetLenOfLayoutConstructorInAPCHeader(),
+                PageNodeOrchestrator::GetBeginIndexOfLayoutBufferOfAPC(),
+                PageNodeOrchestrator::GetLenOfLayoutConstructorInAPCHeader(),
                 a_layout_buffer.data()
             );
         }
         
         return ForceCopyToAPCFromBuffer(
-            LayoutBoundsOrchestrator::GetBeginIndexOfLayoutBufferOfAPC(),
-            LayoutBoundsOrchestrator::GetLenOfLayoutConstructorInAPCHeader(),
+            PageNodeOrchestrator::GetBeginIndexOfLayoutBufferOfAPC(),
+            PageNodeOrchestrator::GetLenOfLayoutConstructorInAPCHeader(),
             a_layout_buffer.data()
         );
     }

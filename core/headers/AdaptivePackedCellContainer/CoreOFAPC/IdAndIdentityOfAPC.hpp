@@ -51,12 +51,12 @@ struct HashIdConstructror
     /// @brief CREATS: HASH KEY: Based On a Desired SHARED / LOGICAL Group ID
     /// @param sequential_idx_of_desired_id SEQUENTIAL IDX < UINT16_MAX - 1
     /// @return IF INVALID: UINT64_MAX
-    static constexpr uint64_t MakeGroupAccessKey48(uint64_t group_id, uint64_t sequential_idx_of_desired_id) noexcept
+    static constexpr uint64_t MakeGroupAccessKey48(uint64_t group_id, uint16_t sequential_idx_of_desired_id) noexcept
     {
         if (
             group_id == UNSIGNED_ZERO ||
             group_id > GROUP_SEQUENTIAL_INDEX_MASK ||
-            sequential_idx_of_desired_id > APCDataStructure::APC_ALL_INDEX_LIMIT
+            !APCDataStructure::IsThisIndexValidForAPC(sequential_idx_of_desired_id)
         )
         {
             return PackedCell64_t::PACKED_CELL_SENTINAL;

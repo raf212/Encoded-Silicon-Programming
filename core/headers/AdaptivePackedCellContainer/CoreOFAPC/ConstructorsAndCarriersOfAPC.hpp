@@ -22,6 +22,16 @@ struct APCDataStructure
     static constexpr size_t APC_SIZE_SENTINAL = SIZE_MAX;
 
 
+    static constexpr bool IsThisIndexValidForAPC(uint32_t index) noexcept
+    {
+        if (index < APC_INDEX_SENTINAL)
+        {
+            return true;
+        }
+        return false;
+    }
+
+
 
     static constexpr uint64_t AutoExtractDataOfAValidAPCCell(
         packed64_t packed_cell, 
